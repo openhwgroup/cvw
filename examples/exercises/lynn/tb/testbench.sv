@@ -1,3 +1,7 @@
+// James Kaden Cassidy
+// kacassidy@hmc.edu
+// 1/22/26
+
 `timescale 1ns/1ps
 
 `include "parameters.svh"
@@ -42,7 +46,7 @@ module testbench;
   // Data side interface (byte addresses)
   logic [`XLEN-1:0]               DataAdr;
   logic [`XLEN-1:0]               ReadData, MemReadData, TestbenchRequestReadData;
-  logic [`XLEN-1:0]               WriteData;
+  logic [`XLEN-1:0]               WriteData, IMEM_WriteData;
   logic                           WriteEn;
   logic                           MemEn;
   logic [`XLEN/8-1:0]             WriteByteEn;   // byte enables, one per 8 bits
@@ -66,7 +70,7 @@ module testbench;
       //         dut.ieu.dp.rf.rf[5]
       //         );
 
-
+      // terminate program as it exited program space
       if (Instr === 'x) begin
         $display("Instruction data x (PC: %h)", PC);
         $finish(-1);
@@ -78,7 +82,7 @@ module testbench;
 
   /* ------- PROCESSOR Instantiation ------- */
 
-  vectorStorage #(
+  ram1p1rwb #(
     .MEMORY_NAME              ("Instruction Memory"),
     .ADDRESS_BITS             (`XLEN),
     .DATA_BITS                (32),
@@ -86,9 +90,9 @@ module testbench;
     .MEMORY_FILE_BASE_ADDRESS (`ELF_BASE_ADR),
     .MEMORY_ADR_OFFSET        (`IMEM_BASE_ADR),
     .MEMFILE_PLUS_ARG         ("MEMFILE")
-  ) InstructionMemory (.clk, .reset, .En(1'b1), .WriteEn(1'b0), .WriteByteEn(4'b0), .MemoryAddress(PC), .WriteData(), .ReadData(Instr));
+  ) InstructionMemory (.clk, .reset, .En(1'b1), .WriteEn(1'b0), .WriteByteEn(4'b0), .MemoryAddress(PC), .WriteData(IMEM_WriteData), .ReadData(Instr));
 
-  vectorStorage #(
+  ram1p1rwb #(
     .MEMORY_NAME              ("Data Memory"),
     .ADDRESS_BITS             (`XLEN),
     .DATA_BITS                (`XLEN),
@@ -123,6 +127,13 @@ module testbench;
 
 /* ------- TOHOST Handling ------- */
 
+/*
+  Host Target Interface (HTIF) semihosting based on 8 byte value at TOHOST label
+  0x00000000_00000001: terminate successfully
+  0x00000000_xxxxxxx0: terminate with failure code xxxxxxx
+  0x01010000_000000ch: writes the byte ch to the console as ASCII
+*/
+
 logic [`XLEN-1:0] TO_HOST_ADR;
 logic [31:0] tohost_lo, tohost_hi, payload;
 
@@ -144,25 +155,27 @@ always @(negedge clk) begin
     if (tohost_hi == 32'h0) begin
       payload = tohost_lo;
 
-      if (payload[0]) begin
+      if (payload[0] && ~(|(payload >> 1))) begin
         $display("INFO: Test Completed!");
       end else begin
-        $display("ERROR: Test Failed (code=0x%h)", (payload >> 1));
+        $display("ERROR: Test Failed (code=%d)", (payload >> 1));
       end
 
       $display("[%0t] INFO: Program Finished! Ending simulation.", $time);
       $finish;
 
-    // Otherwise: check for putchar code in top word, then print a character (format you can change)
+    // Check top bits for "print char" command
     end else if (tohost_hi == 32'h01010000) begin
-      ch = tohost_lo[7:0]; // adjust payload->char mapping if you want
+      ch = tohost_lo[7:0];
       $write("%c", ch);
       if (ch == "\n") $fflush(`STDOUT);
     end
-    // DataMemory.Memory[(TO_HOST_ADR-`DMEM_BASE_ADR)>>2] = '0;
-    // `ifdef XLEN32
-    // DataMemory.Memory[((TO_HOST_ADR-`DMEM_BASE_ADR)>>2) + 1] = '0;
-    // `endif
+
+    // clear tohost to be 0
+    DataMemory.Memory[(TO_HOST_ADR-`DMEM_BASE_ADR)>>2] = '0;
+    `ifdef XLEN32
+    DataMemory.Memory[((TO_HOST_ADR-`DMEM_BASE_ADR)>>2) + 1] = '0;
+    `endif
   end
 end
 
@@ -189,7 +202,7 @@ end
 
 always @(negedge clk) begin
   if (!reset && ((&jump_to_self_count))) begin
-      $display("ERROR: Jump to self count exceeded");
+      $display("ERROR: Program stuck in infinite loop at address %h", PC);
       $finish(-1);
   end
 end

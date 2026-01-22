@@ -1,6 +1,6 @@
 //James Kaden Cassidy jkc.cassidy@gmail.com 12/20/2024
 
-module vectorStorage #(
+module ram1p1rwb #(
     parameter MEMORY_NAME,
     parameter ADDRESS_BITS,
     parameter DATA_BITS,

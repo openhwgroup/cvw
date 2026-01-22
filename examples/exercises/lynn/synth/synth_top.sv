@@ -1,3 +1,6 @@
+// James Kaden Cassidy
+// kacassidy@hmc.edu
+// 1/22/26
 
 `define XLEN 32
 `define INSTR_BITS 32
@@ -28,7 +31,7 @@ module synth_top (
 
     /* ------- PROCESSOR Instantiation ------- */
 
-    vectorStorage #(
+    ram1p1rwb #(
         .MEMORY_NAME              ("Instruction Memory"),
         .ADDRESS_BITS             (`XLEN),
         .DATA_BITS                (32),
@@ -38,7 +41,7 @@ module synth_top (
         .MEMFILE_PLUS_ARG         ("MEMFILE")
     ) InstructionMemory (.clk, .reset, .En(1'b1), .WriteEn(1'b0), .WriteByteEn(4'b0), .MemoryAddress(PC), .WriteData(), .ReadData(Instr));
 
-    vectorStorage #(
+    ram1p1rwb #(
         .MEMORY_NAME              ("Data Memory"),
         .ADDRESS_BITS             (`XLEN),
         .DATA_BITS                (`XLEN),

@@ -1,4 +1,8 @@
-#!/usr/bin/env -S uv run
+#!/usr/bin/env -S uv run --script
+# James Kaden Cassidy
+# kacassidy@hmc.edu
+# 1/22/26
+
 """
 check_signatures.py
 

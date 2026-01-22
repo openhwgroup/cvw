@@ -1,4 +1,7 @@
 # tests/act4/Makefile
+# James Kaden Cassidy
+# kacassidy@hmc.edu
+# 1/22/26
 
 RISCV_ARCH_TEST ?= $(WALLY)/addins/riscv-arch-test-cvw
 

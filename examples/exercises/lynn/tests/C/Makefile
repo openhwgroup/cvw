@@ -1,4 +1,7 @@
 # tests/C/Makefile
+# James Kaden Cassidy
+# kacassidy@hmc.edu
+# 1/22/26
 
 XLEN       ?= 32
 ARCH       ?= rv$(XLEN)i_zicsr

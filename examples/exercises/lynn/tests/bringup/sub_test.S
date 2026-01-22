@@ -20,10 +20,10 @@ sub_test:
         j Fail_Sub_1
 
     test2:
-        li   t0, 9
-        li   t1, 4
+        li   t0, 27
+        li   t1, 14
         sub  t2, t0, t1
-        li   t3, 5
+        li   t3, 13
         beq  t2, t3, pass
         j Fail_Sub_2
 

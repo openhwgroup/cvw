@@ -1,4 +1,7 @@
 # synth/Makefile
+# James Kaden Cassidy
+# kacassidy@hmc.edu
+# 1/22/26
 
 WORK_DIR 		?= $(CURDIR)/work
 

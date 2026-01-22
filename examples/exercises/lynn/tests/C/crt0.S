@@ -67,7 +67,7 @@ rvtest_entry_point:
     j   pass
 
 finish:
-    /* write gp to tohost and hang */
+    /* write gp (exit code) to tohost and end simulation */
     la   t0, tohost
     sw   gp, 0(t0)
     sw   x0, 4(t0)
@@ -76,6 +76,7 @@ finish:
 fail:
     /* encode a non-1 fail code (gp already holds something else if you want) */
     add  gp, gp, gp # failure code needs to be shifted left by 1 # exit needs 1 in bottom most bit
+    addi gp, gp, 1
     j    finish
 
 pass:

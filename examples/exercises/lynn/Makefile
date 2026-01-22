@@ -1,5 +1,5 @@
 # Wally Coremark Makefile
-# James Kaden Cassidy 1/1/2026
+# James Kaden Cassidy 1/1/2026 kacassidy@hmc.edu
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 # ============================================================
@@ -7,19 +7,16 @@
 # ============================================================
 
 # ---- Processor / Testbench Configuration ---- #
-XLEN 			?= 32
-#sample_processor
-#RISC-V-Pipelined-Processor
-PROCESSOR_DIR   ?= $(CURDIR)/sample_processor/src      # Directory containing all PROCESSOR RTL (will scan for .sv / .svh)
-#sample_processor
-INC_DIR       	?= $(CURDIR)/sample_processor/incdir/  # Optional directory for include files for RTL compilation (parameters)
+XLEN 				?= 32
 
-PROCESSOR_TOP 			?= riscvsingle # top-level module name
-#PROCESSOR_TOP 			?= testingCore
+PROCESSOR_DIR   	?= $(CURDIR)/sample_processor/src      # Directory containing all PROCESSOR RTL (will scan for .sv / .svh)
+INC_DIR       		?= $(CURDIR)/sample_processor/incdir/  # Optional directory for include files for RTL compilation (parameters)
+
+PROCESSOR_TOP 		?= riscvsingle # top-level module name
 PROCESSOR_CONFIG 	?= $(CURDIR)/sample_processor/config
 
 #--trace-all
-SAIL_TRACE_FLAGS ?=
+SAIL_TRACE_FLAGS 	?=
 
 # ----    Synthesis Configuration ---- #
 SYNTH_TECH 			?= sky130 #tsmc28 #tsmc28psyn
@@ -48,7 +45,7 @@ VSIM_PLUSARGS_EXTRA ?=
 LINKER			?= $(PROCESSOR_CONFIG)/link.ld
 
 TB_TOP          ?= testbench
-TESTBENCH_FILES ?= $(TESTBENCH_DIR)/testbench.sv $(TESTBENCH_DIR)/VectorStorage.sv
+TESTBENCH_FILES ?= $(TESTBENCH_DIR)/testbench.sv $(TESTBENCH_DIR)/ram1p1rwb.sv
 WAVES_DO        ?= $(CURDIR)/waves.do
 
 # ---- Repo paths cont ---- #
@@ -96,18 +93,16 @@ TEST_ELFS  	= $(sort $(shell find -L $(ACT4_TEST_DIR) -type f -name '*.elf'))
 # Default target: just build (compile RTL/testbench once)
 all: build
 
-SYNTH_FILE := $(CURDIR)/synth/synth_top.sv
-
 .PHONY: lint
 lint:
 	@verilator --lint-only --quiet \
 		--top-module $(PROCESSOR_TOP) \
 		-DPROCESSOR_TOP=$(PROCESSOR_TOP) \
 		-I$(abspath $(INC_DIR)) \
-		$(abspath $(SV_PACKAGES) $(SV_SOURCES) $(TESTBENCH_FILES) $(SYNTH_FILE)) \
-		-Wall -Wno-UNUSEDSIGNAL -Wno-VARHIDDEN -Wno-GENUNNAMED -Wno-PINCONNECTEMPTY -Wno-DECLFILENAME -Wno-TIMESCALEMOD -Wno-CASEX \
+		$(abspath $(SV_PACKAGES) $(SV_SOURCES) $(TESTBENCH_FILES)) \
+		-Wall -Wno-UNUSEDSIGNAL -Wno-VARHIDDEN -Wno-TIMESCALEMOD \
 		&& echo "[LINT] Linting completed without errors."
-
+# -Wno-DECLFILENAME -Wno-CASEX
 
 # Build = compile RTL once into $(WORK_DIR)/build
 .PHONY: build
@@ -177,7 +172,6 @@ VSIM_PLUSARGS_BASE  ?= \
 	+MEMFILE="$$MEMFILE" \
 	+ENTRY_ADDR="$$ENTRY_ADDR" \
 	+TOHOST_ADDR="$$TOHOST_ADDR" \
-	+FROMHOST_ADDR="$$FROMHOST_ADDR" \
 	+DMEM_BASE_ADDR="$$DMEM_BASE_ADDR"
 
 %.processor: %.memfile $(WORK_DIR)/_info Makefile
@@ -186,7 +180,6 @@ VSIM_PLUSARGS_BASE  ?= \
 	ELF="$${MEMFILE%.memfile}.elf"; \
 	ENTRY_ADDR="$$(riscv64-unknown-elf-readelf -h "$$ELF" | awk '/Entry point address:/ {print $$NF}')"; \
 	TOHOST_ADDR="$$(riscv64-unknown-elf-readelf --syms --wide "$$ELF" | awk '$$NF=="tohost" {print "0x"$$2; exit}')" \
-	FROMHOST_ADDR="$$(riscv64-unknown-elf-readelf --syms --wide "$$ELF" | awk '$$NF=="fromhost" {print "0x"$$2; exit}')" \
 	DMEM_BASE_ADDR="$$(riscv64-unknown-elf-readelf --syms --wide "$$ELF" | awk '$$NF=="dmem_base" {print "0x"$$2; exit}')" \
 	NAME="$${ELF##*/}"; \
 	LOGFILE="$${ELF}.sim.log"; \
@@ -291,6 +284,7 @@ clean:
 	$(MAKE) -C $(COREMARK_DIR) clean
 	$(MAKE) -C $(RISCV_ARCH_TEST) clean
 	$(MAKE) -C $(C_TEST_DIR) clean
+	$(MAKE) -C $(BRINGUP_TEST_DIR) clean
 	rm -rf $(WORK_DIR)
 
 clean-act4:

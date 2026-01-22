@@ -20,10 +20,10 @@ add_test:
         j Fail_Add_1
 
     test2:
-        li   t0, 7
-        li   t1, 5
+        li   t0, 19
+        li   t1, 23
         add  t2, t0, t1
-        li   t3, 12
+        li   t3, 42
         beq  t2, t3, pass
         j Fail_Add_2
 

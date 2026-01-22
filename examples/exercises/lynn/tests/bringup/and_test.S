@@ -20,9 +20,9 @@ and_test:
         j Fail_And_1
 
     test2:
-        li   t0, 0x55
-        li   t1, 0xAA
-        and  t2, t0, t1
+        li   t0, 0x3C      # 00111100
+        li   t1, 0xC3      # 11000011
+        and  t2, t0, t1   # = 00000000
         li   t3, 0x00
         beq  t2, t3, pass
         j Fail_And_2
