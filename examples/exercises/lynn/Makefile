@@ -20,6 +20,7 @@ SAIL_TRACE_FLAGS 	?=
 
 # ----    Synthesis Configuration ---- #
 SYNTH_TECH 			?= sky130 #tsmc28 #tsmc28psyn
+SYNTH_TOP 			?= synth_top # change to different module to find critical path of a specific module
 
 # ----    Coremark Configuration ---- #
 
@@ -138,6 +139,7 @@ run: $(addsuffix .run,$(basename $(ELFS)))
 # Generate score for the project based on coremark score and timing
 .PHONY: score
 score:
+	@$(PYTHON) $(CURDIR)/bin/score.py $(SYNTH_DIR)/work $(CM_WORK_DIR) --output-log $(CURDIR)/score.log
 
 ifeq ($(SAIL),1)
 RUNNER := sail
@@ -201,7 +203,7 @@ VSIM_PLUSARGS_BASE  ?= \
 synth:
 	$(MAKE) -C $(SYNTH_DIR) \
 		SYNTH_TECH=$(SYNTH_TECH) PROCESSOR_DIR=$(PROCESSOR_DIR) INC_DIR=$(INC_DIR) \
-		PROCESSOR_TOP=$(PROCESSOR_TOP) XLEN=$(XLEN)
+		PROCESSOR_TOP=$(PROCESSOR_TOP) XLEN=$(XLEN) SYNTH_TOP=$(SYNTH_TOP)
 
 
 # ----  C test flow  ---- #
@@ -278,19 +280,22 @@ bug:
 
 # ----            Clean             ---- #
 
-.PHONY: clean, clean-act4
+.PHONY: clean, clean-act4, clean-coremark, clean-synth
 
 clean:
-	$(MAKE) -C $(COREMARK_DIR) clean
-	$(MAKE) -C $(RISCV_ARCH_TEST) clean
 	$(MAKE) -C $(C_TEST_DIR) clean
 	$(MAKE) -C $(BRINGUP_TEST_DIR) clean
 	rm -rf $(WORK_DIR)
+	rm score.log
+
+clean-coremark:
+	$(MAKE) -C $(COREMARK_DIR) clean
 
 clean-act4:
+	$(MAKE) -C $(RISCV_ARCH_TEST) clean
 	$(MAKE) -C $(ACT4_TEST_DIR) clean
 
 clean-synth:
 	$(MAKE) -C $(SYNTH_DIR) clean
 
-clean-all: clean clean-act4 clean-synth
+clean-all: clean clean-act4 clean-synth clean-coremark
