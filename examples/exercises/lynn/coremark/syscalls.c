@@ -1,4 +1,7 @@
 // See LICENSE for license details.
+// James Kaden Cassidy
+// kacassidy@hmc.edu
+// 1/22/26
 
 #include <stdint.h>
 #include <string.h>
@@ -19,14 +22,15 @@ extern volatile uint64_t fromhost;
 
 
 void _send_char(char c) {
-  /*#error "You must implement the method _send_char to use this file!\n";
-  */
-  volatile unsigned char *THR=(unsigned char *)0x10000000;
-  volatile unsigned char *LSR=(unsigned char *)0x10000005;
+  uintptr_t base = (uintptr_t) &tohost;
 
-  while(!(*LSR&0b100000));
-  *THR=c;
-  while(!(*LSR&0b100000));
+  volatile uint32_t *TO_HOST_PAYLOAD = (volatile uint32_t *)(base + 0);
+  volatile uint32_t *TO_HOST_COMMAND = (volatile uint32_t *)(base + 4);
+
+  *TO_HOST_PAYLOAD = c;
+  *TO_HOST_COMMAND = 0x01010000;
+
+  return;
 }
 
 int sendstring(const char *p){

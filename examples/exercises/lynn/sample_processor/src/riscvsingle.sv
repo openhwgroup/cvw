@@ -4,7 +4,7 @@
 
 `include "parameters.svh"
 
-module riscvsingle(
+module riscvsingle (
         input   logic           clk,
         input   logic           reset,
 

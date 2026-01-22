@@ -1,4 +1,7 @@
 # See LICENSE for license details.
+# James Kaden Cassidy
+# kacassidy@hmc.edu
+# 1/22/26
 
 #include "encoding.h"
 

@@ -1,6 +1,6 @@
 //James Kaden Cassidy jkc.cassidy@gmail.com 12/20/2024
 
-module vectorStorage #(
+module ram1p1rwb #(
     parameter MEMORY_NAME,
     parameter ADDRESS_BITS,
     parameter DATA_BITS,
@@ -32,6 +32,7 @@ module vectorStorage #(
     assign ReadData = En ? Memory[(MemoryAddress-MEMORY_ADR_OFFSET)>>2] : 'x;
 
     always_ff @(negedge clk) begin
+        //$display("%s En: %h WriteEn: %h Addr: %h ReadData: %h", MEMORY_NAME, En, WriteEn, MemoryAddress, ReadData);
         if (reset) begin
             int i;
             logic[DATA_BITS-1:0] memory_entry;

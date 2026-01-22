@@ -34,6 +34,8 @@ OLDCONFIGDIR ?= ${WALLY}/config
 export CONFIGDIR ?= $(OUTPUTDIR)/config
 export HDLDIR ?= $(WALLY)/src
 export INCDIR ?=
+export PROCESSORTOP ?=
+SYNTH_FILE ?=
 
 default:
 	@echo "  Basic synthesis procedure for Wally:"
@@ -51,6 +53,7 @@ $(CONFIG):
 ifeq ($(LYNN), 1)
 	@mkdir -p $(OUTPUTDIR)/hdl
 	@echo "Copying HDL sources into $(OUTPUTDIR)/hdl"
+	@cp -f $(SYNTH_FILE) $(OUTPUTDIR)/hdl/
 	@find $(CONFIGDIR) $(HDLDIR) -type f \( -name "*.sv" -o -name "*.svh" -o -name "*.vh" -o -name "*.pkg" \) -exec cp -f {} $(OUTPUTDIR)/hdl \; || true
 else
 	cp -r $(OLDCONFIGDIR)/shared/*.vh $(CONFIGDIR)
