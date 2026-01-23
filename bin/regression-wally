@@ -498,8 +498,8 @@ def selectTests(args, sims, coverStr):
         addTestsByDir(f"{WALLY}/tests/coverage/", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
     # run tests in lockstep in functional coverage mode
     if args.fcov or args.nightly:
-        addTestsByDir(f"{archVerifDir}/work/cvw-rv32gc/elfs/rv32/I", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1)
-        addTestsByDir(f"{archVerifDir}/work/cvw-rv64gc/elfs/rv64/I", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
+        addTestsByDir(f"{archVerifDir}/work/cvw-rv32gc/elfs/rv32i/I", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1)
+        addTestsByDir(f"{archVerifDir}/work/cvw-rv64gc/elfs/rv64i/I", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
         # Extra tests from riscv-arch-test that should be run as part of the functional coverage suite
         # addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m/vm_sv32", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1)
         # addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/vm_sv39", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
