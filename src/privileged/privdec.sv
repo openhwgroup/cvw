@@ -36,7 +36,9 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   input  logic         IllegalIEUFPUInstrM,                 // Not a legal IEU instruction
   input  logic         IllegalCSRAccessM,                   // Not a legal CSR access
   input  logic [1:0]   PrivilegeModeW,                      // current privilege level
-  input  logic         STATUS_TSR, STATUS_TVM, STATUS_TW,   // status bits
+  input  logic         VirtModeW,                           // current V
+  input  logic         STATUS_TSR, STATUS_TVM, STATUS_TW,   // status bits (HS)
+  input  logic         HSTATUS_VTSR, HSTATUS_VTVM, HSTATUS_VTW, // status bits (VS)
   output logic         IllegalInstrFaultM,                  // Illegal instruction
   output logic         EcallFaultM, BreakpointFaultM,       // Ecall or breakpoint; must retire, so don't flush it when the trap occurs
   output logic         sretM, mretM, RetM,                  // return instructions
@@ -52,6 +54,7 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   logic                sfencewinvalM, sfenceinvalirM;       // sfence.w.inval, sfence.inval.ir
   logic                vmaM;                                // sfence.vma or sinval.vma
   logic                fenceinvalM;                         // sfence.w.inval or sfence.inval.ir
+  logic                TSRM, TVMM, TWM;
 
   ///////////////////////////////////////////
   // Decode privileged instructions
@@ -69,8 +72,13 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   assign vmaM           =  presfencevmaM | (sinvalvmaM & P.SVINVAL_SUPPORTED);      // sfence.vma or sinval.vma
   assign fenceinvalM    = (sfencewinvalM | sfenceinvalirM) & P.SVINVAL_SUPPORTED;   // sfence.w.inval or sfence.inval.ir
 
+  // In VS-mode, use hstatus.V* bits instead of mstatus.T* bits.
+  assign TSRM = VirtModeW ? HSTATUS_VTSR : STATUS_TSR;
+  assign TVMM = VirtModeW ? HSTATUS_VTVM : STATUS_TVM;
+  assign TWM  = VirtModeW ? HSTATUS_VTW : STATUS_TW;
+
   assign sretM =      PrivilegedM & (InstrM[31:20] == 12'b000100000010) & rs1zeroM & P.S_SUPPORTED &
-                      (PrivilegeModeW == P.M_MODE | PrivilegeModeW == P.S_MODE & ~STATUS_TSR);
+                      (PrivilegeModeW == P.M_MODE | PrivilegeModeW == P.S_MODE & ~TSRM);
   assign mretM =      PrivilegedM & (InstrM[31:20] == 12'b001100000010) & rs1zeroM & (PrivilegeModeW == P.M_MODE);
   assign RetM =       sretM | mretM;
   assign ecallM =     PrivilegedM & (InstrM[31:20] == 12'b000000000000) & rs1zeroM;
@@ -80,7 +88,7 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   // all of sinval.vma, sfence.w.inval, sfence.inval.ir are treated as sfence.vma
   assign sfencevmaM = PrivilegedM & P.VIRTMEM_SUPPORTED &
                       ((PrivilegeModeW == P.M_MODE & (vmaM | fenceinvalM)) |
-                       (PrivilegeModeW == P.S_MODE & (vmaM & ~STATUS_TVM  | fenceinvalM))); // sfence.w.inval & sfence.inval.ir not affected by TVM
+                       (PrivilegeModeW == P.S_MODE & (vmaM & ~TVMM  | fenceinvalM))); // sfence.w.inval & sfence.inval.ir not affected by TVM
 
   ///////////////////////////////////////////
   // WFI timeout Privileged Spec 3.1.6.5
@@ -92,7 +100,7 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
     flopr #(P.WFI_TIMEOUT_BIT+1) wficountreg(clk, reset, WFICountPlus1, WFICount);  // count while in WFI
   // coverage off -item e 1 -fecexprrow 1
   // WFI Timeout trap will not occur when STATUS_TW is low while in supervisor mode, so the system gets stuck waiting for an interrupt and triggers a watchdog timeout.
-    assign WFITimeoutM = ((STATUS_TW & PrivilegeModeW != P.M_MODE) | (P.S_SUPPORTED & PrivilegeModeW == P.U_MODE)) & WFICount[P.WFI_TIMEOUT_BIT];
+    assign WFITimeoutM = ((TWM & PrivilegeModeW != P.M_MODE) | (P.S_SUPPORTED & PrivilegeModeW == P.U_MODE)) & WFICount[P.WFI_TIMEOUT_BIT];
   // coverage on
   end else assign WFITimeoutM = 1'b0;
 
