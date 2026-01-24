@@ -87,7 +87,7 @@ localparam logic ZFA_SUPPORTED = 1;
 // privilege modes
 localparam logic S_SUPPORTED = 1; // Supervisor mode
 localparam logic U_SUPPORTED = 1; // User mode
-localparam logic H_SUPPORTED = 0; // Hypervisor mode
+localparam logic H_SUPPORTED = 1; // Hypervisor mode
 
 // Supervisor level extensions
 localparam logic SSTC_SUPPORTED = 1; // Supervisor-mode timer interrupts
