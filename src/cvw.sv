@@ -234,6 +234,7 @@ typedef struct packed {
   logic Q_SUPPORTED;
   logic S_SUPPORTED;
   logic U_SUPPORTED;
+  logic H_SUPPORTED;
 
 // logarithm of XLEN, used for number of index bits to select
   int LOG_XLEN;
