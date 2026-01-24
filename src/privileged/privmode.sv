@@ -35,8 +35,14 @@ module privmode import cvw::*;  #(parameter cvw_t P) (
   input  logic             DelegateM,           // trap delegated to supervisor mode
   input  logic [1:0]       STATUS_MPP,          // machine trap previous privilege mode
   input  logic             STATUS_SPP,          // supervisor trap previous privilege mode
+  input  logic             VSSTATUS_SPP,        // virtual supervisor trap previous privilege mode
+  input  logic             MSTATUS_MPV,         // from mstatus
+  input  logic             HSTATUS_SPV,         // from hstatus
+  input  logic             TrapToM, TrapToHSM, TrapToVSM, // resolved trap target
   output logic [1:0]       NextPrivilegeModeM,  // next privilege mode, used when updating STATUS CSR on a trap
-  output logic [1:0]       PrivilegeModeW       // current privilege mode
+  output logic [1:0]       PrivilegeModeW,      // current privilege mode
+  output logic             NextVirtModeM,       // next V
+  output logic             VirtModeW            // current V
 );
 
   if (P.U_SUPPORTED) begin:privmode
@@ -46,7 +52,7 @@ module privmode import cvw::*;  #(parameter cvw_t P) (
         if (P.S_SUPPORTED & DelegateM) NextPrivilegeModeM = P.S_MODE;
         else                           NextPrivilegeModeM = P.M_MODE;
       end else if (mretM)              NextPrivilegeModeM = STATUS_MPP;
-      else     if (sretM)              NextPrivilegeModeM = {1'b0, STATUS_SPP};
+      else     if (sretM)              NextPrivilegeModeM = {1'b0, (VirtModeW ? VSSTATUS_SPP : STATUS_SPP)};
       else                             NextPrivilegeModeM = PrivilegeModeW;
     end
 
@@ -54,5 +60,22 @@ module privmode import cvw::*;  #(parameter cvw_t P) (
   end else begin  // only machine mode supported
     assign NextPrivilegeModeM = P.M_MODE;
     assign PrivilegeModeW = P.M_MODE;
+  end
+
+  if (P.H_SUPPORTED) begin:virtmode
+    always_comb begin
+      NextVirtModeM = VirtModeW;
+      if (TrapM)
+        NextVirtModeM = TrapToVSM;
+      else if (mretM)
+        NextVirtModeM = (STATUS_MPP != P.M_MODE) & MSTATUS_MPV;
+      else if (sretM)
+        NextVirtModeM = VirtModeW | HSTATUS_SPV;
+    end
+
+    flopenr #(1) virtmodereg(clk, reset, ~StallW, NextVirtModeM, VirtModeW);
+  end else begin
+    assign NextVirtModeM = 1'b0;
+    assign VirtModeW     = 1'b0;
   end
 endmodule

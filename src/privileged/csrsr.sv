@@ -33,12 +33,15 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
   input  logic              WriteMSTATUSM, WriteMSTATUSHM, WriteSSTATUSM,
   input  logic              TrapM, FRegWriteM,
   input  logic [1:0]        NextPrivilegeModeM, PrivilegeModeW,
+  input  logic              VirtModeW,
+  input  logic              TrapGVAM,            // Trap writes guest virtual address to tval
   input  logic              mretM, sretM,
   input  logic              WriteFRMM, SetOrWriteFFLAGSM,
   input  logic [P.XLEN-1:0] CSRWriteValM,
   input  logic              SelHPTW,
   output logic [P.XLEN-1:0] MSTATUS_REGW, SSTATUS_REGW, MSTATUSH_REGW,
   output logic [1:0]        STATUS_MPP,
+  output logic              MSTATUS_MPV,
   output logic              STATUS_SPP, STATUS_TSR, STATUS_TW,
   output logic              STATUS_MIE, STATUS_SIE,
   output logic              STATUS_MXR, STATUS_SUM,
@@ -48,15 +51,23 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
 );
 
   logic STATUS_SD, STATUS_TW_INT, STATUS_TSR_INT, STATUS_TVM_INT, STATUS_MXR_INT, STATUS_SUM_INT, STATUS_MPRV_INT;
+  logic STATUS_MPV, STATUS_GVA;
   logic [1:0] STATUS_SXL, STATUS_UXL, STATUS_XS, STATUS_FS_INT, STATUS_MPP_NEXT;
   logic STATUS_MPIE, STATUS_SPIE, STATUS_UBE, STATUS_SBE, STATUS_MBE;
   logic nextMBE, nextSBE;
+  logic [63:0] CSRWriteValExt;
+
+  if (P.XLEN == 64) begin: csrwriteext64
+    assign CSRWriteValExt = CSRWriteValM;
+  end else begin: csrwriteext32
+    assign CSRWriteValExt = {32'b0, CSRWriteValM};
+  end
 
   // STATUS REGISTER FIELD
   // See Privileged Spec Section 3.1.6
   // Lower privilege status registers are a subset of the full status register
   if (P.XLEN==64) begin: csrsr64 // RV64
-    assign MSTATUS_REGW  = {STATUS_SD, 25'b0, STATUS_MBE, STATUS_SBE, STATUS_SXL, STATUS_UXL, 9'b0,
+    assign MSTATUS_REGW  = {STATUS_SD, 23'b0, STATUS_MPV, STATUS_GVA, STATUS_MBE, STATUS_SBE, STATUS_SXL, STATUS_UXL, 9'b0,
                            STATUS_TSR, STATUS_TW, STATUS_TVM, STATUS_MXR, STATUS_SUM, STATUS_MPRV,
                            STATUS_XS, STATUS_FS, STATUS_MPP, 2'b0,
                            STATUS_SPP, STATUS_MPIE, STATUS_UBE, STATUS_SPIE, 1'b0,
@@ -72,7 +83,7 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
                            STATUS_TSR, STATUS_TW, STATUS_TVM, STATUS_MXR, STATUS_SUM, STATUS_MPRV,
                            STATUS_XS, STATUS_FS, STATUS_MPP, 2'b0,
                            STATUS_SPP, STATUS_MPIE, STATUS_UBE, STATUS_SPIE, 1'b0, STATUS_MIE, 1'b0, STATUS_SIE, 1'b0};
-    assign MSTATUSH_REGW = {26'b0, STATUS_MBE, STATUS_SBE, 4'b0};
+    assign MSTATUSH_REGW = {24'b0, STATUS_MPV, STATUS_GVA, STATUS_MBE, STATUS_SBE, 4'b0};
     assign SSTATUS_REGW  = {STATUS_SD, 11'b0,
                           /*STATUS_TSR, STATUS_TW, STATUS_TVM, */STATUS_MXR, STATUS_SUM, /* STATUS_MPRV, */ 1'b0,
                            STATUS_XS, STATUS_FS, /*STATUS_MPP, 2'b0*/ 4'b0,
@@ -102,6 +113,8 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
   assign STATUS_FS   = P.F_SUPPORTED ? STATUS_FS_INT : 2'b00; // off if no FP
   assign STATUS_SD   = (STATUS_FS == 2'b11) | (STATUS_XS == 2'b11); // dirty state logic
   assign STATUS_XS   = 2'b00; // No additional user-mode state to be dirty
+
+  assign MSTATUS_MPV = STATUS_MPV;
 
   always_comb
     if      (CSRWriteValM[12:11] == P.U_MODE & P.U_SUPPORTED) STATUS_MPP_NEXT = P.U_MODE;
@@ -144,6 +157,8 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
       STATUS_MXR_INT  <= 1'b0;
       STATUS_SUM_INT  <= 1'b0;
       STATUS_MPRV_INT <= 1'b0; // Per Priv 3.3
+      STATUS_MPV      <= 1'b0;
+      STATUS_GVA      <= 1'b0;
       STATUS_FS_INT   <= 2'b00; // leave floating-point off until activated, even if F_SUPPORTED
       STATUS_MPP      <= 2'b00;
       STATUS_SPP      <= 1'b0;
@@ -164,6 +179,8 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
           STATUS_MPIE <= STATUS_MIE;
           STATUS_MIE  <= 1'b0;
           STATUS_MPP  <= PrivilegeModeW;
+          STATUS_MPV  <= P.H_SUPPORTED & VirtModeW;
+          STATUS_GVA  <= P.H_SUPPORTED & TrapGVAM;
         end else if (P.S_SUPPORTED) begin // supervisor mode
           STATUS_SPIE <= STATUS_SIE;
           STATUS_SIE  <= 1'b0;
@@ -174,6 +191,7 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
         STATUS_MPIE     <= 1'b1; //
         STATUS_MPP      <= P.U_SUPPORTED ? P.U_MODE : P.M_MODE; // set MPP to lowest supported privilege level
         STATUS_MPRV_INT <= STATUS_MPRV_INT & (STATUS_MPP == P.M_MODE); // page 21 of privileged spec.
+        STATUS_MPV      <= 1'b0;
       end else if (sretM & P.S_SUPPORTED) begin
         STATUS_SIE      <= STATUS_SPIE; // restore global interrupt enable
         STATUS_SPIE     <= P.S_SUPPORTED;
@@ -196,11 +214,17 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
         STATUS_UBE      <= P.U_SUPPORTED & P.BIGENDIAN_SUPPORTED & CSRWriteValM[6];
         STATUS_MBE      <= nextMBE;
         STATUS_SBE      <= nextSBE;
+        if (P.XLEN == 64) begin
+          STATUS_MPV    <= P.H_SUPPORTED & CSRWriteValExt[39];
+          STATUS_GVA    <= P.H_SUPPORTED & CSRWriteValExt[38];
+        end
       // coverage off
       // MSTATUSH only exists in 32-bit configurations, will not be hit on rv64gc
       end else if ((P.XLEN == 32) & WriteMSTATUSHM) begin
         STATUS_MBE      <= P.BIGENDIAN_SUPPORTED & CSRWriteValM[5];
         STATUS_SBE      <= P.S_SUPPORTED & P.BIGENDIAN_SUPPORTED & CSRWriteValM[4];
+        STATUS_MPV      <= P.H_SUPPORTED & CSRWriteValM[7];
+        STATUS_GVA      <= P.H_SUPPORTED & CSRWriteValM[6];
       // coverage on
       end else if (P.S_SUPPORTED & WriteSSTATUSM) begin // write a subset of the STATUS bits
         STATUS_MXR_INT  <= P.S_SUPPORTED & CSRWriteValM[19];
@@ -210,6 +234,6 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
         STATUS_SPIE     <= P.S_SUPPORTED & CSRWriteValM[5];
         STATUS_SIE      <= P.S_SUPPORTED & CSRWriteValM[1];
         STATUS_UBE      <= P.U_SUPPORTED & P.BIGENDIAN_SUPPORTED & CSRWriteValM[6];
-      end else if (FRegWriteM | WriteFRMM | SetOrWriteFFLAGSM) STATUS_FS_INT <= 2'b11;
+      end else if (~VirtModeW & (FRegWriteM | WriteFRMM | SetOrWriteFFLAGSM)) STATUS_FS_INT <= 2'b11;
     end
 endmodule
