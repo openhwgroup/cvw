@@ -12,11 +12,9 @@
 ///////////////////////////////////////////
 
 module rvviTextLogger #(
-    parameter string FILENAME = "logs/rvvi_trace.txt", // TODO: not sure what default should be
-    parameter string VENDOR_NAME = "Placeholdr",
+    parameter string VENDOR_NAME = "cvw",
     parameter int VENDOR_MAJOR = 1,
-    parameter int VENDOR_MINOR = 0,
-    parameter bit COMPRESSED_WIDTH_16 = 1  // Detect compressed instructions by width
+    parameter int VENDOR_MINOR = 0
 ) (
     rvviTrace rvvi  // Only input for now - RVVI-TRACE interface
 );
@@ -29,8 +27,9 @@ module rvviTextLogger #(
     localparam int NHART = rvvi.NHART;
     localparam int RETIRE = rvvi.RETIRE;
 
-    // need someway handle the file
+    // File handling
     integer file;
+    string filename;
 
     // Track current hart (for general processors, multi-core)
     int current_hart = 0;
@@ -39,17 +38,36 @@ module rvviTextLogger #(
     logic [1:0] prev_mode[NHART];
     logic prev_mode_virt[NHART];
 
+    // Track expected retirement slot (moved to module scope)
+    int expected_slot[NHART];
+
+    // Track ORDER for each hart (auto-increments per spec)
+    longint unsigned order_counter[NHART];
+
+    // Track CYCLE count (delta since last CYCLE output)
+    longint unsigned total_cycles;
+    longint unsigned last_cycle_output;
+
+    // Track TIME (delta since last TIME output)
+    // Assumes time is in picoseconds by default
+    time last_time_output;
+
 
     // INITIALIZATION - Write File Header
     initial begin
-        file = $fopen(FILENAME, "w");
+        // Get filename from plusarg, default if not provided
+        if (!$value$plusargs("rvvi_trace_file=%s", filename)) begin
+            filename = "logs/rvvi_trace.txt";
+        end
+
+        file = $fopen(filename, "w");
 
         if (file == 0) begin
-            $display("ERROR: rvviTextLogger could not open %s for writing", FILENAME);
+            $display("ERROR: rvviTextLogger could not open %s for writing", filename);
             $finish;
         end
 
-        $display("rvviTextLogger: Writing RVVI-TEXT trace to %s", FILENAME);
+        $display("rvviTextLogger: Writing RVVI-TEXT trace to %s", filename);
         $display("  Parameters: ILEN=%0d XLEN=%0d FLEN=%0d VLEN=%0d NHART=%0d RETIRE=%0d",
                  ILEN, XLEN, FLEN, VLEN, NHART, RETIRE);
 
@@ -68,27 +86,25 @@ module rvviTextLogger #(
         for (int i = 0; i < NHART; i++) begin
             prev_mode[i] = 2'b11;  // Start in M-mode
             prev_mode_virt[i] = 0;
+            expected_slot[i] = 0; // TODO: follow up on this
+            order_counter[i] = 0;  // Start order at 0 per spec
         end
+
+        // Initialize cycle and time tracking
+        total_cycles = 0;
+        last_cycle_output = 0;
+        last_time_output = $time;
     end
 
 
     // NET CHANGES - Track External Signal Transitions (may not be needed or correct)
-    // essentially, if something externallly changes (like interrupt) we pull from the rvviTrace interface
-
-    // net_pop() function will retrieve net changes from the standard RVVI-TRACE API interface
-    string net_name;
-    logic [XLEN-1:0] net_value;
-
-    always_ff @(posedge rvvi.clk) begin
-        // Pop all available NET changes
-        while (rvvi.net_pop(net_name, net_value)) begin
-            $fwrite(file, "NET %s %h\n", net_name, net_value);
-        end
-    end
-
+    // essentially, if something externally changes (like interrupt) we pull from the rvviTrace interface
 
     // MAIN TRACE - Process All Harts and Retirement Slots
     always_ff @(posedge rvvi.clk) begin
+        // Increment cycle counter
+        total_cycles++;
+
         for (int hart = 0; hart < NHART; hart++) begin
             for (int retire_slot = 0; retire_slot < RETIRE; retire_slot++) begin
                 if (rvvi.valid[retire_slot][hart]) begin
@@ -104,11 +120,14 @@ module rvviTextLogger #(
         logic [ILEN-1:0] insn;
         int insn_bytes;
 
+        longint unsigned cycle_delta;
+        time time_delta;
+
         insn = rvvi.insn[retire_slot][hart];
 
         // Determine instruction width (compressed vs full)
         // Compressed instructions: lower 2 bits != 11
-        if (COMPRESSED_WIDTH_16 && (insn[1:0] != 2'b11)) begin
+        if (insn[1:0] != 2'b11) begin
             insn_bytes = 2;  // 16-bit compressed
         end else begin
             insn_bytes = 4;  // 32-bit full
@@ -122,11 +141,35 @@ module rvviTextLogger #(
 
         // ISSUE (retirement slot) - only needed for superscalar
         // According to RVVI-TEXT spec, slot auto-increments
-        static int expected_slot[NHART];
         if (retire_slot != expected_slot[hart] && RETIRE > 1) begin
-            $fwrite(file, "ISSUE %0d ", retire_slot);
+            $fwrite(file, "ISSUE %0d\n", retire_slot);
         end
         expected_slot[hart] = (retire_slot + 1) % RETIRE;
+
+
+        // ORDER - Only output if it doesn't follow the auto-increment algorithm
+        // The spec says order auto-increments after each RET/TRAP
+        // We output ORDER when we need to override the expected value
+        if (rvvi.order[retire_slot][hart] != order_counter[hart]) begin
+            $fwrite(file, "ORDER %0d ", rvvi.order[retire_slot][hart]);
+            order_counter[hart] = rvvi.order[retire_slot][hart];
+        end
+
+        // CYCLE - Output cycle delta periodically or on significant events
+        // Only output if cycles have elapsed since last output
+        // cycle_delta = total_cycles - last_cycle_output;
+        // if (cycle_delta > 0) begin
+        //     $fwrite(file, "CYCLE %0d ", cycle_delta);
+        //     last_cycle_output = total_cycles;
+        // end
+
+        // // TIME - Output time delta
+        // // Spec says time is in units of TIMESCALE (default picoseconds)
+        // time_delta = $time - last_time_output;
+        // if (time_delta > 0) begin
+        //     $fwrite(file, "TIME %0d ", time_delta);
+        //     last_time_output = $time;
+        // end
 
 
         // RET or TRAP
@@ -138,18 +181,16 @@ module rvviTextLogger #(
 
         // PC (formatted based on XLEN)
         if (XLEN == 32) begin
-            $fwrite(file, " %5h ", rvvi.pc_rdata[retire_slot][hart][31:0]);
+            $fwrite(file, " %08h ", rvvi.pc_rdata[retire_slot][hart]);
         end else if (XLEN == 64) begin
-            $fwrite(file, "%6h ", rvvi.pc_rdata[retire_slot][hart][63:0]);
-        end else begin
-            $fwrite(file, "%h ", rvvi.pc_rdata[retire_slot][hart]);
+            $fwrite(file, "%016h ", rvvi.pc_rdata[retire_slot][hart]);
         end
 
         // Instruction encoding (width depends on compressed/full)
         if (insn_bytes == 2) begin
             $fwrite(file, "%04h ", insn[15:0]);
         end else begin
-            $fwrite(file, "%08h ", insn[31:0]);
+            $fwrite(file, "%08h ", insn);
         end
 
         // Write register and state changes
@@ -159,6 +200,9 @@ module rvviTextLogger #(
         writeCSRChanges(hart, retire_slot);
         writeModeChanges(hart, retire_slot);
         writeProcessorState(hart, retire_slot);
+
+        // Update order counter for next instruction (auto-increment algorithm)
+        order_counter[hart]++;
 
         // End of line
         $fwrite(file, "\n");
@@ -175,11 +219,11 @@ module rvviTextLogger #(
                 // Get register name
                 reg_name = getGPRName(i);
 
-                // Format: X <index> <value>
+                // Format: X <index> <register> <value>
                 if (XLEN == 32) begin
-                    $fwrite(file, "X %2d '%s' %08h ", i, reg_name, rvvi.x_wdata[retire_slot][hart][i][31:0]);
+                    $fwrite(file, "X %2d '%s' %08h ", i, reg_name, rvvi.x_wdata[retire_slot][hart][i]);
                 end else if (XLEN == 64) begin
-                    $fwrite(file, "X %2d '%s' %016h ", i, reg_name, rvvi.x_wdata[retire_slot][hart][i][63:0]);
+                    $fwrite(file, "X %2d '%s' %016h ", i, reg_name, rvvi.x_wdata[retire_slot][hart][i]);
                 end else begin
                     $fwrite(file, "X %0d '%s' %h ", i, reg_name, rvvi.x_wdata[retire_slot][hart][i]);
                 end
@@ -200,11 +244,11 @@ module rvviTextLogger #(
 
                     // Format: F <index> <value>
                     if (FLEN == 32) begin
-                        $fwrite(file, "F %2d '%s' %08h ", i, reg_name, rvvi.f_wdata[retire_slot][hart][i][31:0]);
+                        $fwrite(file, "F %2d '%s' %08h ", i, reg_name, rvvi.f_wdata[retire_slot][hart][i]);
                     end else if (FLEN == 64) begin
-                        $fwrite(file, "F %2d '%s' %016h ", i, reg_name, rvvi.f_wdata[retire_slot][hart][i][63:0]);
+                        $fwrite(file, "F %2d '%s' %016h ", i, reg_name, rvvi.f_wdata[retire_slot][hart][i]);
                     end else if (FLEN == 128) begin
-                        $fwrite(file, "F %2d '%s' %032h ", i, reg_name, rvvi.f_wdata[retire_slot][hart][i][127:0]);
+                        $fwrite(file, "F %2d '%s' %032h ", i, reg_name, rvvi.f_wdata[retire_slot][hart][i]);
                     end else begin
                         $fwrite(file, "F %0d '%s' %h ", i, reg_name, rvvi.f_wdata[retire_slot][hart][i]);
                     end
@@ -228,16 +272,35 @@ module rvviTextLogger #(
 
 
     // Write CSR Changes
+    // task automatic writeCSRChanges(int hart, int retire_slot);
+    //     // Iterate through all 4096 possible CSR addresses
+    //     // Note: CSR address is in HEX format
+    //     for (int i = 0; i < 4096; i++) begin
+    //         if (rvvi.csr_wb[retire_slot][hart][i]) begin
+    //             // Format: C <address_hex> <value_hex>
+    //             if (XLEN == 32) begin
+    //                 $fwrite(file, "C %03h %08h ", i, rvvi.csr[retire_slot][hart][i]);
+    //             end else if (XLEN == 64) begin
+    //                 $fwrite(file, "C %03h %016h ", i, rvvi.csr[retire_slot][hart][i]);
+    //             end else begin
+    //                 $fwrite(file, "C %03h %h ", i, rvvi.csr[retire_slot][hart][i]);
+    //             end
+    //         end
+    //     end
+    // endtask
     task automatic writeCSRChanges(int hart, int retire_slot);
         // Iterate through all 4096 possible CSR addresses
-        // Note: made CSR address is in HEX format
+        // Note: CSR address is in HEX format
         for (int i = 0; i < 4096; i++) begin
             if (rvvi.csr_wb[retire_slot][hart][i]) begin
+                // Skip auto-incrementing performance counters
+                if (i == 'hb00 || i == 'hb02) continue;  // Skip mcycle and minstret for now
+
                 // Format: C <address_hex> <value_hex>
                 if (XLEN == 32) begin
-                    $fwrite(file, "C %03h %08h ", i, rvvi.csr[retire_slot][hart][i][31:0]);
+                    $fwrite(file, "C %03h %08h ", i, rvvi.csr[retire_slot][hart][i]);
                 end else if (XLEN == 64) begin
-                    $fwrite(file, "C %03h %016h ", i, rvvi.csr[retire_slot][hart][i][63:0]);
+                    $fwrite(file, "C %03h %016h ", i, rvvi.csr[retire_slot][hart][i]);
                 end else begin
                     $fwrite(file, "C %03h %h ", i, rvvi.csr[retire_slot][hart][i]);
                 end
@@ -252,7 +315,7 @@ module rvviTextLogger #(
         logic virt_changed;
 
         mode_changed = (rvvi.mode[retire_slot][hart] != prev_mode[hart]);
-        virt_changed = (rvvi.mode_virt[retire_slot][hart] != prev_mode_virt[hart]);
+        // virt_changed = (rvvi.mode_virt[hart] != prev_mode_virt[hart]);
 
         // MODE - Only write if changed
         if (mode_changed) begin
@@ -261,10 +324,10 @@ module rvviTextLogger #(
         end
 
         // VIRT - Only write if changed and non-zero
-        if (virt_changed && rvvi.mode_virt[retire_slot][hart]) begin
-            $fwrite(file, "VIRT %0d ", rvvi.mode_virt[retire_slot][hart]);
-            prev_mode_virt[hart] = rvvi.mode_virt[retire_slot][hart];
-        end
+        // if (virt_changed && rvvi.mode_virt[hart]) begin
+        //     $fwrite(file, "VIRT %0d ", rvvi.mode_virt[hart]);
+        //     prev_mode_virt[hart] = rvvi.mode_virt[hart];
+        // end
     endtask
 
 
@@ -320,7 +383,10 @@ module rvviTextLogger #(
             29: return "t4";
             30: return "t5";
             31: return "t6";
-            default: return "x?";
+            default: begin
+                $error("rvviTextLogger: Invalid GPR index %0d", idx);
+                return "x?";
+            end
         endcase
     endfunction
 
@@ -360,7 +426,10 @@ module rvviTextLogger #(
             29: return "ft9";
             30: return "ft10";
             31: return "ft11";
-            default: return "f?";
+            default: begin
+                $error("rvviTextLogger: Invalid FPR index %0d", idx);
+                return "f?";
+            end
         endcase
     endfunction
 
@@ -369,7 +438,7 @@ module rvviTextLogger #(
     final begin
         if (file != 0) begin
             $fclose(file);
-            $display("rvviTextLogger: Trace file closed: %s", FILENAME);
+            $display("rvviTextLogger: Trace file closed: %s", filename);
         end
     end
 
