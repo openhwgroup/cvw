@@ -1495,5 +1495,5 @@ derive cache_rv64gc rv64gc
 deriv rv32gch rv32gc
 H_SUPPORTED     1
 
-deriv_rv64gch rv64gc
+deriv rv64gch rv64gc
 H_SUPPORTED     1

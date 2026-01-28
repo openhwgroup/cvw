@@ -154,7 +154,7 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
       end
   end
 
-  // Read Counters, or cause excepiton if insufficient privilege in light of COUNTEREN flags
+  // Read Counters, or cause exception if insufficient privilege in light of COUNTEREN flags
   assign CounterNumM = CSRAdrM[4:0]; // which counter to read?
   assign CounterEnM = MCOUNTEREN_REGW[CounterNumM];
   assign SCounterEnM = SCOUNTEREN_REGW[CounterNumM];
