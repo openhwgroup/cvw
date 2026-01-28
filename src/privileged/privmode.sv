@@ -70,7 +70,7 @@ module privmode import cvw::*;  #(parameter cvw_t P) (
       else if (mretM)
         NextVirtModeM = (STATUS_MPP != P.M_MODE) & MSTATUS_MPV;
       else if (sretM)
-        NextVirtModeM = VirtModeW | HSTATUS_SPV;
+        NextVirtModeM = HSTATUS_SPV;
     end
 
     flopenr #(1) virtmodereg(clk, reset, ~StallW, NextVirtModeM, VirtModeW);

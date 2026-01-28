@@ -217,7 +217,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   assign WriteHVIPM       = ValidHWrite & (CSRAdrM == HVIP);
   assign WriteHTINSTM     = ValidHWrite & (CSRAdrM == HTINST);
   assign WriteHGATPM      = ValidHWrite & (CSRAdrM == HGATP);
-  assign WriteHGEIPM      = ValidHWrite & (CSRAdrM == HGEIP);
+  assign WriteHGEIPM      = 1'b0; // TODO: Add external interrupt handling
   assign WriteVSTVECM     = ValidVSWrite & (CSRAdrM == VSTVEC);
   assign WriteVSSCRATCHM  = ValidVSWrite & (CSRAdrM == VSSCRATCH);
   assign WriteVSEPCM      = ValidVSWrite & (CSRAdrM == VSEPC);
@@ -293,7 +293,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   assign VSSTATUS_SPELP = 1'b0;
   assign VSSTATUS_SDT = 1'b0;
   assign VSSTATUS_SD  = (VSSTATUS_FS == 2'b11) | (VSSTATUS_XS == 2'b11) | (VSSTATUS_VS == 2'b11);
-  assign VSSTATUS_UXL = P.U_SUPPORTED ? 2'b10 : 2'b00;
+  assign VSSTATUS_UXL = P.U_SUPPORTED ? ((P.XLEN == 64) ? 2'b10 : 2'b01) : 2'b00;
 
   if (P.XLEN == 64) begin : vsstatus64
     assign VSSTATUS_REGW = {VSSTATUS_SD, 29'b0, VSSTATUS_UXL, 7'b0,
