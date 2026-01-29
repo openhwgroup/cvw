@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 //
 // Written: me@KatherineParry.com
-// Modified: 7/5/2022
+// Modified: 11/19/2025 by marcus@infinitymdm.dev
 //
 // Purpose: Leading Zero Counter
 //
@@ -25,15 +25,49 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module lzc #(parameter WIDTH = 1) (
-  input  logic [WIDTH-1:0]            num,    // number to count the leading zeroes of
-  output logic [$clog2(WIDTH+1)-1:0]  ZeroCnt // the number of leading zeroes
+  input  logic [WIDTH-1:0]           num,     // number to count the leading zeroes of
+  output logic [$clog2(WIDTH+1)-1:0] ZeroCnt, // the number of leading zeroes
+  output logic                       AllZeros // Indicates the number is entirely zeroes
 );
 
-  integer i;
+  // Use a recursive binary tree structure to avoid unsynthesizable loops
+  localparam LWIDTH = 2**($clog2(WIDTH)-1); // Largest power of 2 < WIDTH
+  localparam RWIDTH = WIDTH - LWIDTH; // Remaining bits
+  logic [LWIDTH-1:0] LNum;
+  logic [RWIDTH-1:0] RNum;
+  logic [$clog2(LWIDTH+1)-1:0] LCnt;
+  logic [$clog2(RWIDTH+1)-1:0] RCnt;
+  logic LAllZeros, RAllZeros;
 
-  always_comb begin
-    i = 0;
-    while ((i < WIDTH) & ~num[WIDTH-1-i]) i = i+1;  // search for leading one
-    ZeroCnt = i[$clog2(WIDTH+1)-1:0];
-  end
+  assign {LNum, RNum} = num;
+  generate
+    if (WIDTH == 1) begin
+      assign ZeroCnt = ~num;
+      assign AllZeros = ~num;
+    end else begin
+      lzc #(LWIDTH) l_lcz (LNum, LCnt, LAllZeros);
+      lzc #(RWIDTH) r_lcz (RNum, RCnt, RAllZeros);
+      assign ZeroCnt = LAllZeros ? LWIDTH + RCnt: LCnt;
+      assign AllZeros = LAllZeros & RAllZeros;
+    end
+  endgenerate
+
 endmodule
+
+// Below is the prior version of this module. This works with Cadence Design Compiler and AMD
+// Vivado 2024.1 but other tools (yosys 0.49, Intel Quartus Prime Lite 21.1.1, Cadence Jasper
+// v2024.12, and possibly others) fail to synthesize the while loop.
+//
+// module lzc #(parameter WIDTH = 1) (
+//   input  logic [WIDTH-1:0]            num,    // number to count the leading zeroes of
+//   output logic [$clog2(WIDTH+1)-1:0]  ZeroCnt // the number of leading zeroes
+// );
+//
+//   integer i;
+//
+//   always_comb begin
+//     i = 0;
+//     while ((i < WIDTH) & ~num[WIDTH-1-i]) i = i+1;  // search for leading one
+//     ZeroCnt = i[$clog2(WIDTH+1)-1:0];
+//   end
+// endmodule
