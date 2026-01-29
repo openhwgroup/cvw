@@ -1,9 +1,34 @@
 # Wally Debug Feature List
 
+Wally currently implements a **minimal RISC-V Debug Specification–compliant debug module**, focused on **abstract register access**. When the debugger is engaged, the core **halts the pipeline** and services **abstract commands** issued by the debug module. These commands allow an external debugger to safely inspect and modify architectural state without software assistance.
+
+At present, Wally supports **abstract read and write access** to:
+
+### General-Purpose and Floating-Point Registers
+- All **GPRs (x0–x31)**
+- All **FPRs (f0–f31)**
+
+### Supported CSRs (currently implemented and readable)
+- `mstatus`
+- `misa`
+- `mtvec`
+- `mepc`
+- `mtval`
+- `dcsr`
+- `dpc`
+- `dscratch0`
+
+All of the above registers are accessible through the **abstract command interface** and are configured to support **read operations** (and write where architecturally meaningful).
+
+This constitutes Wally’s current **“Minimal Debug Spec” implementation**: abstract access to **GPRs, FPRs, and a core subset of CSRs** sufficient for basic halt, inspection, and low-level bring-up.
+
+Wally’s debug module halts the processor pipeline and services abstract commands, enabling external debuggers to read and write GPRs, FPRs, and a growing set of CSRs. This provides a clean, stable foundation for full RISC-V Debug Specification support.
+
 :x: means we currently have no intention of implementing this feature.
+[x] denotes an item that is currently completed.
 🔶 means we intend to implement this in the future at some point but it is not immediately imperative.
 
-Anything else is intended to be implemented and will be implemented as soon as possible.
+Anything else is intended to be implemented and will be implemented as soon as possible.  
 
 General Overview of Implemented Features:
 - [x] Halting and Resuming
@@ -27,12 +52,12 @@ Debug Module
   - [x] resumereq
   - [ ] hartreset
   - [x] ackhavereset
-  - [ ] ackunavail :x:
+  - [ ] ackunavail :-:
     - I can't imagine there's a scenario where the only hart that exists wouldn't be available, but I need to investigate further, just in case.
-  - [ ] hasel :x:
+  - [ ] hasel :-:
     - By hardcoding this to `0` as well as the hardcoding `hartsello` and `hartselhi` to 0 indicates to the debugger that there is only one hart. If Wally becomes multicore, this will need to be expanded so that we can select many harts. For now, it's not important to implement.
-  - [ ] hartsello :x:
-  - [ ] hartselhi :x:
+  - [ ] hartsello :-:
+  - [ ] hartselhi :-:
   - [ ] setkeepalive
   - [ ] clrkeepalive
   - [x] setresethaltreq
@@ -49,8 +74,8 @@ Debug Module
   - [x] anyresumeack
   - [ ] allnonexistent
   - [ ] anynonexistent
-  - [ ] allunavail :x:
-  - [ ] anyunavail :x:
+  - [ ] allunavail :-:
+  - [ ] anyunavail :-:
   - [x] allrunning
   - [x] anyrunning
   - [x] allhalted
@@ -58,7 +83,7 @@ Debug Module
   - [ ] authenticated 🔶
   - [ ] authbusy 🔶
   - [ ] hasresethaltreq
-  - [ ] confstrptrvalid :x:
+  - [ ] confstrptrvalid :-:
   - [x] version
 - [x] Command
 - [x] AbstractCS
@@ -86,7 +111,7 @@ Debug Extension
   - [ ] Ebreak to Debug mode in all modes
   - [ ] Stop counters 🔶
   - [ ] Stop time 🔶
-  - [ ] extcause :x:
+  - [ ] extcause :-:
     - Can just be set to 0 for not being implemented and also stays 0 even if cetrig is implemented which is partly what it's needed for. All other values are reserved for future version of the RISCV debug spec.
   - [ ] nmip 🔶
   - [ ] prv
