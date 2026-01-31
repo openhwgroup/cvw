@@ -61,7 +61,15 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.FLEN-1:0]    ReadDataW,                          // Read data (from LSU)
   output logic [P.XLEN-1:0]    FCvtIntResW,                        // convert result to to be written to integer register (to IEU)
   output logic                 FCvtIntW,                           // select FCvtIntRes (to IEU)
-  output logic [P.XLEN-1:0]    FIntDivResultW                      // Result from integer division (to IEU)
+  output logic [P.XLEN-1:0]    FIntDivResultW,                     // Result from integer division (to IEU)
+  // Debug signals
+  input  logic              DebugMode,
+  input  logic              DebugControl,
+  input  logic              FPRDebugEnable,
+  output logic [P.XLEN-1:0] DebugFPURDATA,
+  input  logic [P.XLEN-1:0] DebugRegWDATA,
+  input  logic [11:0]       DebugRegAddr,
+  input  logic              DebugRegWrite
 );
 
   // RISC-V FPU specifics:
@@ -169,6 +177,11 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   logic [P.FLEN-1:0]           ZfaResE;                            // Result of Zfa fli or fround instruction
   logic                        FRoundNVE, FRoundNXE;               // Zfa fround invalid and inexact flags
 
+  // debug signals
+  logic                        RegWrite;
+  logic [4:0]                  a1, Rd;
+  logic [P.FLEN-1:0]           Result;
+
   //////////////////////////////////////////////////////////////////////////////////////////
   // Decode Stage: fctrl decoder, read register file
   //////////////////////////////////////////////////////////////////////////////////////////
@@ -183,12 +196,26 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
               .FResSelE, .FResSelM, .FResSelW, .FPUActiveE, .PostProcSelE, .PostProcSelM, .FCvtIntW,
               .Adr1D, .Adr2D, .Adr3D, .Adr1E, .Adr2E, .Adr3E);
 
+  if (P.DEBUG_SUPPORTED) begin
+    mux2 #(5) rfreadaddrmux (InstrD[19:15], DebugRegAddr[4:0], DebugControl & FPRDebugEnable, a1);
+    mux2 #(5) rfwriteaddrmux (RdW, DebugRegAddr[4:0], DebugControl & FPRDebugEnable, Rd);
+    mux2 #(P.FLEN) rfwdatamux (FResultW, DebugRegWDATA, DebugControl & FPRDebugEnable, Result);
+    assign RegWrite = DebugMode ? DebugRegWrite & FPRDebugEnable : FRegWriteW;
+  end else begin
+    assign DebugFPURDATA = '0;
+    assign RegWrite = FRegWriteW;
+    assign Rd = RdW;
+    assign a1 = InstrD[19:15];
+    assign Result = FResultW;
+  end
+
   // FP register file
-  fregfile #(P.FLEN) fregfile (.clk, .reset, .we4(FRegWriteW),
-    .a1(InstrD[19:15]), .a2(InstrD[24:20]), .a3(InstrD[31:27]),
-    .a4(RdW), .wd4(FResultW),
+  fregfile #(P.FLEN) fregfile (.clk, .reset, .we4(RegWrite),
+    .a1(a1), .a2(InstrD[24:20]), .a3(InstrD[31:27]),
+    .a4(Rd), .wd4(Result),
     .rd1(FRD1D), .rd2(FRD2D), .rd3(FRD3D));
 
+  assign DebugFPURDATA = FRD1D;
   // D/E pipeline registers
   flopenrc #(P.FLEN) DEReg1(clk, reset, FlushE, ~StallE, FRD1D, FRD1E);
   flopenrc #(P.FLEN) DEReg2(clk, reset, FlushE, ~StallE, FRD2D, FRD2E);
