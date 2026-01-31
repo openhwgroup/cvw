@@ -48,6 +48,20 @@ SAIL_PACKAGES+=(cmake)
 VERILATOR_PACKAGES+=(autoconf flex bison help2man perl ccache numactl gtkwave) # gtkwave is not needed for verilator, but useful for viewing waveforms
 BUILDROOT_PACKAGES+=(patchutils perl cpio bc)
 
+# OPENOCD packages are distro-specific
+# OpenOCD build dependencies (Jim Tcl + FTDI + USB)
+case "$FAMILY" in
+  rhel)
+    OPENOCD_PACKAGES+=(jimtcl jimtcl-devel libftdi-devel libusb1-devel pkgconf-pkg-config)
+    ;;
+  ubuntu|debian)
+    OPENOCD_PACKAGES+=(libjim-dev libftdi1-dev libusb-1.0-0-dev pkg-config)
+    ;;
+  suse)
+    OPENOCD_PACKAGES+=(jimtcl jimtcl-devel libftdi-devel libusb-1_0-devel pkg-config)
+    ;;
+esac
+
 # Distro specific packages and package manager
 case "$FAMILY" in
     rhel)
@@ -121,11 +135,11 @@ esac
 if [ "${1}" == "--check" ]; then
     section_header "Checking Dependencies from Package Manager"
     if [[ "$FAMILY" == rhel || "$FAMILY" == suse ]]; then
-        for pack in "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${SAIL_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}"; do
+        for pack in "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${SAIL_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}" "${OPENOCD_PACKAGES[@]}"; do
             rpm -q "$pack" > /dev/null || (echo -e "${FAIL_COLOR}Missing packages detected (${WARNING_COLOR}$pack${FAIL_COLOR}). Run as root to auto-install or run wally-package-install.sh first.${ENDC}" && exit 1)
         done
     elif [[ "$FAMILY" == ubuntu || "$FAMILY" == debian ]]; then
-        for pack in "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${SAIL_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}"; do
+        for pack in "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${SAIL_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}" "${OPENOCD_PACKAGES[@]}"; do
             dpkg -l "$pack" | grep "ii" > /dev/null || (echo -e "${FAIL_COLOR}Missing packages detected (${WARNING_COLOR}$pack${FAIL_COLOR}). Run as root to auto-install or run wally-package-install.sh first." && exit 1)
         done
     fi
@@ -155,7 +169,7 @@ else
     # Update and Upgrade tools
     eval "$UPDATE_COMMAND"
     # Install packages listed above using appropriate package manager
-    eval $PACKAGE_MANAGER install "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${SAIL_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}" "${VIVADO_PACKAGES[@]}"
+    eval $PACKAGE_MANAGER install "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${SAIL_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}" "${OPENOCD_PACKAGES[@]}" "${VIVADO_PACKAGES[@]}"
 
     # Post install steps
     # Vivado looks for ncurses5 libraries, but Ubuntu 24.04 only has ncurses6

@@ -110,6 +110,12 @@ source "$WALLY"/bin/installation/verilator-install.sh
 source "$WALLY"/bin/installation/skywater-lib-install.sh
 
 
+# OpenOCD installation for RISC-V debug support
+# OpenOCD is used to provide JTAG-based debugging and programming support
+# for the Wally RISC-V processor during bring-up and validation.
+source "$WALLY"/bin/installation/openocd-install.sh
+
+
 # Buildroot and Linux testvectors
 # Buildroot is used to boot a minimal version of Linux on Wally.
 # Testvectors are generated using QEMU.
