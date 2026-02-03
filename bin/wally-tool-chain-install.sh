@@ -5,6 +5,7 @@
 ## Written: Rose Thompson rose@rosethompson.net
 ## Modified: 30 June 2024, Jordan Carlin jcarlin@hmc.edu
 ## Modified: 30 May 2025
+## Modified: 24 Jan 2206, James Stine james.stine@okstate.edu
 ##
 ## Purpose: Open source tool chain installation script
 ##
