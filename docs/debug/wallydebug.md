@@ -24,7 +24,7 @@ This constitutes Wally’s current **“Minimal Debug Spec” implementation**: 
 
 Wally’s debug module halts the processor pipeline and services abstract commands, enabling external debuggers to read and write GPRs, FPRs, and a growing set of CSRs. This provides a clean, stable foundation for full RISC-V Debug Specification support.
 
-:x: means we currently have no intention of implementing this feature.
+:-: means we currently have no intention of implementing this feature.
 [x] denotes an item that is currently completed.
 🔶 means we intend to implement this in the future at some point but it is not immediately imperative.
 
