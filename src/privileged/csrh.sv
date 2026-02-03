@@ -161,6 +161,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   // Next Value Muxes
   logic [P.XLEN-1:0] NextHTVAL;
   logic [P.XLEN-1:0] NextHTINST;
+  logic [P.XLEN-1:0] NextVSCAUSE;
   logic [63:0]       NextHEDELEG;
   logic [11:0]       NextHIDELEG;
   logic [P.XLEN-1:0] VSTVECWriteValM;
@@ -373,8 +374,10 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   flopenr #(P.XLEN) VSTVECreg(clk, reset, WriteVSTVECM, VSTVECWriteValM, VSTVEC_REGW);
   flopenr #(P.XLEN) VSSCRATCHreg(clk, reset, WriteVSSCRATCHM, CSRWriteValM, VSSCRATCH_REGW);
   flopenr #(P.XLEN) VSEPCreg(clk, reset, (VSTrapM | WriteVSEPCM), NextEPCM, VSEPC_REGW);
-  flopenr #(P.XLEN) VSCAUSEreg(clk, reset, (VSTrapM | WriteVSCAUSEM),
-                              {NextCauseM[4], {(P.XLEN-5){1'b0}}, NextCauseM[3:0]}, VSCAUSE_REGW);
+  // VSCAUSE is WLRL; allow CSR writes to set full VSXLEN value, but let traps override.
+  assign NextVSCAUSE = VSTrapM ? {NextCauseM[4], {(P.XLEN-5){1'b0}}, NextCauseM[3:0]}
+                               : CSRWriteValM;
+  flopenr #(P.XLEN) VSCAUSEreg(clk, reset, (VSTrapM | WriteVSCAUSEM), NextVSCAUSE, VSCAUSE_REGW);
   flopenr #(P.XLEN) VSTVALreg(clk, reset, (VSTrapM | WriteVSTVALM), NextMtvalM, VSTVAL_REGW);
   if (P.VIRTMEM_SUPPORTED)
     flopenr #(P.XLEN) VSATPreg(clk, reset, WriteVSATPM, CSRWriteValM, VSATP_REGW);
