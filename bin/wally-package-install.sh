@@ -5,7 +5,7 @@
 ## Written: Jordan Carlin, jcarlin@hmc.edu
 ## Created: 30 June 2024
 ## Modified: May 30 2025
-## Modified: 24 Jan 2026, James Stine james.stine@okstate.edu 
+## Modified: 24 Jan 2026, James Stine james.stine@okstate.edu
 ##
 ## Purpose: Package manager installation for open source tool chain installation script
 ##
