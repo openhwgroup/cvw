@@ -46,4 +46,3 @@ Verify that the file was copied successfully:
 ```bash
 ls -l /etc/udev/rules.d/60-openocd.rules
 ```
-
