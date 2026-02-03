@@ -420,15 +420,15 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
       MTVAL2:     begin LegalAccessM = (PrivilegeModeW == P.M_MODE); CSRHReadValM = MTVAL2_REGW; end
       HSTATUS:    begin LegalAccessM = LegalHAccessM; CSRHReadValM = HSTATUS_REGW; end
       HEDELEG:    begin LegalAccessM = LegalHAccessM; CSRHReadValM = HEDELEG_REGW[P.XLEN-1:0]; end
-      HEDELEGH:   begin LegalAccessM = LegalHAccessM & (P.XLEN == 32); CSRHReadValM = HEDELEG_REGW[63:32]; end
+      HEDELEGH:   begin LegalAccessM = LegalHAccessM & (P.XLEN == 32); CSRHReadValM = {{(P.XLEN-32){1'b0}}, HEDELEG_REGW[63:32]}; end
       HIDELEG:    begin LegalAccessM = LegalHAccessM; CSRHReadValM = {{(P.XLEN-12){1'b0}}, HIDELEG_REGW}; end
       HIE:        begin LegalAccessM = LegalHAccessM; CSRHReadValM = HIE_REGW; end
       HTIMEDELTA: begin LegalAccessM = LegalHAccessM; CSRHReadValM = HTIMEDELTA_REGW[P.XLEN-1:0]; end
-      HTIMEDELTAH:begin LegalAccessM = LegalHAccessM & (P.XLEN == 32); CSRHReadValM = HTIMEDELTA_REGW[63:32]; end
+      HTIMEDELTAH:begin LegalAccessM = LegalHAccessM & (P.XLEN == 32); CSRHReadValM = {{(P.XLEN-32){1'b0}}, HTIMEDELTA_REGW[63:32]}; end
       HCOUNTEREN: begin LegalAccessM = LegalHAccessM; CSRHReadValM = {{(P.XLEN-32){1'b0}}, HCOUNTEREN_REGW}; end
       HGEIE:      begin LegalAccessM = LegalHAccessM; CSRHReadValM = HGEIE_REGW; end
       HENVCFG:    begin LegalAccessM = LegalHAccessM; CSRHReadValM = HENVCFG_REGW[P.XLEN-1:0]; end
-      HENVCFGH:   begin LegalAccessM = LegalHAccessM & (P.XLEN == 32); CSRHReadValM = HENVCFG_REGW[63:32]; end
+      HENVCFGH:   begin LegalAccessM = LegalHAccessM & (P.XLEN == 32); CSRHReadValM = {{(P.XLEN-32){1'b0}}, HENVCFG_REGW[63:32]}; end
       HTVAL:      begin LegalAccessM = LegalHAccessM; CSRHReadValM = HTVAL_REGW; end
       HIP:        begin LegalAccessM = LegalHAccessM; CSRHReadValM = {{(P.XLEN-12){1'b0}}, (HVIP_REGW | MIP_REGW)}; end
       HVIP:       begin LegalAccessM = LegalHAccessM; CSRHReadValM = {{(P.XLEN-12){1'b0}}, HVIP_REGW}; end
@@ -446,7 +446,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
       VSIP:       begin LegalAccessM = LegalVSAccessM; CSRHReadValM = {{(P.XLEN-12){1'b0}}, VSIP_REGW}; end
       VSATP:      begin LegalAccessM = LegalVSAccessM & P.VIRTMEM_SUPPORTED; CSRHReadValM = VSATP_REGW; end
       VSTIMECMP:  begin LegalAccessM = LegalVSAccessM & P.SSTC_SUPPORTED & AllowVSTimecmpAccess; CSRHReadValM = VSTIMECMP_REGW[P.XLEN-1:0]; end
-      VSTIMECMPH: begin LegalAccessM = LegalVSAccessM & P.SSTC_SUPPORTED & (P.XLEN == 32) & AllowVSTimecmpAccess; CSRHReadValM = VSTIMECMP_REGW[63:32]; end
+      VSTIMECMPH: begin LegalAccessM = LegalVSAccessM & P.SSTC_SUPPORTED & (P.XLEN == 32) & AllowVSTimecmpAccess; CSRHReadValM = {{(P.XLEN-32){1'b0}}, VSTIMECMP_REGW[63:32]}; end
 
       default:    begin LegalAccessM = 1'b0; CSRHReadValM = '0; end
     endcase
