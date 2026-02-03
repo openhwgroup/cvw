@@ -47,7 +47,7 @@ if check_tool_version $OPENOCD_VERSION; then
     git_checkout "riscv-openocd" "https://github.com/riscv-collab/riscv-openocd.git" "$OPENOCD_VERSION"
     cd "$RISCV"/riscv-openocd
     git submodule update --init --recursive
-    ./bootstrap 
+    ./bootstrap
     ./configure --enable-ftdi --enable-dummy --enable-jimtcl --prefix="$RISCV"
     make -j "${NUM_THREADS}" 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
     sudo make install 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
