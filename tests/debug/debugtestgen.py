@@ -43,7 +43,8 @@ def parse_args():
     parser.add_argument(
         "--test", "-s", help="Assembly test.", type=non_empty_string)
     parser.add_argument(
-        "--tcl", "-t", help="TCL script to run parallel to assembly test.", type=non_empty_string)
+        "--tcl", "-t", help="Tcl script to run parallel to assembly test.",
+        type=non_empty_string)
     return parser.parse_args()
 
 
