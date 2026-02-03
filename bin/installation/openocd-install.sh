@@ -4,7 +4,6 @@
 ##
 ## Written: James Stine, james.stine@okstate.edu
 ## Created: Oct 16, 2025
-## Modified: 
 ##
 ## Purpose: openocd installation script
 ##
