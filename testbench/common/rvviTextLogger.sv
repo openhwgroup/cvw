@@ -73,7 +73,7 @@ module rvviTextLogger #(
 
         // Write RVVI-TEXT header
         $fwrite(file, "VERSION 0 1\n");
-        $fwrite(file, "VENDOR %s %0d %0d\n", VENDOR_NAME, VENDOR_MAJOR, VENDOR_MINOR);
+        $fwrite(file, "VENDOR \"%s\" %0d %0d\n", VENDOR_NAME, VENDOR_MAJOR, VENDOR_MINOR);
         $fwrite(file, "PARAMS 6 ILEN %0d XLEN %0d FLEN %0d VLEN %0d NHART %0d RETIRE %0d\n",
                 ILEN, XLEN, FLEN, VLEN, NHART, RETIRE);
 
@@ -86,7 +86,7 @@ module rvviTextLogger #(
         for (int i = 0; i < NHART; i++) begin
             prev_mode[i] = 2'b11;  // Start in M-mode
             prev_mode_virt[i] = 0;
-            expected_slot[i] = 0; // TODO: follow up on this
+            expected_slot[i] = 0;
             order_counter[i] = 0;  // Start order at 0 per spec
         end
 
@@ -181,16 +181,18 @@ module rvviTextLogger #(
 
         // PC (formatted based on XLEN)
         if (XLEN == 32) begin
-            $fwrite(file, " %08h ", rvvi.pc_rdata[retire_slot][hart]);
+            $fwrite(file, "0x%08h ", rvvi.pc_rdata[retire_slot][hart]);
         end else if (XLEN == 64) begin
-            $fwrite(file, "%016h ", rvvi.pc_rdata[retire_slot][hart]);
+            $fwrite(file, "0x%016h ", rvvi.pc_rdata[retire_slot][hart]);
+        end else begin
+            $fwrite(file, "0x%h ", rvvi.pc_rdata[retire_slot][hart]);
         end
 
         // Instruction encoding (width depends on compressed/full)
         if (insn_bytes == 2) begin
-            $fwrite(file, "%04h ", insn[15:0]);
+            $fwrite(file, "0x%04h ", insn[15:0]);
         end else begin
-            $fwrite(file, "%08h ", insn);
+            $fwrite(file, "0x%08h ", insn);
         end
 
         // Write register and state changes
@@ -219,13 +221,13 @@ module rvviTextLogger #(
                 // Get register name
                 reg_name = getGPRName(i);
 
-                // Format: X <index> <register> <value>
+                // Format with register index, name, and value
                 if (XLEN == 32) begin
-                    $fwrite(file, "X %2d '%s' %08h ", i, reg_name, rvvi.x_wdata[retire_slot][hart][i]);
+                    $fwrite(file, "X %2d '%s' 0x%08h ", i, reg_name, rvvi.x_wdata[retire_slot][hart][i]);
                 end else if (XLEN == 64) begin
-                    $fwrite(file, "X %2d '%s' %016h ", i, reg_name, rvvi.x_wdata[retire_slot][hart][i]);
+                    $fwrite(file, "X %2d '%s' 0x%016h ", i, reg_name, rvvi.x_wdata[retire_slot][hart][i]);
                 end else begin
-                    $fwrite(file, "X %0d '%s' %h ", i, reg_name, rvvi.x_wdata[retire_slot][hart][i]);
+                    $fwrite(file, "X %0d '%s' 0x%h ", i, reg_name, rvvi.x_wdata[retire_slot][hart][i]);
                 end
             end
         end
@@ -244,13 +246,13 @@ module rvviTextLogger #(
 
                     // Format: F <index> <value>
                     if (FLEN == 32) begin
-                        $fwrite(file, "F %2d '%s' %08h ", i, reg_name, rvvi.f_wdata[retire_slot][hart][i]);
+                        $fwrite(file, "F %2d '%s' 0x%08h ", i, reg_name, rvvi.f_wdata[retire_slot][hart][i]);
                     end else if (FLEN == 64) begin
-                        $fwrite(file, "F %2d '%s' %016h ", i, reg_name, rvvi.f_wdata[retire_slot][hart][i]);
+                        $fwrite(file, "F %2d '%s' 0x%016h ", i, reg_name, rvvi.f_wdata[retire_slot][hart][i]);
                     end else if (FLEN == 128) begin
-                        $fwrite(file, "F %2d '%s' %032h ", i, reg_name, rvvi.f_wdata[retire_slot][hart][i]);
+                        $fwrite(file, "F %2d '%s' 0x%032h ", i, reg_name, rvvi.f_wdata[retire_slot][hart][i]);
                     end else begin
-                        $fwrite(file, "F %0d '%s' %h ", i, reg_name, rvvi.f_wdata[retire_slot][hart][i]);
+                        $fwrite(file, "F %0d '%s' 0x%h ", i, reg_name, rvvi.f_wdata[retire_slot][hart][i]);
                     end
                 end
             end
@@ -264,30 +266,12 @@ module rvviTextLogger #(
             for (int i = 0; i < 32; i++) begin
                 if (rvvi.v_wb[retire_slot][hart][i]) begin
                     // Format: V <index> <value>
-                    $fwrite(file, "V %2d %h ", i, rvvi.v_wdata[retire_slot][hart][i]);
+                    $fwrite(file, "V 0x%2h 0x%h ", i, rvvi.v_wdata[retire_slot][hart][i]);
                 end
             end
         end
     endtask
 
-
-    // Write CSR Changes
-    // task automatic writeCSRChanges(int hart, int retire_slot);
-    //     // Iterate through all 4096 possible CSR addresses
-    //     // Note: CSR address is in HEX format
-    //     for (int i = 0; i < 4096; i++) begin
-    //         if (rvvi.csr_wb[retire_slot][hart][i]) begin
-    //             // Format: C <address_hex> <value_hex>
-    //             if (XLEN == 32) begin
-    //                 $fwrite(file, "C %03h %08h ", i, rvvi.csr[retire_slot][hart][i]);
-    //             end else if (XLEN == 64) begin
-    //                 $fwrite(file, "C %03h %016h ", i, rvvi.csr[retire_slot][hart][i]);
-    //             end else begin
-    //                 $fwrite(file, "C %03h %h ", i, rvvi.csr[retire_slot][hart][i]);
-    //             end
-    //         end
-    //     end
-    // endtask
     task automatic writeCSRChanges(int hart, int retire_slot);
         // Iterate through all 4096 possible CSR addresses
         // Note: CSR address is in HEX format
@@ -298,11 +282,11 @@ module rvviTextLogger #(
 
                 // Format: C <address_hex> <value_hex>
                 if (XLEN == 32) begin
-                    $fwrite(file, "C %03h %08h ", i, rvvi.csr[retire_slot][hart][i]);
+                    $fwrite(file, "C 0x%03h 0x%08h ", i, rvvi.csr[retire_slot][hart][i]);
                 end else if (XLEN == 64) begin
-                    $fwrite(file, "C %03h %016h ", i, rvvi.csr[retire_slot][hart][i]);
+                    $fwrite(file, "C 0x%03h 0x%016h ", i, rvvi.csr[retire_slot][hart][i]);
                 end else begin
-                    $fwrite(file, "C %03h %h ", i, rvvi.csr[retire_slot][hart][i]);
+                    $fwrite(file, "C 0x%03h 0x%h ", i, rvvi.csr[retire_slot][hart][i]);
                 end
             end
         end
@@ -319,7 +303,7 @@ module rvviTextLogger #(
 
         // MODE - Only write if changed
         if (mode_changed) begin
-            $fwrite(file, "MODE %h ", rvvi.mode[retire_slot][hart]);
+            $fwrite(file, "MODE 0x%h ", rvvi.mode[retire_slot][hart]);
             prev_mode[hart] = rvvi.mode[retire_slot][hart];
         end
 
