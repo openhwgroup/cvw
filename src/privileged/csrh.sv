@@ -81,10 +81,12 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   logic              VSSTATUS_SPIE, VSSTATUS_SIE;
   logic [1:0]        VSSTATUS_FS_INT, VSSTATUS_XS, VSSTATUS_UXL, VSSTATUS_VS;
   logic [P.XLEN-1:0] HIE_REGW;
+  logic [P.XLEN-1:0] NextHIE;
+  logic [P.XLEN-1:0] HIE_WRITE_MASK;
   logic [11:0]       VSIE_REGW;
   // outputs declared above
   logic [P.XLEN-1:0] HGEIE_REGW;
-  
+
   logic [P.XLEN-1:0] HTVAL_REGW;
   logic [P.XLEN-1:0] VSTVAL_REGW;
   logic [11:0]       VSIP_REGW;
@@ -128,11 +130,13 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   localparam VSATP      = 12'h280;
   localparam VSTIMECMP  = 12'h24D;
   localparam VSTIMECMPH = 12'h25D;
-  localparam [63:0] HEDELEG_MASK = 64'h0000_0000_0000_FFFF;
-  localparam [11:0] HIDELEG_MASK = 12'hFFF;
+  // HEDELEG: lower bits per Table 45; upper 32 bits are WARL.
+  localparam [63:0] HEDELEG_MASK = 64'hFFFF_FFFF_000C_B1FF;
+  // HIDELEG: only VS-level interrupts (VSSIP/VSTIP/VSEIP) are writable.
+  localparam [11:0] HIDELEG_MASK = 12'h444;
   localparam [11:0] HVIP_MASK    = 12'h444; // Only VSSIP[2], VSTIP[6], VSEIP[10] are writable (spec 7.4.4)
-  localparam [11:0] VSIP_MASK    = 12'h222; // Only SSIP[1], STIP[5], SEIP[9] are writable (spec 7.4.4)
   localparam [11:0] HIP_MASK     = 12'h444; // Valid interrupt bits for HIP read (spec 7.4.4)
+  localparam [12:0] HIE_MASK     = 13'h1444; // Writable HIE bits: SGEIE[12], VSEIE[10], VSTIE[6], VSSIE[2]
 
   // Write Enables for CSR instructions
   logic WriteMTINSTM;
@@ -170,9 +174,17 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0] NextVSCAUSE;
   logic [63:0]       NextHEDELEG;
   logic [11:0]       NextHIDELEG;
-  logic [11:0]       NextHVIP, NextVSIP;
+  logic [11:0]       NextHVIP;
+  logic [11:0]       HIP_PENDING;
   logic [P.XLEN-1:0] VSTVECWriteValM;
   logic [63:0]       NextHENVCFG;
+  logic [63:0]       CSRWriteValExt;
+
+  if (P.XLEN == 64) begin: csrwriteext64
+    assign CSRWriteValExt = CSRWriteValM;
+  end else begin: csrwriteext32
+    assign CSRWriteValExt = {32'b0, CSRWriteValM};
+  end
 
   // CSR Write Validation Intermediates
   logic LegalHAccessM;
@@ -362,15 +374,48 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   flopenr #(12) HIDELEGreg(clk, reset, WriteHIDELEGM, NextHIDELEG, HIDELEG_REGW);
 
   // Interrupt Enable / Pending
-  flopenr #(P.XLEN) HIEreg(clk, reset, WriteHIEM, CSRWriteValM, HIE_REGW);
+  assign HIE_WRITE_MASK = {{(P.XLEN-13){1'b0}}, HIE_MASK};
+  // VSIE writes update HIE bits only when corresponding hideleg bits are set.
+  always_comb begin
+    NextHIE = HIE_REGW & HIE_WRITE_MASK;
+    if (WriteHIEM) NextHIE = CSRWriteValM & HIE_WRITE_MASK;
+    if (WriteVSIEM) begin
+      if (HIDELEG_REGW[2])  NextHIE[2]  = CSRWriteValM[1]; // SSIE -> VSSIE
+      if (HIDELEG_REGW[6])  NextHIE[6]  = CSRWriteValM[5]; // STIE -> VSTIE
+      if (HIDELEG_REGW[10]) NextHIE[10] = CSRWriteValM[9]; // SEIE -> VSEIE
+    end
+  end
+  flopenr #(P.XLEN) HIEreg(clk, reset, (WriteHIEM | WriteVSIEM), NextHIE, HIE_REGW);
+
   // HVIP: Only bits 2 (VSSIP), 6 (VSTIP), 10 (VSEIP) are writable per spec 7.4.4
-  assign NextHVIP = CSRWriteValM[11:0] & HVIP_MASK;
-  flopenr #(12)     HVIPreg(clk, reset, WriteHVIPM, NextHVIP, HVIP_REGW);
+  // VSIP writes can update VSSIP only when hideleg[2] is set.
+  always_comb begin
+    NextHVIP = HVIP_REGW;
+    if (WriteHVIPM) NextHVIP = CSRWriteValM[11:0] & HVIP_MASK;
+    if (WriteVSIPM && HIDELEG_REGW[2]) begin
+      NextHVIP[2] = CSRWriteValM[1]; // SSIP -> VSSIP
+    end
+  end
+  flopenr #(12)     HVIPreg(clk, reset, (WriteHVIPM | WriteVSIPM), NextHVIP, HVIP_REGW);
+
   flopenr #(P.XLEN) HGEIEreg(clk, reset, WriteHGEIEM, CSRWriteValM, HGEIE_REGW);
-  flopenr #(12)     VSIEreg(clk, reset, WriteVSIEM, CSRWriteValM[11:0], VSIE_REGW);
-  // VSIP: Only bits 1 (SSIP), 5 (STIP), 9 (SEIP) are writable per spec 7.4.4
-  assign NextVSIP = CSRWriteValM[11:0] & VSIP_MASK;
-  flopenr #(12)     VSIPreg(clk, reset, WriteVSIPM, NextVSIP, VSIP_REGW);
+
+  // VSIP/VSIE are aliases of HIP/HIE when delegated; otherwise read-only zero.
+  assign HIP_PENDING = (HVIP_REGW | MIP_REGW) & HIP_MASK;
+  always_comb begin
+    VSIE_REGW = 12'b0;
+    if (HIDELEG_REGW[2])  VSIE_REGW[1] = HIE_REGW[2];
+    if (HIDELEG_REGW[6])  VSIE_REGW[5] = HIE_REGW[6];
+    if (HIDELEG_REGW[10]) VSIE_REGW[9] = HIE_REGW[10];
+    // LCOFIE not supported; keep bit 13 at 0.
+  end
+  always_comb begin
+    VSIP_REGW = 12'b0;
+    if (HIDELEG_REGW[2])  VSIP_REGW[1] = HIP_PENDING[2];
+    if (HIDELEG_REGW[6])  VSIP_REGW[5] = HIP_PENDING[6];
+    if (HIDELEG_REGW[10]) VSIP_REGW[9] = HIP_PENDING[10];
+    // LCOFIP not supported; keep bit 13 at 0.
+  end
 
   // HTVAL: Written by CSR instructions and by hardware on traps
   assign NextHTVAL = HSTrapM ? NextHtvalM : CSRWriteValM;
@@ -381,7 +426,8 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   flopenr #(P.XLEN) HTINSTreg(clk, reset, (WriteHTINSTM | HSTrapM), NextHTINST, HTINST_REGW);
 
   // VS CSRs: Guest-visible S-mode state
-  assign VSTVECWriteValM = CSRWriteValM[0] ? {CSRWriteValM[P.XLEN-1:6], 6'b000001} :
+  // VSTVEC: preserve base bits [XLEN-1:2], force MODE[1:0] to 01 (vect) or 00 (direct).
+  assign VSTVECWriteValM = CSRWriteValM[0] ? {CSRWriteValM[P.XLEN-1:2], 2'b01} :
                                               {CSRWriteValM[P.XLEN-1:2], 2'b00};
   flopenr #(P.XLEN) VSTVECreg(clk, reset, WriteVSTVECM, VSTVECWriteValM, VSTVEC_REGW);
   flopenr #(P.XLEN) VSSCRATCHreg(clk, reset, WriteVSSCRATCHM, CSRWriteValM, VSSCRATCH_REGW);
@@ -410,10 +456,11 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
 
   // Configuration & Timers
   flopenr #(32) HCOUNTERENreg(clk, reset, WriteHCOUNTERENM, CSRWriteValM[31:0], HCOUNTEREN_REGW);
-  
+
   // HENVCFG: Conditional bit masking based on supported features (similar to MENVCFG in csrm.sv)
   // Spec 7.4.5: FIOM[0], ADUE[61], PBMTE[62], STCE[63]
   always_comb begin
+    NextHENVCFG = HENVCFG_REGW;
     if (WriteHENVCFGM) begin
       NextHENVCFG[31:0] = {
         CSRWriteValM[31:8], // Reserved bits 31:8
@@ -423,25 +470,25 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
         CSRWriteValM[3:1],                       // Reserved
         CSRWriteValM[0]  & P.S_SUPPORTED & P.VIRTMEM_SUPPORTED  // FIOM
       };
-      NextHENVCFG[63:32] = {
-        CSRWriteValM[63] & P.SSTC_SUPPORTED,     // STCE
-        CSRWriteValM[62] & P.SVPBMT_SUPPORTED,   // PBMTE
-        CSRWriteValM[61] & P.SVADU_SUPPORTED,    // ADUE
-        CSRWriteValM[60:32]                       // Reserved
-      };
-    end else if (WriteHENVCFGHM) begin
-      NextHENVCFG[31:0] = HENVCFG_REGW[31:0];
+      if (P.XLEN == 64) begin
+        NextHENVCFG[63:32] = {
+          CSRWriteValExt[63] & P.SSTC_SUPPORTED,     // STCE
+          CSRWriteValExt[62] & P.SVPBMT_SUPPORTED,   // PBMTE
+          CSRWriteValExt[61] & P.SVADU_SUPPORTED,    // ADUE
+          CSRWriteValExt[60:32]                       // Reserved
+        };
+      end
+    end
+    if (WriteHENVCFGHM) begin
       NextHENVCFG[63:32] = {
         CSRWriteValM[31] & P.SSTC_SUPPORTED,     // STCE
         CSRWriteValM[30] & P.SVPBMT_SUPPORTED,   // PBMTE
         CSRWriteValM[29] & P.SVADU_SUPPORTED,    // ADUE
         CSRWriteValM[28:0]                       // Reserved
       };
-    end else begin
-      NextHENVCFG = HENVCFG_REGW;
     end
   end
-  
+
   flopenr #(64) HENVCFGreg(clk, reset, (WriteHENVCFGM | WriteHENVCFGHM), NextHENVCFG, HENVCFG_REGW);
   if (P.XLEN == 64) begin : htimedelta_regs_64
     flopenr #(P.XLEN) HTIMEDELTAreg(clk, reset, WriteHTIMEDELTAM, CSRWriteValM, HTIMEDELTA_REGW);
