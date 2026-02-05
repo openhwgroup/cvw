@@ -297,6 +297,12 @@ typedef struct packed {
   int DIVBLEN    ;
 // integer division/remainder constants
   int INTDIVb    ;
+
+  // Debug Specification Variables
+  logic DEBUG_SUPPORTED;
+  logic [5:0] ABITS;
+  int         DTM_INSTR_WIDTH;
+
 } cvw_t;
 
 endpackage
