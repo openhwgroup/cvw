@@ -141,6 +141,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic                    InstrValidNotFlushedM;
   logic                    STimerInt;
   logic [63:0]             MENVCFG_REGW;
+  logic [63:0]             HENVCFG_REGW;
   logic [P.XLEN-1:0]       SENVCFG_REGW;
   logic                    ENVCFG_STCE; // supervisor timer counter enable
   logic                    ENVCFG_FIOM; // fence implies io (presently not used)
@@ -151,6 +152,8 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic [1:0]              VSSTATUS_FS;
   logic                    HSTATUS_VSBE;
   logic [31:0]             HCOUNTEREN_REGW;
+  logic [11:0]             HVIP_REGW;
+  logic [63:0]             HTIMEDELTA_REGW;
   logic                    CSRHWriteM;
   logic [P.XLEN-1:0]       CSRHReadValM;
   logic                    IllegalCSRHAccessM;
@@ -284,6 +287,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   csri #(P) csri(.clk, .reset,
     .CSRMWriteM, .CSRSWriteM, .CSRWriteValM, .CSRAdrM,
     .MExtInt, .SExtInt, .MTimerInt, .STimerInt, .MSwInt,
+    .HVIP_REGW,
     .MIDELEG_REGW, .ENVCFG_STCE, .MIP_REGW, .MIE_REGW, .MIP_REGW_writeable);
 
   csrsr #(P) csrsr(.clk, .reset, .StallW,
@@ -340,7 +344,8 @@ module csr import cvw::*;  #(parameter cvw_t P) (
       .CSRHReadValM, .IllegalCSRHAccessM,
       .HSTATUS_SPV, .HSTATUS_VTSR, .HSTATUS_VTW, .HSTATUS_VTVM,
       .HSTATUS_VSBE, .VSSTATUS_SPP, .VSSTATUS_SUM, .VSSTATUS_MXR, .VSSTATUS_UBE, .VSSTATUS_FS,
-      .HEDELEG_REGW, .HIDELEG_REGW, .HCOUNTEREN_REGW, .VSTVEC_REGW, .VSEPC_REGW);
+      .HEDELEG_REGW, .HIDELEG_REGW, .HCOUNTEREN_REGW, .HVIP_REGW, .HTIMEDELTA_REGW, .HENVCFG_REGW,
+      .VSTVEC_REGW, .VSEPC_REGW);
   end else begin: no_csrh
     assign CSRHReadValM = '0;
     assign IllegalCSRHAccessM = 1'b1;
@@ -357,6 +362,9 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign HEDELEG_REGW = '0;
     assign HIDELEG_REGW = '0;
     assign HCOUNTEREN_REGW = '0;
+    assign HVIP_REGW = '0;
+    assign HTIMEDELTA_REGW = '0;
+    assign HENVCFG_REGW = '0;
     assign VSTVEC_REGW = '0;
     assign VSEPC_REGW = '0;
   end
@@ -406,26 +414,25 @@ module csr import cvw::*;  #(parameter cvw_t P) (
       .BPDirWrongM, .BTAWrongM, .RASPredPCWrongM, .IClassWrongM, .BPWrongM,
       .IClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .sfencevmaM,
       .InterruptM, .ExceptionM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
-      .CSRAdrM, .PrivilegeModeW, .CSRWriteValM,
+      .CSRAdrM, .PrivilegeModeW, .VirtModeW, .CSRWriteValM,
       .MCOUNTINHIBIT_REGW, .MCOUNTEREN_REGW, .SCOUNTEREN_REGW, .HCOUNTEREN_REGW,
-      .VirtModeW,
-      .MTIME_CLINT,  .CSRCReadValM, .IllegalCSRCAccessM);
+      .MTIME_CLINT, .HTIMEDELTA_REGW,  .CSRCReadValM, .IllegalCSRCAccessM);
   end else begin
     assign CSRCReadValM = '0;
     assign IllegalCSRCAccessM = 1'b1; // counters aren't enabled
   end
 
    // Broadcast appropriate environment configuration based on privilege mode
-  assign ENVCFG_STCE =  MENVCFG_REGW[63]; // supervisor timer counter enable
-  assign ENVCFG_PBMTE = MENVCFG_REGW[62]; // page-based memory types enable
-  assign ENVCFG_ADUE  = MENVCFG_REGW[61]; // Hardware A/D Update enable
+  assign ENVCFG_STCE =  (P.H_SUPPORTED & VirtModeW) ? HENVCFG_REGW[63] : MENVCFG_REGW[63]; // supervisor timer counter enable
+  assign ENVCFG_PBMTE = (P.H_SUPPORTED & VirtModeW) ? HENVCFG_REGW[62] : MENVCFG_REGW[62]; // page-based memory types enable
+  assign ENVCFG_ADUE  = (P.H_SUPPORTED & VirtModeW) ? HENVCFG_REGW[61] : MENVCFG_REGW[61]; // Hardware A/D Update enable
   assign ENVCFG_CBE =   (PrivilegeModeW == P.M_MODE) ? 4'b1111 :
-                        (PrivilegeModeW == P.S_MODE | !P.S_SUPPORTED) ? MENVCFG_REGW[7:4] :
-                                                                       (MENVCFG_REGW[7:4] & SENVCFG_REGW[7:4]);
+                        (PrivilegeModeW == P.S_MODE | !P.S_SUPPORTED) ? ((P.H_SUPPORTED & VirtModeW) ? HENVCFG_REGW[7:4] : MENVCFG_REGW[7:4]) :
+                                                                       (((P.H_SUPPORTED & VirtModeW) ? HENVCFG_REGW[7:4] : MENVCFG_REGW[7:4]) & SENVCFG_REGW[7:4]);
   // FIOM presently doesn't do anything because Wally fences don't do anything
   assign ENVCFG_FIOM =  (PrivilegeModeW == P.M_MODE) ? 1'b1 :
-                        (PrivilegeModeW == P.S_MODE | !P.S_SUPPORTED) ? MENVCFG_REGW[0] :
-                                                                       (MENVCFG_REGW[0] & SENVCFG_REGW[0]);
+                        (PrivilegeModeW == P.S_MODE | !P.S_SUPPORTED) ? ((P.H_SUPPORTED & VirtModeW) ? HENVCFG_REGW[0] : MENVCFG_REGW[0]) :
+                                                                       (((P.H_SUPPORTED & VirtModeW) ? HENVCFG_REGW[0] : MENVCFG_REGW[0]) & SENVCFG_REGW[0]);
 
   // merge CSR Reads
   assign CSRReadValM = CSRUReadValM | CSRSReadValM | CSRMReadValM | CSRCReadValM | CSRHReadValM;

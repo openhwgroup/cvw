@@ -34,6 +34,7 @@ module csri import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0] CSRWriteValM,
   input  logic [11:0]       CSRAdrM,
   input  logic              MExtInt, SExtInt, MTimerInt, STimerInt, MSwInt,
+  input  logic [11:0]       HVIP_REGW,
   input  logic [11:0]       MIDELEG_REGW,
   input  logic              ENVCFG_STCE,
   output logic [11:0]       MIP_REGW, MIE_REGW,
@@ -84,7 +85,7 @@ module csri import cvw::*;  #(parameter cvw_t P) (
     else if (WriteMIEM) MIE_REGW <= (CSRWriteValM[11:0] & MIE_WRITE_MASK); // MIE controls M and S fields
     else if (WriteSIEM) MIE_REGW <= (CSRWriteValM[11:0] & 12'h222 & MIDELEG_REGW) | (MIE_REGW & 12'h888); // only S fields
 
-  assign MIP_REGW = {MExtInt,   1'b0, SExtInt|MIP_REGW_writeable[9],  1'b0,
-                     MTimerInt, 1'b0, STIP,                           1'b0,
-                     MSwInt,    1'b0, MIP_REGW_writeable[1],          1'b0};
+  assign MIP_REGW = {MExtInt,   HVIP_REGW[10], SExtInt|MIP_REGW_writeable[9],  1'b0,
+                     MTimerInt, HVIP_REGW[6],  STIP,                           1'b0,
+                     MSwInt,    HVIP_REGW[2],  MIP_REGW_writeable[1],          1'b0};
 endmodule
