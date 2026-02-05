@@ -7,13 +7,13 @@ rvtest_entry_point:
    la t2, begin_signature
 
    li t0, 42
-   li t1, 0x9f8e7d6c5b4a3928	
+   li t1, 0x9f8e7d6c5b4a3928
 
 test1:
    sd t0, 0(t2)
    addi t2, t2, 8
    sd t1, 0(t2)
-   addi t2, t2, 8		
+   addi t2, t2, 8
 1: j 1b
 
 test_end:
