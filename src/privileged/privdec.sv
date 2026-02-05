@@ -52,6 +52,7 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   logic                sinvalvmaM;                          // sinval.vma
   logic                presfencevmaM;                       // sfence.vma before checking privilege mode
   logic                sfencewinvalM, sfenceinvalirM;       // sfence.w.inval, sfence.inval.ir
+  logic                hfencevvmaM, hfencegvmaM;            // hfence.vvma, hfence.gvma
   logic                vmaM;                                // sfence.vma or sinval.vma
   logic                fenceinvalM;                         // sfence.w.inval or sfence.inval.ir
   logic                TSRM, TVMM, TWM;
@@ -69,6 +70,8 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   assign sfencewinvalM  = (InstrM[31:20] == 12'b000110000000) & rs1zeroM & rdzeroM;
   assign sfenceinvalirM = (InstrM[31:20] == 12'b000110000001) & rs1zeroM & rdzeroM;
   assign presfencevmaM  = (InstrM[31:25] ==  7'b0001001)                 & rdzeroM;
+  assign hfencevvmaM    = (InstrM[31:25] ==  7'b0010001)                 & rdzeroM; // hfence.vvma
+  assign hfencegvmaM    = (InstrM[31:25] ==  7'b0110001)                 & rdzeroM; // hfence.gvma
   assign vmaM           =  presfencevmaM | (sinvalvmaM & P.SVINVAL_SUPPORTED);      // sfence.vma or sinval.vma
   assign fenceinvalM    = (sfencewinvalM | sfenceinvalirM) & P.SVINVAL_SUPPORTED;   // sfence.w.inval or sfence.inval.ir
 
@@ -88,7 +91,8 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   // all of sinval.vma, sfence.w.inval, sfence.inval.ir are treated as sfence.vma
   assign sfencevmaM = PrivilegedM & P.VIRTMEM_SUPPORTED &
                       ((PrivilegeModeW == P.M_MODE & (vmaM | fenceinvalM)) |
-                       (PrivilegeModeW == P.S_MODE & (vmaM & ~TVMM  | fenceinvalM))); // sfence.w.inval & sfence.inval.ir not affected by TVM
+                       (PrivilegeModeW == P.S_MODE & (vmaM & ~TVMM  | fenceinvalM)) |
+                       (PrivilegeModeW == P.S_MODE & ~VirtModeW & (hfencevvmaM | hfencegvmaM))); // hfence treated as sfence.vma in HS
 
   ///////////////////////////////////////////
   // WFI timeout Privileged Spec 3.1.6.5
