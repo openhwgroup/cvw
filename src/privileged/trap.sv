@@ -32,7 +32,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   input  logic                 InstrMisalignedFaultM, InstrAccessFaultM, HPTWInstrAccessFaultM, HPTWInstrPageFaultM, IllegalInstrFaultM,
   input  logic                 BreakpointFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM,
   input  logic                 LoadAccessFaultM, StoreAmoAccessFaultM, EcallFaultM, InstrPageFaultM,
-  input  logic                 LoadPageFaultM, StoreAmoPageFaultM,              // various trap sources
+  input  logic                 LoadPageFaultM, StoreAmoPageFaultM, VirtualInstrFaultM, // various trap sources
   input  logic                 wfiM, wfiW,                                      // wait for interrupt instruction
   input  logic [1:0]           PrivilegeModeW,                                  // current privilege mode
   input  logic                 VirtModeW,                                       // current V
@@ -101,7 +101,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   assign ExceptionM = InstrMisalignedFaultM | BothInstrAccessFaultM | IllegalInstrFaultM |
                       LoadMisalignedFaultM | StoreAmoMisalignedFaultM |
                       BothInstrPageFaultM | LoadPageFaultM | StoreAmoPageFaultM |
-                      BreakpointFaultM | EcallFaultM |
+                      BreakpointFaultM | EcallFaultM | VirtualInstrFaultM |
                       LoadAccessFaultM | StoreAmoAccessFaultM;
   // coverage on
   assign TrapM = (ExceptionM & ~CommittedF) | InterruptM;
@@ -119,6 +119,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
     else if (ValidIntsM[1])                                   CauseM = 5'd1;  // Supervisor Sw Int
     else if (ValidIntsM[5])                                   CauseM = 5'd5;  // Supervisor Timer Int
     else if (BothInstrPageFaultM)                             CauseM = 5'd12;
+    else if (VirtualInstrFaultM)                              CauseM = 5'd22; // Virtual Instruction Fault
     else if (BothInstrAccessFaultM)                           CauseM = 5'd1;
     else if (IllegalInstrFaultM)                              CauseM = 5'd2;
     // coverage off
