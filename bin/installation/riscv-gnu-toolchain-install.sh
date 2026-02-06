@@ -27,7 +27,7 @@
 ## and limitations under the License.
 ################################################################################################
 
-RISCV_GNU_TOOLCHAIN_VERSION=049b329cb919593d420dd48753297fb3fd5f1633 # Latest commit as of January 19, 2026 (GCC 15.2, Binutils 2.45)
+RISCV_GNU_TOOLCHAIN_VERSION=311e70f6c55953a624ca670de7c85af38c2b23c2 # Latest commit as of January 22, 2026 (GCC 15.2, Binutils 2.45)
 set -e # break on error
 # If run standalone, check environment. Otherwise, use info from main install script
 if [ -z "$FAMILY" ]; then
