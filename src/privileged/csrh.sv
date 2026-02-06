@@ -136,8 +136,10 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   localparam VSATP      = 12'h280;
   localparam VSTIMECMP  = 12'h24D;
   localparam VSTIMECMPH = 12'h25D;
-  // HEDELEG: lower bits per Table 45; upper 32 bits are WARL.
-  localparam [63:0] HEDELEG_MASK = 64'hFFFF_FFFF_000C_B1FF;
+  // HEDELEG: lower bits per Table 45; upper 32 bits are WARL (reserved 0 in RV64, accessible in RV32 via HEDELEGH).
+  logic [63:0] HEDELEG_MASK;
+  if (P.XLEN == 32) assign HEDELEG_MASK = 64'hFFFF_FFFF_000C_B1FF;
+  else              assign HEDELEG_MASK = 64'h0000_0000_000C_B1FF;
   // HIDELEG: only VS-level interrupts (VSSIP/VSTIP/VSEIP) are writable.
   localparam [11:0] HIDELEG_MASK = 12'h444;
   localparam [11:0] HVIP_MASK    = 12'h444; // Only VSSIP[2], VSTIP[6], VSEIP[10] are writable (spec 7.4.4)
@@ -292,12 +294,12 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
     end else if (PrivReturnHSM) begin
       HSTATUS_SPV <= 1'b0;
     end else if (WriteHSTATUSM) begin
-      HSTATUS_VSBE  <= P.BIGENDIAN_SUPPORTED & CSRWriteValM[5];
+      HSTATUS_VSBE  <= 1'b0; // P.BIGENDIAN_SUPPORTED & CSRWriteValM[5];
       HSTATUS_GVA   <= CSRWriteValM[6];
       HSTATUS_SPV   <= CSRWriteValM[7];
       HSTATUS_SPVP  <= CSRWriteValM[8];
       HSTATUS_HU    <= P.U_SUPPORTED & CSRWriteValM[9];
-      HSTATUS_VGEIN <= CSRWriteValM[17:12];
+      HSTATUS_VGEIN <= 6'b0; // CSRWriteValM[17:12];
       HSTATUS_VTVM  <= CSRWriteValM[20];
       HSTATUS_VTW   <= CSRWriteValM[21];
       HSTATUS_VTSR  <= CSRWriteValM[22];
@@ -430,7 +432,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
     end
   end
   flopenr #(12)     HVIPreg(clk, reset, (WriteHVIPM | WriteVSIPM), NextHVIP, HVIP_REGW);
-  assign VSIP_REGW = (HVIP_REGW & HVIP_MASK) >> 1;
+  assign VSIP_REGW = (HIP_PENDING & HIDELEG_REGW) >> 1;
 
   flopenr #(P.XLEN) HGEIEreg(clk, reset, WriteHGEIEM, CSRWriteValM, HGEIE_REGW);
 

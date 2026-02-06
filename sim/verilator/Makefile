@@ -58,7 +58,7 @@ $(WORKDIR)/V${TESTBENCH}: $(DEPENDENCIES)
 	mkdir -p $(WORKDIR)
 	verilator \
 	--Mdir $(WORKDIR) -o V${TESTBENCH} \
-	--binary --trace \
+	--cc --exe --main --trace --timing \
 	$(OPT) $(PARAMS) $(NONPROF) \
 	--top-module ${TESTBENCH}  --relative-includes \
 	$(INCLUDE_PATH) \
@@ -66,6 +66,7 @@ $(WORKDIR)/V${TESTBENCH}: $(DEPENDENCIES)
 	${DEFINE_ARGS} \
 	${EXPANDED_PARAM_ARGS} \
 	$(SOURCES)
+	make -C $(WORKDIR) -f V${TESTBENCH}.mk CFG_LDFLAGS_VERILATED=""
 
 obj_dir_profiling/V${TESTBENCH}_$(WALLYCONF): $(DEPENDENCIES)
 	mkdir -p obj_dir_profiling
