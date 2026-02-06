@@ -40,6 +40,7 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   input  logic         STATUS_TSR, STATUS_TVM, STATUS_TW,   // status bits (HS)
   input  logic         HSTATUS_VTSR, HSTATUS_VTVM, HSTATUS_VTW, // status bits (VS)
   output logic         IllegalInstrFaultM,                  // Illegal instruction
+  output logic         VirtualInstrFaultM,                  // Virtual instruction exception
   output logic         EcallFaultM, BreakpointFaultM,       // Ecall or breakpoint; must retire, so don't flush it when the trap occurs
   output logic         sretM, mretM, RetM,                  // return instructions
   output logic         wfiM, wfiW, sfencevmaM               // wfi / sfence.vma / sinval.vma instructions
@@ -122,6 +123,44 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   ///////////////////////////////////////////
 
   assign IllegalPrivilegedInstrM = PrivilegedM & ~(sretM|mretM|ecallM|ebreakM|wfiM|sfencevmaM);
-  assign IllegalInstrFaultM = IllegalIEUFPUInstrM | IllegalPrivilegedInstrM | IllegalCSRAccessM |
-                              WFITimeoutM;
+  
+  // Virtual Instruction Exception Detection
+  // 1. hfence in VS-mode (VirtModeW & PrivilegedM & (hfencevvmaM | hfencegvmaM))
+  // 2. sret in VS-mode when VTSR=1 (VirtModeW & sret & HSTATUS_VTSR) - wait, sretM is suppressed by VTSR logic?
+  //    sretM logic: ... & (PrivilegeModeW == P.M_MODE | PrivilegeModeW == P.S_MODE & ~TSRM);
+  //    If TSRM (which is VTSR in VS-mode) is 1, sretM is 0.
+  //    So we detect the attempt: PrivilegedM & opcode==sret & VirtModeW & HSTATUS_VTSR
+  // 3. satp access in VS-mode when VTVM=1
+  //    IllegalCSRAccessM will be high. We need to distinguish.
+  //    Check opcode? CSRRW/RS/RC?
+  //    If IllegalCSRAccessM & VirtModeW & HSTATUS_VTVM & (CSRAdr == SATP) -> Virtual Instr.
+  
+  // Re-deriving raw instruction decodes for fault detection since sretM/sfencevmaM might be gated
+  logic is_sret, is_hfence;
+  assign is_sret = (InstrM[31:20] == 12'b000100000010) & rs1zeroM;
+  assign is_hfence = (InstrM[31:25] == 7'b0010001 | InstrM[31:25] == 7'b0110001) & rdzeroM; // hfence.vvma | hfence.gvma
+  
+  logic VSTSRFault, VTVMFault, HFenceFault;
+  assign VSTSRFault = PrivilegedM & is_sret & VirtModeW & HSTATUS_VTSR;
+  assign HFenceFault = PrivilegedM & is_hfence & VirtModeW;
+  // Note: VTVM fault is tricky because 'satp' access isn't explicitly decoded here, it's in csr.sv.
+  // However, csr.sv reports IllegalCSRAccessM.
+  // We can rely on IllegalCSRAccessM being high, and verify if it matches VTVM condition.
+  // BUT privdec doesn't know the CSR address.
+  // We will output VirtualInstrFaultM primarily for the instruction faults we can see.
+  // For VTVM, csr.sv logic handles the illegality, but trap.sv needs to know the Cause.
+  // Ideally, csr.sv should report 'VirtualInstructionFault' separate from 'IllegalAccess'.
+  // Given constraints, we will handle HFence and SRET here.
+  // For SATP/VTVM: If we can't change csr.sv interface easily to output specific fault type, 
+  // we might have to accept Illegal Instruction for SATP/VTVM or move decoding here.
+  // Moving decoding: 'satp' is 0x180.
+  logic is_satp_access;
+  assign is_satp_access = (InstrM[31:20] == 12'h180); 
+  assign VTVMFault = PrivilegedM & is_satp_access & VirtModeW & HSTATUS_VTVM;
+
+  assign VirtualInstrFaultM = VSTSRFault | HFenceFault | VTVMFault;
+
+  // Prevent double-reporting. If it's Virtual, it's not Illegal.
+  assign IllegalInstrFaultM = (IllegalIEUFPUInstrM | IllegalPrivilegedInstrM | IllegalCSRAccessM |
+                               WFITimeoutM) & ~VirtualInstrFaultM;
 endmodule

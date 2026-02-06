@@ -54,7 +54,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic [1:0]               NextPrivilegeModeM,        // STATUS bits updated based on next privilege mode
   input  logic [1:0]               PrivilegeModeW,            // current privilege mode
   input  logic                     VirtModeW,                 // current V Bit
-  input  logic [3:0]               CauseM,                    // Trap cause
+  input  logic [4:0]               CauseM,                    // Trap cause
   input  logic                     SelHPTW,                   // hardware page table walker active, so base endianness on supervisor mode
   // inputs for performance counters
   input  logic                     LoadStallD, StoreStallD,
@@ -127,7 +127,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic                    UngatedCSRMWriteM;
   logic                    WriteFRMM, SetOrWriteFFLAGSM;
   logic [P.XLEN-1:0]       UnalignedNextEPCM, NextEPCM, NextMtvalM;
-  logic [4:0]              NextCauseM;
+  logic [5:0]              NextCauseM;
   logic [11:0]             CSRAdrM_In, CSRAdrM;
   logic                    IllegalCSRCAccessM, IllegalCSRMAccessM, IllegalCSRSAccessM, IllegalCSRUAccessM;
   logic                    InsufficientCSRPrivilegeM;
@@ -261,7 +261,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   end
   assign UnalignedNextEPCM = TrapM ? PCM : CSRWriteValM;
   assign NextEPCM = P.ZCA_SUPPORTED ? {UnalignedNextEPCM[P.XLEN-1:1], 1'b0} : {UnalignedNextEPCM[P.XLEN-1:2], 2'b00}; // 3.1.15 alignment
-  assign NextCauseM = TrapM ? {InterruptM, CauseM}: {CSRWriteValM[P.XLEN-1], CSRWriteValM[3:0]};
+  assign NextCauseM = TrapM ? {InterruptM, CauseM}: {CSRWriteValM[P.XLEN-1], CSRWriteValM[4:0]};
   assign NextMtvalM = TrapM ? NextFaultMtvalM : CSRWriteValM;
   assign UngatedCSRMWriteM = CSRWriteM & (PrivilegeModeW == P.M_MODE);
   assign CSRMWriteM = UngatedCSRMWriteM & InstrValidNotFlushedM;

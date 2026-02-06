@@ -139,10 +139,11 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .NextPrivilegeModeM, .PrivilegeModeW, .NextVirtModeM, .VirtModeW);
 
   // decode privileged instructions
+  logic VirtualInstrFaultM;
   privdec #(P) pmd(.clk, .reset, .StallW, .FlushW, .InstrM(InstrM[31:7]),
     .PrivilegedM, .IllegalIEUFPUInstrM, .IllegalCSRAccessM,
     .PrivilegeModeW, .VirtModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_TW,
-    .HSTATUS_VTSR, .HSTATUS_VTVM, .HSTATUS_VTW, .IllegalInstrFaultM,
+    .HSTATUS_VTSR, .HSTATUS_VTVM, .HSTATUS_VTW, .IllegalInstrFaultM, .VirtualInstrFaultM,
     .EcallFaultM, .BreakpointFaultM, .sretM, .mretM, .RetM, .wfiM, .wfiW, .sfencevmaM);
 
   // Control and Status Registers
@@ -174,7 +175,8 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .InstrMisalignedFaultM, .InstrAccessFaultM, .HPTWInstrAccessFaultM, .HPTWInstrPageFaultM, .IllegalInstrFaultM,
     .BreakpointFaultM, .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
     .LoadAccessFaultM, .StoreAmoAccessFaultM, .EcallFaultM, .InstrPageFaultM,
-    .LoadPageFaultM, .StoreAmoPageFaultM, .PrivilegeModeW, .VirtModeW,
+    .LoadPageFaultM, .StoreAmoPageFaultM, .VirtualInstrFaultM,
+    .PrivilegeModeW, .VirtModeW,
     .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW, .HEDELEG_REGW, .HIDELEG_REGW, .STATUS_MIE, .STATUS_SIE,
     .InstrValidM, .CommittedM, .CommittedF,
     .TrapM, .wfiM, .wfiW, .InterruptM, .ExceptionM, .IntPendingM, .DelegateM, .CauseM,

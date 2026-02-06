@@ -34,7 +34,7 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
   input  logic              CSRSWriteM, STrapM,
   input  logic [11:0]       CSRAdrM,
   input  logic [P.XLEN-1:0] NextEPCM, NextMtvalM, SSTATUS_REGW,
-  input  logic [4:0]        NextCauseM,
+  input  logic [5:0]        NextCauseM,
   input  logic              STATUS_TVM,
   input  logic [P.XLEN-1:0] CSRWriteValM,
   input  logic [1:0]        PrivilegeModeW,
@@ -106,7 +106,7 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
   flopenr #(P.XLEN) STVECreg(clk, reset, WriteSTVECM, TVECWriteValM, STVEC_REGW);
   flopenr #(P.XLEN) SSCRATCHreg(clk, reset, WriteSSCRATCHM, CSRWriteValM, SSCRATCH_REGW);
   flopenr #(P.XLEN) SEPCreg(clk, reset, WriteSEPCM, NextEPCM, SEPC_REGW);
-  flopenr #(P.XLEN) SCAUSEreg(clk, reset, WriteSCAUSEM, {NextCauseM[4], {(P.XLEN-5){1'b0}}, NextCauseM[3:0]}, SCAUSE_REGW);
+  flopenr #(P.XLEN) SCAUSEreg(clk, reset, WriteSCAUSEM, {NextCauseM[5], {(P.XLEN-6){1'b0}}, NextCauseM[4:0]}, SCAUSE_REGW);
   flopenr #(P.XLEN) STVALreg(clk, reset, WriteSTVALM, NextMtvalM, STVAL_REGW);
   if (P.VIRTMEM_SUPPORTED)
     flopenr #(P.XLEN) SATPreg(clk, reset, WriteSATPM, CSRWriteValM, SATP_REGW);

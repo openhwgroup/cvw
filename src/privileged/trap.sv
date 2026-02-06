@@ -32,7 +32,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   input  logic                 InstrMisalignedFaultM, InstrAccessFaultM, HPTWInstrAccessFaultM, HPTWInstrPageFaultM, IllegalInstrFaultM,
   input  logic                 BreakpointFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM,
   input  logic                 LoadAccessFaultM, StoreAmoAccessFaultM, EcallFaultM, InstrPageFaultM,
-  input  logic                 LoadPageFaultM, StoreAmoPageFaultM,              // various trap sources
+  input  logic                 LoadPageFaultM, StoreAmoPageFaultM, VirtualInstrFaultM, // various trap sources
   input  logic                 wfiM, wfiW,                                      // wait for interrupt instruction
   input  logic [1:0]           PrivilegeModeW,                                  // current privilege mode
   input  logic                 VirtModeW,                                       // current V
@@ -48,7 +48,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   output logic                 ExceptionM,                                      // exception is occurring
   output logic                 IntPendingM,                                     // Interrupt is pending, might occur if enabled
   output logic                 DelegateM,                                       // Delegate trap to supervisor handler
-  output logic [3:0]           CauseM,                                          // trap cause
+  output logic [4:0]           CauseM,                                          // trap cause
   output logic                 TrapToM, TrapToHSM, TrapToVSM
 );
 
@@ -101,7 +101,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   assign ExceptionM = InstrMisalignedFaultM | BothInstrAccessFaultM | IllegalInstrFaultM |
                       LoadMisalignedFaultM | StoreAmoMisalignedFaultM |
                       BothInstrPageFaultM | LoadPageFaultM | StoreAmoPageFaultM |
-                      BreakpointFaultM | EcallFaultM |
+                      BreakpointFaultM | EcallFaultM | VirtualInstrFaultM |
                       LoadAccessFaultM | StoreAmoAccessFaultM;
   // coverage on
   assign TrapM = (ExceptionM & ~CommittedF) | InterruptM;
@@ -111,29 +111,30 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   ///////////////////////////////////////////
 
   always_comb
-    if      (reset)                    CauseM = 4'd0; // hard reset 3.3
-    else if (ValidIntsM[11])           CauseM = 4'd11; // Machine External Int
-    else if (ValidIntsM[3])            CauseM = 4'd3;  // Machine Sw Int
-    else if (ValidIntsM[7])            CauseM = 4'd7;  // Machine Timer Int
-    else if (ValidIntsM[9])            CauseM = 4'd9;  // Supervisor External Int
-    else if (ValidIntsM[1])            CauseM = 4'd1;  // Supervisor Sw Int
-    else if (ValidIntsM[5])            CauseM = 4'd5;  // Supervisor Timer Int
-    else if (BothInstrPageFaultM)      CauseM = 4'd12;
-    else if (BothInstrAccessFaultM)    CauseM = 4'd1;
-    else if (IllegalInstrFaultM)       CauseM = 4'd2;
+    if      (reset)                    CauseM = 5'd0; // hard reset 3.3
+    else if (ValidIntsM[11])           CauseM = 5'd11; // Machine External Int
+    else if (ValidIntsM[3])            CauseM = 5'd3;  // Machine Sw Int
+    else if (ValidIntsM[7])            CauseM = 5'd7;  // Machine Timer Int
+    else if (ValidIntsM[9])            CauseM = 5'd9;  // Supervisor External Int
+    else if (ValidIntsM[1])            CauseM = 5'd1;  // Supervisor Sw Int
+    else if (ValidIntsM[5])            CauseM = 5'd5;  // Supervisor Timer Int
+    else if (BothInstrPageFaultM)      CauseM = 5'd12;
+    else if (VirtualInstrFaultM)       CauseM = 5'd22; // Virtual Instruction Fault
+    else if (BothInstrAccessFaultM)    CauseM = 5'd1;
+    else if (IllegalInstrFaultM)       CauseM = 5'd2;
     // coverage off
     // Misaligned instructions cannot occur in rv64gc
-    else if (InstrMisalignedFaultM)    CauseM = 4'd0;
+    else if (InstrMisalignedFaultM)    CauseM = 5'd0;
     // coverage on
-    else if (BreakpointFaultM)         CauseM = 4'd3;
-    else if (EcallFaultM)              CauseM = {2'b10, PrivilegeModeW};
-    else if (StoreAmoMisalignedFaultM & ~P.ZICCLSM_SUPPORTED) CauseM = 4'd6;  // misaligned faults are higher priority if they always are taken
-    else if (LoadMisalignedFaultM & ~P.ZICCLSM_SUPPORTED)     CauseM = 4'd4;
-    else if (StoreAmoPageFaultM)       CauseM = 4'd15;
-    else if (LoadPageFaultM)           CauseM = 4'd13;
-    else if (StoreAmoAccessFaultM)     CauseM = 4'd7;
-    else if (LoadAccessFaultM)         CauseM = 4'd5;
-    else if (StoreAmoMisalignedFaultM & P.ZICCLSM_SUPPORTED) CauseM = 4'd6; // See priority in Privileged Spec 3.1.15
-    else if (LoadMisalignedFaultM & P.ZICCLSM_SUPPORTED)     CauseM = 4'd4;
-    else                               CauseM = 4'd0;
+    else if (BreakpointFaultM)         CauseM = 5'd3;
+    else if (EcallFaultM)              CauseM = {3'b0, 2'b10, PrivilegeModeW};
+    else if (StoreAmoMisalignedFaultM & ~P.ZICCLSM_SUPPORTED) CauseM = 5'd6;  // misaligned faults are higher priority if they always are taken
+    else if (LoadMisalignedFaultM & ~P.ZICCLSM_SUPPORTED)     CauseM = 5'd4;
+    else if (StoreAmoPageFaultM)       CauseM = 5'd15;
+    else if (LoadPageFaultM)           CauseM = 5'd13;
+    else if (StoreAmoAccessFaultM)     CauseM = 5'd7;
+    else if (LoadAccessFaultM)         CauseM = 5'd5;
+    else if (StoreAmoMisalignedFaultM & P.ZICCLSM_SUPPORTED) CauseM = 5'd6; // See priority in Privileged Spec 3.1.15
+    else if (LoadMisalignedFaultM & P.ZICCLSM_SUPPORTED)     CauseM = 5'd4;
+    else                               CauseM = 5'd0;
 endmodule

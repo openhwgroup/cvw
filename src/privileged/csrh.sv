@@ -47,7 +47,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   input  logic              sretM,            // SRET in M stage
   input  logic [31:0]       InstrM,           // Instruction for mtinst/htinst decode
   input  logic [P.XLEN-1:0] NextEPCM,         // EPC value for trap/return
-  input  logic [4:0]        NextCauseM,       // Exception/interrupt cause
+  input  logic [5:0]        NextCauseM,       // Exception/interrupt cause
   input  logic [P.XLEN-1:0] NextMtvalM,       // Value for {v,s,}tval on trap
   input  logic [P.XLEN-1:0] NextHtvalM,       // Value for htval on trap
 
@@ -363,10 +363,17 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
 
   // Exception and Interrupt Delegation Registers
   // Mask off read-only zero bits (see ISA 15.2.2)
-  always_comb begin
-    NextHEDELEG = HEDELEG_REGW;
-    if (WriteHEDELEGM)  NextHEDELEG[31:0]  = CSRWriteValM[31:0] & HEDELEG_MASK[31:0];
-    if (WriteHEDELEGHM) NextHEDELEG[63:32] = CSRWriteValM[31:0] & HEDELEG_MASK[63:32];
+  if (P.XLEN == 64) begin : hedeleg_update_64
+    always_comb begin
+      NextHEDELEG = HEDELEG_REGW;
+      if (WriteHEDELEGM) NextHEDELEG = CSRWriteValM & HEDELEG_MASK;
+    end
+  end else begin : hedeleg_update_32
+    always_comb begin
+      NextHEDELEG = HEDELEG_REGW;
+      if (WriteHEDELEGM)  NextHEDELEG[31:0]  = CSRWriteValM[31:0] & HEDELEG_MASK[31:0];
+      if (WriteHEDELEGHM) NextHEDELEG[63:32] = CSRWriteValM[31:0] & HEDELEG_MASK[63:32];
+    end
   end
   flopenr #(64) HEDELEGreg(clk, reset, (WriteHEDELEGM | WriteHEDELEGHM), NextHEDELEG, HEDELEG_REGW);
 
@@ -386,18 +393,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
     end
   end
   flopenr #(P.XLEN) HIEreg(clk, reset, (WriteHIEM | WriteVSIEM), NextHIE, HIE_REGW);
-
-  // HVIP: Only bits 2 (VSSIP), 6 (VSTIP), 10 (VSEIP) are writable per spec 7.4.4
-  // VSIP writes can update VSSIP only when hideleg[2] is set.
-  always_comb begin
-    NextHVIP = HVIP_REGW;
-    if (WriteHVIPM) NextHVIP = CSRWriteValM[11:0] & HVIP_MASK;
-    if (WriteVSIPM && HIDELEG_REGW[2]) begin
-      NextHVIP[2] = CSRWriteValM[1]; // SSIP -> VSSIP
-    end
-  end
   flopenr #(12)     HVIPreg(clk, reset, (WriteHVIPM | WriteVSIPM), NextHVIP, HVIP_REGW);
-
   flopenr #(P.XLEN) HGEIEreg(clk, reset, WriteHGEIEM, CSRWriteValM, HGEIE_REGW);
 
   // VSIP/VSIE are aliases of HIP/HIE when delegated; otherwise read-only zero.
@@ -409,13 +405,22 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
     if (HIDELEG_REGW[10]) VSIE_REGW[9] = HIE_REGW[10];
     // LCOFIE not supported; keep bit 13 at 0.
   end
+
+  // HVIP: Only bits 2 (VSSIP), 6 (VSTIP), 10 (VSEIP) are writable per spec 7.4.4
+  // VSIP writes can update VSSIP only when hideleg[2] is set.
   always_comb begin
-    VSIP_REGW = 12'b0;
-    if (HIDELEG_REGW[2])  VSIP_REGW[1] = HIP_PENDING[2];
-    if (HIDELEG_REGW[6])  VSIP_REGW[5] = HIP_PENDING[6];
-    if (HIDELEG_REGW[10]) VSIP_REGW[9] = HIP_PENDING[10];
-    // LCOFIP not supported; keep bit 13 at 0.
+    NextHVIP = HVIP_REGW;
+    if (WriteHVIPM) NextHVIP = (HVIP_REGW & ~HVIP_MASK) | (CSRWriteValM[11:0] & HVIP_MASK);
+    else if (WriteVSIPM) begin
+        NextHVIP[2]  = CSRWriteValM[1];
+        NextHVIP[6]  = CSRWriteValM[5];
+        NextHVIP[10] = CSRWriteValM[9];
+    end
   end
+  flopenr #(12)     HVIPreg(clk, reset, (WriteHVIPM | WriteVSIPM), NextHVIP, HVIP_REGW);
+  assign VSIP_REGW = (HVIP_REGW & HVIP_MASK) >> 1;
+
+  flopenr #(P.XLEN) HGEIEreg(clk, reset, WriteHGEIEM, CSRWriteValM, HGEIE_REGW);
 
   // HTVAL: Written by CSR instructions and by hardware on traps
   assign NextHTVAL = HSTrapM ? NextHtvalM : CSRWriteValM;
@@ -433,7 +438,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   flopenr #(P.XLEN) VSSCRATCHreg(clk, reset, WriteVSSCRATCHM, CSRWriteValM, VSSCRATCH_REGW);
   flopenr #(P.XLEN) VSEPCreg(clk, reset, (VSTrapM | WriteVSEPCM), NextEPCM, VSEPC_REGW);
   // VSCAUSE is WLRL; allow CSR writes to set full VSXLEN value, but let traps override.
-  assign NextVSCAUSE = VSTrapM ? {NextCauseM[4], {(P.XLEN-5){1'b0}}, NextCauseM[3:0]}
+  assign NextVSCAUSE = VSTrapM ? {NextCauseM[5], {(P.XLEN-6){1'b0}}, NextCauseM[4:0]}
                                : CSRWriteValM;
   flopenr #(P.XLEN) VSCAUSEreg(clk, reset, (VSTrapM | WriteVSCAUSEM), NextVSCAUSE, VSCAUSE_REGW);
   flopenr #(P.XLEN) VSTVALreg(clk, reset, (VSTrapM | WriteVSTVALM), NextMtvalM, VSTVAL_REGW);
@@ -452,13 +457,33 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   end else assign VSTIMECMP_REGW = '0;
 
   // Address Translation
-  flopenr #(P.XLEN) HGATPreg(clk, reset, WriteHGATPM, CSRWriteValM, HGATP_REGW);
+  if (P.XLEN == 64) begin : hgatp64
+    logic LegalHgatpModeM;
+    // HGATP Mode is in bits 63:60
+    // Modes: 0=Bare, 8=Sv39x4, 9=Sv48x4, 10=Sv57x4
+    assign LegalHgatpModeM = CSRWriteValM[63:60] == 4'h0 |
+                             (P.SV39_SUPPORTED & CSRWriteValM[63:60] == 4'h8) |
+                             (P.SV48_SUPPORTED & CSRWriteValM[63:60] == 4'h9) |
+                             (P.SV57_SUPPORTED & CSRWriteValM[63:60] == 4'hA);
+
+    // Only allow write if mode is legal. Invalid modes are ignored (WARL behavior: preserve old value)
+    // Alternatively, we could force invalid modes to Bare (0), but preserving old is safer WARL.
+    // However, simplest WARL is often "if invalid, don't write".
+    flopenr #(P.XLEN) HGATPreg(clk, reset, WriteHGATPM & LegalHgatpModeM, CSRWriteValM, HGATP_REGW);
+  end else begin : hgatp32
+    // RV32 HGATP Mode is in bit 31 (0=Bare, 1=Sv32x4)
+    logic LegalHgatpModeM;
+    assign LegalHgatpModeM = CSRWriteValM[31] == 1'b0 |
+                             (P.SV32_SUPPORTED & CSRWriteValM[31] == 1'b1);
+    flopenr #(P.XLEN) HGATPreg(clk, reset, WriteHGATPM & LegalHgatpModeM, CSRWriteValM, HGATP_REGW);
+  end
 
   // Configuration & Timers
   flopenr #(32) HCOUNTERENreg(clk, reset, WriteHCOUNTERENM, CSRWriteValM[31:0], HCOUNTEREN_REGW);
 
   // HENVCFG: Conditional bit masking based on supported features (similar to MENVCFG in csrm.sv)
   // Spec 7.4.5: FIOM[0], ADUE[61], PBMTE[62], STCE[63]
+<<<<<<< HEAD
   always_comb begin
     NextHENVCFG = HENVCFG_REGW;
     if (WriteHENVCFGM) begin
@@ -486,6 +511,49 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
         CSRWriteValM[29] & P.SVADU_SUPPORTED,    // ADUE
         CSRWriteValM[28:0]                       // Reserved
       };
+=======
+  if (P.XLEN == 64) begin : henvcfg_update_64
+    always_comb begin
+      NextHENVCFG = HENVCFG_REGW;
+      if (WriteHENVCFGM) begin
+        NextHENVCFG[31:0] = {
+          CSRWriteValM[31:8], // Reserved bits 31:8
+          CSRWriteValM[7]  & P.ZICBOZ_SUPPORTED,  // CBZE
+          CSRWriteValM[6]  & P.ZICBOM_SUPPORTED,  // CBCFE
+          CSRWriteValM[5:4],                       // CBIE
+          CSRWriteValM[3:1],                       // Reserved
+          CSRWriteValM[0]  & P.S_SUPPORTED & P.VIRTMEM_SUPPORTED  // FIOM
+        };
+        NextHENVCFG[63:32] = {
+          CSRWriteValM[63] & P.SSTC_SUPPORTED,     // STCE
+          CSRWriteValM[62] & P.SVPBMT_SUPPORTED,   // PBMTE
+          CSRWriteValM[61] & P.SVADU_SUPPORTED,    // ADUE
+          CSRWriteValM[60:32]                       // Reserved
+        };
+      end
+    end
+  end else begin : henvcfg_update_32
+    always_comb begin
+      NextHENVCFG = HENVCFG_REGW;
+      if (WriteHENVCFGM) begin
+        NextHENVCFG[31:0] = {
+          CSRWriteValM[31:8], // Reserved bits 31:8
+          CSRWriteValM[7]  & P.ZICBOZ_SUPPORTED,  // CBZE
+          CSRWriteValM[6]  & P.ZICBOM_SUPPORTED,  // CBCFE
+          CSRWriteValM[5:4],                       // CBIE
+          CSRWriteValM[3:1],                       // Reserved
+          CSRWriteValM[0]  & P.S_SUPPORTED & P.VIRTMEM_SUPPORTED  // FIOM
+        };
+      end
+      if (WriteHENVCFGHM) begin
+        NextHENVCFG[63:32] = {
+          CSRWriteValM[31] & P.SSTC_SUPPORTED,     // STCE
+          CSRWriteValM[30] & P.SVPBMT_SUPPORTED,   // PBMTE
+          CSRWriteValM[29] & P.SVADU_SUPPORTED,    // ADUE
+          CSRWriteValM[28:0]                       // Reserved
+        };
+      end
+>>>>>>> 24f6c6b1c (updated exceptions, cleaned up rv32 inconsistencies)
     end
   end
 
@@ -519,7 +587,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
       HENVCFG:    begin LegalAccessM = LegalHAccessM; CSRHReadValM = HENVCFG_REGW[P.XLEN-1:0]; end
       HENVCFGH:   begin LegalAccessM = LegalHAccessM & (P.XLEN == 32); CSRHReadValM = {{(P.XLEN-32){1'b0}}, HENVCFG_REGW[63:32]}; end
       HTVAL:      begin LegalAccessM = LegalHAccessM; CSRHReadValM = HTVAL_REGW; end
-      HIP:        begin LegalAccessM = LegalHAccessM; CSRHReadValM = {{(P.XLEN-12){1'b0}}, ((HVIP_REGW | MIP_REGW) & HIP_MASK)}; end
+      HIP:        begin LegalAccessM = LegalHAccessM; CSRHReadValM = {{(P.XLEN-12){1'b0}}, ((HVIP_REGW) & HIP_MASK)}; end
       HVIP:       begin LegalAccessM = LegalHAccessM; CSRHReadValM = {{(P.XLEN-12){1'b0}}, HVIP_REGW}; end
       HTINST:     begin LegalAccessM = LegalHAccessM; CSRHReadValM = HTINST_REGW; end
       HGATP:      begin LegalAccessM = LegalHAccessM; CSRHReadValM = HGATP_REGW; end
