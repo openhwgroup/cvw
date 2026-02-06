@@ -57,8 +57,6 @@ rvtest_entry_point:
     li   t6, 0        /* x31 */
 
     /* ---- call C entry ---- */
-    #call partial_load_test
-    #call partial_load_store_test
     call main
 
     /* ---- fallthrough to end ---- */
