@@ -126,11 +126,11 @@ build: $(WORK_DIR)/_info Makefile
 .PRECIOUS: %.memfile
 %.memfile: %.elf
 	@echo "[MEM] Generating memfile $@ from $< along with debug files"
-	$(SIZE) -A $< > $<.elf.size
-	$(READELF) -S $< > $<.elf.read
-	$(OBJDUMP) -D $< > $<.elf.objdump
+	$(SIZE) -A $< > $<.size
+	$(READELF) -S $< > $<.read
+	$(OBJDUMP) -D $< > $<.objdump
 	$(ELF2HEX) --bit-width 32 --input $< --output $@
-	extractFunctionRadix.sh $<.elf.objdump
+	extractFunctionRadix.sh $<.objdump
 
 #   Use: make run ELFS="path/to/a.elf path/to/b.elf" [-j]
 .PHONY: run
@@ -286,7 +286,7 @@ clean:
 	$(MAKE) -C $(C_TEST_DIR) clean
 	$(MAKE) -C $(BRINGUP_TEST_DIR) clean
 	rm -rf $(WORK_DIR)
-	rm score.log
+	rm -f score.log
 
 clean-coremark:
 	$(MAKE) -C $(COREMARK_DIR) clean

@@ -54,15 +54,8 @@ rvtest_entry_point:
     li   t5, 0        /* x30 */
     li   t6, 0        /* x31 */
 
-    /* ---- call C entry ---- */
-    #call partial_load_test
-    #call partial_load_store_test
+    /* ---- main entry ---- */
     j main
-
-    /* ---- fallthrough to end ---- */
-    li  t0, 1
-    bne a0, t0, fail
-    j   pass
 
 finish:
     /* write gp (exit code) to tohost and end simulation */
