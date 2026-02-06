@@ -482,36 +482,6 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   flopenr #(32) HCOUNTERENreg(clk, reset, WriteHCOUNTERENM, CSRWriteValM[31:0], HCOUNTEREN_REGW);
 
   // HENVCFG: Conditional bit masking based on supported features (similar to MENVCFG in csrm.sv)
-  // Spec 7.4.5: FIOM[0], ADUE[61], PBMTE[62], STCE[63]
-<<<<<<< HEAD
-  always_comb begin
-    NextHENVCFG = HENVCFG_REGW;
-    if (WriteHENVCFGM) begin
-      NextHENVCFG[31:0] = {
-        CSRWriteValM[31:8], // Reserved bits 31:8
-        CSRWriteValM[7]  & P.ZICBOZ_SUPPORTED,  // CBZE
-        CSRWriteValM[6]  & P.ZICBOM_SUPPORTED,  // CBCFE
-        CSRWriteValM[5:4],                       // CBIE
-        CSRWriteValM[3:1],                       // Reserved
-        CSRWriteValM[0]  & P.S_SUPPORTED & P.VIRTMEM_SUPPORTED  // FIOM
-      };
-      if (P.XLEN == 64) begin
-        NextHENVCFG[63:32] = {
-          CSRWriteValExt[63] & P.SSTC_SUPPORTED,     // STCE
-          CSRWriteValExt[62] & P.SVPBMT_SUPPORTED,   // PBMTE
-          CSRWriteValExt[61] & P.SVADU_SUPPORTED,    // ADUE
-          CSRWriteValExt[60:32]                       // Reserved
-        };
-      end
-    end
-    if (WriteHENVCFGHM) begin
-      NextHENVCFG[63:32] = {
-        CSRWriteValM[31] & P.SSTC_SUPPORTED,     // STCE
-        CSRWriteValM[30] & P.SVPBMT_SUPPORTED,   // PBMTE
-        CSRWriteValM[29] & P.SVADU_SUPPORTED,    // ADUE
-        CSRWriteValM[28:0]                       // Reserved
-      };
-=======
   if (P.XLEN == 64) begin : henvcfg_update_64
     always_comb begin
       NextHENVCFG = HENVCFG_REGW;
@@ -553,7 +523,6 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
           CSRWriteValM[28:0]                       // Reserved
         };
       end
->>>>>>> 24f6c6b1c (updated exceptions, cleaned up rv32 inconsistencies)
     end
   end
 
