@@ -123,7 +123,7 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   ///////////////////////////////////////////
 
   assign IllegalPrivilegedInstrM = PrivilegedM & ~(sretM|mretM|ecallM|ebreakM|wfiM|sfencevmaM);
-  
+
   // Virtual Instruction Exception Detection
   // 1. hfence in VS-mode (VirtModeW & PrivilegedM & (hfencevvmaM | hfencegvmaM))
   // 2. sret in VS-mode when VTSR=1 (VirtModeW & sret & HSTATUS_VTSR) - wait, sretM is suppressed by VTSR logic?
@@ -134,12 +134,12 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   //    IllegalCSRAccessM will be high. We need to distinguish.
   //    Check opcode? CSRRW/RS/RC?
   //    If IllegalCSRAccessM & VirtModeW & HSTATUS_VTVM & (CSRAdr == SATP) -> Virtual Instr.
-  
+
   // Re-deriving raw instruction decodes for fault detection since sretM/sfencevmaM might be gated
   logic is_sret, is_hfence;
   assign is_sret = (InstrM[31:20] == 12'b000100000010) & rs1zeroM;
   assign is_hfence = (InstrM[31:25] == 7'b0010001 | InstrM[31:25] == 7'b0110001) & rdzeroM; // hfence.vvma | hfence.gvma
-  
+
   logic VSTSRFault, VTVMFault, HFenceFault;
   assign VSTSRFault = PrivilegedM & is_sret & VirtModeW & HSTATUS_VTSR;
   assign HFenceFault = PrivilegedM & is_hfence & VirtModeW;
@@ -151,11 +151,11 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   // For VTVM, csr.sv logic handles the illegality, but trap.sv needs to know the Cause.
   // Ideally, csr.sv should report 'VirtualInstructionFault' separate from 'IllegalAccess'.
   // Given constraints, we will handle HFence and SRET here.
-  // For SATP/VTVM: If we can't change csr.sv interface easily to output specific fault type, 
+  // For SATP/VTVM: If we can't change csr.sv interface easily to output specific fault type,
   // we might have to accept Illegal Instruction for SATP/VTVM or move decoding here.
   // Moving decoding: 'satp' is 0x180.
   logic is_satp_access;
-  assign is_satp_access = (InstrM[31:20] == 12'h180); 
+  assign is_satp_access = (InstrM[31:20] == 12'h180);
   assign VTVMFault = PrivilegedM & is_satp_access & VirtModeW & HSTATUS_VTVM;
 
   assign VirtualInstrFaultM = VSTSRFault | HFenceFault | VTVMFault;
