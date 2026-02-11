@@ -4,15 +4,21 @@
 // Demonstrates generating a machine external interrupt using NS16550 UART
 // The UART device is at 0x10000000 and generates PLIC interrupt ID 1
 
+# Following parameter needs to be set based on the UART SRC ID for the DUT
+#.EQU UART_INT_SRC, 10  # For CVW
+.EQU UART_INT_SRC, 1   # For Spike
+
+
 .EQU NS16550_BASE,  0x10000000
 .EQU NS16550_IER,   1              // Interrupt Enable Register offset
 .EQU UART_IER_THRI, 0x02           // Transmitter Holding Register Interrupt enable
 
 .EQU PLIC_BASE,     0x0c000000
-.EQU PLIC_PRIORITY, 0x0c000004     // Priority for interrupt ID 1
+.EQU PLIC_PRIORITY, 0x0c000000     // Priority for interrupt ID 0, used
 .EQU PLIC_ENABLE,   0x0c002000     // Enable bits for context 0 (M-mode hart 0)
 .EQU PLIC_THRESHOLD,0x0c200000     // Threshold for context 0
 .EQU PLIC_CLAIM,    0x0c200004     // Claim/complete for context 0
+
 
 .global rvtest_entry_point
 
@@ -28,14 +34,20 @@ rvtest_entry_point:
     la t0, topoftrapstack
     csrw mscratch, t0       # MSCRATCH holds trap stack pointer
 
+    # set up PMP so user and supervisor mode can access full address space
+    csrw pmpcfg0, 0xF   # configure PMP0 to TOR RWX
+    li t0, 0xFFFFFFFF
+    csrw pmpaddr0, t0   # configure PMP0 top of range to 0xFFFFFFFF to allow all 32-bit addresses
+
+
     # Configure PLIC for interrupt ID 1 (NS16550)
-    li t0, PLIC_PRIORITY
+    li t0, PLIC_BASE
     li t1, 7                # Set priority to 7 (max is based on PLIC_PRIO_BITS)
-    sw t1, 0(t0)            # Set priority for interrupt source 1
+    sw t1, 4*UART_INT_SRC(t0)            # Set priority for interrupt source (offset from base)
 
     li t0, PLIC_ENABLE
-    li t1, 0x2              # Enable interrupt ID 1 (bit 1)
-    sw t1, 0(t0)            # Enable interrupt 1 for context 0
+    li t1, 1<<UART_INT_SRC   # Enable interrupt ID for interrupt source
+    sw t1, 0(t0)             # Enable interrupt 1 for context 0
 
     li t0, PLIC_THRESHOLD
     sw zero, 0(t0)          # Set priority threshold to 0 (accept all priorities)
@@ -83,14 +95,15 @@ trap_handler:
     bgez t0, exception      # if msb is clear, it is an exception
 
 interrupt:                  # must be an external interrupt
-    li t1, PLIC_CLAIM       # address of Claim register
-    lw t0, 0(t1)            # read claim register to get the interrupt ID
-    # t0 should contain 1 (interrupt ID 1 from NS16550)
-    sw t0, 0(t1)            # write it back to Claim register to complete
-
     # Disable the UART interrupt to prevent it from firing again
     li t0, NS16550_BASE
     sb zero, NS16550_IER(t0)  # Clear IER to disable interrupts
+
+    li t1, PLIC_CLAIM       # address of Claim register
+    lw t0, 0(t1)            # read claim register to get the interrupt ID
+    # t0 should contain the interrupt source ID
+    sw t0, 0(t1)            # write it back to Claim register to complete
+
 
     j trap_return           # clean up and return
 
