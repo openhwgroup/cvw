@@ -5,8 +5,8 @@
 // The UART device is at 0x10000000 and generates PLIC interrupt ID 1
 
 # Following parameter needs to be set based on the UART SRC ID for the DUT
-#.EQU UART_INT_SRC, 10  # For CVW
-.EQU UART_INT_SRC, 1   # For Spike
+.EQU UART_INT_SRC_WALLY, 10  # For CVW
+.EQU UART_INT_SRC_SPIKE, 1   # For Spike
 
 
 .EQU NS16550_BASE,  0x10000000
@@ -40,14 +40,15 @@ rvtest_entry_point:
     csrw pmpaddr0, t0   # configure PMP0 top of range to 0xFFFFFFFF to allow all 32-bit addresses
 
 
-    # Configure PLIC for interrupt ID 1 (NS16550)
+    # Configure PLIC for interrupt ID 1 and 10 (NS16550) to support both Wally and Spike
     li t0, PLIC_BASE
     li t1, 7                # Set priority to 7 (max is based on PLIC_PRIO_BITS)
-    sw t1, 4*UART_INT_SRC(t0)            # Set priority for interrupt source (offset from base)
+    sw t1, 4*UART_INT_SRC_WALLY(t0)            # Set priority for interrupt source (offset from base) for Wally
+    sw t1, 4*UART_INT_SRC_SPIKE(t0)            # Set priority for interrupt source (offset from base) for Spike
 
     li t0, PLIC_ENABLE
-    li t1, 1<<UART_INT_SRC   # Enable interrupt ID for interrupt source
-    sw t1, 0(t0)             # Enable interrupt 1 for context 0
+    li t1, (1<<UART_INT_SRC_WALLY | 1<<UART_INT_SRC_SPIKE)   # Enable interrupt ID for interrupt source
+    sw t1, 0(t0)             # Enable interrupt for context 0 for both Wally and Spike interrupt sources
 
     li t0, PLIC_THRESHOLD
     sw zero, 0(t0)          # Set priority threshold to 0 (accept all priorities)
@@ -72,7 +73,7 @@ main:
     # The interrupt should fire here since UART LSR has TEMT set
 
     # Wait a bit for interrupt to occur
-    li t0, 100
+    li t0, 10
 1:  addi t0, t0, -1
     bnez t0, 1b
 
@@ -101,7 +102,6 @@ interrupt:                  # must be an external interrupt
 
     li t1, PLIC_CLAIM       # address of Claim register
     lw t0, 0(t1)            # read claim register to get the interrupt ID
-    # t0 should contain the interrupt source ID
     sw t0, 0(t1)            # write it back to Claim register to complete
 
 
