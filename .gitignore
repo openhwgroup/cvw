@@ -167,7 +167,6 @@ examples/asm/sumtest/sumtest
 examples/asm/example/example
 examples/asm/trap/trap
 examples/asm/etc/pause
-examples/asm/mei/mei
 examples/C/fmul
 examples/exercises/fma16/fma16.sv
 examples/exercises/fma16/fma16_testgen
