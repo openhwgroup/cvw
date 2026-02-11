@@ -2,7 +2,7 @@
 //
 // Written: me@KatherineParry.com
 // Modified: 7/5/2022
-// Modified: 2/11/2026 james.stine@okstate.edu/marcus@infinitymdm.dev 
+// Modified: 2/11/2026 james.stine@okstate.edu/marcus@infinitymdm.dev
 //
 // Purpose: Leading Zero Counter
 //
