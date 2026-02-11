@@ -19,25 +19,17 @@
 .EQU PLIC_THRESHOLD,0x0c200000     // Threshold for context 0
 .EQU PLIC_CLAIM,    0x0c200004     // Claim/complete for context 0
 
-
 .global rvtest_entry_point
 
 rvtest_entry_point:
-    la sp, topofstack       # Initialize stack pointer
     la s6, begin_signature  # s6 points to signature
 
     # Set up trap handler
     la t0, trap_handler
     csrw mtvec, t0          # Initialize MTVEC to trap_handler
-    csrw mideleg, zero      # Don't delegate interrupts
-    csrw medeleg, zero      # Don't delegate exceptions
     la t0, topoftrapstack
     csrw mscratch, t0       # MSCRATCH holds trap stack pointer
 
-    # set up PMP so user and supervisor mode can access full address space
-    csrw pmpcfg0, 0xF   # configure PMP0 to TOR RWX
-    li t0, 0xFFFFFFFF
-    csrw pmpaddr0, t0   # configure PMP0 top of range to 0xFFFFFFFF to allow all 32-bit addresses
 
 
     # Configure PLIC for interrupt ID 1 and 10 (NS16550) to support both Wally and Spike
@@ -59,9 +51,6 @@ rvtest_entry_point:
     csrsi mstatus, 0x8      # Turn on mstatus.MIE global interrupt enable
 
 main:
-    # Change to user mode
-    li a0, 0                # a0 = 0: argument to enter user mode
-    ecall                   # System call to enter user mode
 
     # Trigger NS16550 UART transmitter interrupt
     # The UART starts with transmitter empty, so enabling the
@@ -73,7 +62,7 @@ main:
     # The interrupt should fire here since UART LSR has TEMT set
 
     # Wait a bit for interrupt to occur
-    li t0, 10
+    li t0, 1000
 1:  addi t0, t0, -1
     bnez t0, 1b
 
@@ -153,10 +142,6 @@ begin_signature:
     .fill 6*(XLEN/32),4,0xdeadbeef
 end_signature:
 
-# Initialize stack with room for 512 bytes
-.bss
-    .space 512
-topofstack:
 # And another stack for the trap handler
 .bss
     .space 512
