@@ -11,7 +11,7 @@ TOOLPREFIX ?= riscv64-unknown-elf-
 GCC         ?= $(TOOLPREFIX)gcc
 
 # Intentionally undefined unless caller provides it:
-LINKER     ?=
+LINKER     ?= $(CURDIR)/link.ld
 
 WORK_DIR   ?= $(CURDIR)/work
 
