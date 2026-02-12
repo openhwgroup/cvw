@@ -62,7 +62,8 @@ main:
     # The interrupt should fire here since UART LSR has TEMT set
 
     # Wait a bit for interrupt to occur
-    li t0, 1000
+    # in spike, interrupts are only sampled every 5K instructions or so
+    li t0, 10000
 1:  addi t0, t0, -1
     bnez t0, 1b
 
