@@ -16,7 +16,7 @@ PROCESSOR_TOP 		?= riscvsingle # top-level module name
 PROCESSOR_CONFIG 	?= $(CURDIR)/sample_processor/config
 
 #--trace-all
-SAIL_TRACE_FLAGS 	?=
+SAIL_TRACE_FLAGS 	?= --trace-all
 
 # ----    Synthesis Configuration ---- #
 SYNTH_TECH 			?= sky130 #tsmc28 #tsmc28psyn
@@ -222,7 +222,7 @@ C_test:
 .PHONY: bringup_test
 bringup_test:
 	@$(MAKE) -C $(BRINGUP_TEST_DIR) \
-		XLEN=$(XLEN) ARCH="$(ARCH)" ABI=$(ABI) LINKER=$(LINKER) TOOLPREFIX=$(TOOLPREFIX)
+		XLEN=$(XLEN) ARCH="$(ARCH)" ABI=$(ABI) TOOLPREFIX=$(TOOLPREFIX)
 	@$(MAKE) run ELFS="$(BRINGUP_TEST_DIR)/work/bringup.elf"
 
 # ----  Coremark flow  ---- #
