@@ -1,0 +1,200 @@
+# pma.yaml
+# Describes RISC-V Physical Memory Attributes (PMA) for a platform.
+# See RISC-V Privileged Architectures specification for more details on PMA.
+
+# Required fields:
+# name: A string name for the PMA region.
+# lo: The lower bound of the PMA region, as a hexadecimal string.
+# hi: The upper bound of the PMA region, as a hexadecimal string.
+# attributes: A dictionary of PMA attributes for the region.
+# The following attributes are required:
+#   size: A list of supported access sizes (in bytes) for the region.
+#   read: A boolean indicating if the region is readable.
+#   write: A boolean indicating if the region is writable.
+#   execute: A boolean indicating if the region is executable.
+#   cachable: A boolean indicating if the region is cachable.
+#   coherent: A boolean indicating if the region is coherent.
+#             Writes by one agent to an address in the region are eventually visible to other coherent agents in the system.
+# The following attributes are optional and have default values if not specified:
+#   idempotent_read: A boolean indicating if reads from the region are idempotent (default: same as read)
+#   idempotent_write: A boolean indicating if writes to the region are idempotent (default: same as write)
+#   hptw_read: A boolean indicating if the region supports host page table walks (default: same as read)
+#   hptw_write: A boolean indicating if the region supports host page table walks (default: same as write)
+#   misaligned_scalar: A boolean indicating if the region supports misaligned scalar accesses (default: false)
+#   misaligned_vector: A boolean indicating if the region supports misaligned vector accesses (default: false)
+#   amo: The type of atomic memory operations supported by the region, as a string (default: "AMONone")
+#       Options: "AMONone", "AMOSwap", "AMOLogical", "AMOArithmetic"
+#   reserve: The type of reservation granularity for the region, as a string (default: "RsrvNone")
+#       Options: "RsrvNone", "RsrvNonEventual", "RsrvEventual"
+#   misaligned_atomicity_granule: The granularity (in bytes) for atomic accesses to the region that support misaligned atomics (default: 0, meaning misaligned AMOs are not supported)
+pma_regions:
+  - name: "BOOTROM"
+    lo: "0x0000001000"
+    hi: "0x0000001FFF"
+    attributes:
+      size: [1, 2, 4, 8]
+      read: true
+      write: false
+      execute: true
+      cachable: true
+      coherent: true
+      idempotent_read: true
+      idempotent_write: false
+      hptw_read: true
+      hptw_write: false
+      misaligned_scalar: true
+      misaligned_vector: true
+      amo: AMONone
+      reserve: RsrvNone
+      misaligned_atomicity_granule: 0
+  - name: "SDC"
+    lo: "0x0000012100"
+    hi: "0x000001211F"
+    attributes:
+      size: [4, 8]
+      read: true
+      write: true
+      execute: false
+      cachable: false
+      coherent: false
+      idempotent_read: false
+      idempotent_write: false
+      hptw_read: false
+      hptw_write: false
+      misaligned_scalar: false
+      misaligned_vector: false
+      amo: AMONone
+      Reserve: RsrvNone
+      misaligned_atomicity_granule: 0
+  - name: "CLINT"
+    lo: "0x0002000000"
+    hi: "0x000200FFFF"
+    attributes:
+      size: [1, 2, 4, 8]
+      read: true
+      write: true
+      execute: false
+      cachable: false
+      coherent: false
+      idempotent_read: false
+      idempotent_write: false
+      hptw_read: false
+      hptw_write: false
+      misaligned_scalar: false
+      misaligned_vector: false
+      amo: AMONone
+      Reserve: RsrvNone
+      misaligned_atomicity_granule: 0
+  - name: "PLIC"
+    lo: "0x000C000000"
+    hi: "0x000FFFFFFF"
+    attributes:
+      size: [4]
+      read: true
+      write: true
+      execute: false
+      cachable: false
+      coherent: false
+      idempotent_read: false
+      idempotent_write: false
+      hptw_read: false
+      hptw_write: false
+      misaligned_scalar: false
+      misaligned_vector: false
+      amo: AMONone
+      Reserve: RsrvNone
+      misaligned_atomicity_granule: 0
+  - name: "UART0"
+    lo: "0x0010000000"
+    hi: "0x0010000007"
+    attributes:
+      size: [1]
+      read: true
+      write: true
+      execute: false
+      cachable: false
+      coherent: false
+      idempotent_read: false
+      idempotent_write: false
+      hptw_read: false
+      hptw_write: false
+      misaligned_scalar: false
+      misaligned_vector: false
+      amo: AMONone
+      Reserve: RsrvNone
+      misaligned_atomicity_granule: 0
+  - name: "GPIO"
+    lo: "0x0010060000"
+    hi: "0x00100600FF"
+    attributes:
+      size: [4]
+      read: true
+      write: true
+      execute: false
+      cachable: false
+      coherent: false
+      idempotent_read: false
+      idempotent_write: false
+      hptw_read: false
+      hptw_write: false
+      misaligned_scalar: false
+      misaligned_vector: false
+      amo: AMONone
+      Reserve: RsrvNone
+      misaligned_atomicity_granule: 0
+  - name: "SPI"
+    lo: "0x0010040000"
+    hi: "0x0010040FFF"
+    attributes:
+      size: [4]
+      read: true
+      write: true
+      execute: false
+      cachable: false
+      coherent: false
+      idempotent_read: false
+      idempotent_write: false
+      hptw_read: false
+      hptw_write: false
+      misaligned_scalar: false
+      misaligned_vector: false
+      amo: AMONone
+      Reserve: RsrvNone
+      misaligned_atomicity_granule: 0
+  - name: "UNCORE_RAM"
+    lo: "0x0080000000"
+    hi: "0x008FFFFFFF"
+    attributes:
+      size: [1, 2, 4, 8]
+      read: true
+      write: true
+      execute: true
+      cachable: true
+      coherent: true
+      idempotent_read: true
+      idempotent_write: true
+      hptw_read: true
+      hptw_write: true
+      misaligned_scalar: true
+      misaligned_vector: true
+      amo: AMOArithmetic
+      Reserve: RsrvEventual
+      misaligned_atomicity_granule: 64
+  - name: "Undefined memory inaccessible"
+    lo: "0x0000000000"
+    hi: "0xFFFFFFFFFFFFFFFFFF"
+    attributes:
+      read: false
+      write: false
+      execute: false
+      cachable: false
+      coherent: false
+      idempotent_read: false
+      idempotent_write: false
+      hptw_read: false
+      hptw_write: false
+      misaligned_scalar: false
+      misaligned_vector: false
+      amo: AMONone
+      Reserve: RsrvNone
+      misaligned_atomicity_granule: 0
