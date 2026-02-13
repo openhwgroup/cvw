@@ -39,7 +39,7 @@ pma_regions:
       read: true
       write: false
       execute: true
-      cachable: true
+      cacheable: true
       coherent: true
       idempotent_read: true
       idempotent_write: false
@@ -60,7 +60,7 @@ pma_regions:
       read: true
       write: true
       execute: false
-      cachable: false
+      cacheable: false
       coherent: false
       idempotent_read: false
       idempotent_write: false
@@ -81,7 +81,7 @@ pma_regions:
       read: true
       write: true
       execute: false
-      cachable: false
+      cacheable: false
       coherent: false
       idempotent_read: false
       idempotent_write: false
@@ -102,7 +102,7 @@ pma_regions:
       read: true
       write: true
       execute: false
-      cachable: false
+      cacheable: false
       coherent: false
       idempotent_read: false
       idempotent_write: false
@@ -123,7 +123,7 @@ pma_regions:
       read: true
       write: true
       execute: false
-      cachable: false
+      cacheable: false
       coherent: false
       idempotent_read: false
       idempotent_write: false
@@ -144,7 +144,7 @@ pma_regions:
       read: true
       write: true
       execute: false
-      cachable: false
+      cacheable: false
       coherent: false
       idempotent_read: false
       idempotent_write: false
@@ -165,7 +165,7 @@ pma_regions:
       read: true
       write: true
       execute: false
-      cachable: false
+      cacheable: false
       coherent: false
       idempotent_read: false
       idempotent_write: false
@@ -186,7 +186,7 @@ pma_regions:
       read: true
       write: true
       execute: true
-      cachable: true
+      cacheable: true
       coherent: true
       idempotent_read: true
       idempotent_write: true
@@ -201,12 +201,13 @@ pma_regions:
       misaligned_atomicity_granule: 64
   - name: "Undefined memory inaccessible"
     lo: "0x0000000000"
-    hi: "0xFFFFFFFFFFFFFFFFFF"
+    hi: "0xFFFFFFFFFFFFFFFF"
     attributes:
+      size: [1, 2, 4, 8]
       read: false
       write: false
       execute: false
-      cachable: false
+      cacheable: false
       coherent: false
       idempotent_read: false
       idempotent_write: false
