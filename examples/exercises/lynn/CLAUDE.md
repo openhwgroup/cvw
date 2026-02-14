@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a **competitive RISC-V processor design exercise** within the CORE-V Wally (CVW) repository. Students implement custom RISC-V processors in SystemVerilog, validate them against the RISC-V architecture test suite, benchmark with CoreMark, synthesize with Synopsys Design Compiler, and compete for the lowest composite score.
 
-**Scoring formula:** `Score = (MTIME × Critical_Path_Length)² / Area` — lower is better. This heavily penalizes slow designs (squared execution time) while rewarding small area.
+**Scoring formula:** `Score = 1 / ((MTIME × Critical_Path_Length)^3 / Area)` — lower is better. This heavily penalizes slow designs (squared execution time) while rewarding small area.
 
 ## Environment Setup
 
