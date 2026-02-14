@@ -20,7 +20,7 @@ SAIL_TRACE_FLAGS 	?= --trace-all
 
 # ----    Synthesis Configuration ---- #
 SYNTH_TECH 			?= sky130 #tsmc28 #tsmc28psyn
-SYNTH_TOP 			?= synth_top # change to different module to find critical path of a specific module
+SYNTH_TOP 			?= $(PROCESSOR_TOP) # change to different module to find critical path of a specific module
 
 # ----    Coremark Configuration ---- #
 

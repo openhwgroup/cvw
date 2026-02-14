@@ -10,8 +10,9 @@ SYNTH_TECH 		?= sky130
 PROCESSOR_DIR   ?= $(CURDIR)/sample_processor/src
 INC_DIR       	?= $(CURDIR)/sample_processor/incdir
 
-SYNTH_TOP 		?= synth_top
-SYNTH_FILE 		?= $(CURDIR)/synth_top.sv
+SYNTH_TOP 		?= riscvsingle
+SYNTH_FILES 	?= $(CURDIR)/synth_top.sv
+LIB_FILES 		?= $(CURDIR)/dummy_mem_2ns_32.lib
 
 PROCESSOR_TOP 	?= riscvsingle
 
@@ -19,7 +20,8 @@ SYNTH_MAKE_FLAGS 	?= \
 	OUTPUTBASEDIR=$(WORK_DIR) \
 	NAME=lynn \
 	DESIGN=$(SYNTH_TOP) \
-	SYNTH_FILE=$(SYNTH_FILE) \
+	SYNTH_FILES=$(SYNTH_FILES) \
+	LIB_FILES=$(LIB_FILES) \
 	PROCESSORTOP=$(PROCESSOR_TOP) \
 	INCDIR=$(INC_DIR) \
 	CONFIG=- \
