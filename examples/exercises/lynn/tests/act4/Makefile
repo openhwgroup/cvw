@@ -14,11 +14,11 @@ populate: $(STAMP)
 $(STAMP): Makefile
 	@mkdir -p $(WORK_DIR)
 	@$(MAKE) -C $(RISCV_ARCH_TEST) \
-		CONFIG_FILES=$(RISCV_ARCH_TEST)/config/ref/sail-rv32gc/test_config.yaml \
-		EXTENSIONS=I,Zicntr,Zihpm,Zicsr \
+		CONFIG_FILES=$(RISCV_ARCH_TEST)/config/sail/sail-RVI20U32/test_config.yaml \
+		EXTENSIONS=I,Zicntr,Zihpm,Zicsr,Zmmul \
 		DEBUG=True \
 		--jobs $$(nproc)
-	@cp -r $(RISCV_ARCH_TEST)/work/common/elfs/rv32i/I/* $(WORK_DIR)/
+	@cp -r $(RISCV_ARCH_TEST)/work/sail-RVI20U32/elfs/rv32i/I/* $(WORK_DIR)/
 	@touch $(STAMP)
 
 .PHONY: list-elfs

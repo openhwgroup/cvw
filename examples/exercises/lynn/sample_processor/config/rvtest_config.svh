@@ -9,4 +9,4 @@
 `define XLEN32
 
 // Define relevant addresses
-`define ACCESS_FAULT_ADDRESS 32'h00000000
+`define RVMODEL_ACCESS_FAULT_ADDRESS 32'h00000000
