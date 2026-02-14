@@ -22,10 +22,10 @@ def find_latest_synth_folder(synth_work_dir):
         raise FileNotFoundError(f"Synthesis work directory not found: {synth_work_dir}")
 
     folders = [f for f in os.listdir(synth_work_dir)
-               if os.path.isdir(os.path.join(synth_work_dir, f)) and f.startswith('synth_top')]
+               if os.path.isdir(os.path.join(synth_work_dir, f))]
 
     if not folders:
-        raise FileNotFoundError(f"No folders begining with 'synth_top'found in {synth_work_dir}")
+        raise FileNotFoundError(f"No synthesis folders found in {synth_work_dir}")
 
     # Sort by modification time, get latest
     latest = max(folders, key=lambda f: os.path.getmtime(os.path.join(synth_work_dir, f)))
