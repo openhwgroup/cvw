@@ -8,6 +8,13 @@ import re
 import sys
 from datetime import datetime
 
+COMPLETED_LYNN_STR = "INFO: Test Completed!"
+COMPLETED_SAIL_STR = 'SUCCESS'
+
+# ── Scoring constants (easy to modify) ──────────────────────────────────────
+SCORE_NUMERATOR   = 10 ** 30          # numerator constant
+SCORE_TIME_EXP    = 3                 # exponent on (cycles * critical_path)
+SCORE_AREA_EXP    = 1                 # exponent on area
 
 def find_latest_synth_folder(synth_work_dir):
     """Find the most recently generated synthesis output folder."""
@@ -15,7 +22,7 @@ def find_latest_synth_folder(synth_work_dir):
         raise FileNotFoundError(f"Synthesis work directory not found: {synth_work_dir}")
 
     folders = [f for f in os.listdir(synth_work_dir)
-               if os.path.isdir(os.path.join(synth_work_dir, f)) and f.startswith('synth_top')]
+               if os.path.isdir(os.path.join(synth_work_dir, f))]
 
     if not folders:
         raise FileNotFoundError(f"No synthesis folders found in {synth_work_dir}")
@@ -24,8 +31,23 @@ def find_latest_synth_folder(synth_work_dir):
     latest = max(folders, key=lambda f: os.path.getmtime(os.path.join(synth_work_dir, f)))
     return os.path.join(synth_work_dir, latest)
 
+def parse_timing_report(timing_file):
+    """Parse timing report to extract data arrival time (critical path length in ns)."""
+    if not os.path.isfile(timing_file):
+        raise FileNotFoundError(f"Timing report not found: {timing_file}")
+
+    with open(timing_file) as f:
+        content = f.read()
+
+    # Match the first "data arrival time" line (the positive value before the slack section)
+    match = re.search(r'^\s*data arrival time\s+([\d.]+)', content, re.MULTILINE)
+    if match:
+        return float(match.group(1))
+    else:
+        raise ValueError("Could not find 'data arrival time' in timing report")
+
 def parse_qor_report(qor_file):
-    """Parse QOR (Quality of Results) report to extract timing and area metrics."""
+    """Parse QOR (Quality of Results) report to extract area metrics."""
     if not os.path.isfile(qor_file):
         raise FileNotFoundError(f"QOR report not found: {qor_file}")
 
@@ -33,13 +55,6 @@ def parse_qor_report(qor_file):
 
     with open(qor_file) as f:
         content = f.read()
-
-    # Extract Critical Path Length (in nanoseconds)
-    match = re.search(r'Critical Path Length:\s+([\d.]+)', content)
-    if match:
-        metrics['critical_path_length'] = float(match.group(1))
-    else:
-        raise ValueError("Could not find Critical Path Length in QOR report")
 
     # Extract Total Cell Area (in µm²)
     match = re.search(r'Cell Area:\s+([\d.]+)', content)
@@ -95,7 +110,7 @@ def parse_coremark_log(sim_log_file):
         content = f.read()
 
     # Check for successful run
-    if 'SUCCESS' not in content:
+    if (COMPLETED_LYNN_STR not in content) & (COMPLETED_SAIL_STR not in content):
         raise RuntimeError("Coremark simulation did not complete successfully (no SUCCESS marker)")
 
     metrics['success'] = True
@@ -136,15 +151,12 @@ def parse_coremark_log(sim_log_file):
 
 def compute_score(mtime, critical_path_ns, area_um2):
     """
-    Compute composite score: (MTIME x Critical_Path_Length)^2 / Area
+    Compute composite score: SCORE_NUMERATOR / ((cycles * critical_path)^SCORE_TIME_EXP * area^SCORE_AREA_EXP)
 
-    This metric combines:
-    - Execution time (MTIME x critical path = total execution time in ns)
-    - Squared to heavily penalize slow designs
-    - Normalized by area to reward efficient designs
+    Higher is better. Penalizes slow execution time and large area.
     """
     execution_time_ns = mtime * critical_path_ns
-    score = (execution_time_ns ** 2) / area_um2
+    score = SCORE_NUMERATOR / ((execution_time_ns ** SCORE_TIME_EXP) * (area_um2 ** SCORE_AREA_EXP))
     return score
 
 def main():
@@ -167,18 +179,20 @@ def main():
         # Find latest synthesis folder
         latest_synth_dir = find_latest_synth_folder(synth_work_dir)
         qor_file = os.path.join(latest_synth_dir, "reports", "qor.rep")
+        timing_file = os.path.join(latest_synth_dir, "reports", "timing.rep")
 
         # Parse reports
         synth_metrics = parse_qor_report(qor_file)
+        critical_path_ns = parse_timing_report(timing_file)
 
         # Find coremark log
-        coremark_log = os.path.join(coremark_work_dir, "coremark.bare.riscv.sim.log")
+        coremark_log = os.path.join(coremark_work_dir, "coremark.bare.riscv.elf.sim.log")
         coremark_metrics = parse_coremark_log(coremark_log)
 
         # Compute score
         score = compute_score(
             coremark_metrics['elapsed_mtime'],
-            synth_metrics['critical_path_length'],
+            critical_path_ns,
             synth_metrics['total_area']
         )
 
@@ -196,14 +210,12 @@ def main():
         report.append("-" * 80)
         report.append("FINAL SCORE")
         report.append("-" * 80)
-        score_int = int(score)
-        score_dec = score - score_int
-        report.append(f"Score: {score_int:,}.{int(score_dec * 100):02d}")
-        report.append("  Formula: (MTIME x Critical_Path_Length)^2 / Area")
+        report.append(f"Score: {score:,.2f}")
+        report.append(f"  Formula: {SCORE_NUMERATOR:.0e} / ((cycles x critical_path)^{SCORE_TIME_EXP} x area^{SCORE_AREA_EXP})")
         report.append(f"  MTIME (cycles): {coremark_metrics['elapsed_mtime']:,}")
-        report.append(f"  Critical Path Length (ns): {synth_metrics['critical_path_length']:.6f}")
+        report.append(f"  Critical Path Length (ns): {critical_path_ns:.6f}  [from timing.rep data arrival time]")
         report.append(f"  Total Area (µm²): {synth_metrics['total_area']:,.2f}")
-        report.append(f"  Execution Time (ns): {coremark_metrics['elapsed_mtime'] * synth_metrics['critical_path_length']:,.2f}")
+        report.append(f"  Execution Time (ns): {coremark_metrics['elapsed_mtime'] * critical_path_ns:,.2f}")
         report.append("")
 
         # Coremark diagnostics
@@ -223,7 +235,7 @@ def main():
         report.append("-" * 80)
         report.append("SYNTHESIS TIMING DIAGNOSTICS")
         report.append("-" * 80)
-        report.append(f"Critical Path Length (ns): {synth_metrics['critical_path_length']:.6f}")
+        report.append(f"Critical Path Length (ns): {critical_path_ns:.6f}  [timing.rep data arrival time]")
         report.append(f"Levels of Logic: {synth_metrics['levels_of_logic']}")
         report.append(f"Worst Negative Slack (ns): {synth_metrics['wns']:.6f}")
         report.append(f"Total Negative Slack (ns): {synth_metrics['tns']:.2f}")
@@ -247,12 +259,10 @@ def main():
             f.write(log_content)
 
         # Print score to stdout with exciting formatting
-        score_int = int(score)
-        score_dec = score - score_int
         print("")
         print("╔" + "═" * 78 + "╗")
         print("║" + " " * 78 + "║")
-        print("║" + f"  LYNN PROCESSOR SCORE: {score_int:,}.{int(score_dec * 100):02d}".ljust(78) + "║")
+        print("║" + f"  LYNN PROCESSOR SCORE: {score:,.2f}".ljust(78) + "║")
         print("║" + " " * 78 + "║")
         print("╚" + "═" * 78 + "╝")
         print("")
