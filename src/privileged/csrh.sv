@@ -50,6 +50,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   input  logic [5:0]        NextCauseM,       // Exception/interrupt cause
   input  logic [P.XLEN-1:0] NextMtvalM,       // Value for {v,s,}tval on trap
   input  logic [P.XLEN-1:0] NextHtvalM,       // Value for htval on trap
+  input  logic [31:0]       InstrOrigM,       // Original compressed or uncompressed instruction for mtinst/htinst
 
   output logic [P.XLEN-1:0] CSRHReadValM,
   output logic              IllegalCSRHAccessM,
@@ -63,10 +64,14 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   output logic [11:0]       HIDELEG_REGW,
   output logic [31:0]       HCOUNTEREN_REGW,
   output logic [11:0]       HVIP_REGW,
+  output logic [P.XLEN-1:0] HIE_REGW,
+  output logic [P.XLEN-1:0] HGEIE_REGW,
   output logic [63:0]       HTIMEDELTA_REGW,
   output logic [63:0]       HENVCFG_REGW,
   output logic [P.XLEN-1:0] VSTVEC_REGW,
-  output logic [P.XLEN-1:0] VSEPC_REGW
+  output logic [P.XLEN-1:0] VSEPC_REGW,
+  output logic [P.XLEN-1:0] VSATP_REGW,
+  output logic [P.XLEN-1:0] HGATP_REGW
 );
 
   logic [P.XLEN-1:0] MTINST_REGW;
@@ -80,23 +85,24 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   logic              VSSTATUS_MXR_INT, VSSTATUS_SUM_INT;
   logic              VSSTATUS_SPIE, VSSTATUS_SIE;
   logic [1:0]        VSSTATUS_FS_INT, VSSTATUS_XS, VSSTATUS_UXL, VSSTATUS_VS;
-  logic [P.XLEN-1:0] HIE_REGW;
+
   logic [P.XLEN-1:0] NextHIE;
   logic [P.XLEN-1:0] HIE_WRITE_MASK;
   logic [11:0]       VSIE_REGW;
   // outputs declared above
-  logic [P.XLEN-1:0] HGEIE_REGW;
+
 
   logic [P.XLEN-1:0] HTVAL_REGW;
   logic [P.XLEN-1:0] VSTVAL_REGW;
   logic [11:0]       VSIP_REGW;
   // outputs declared above
   logic [P.XLEN-1:0] HTINST_REGW;
-  logic [P.XLEN-1:0] HGATP_REGW;
+  // logic [P.XLEN-1:0] HGATP_REGW; // output
+  // logic [P.XLEN-1:0] VSATP_REGW; // output
   logic [P.XLEN-1:0] HGEIP_REGW;
   logic [P.XLEN-1:0] VSSCRATCH_REGW;
   logic [P.XLEN-1:0] VSCAUSE_REGW;
-  logic [P.XLEN-1:0] VSATP_REGW;
+  // logic [P.XLEN-1:0] VSATP_REGW; // output
   logic [63:0] VSTIMECMP_REGW;
 
   // Hypervisor CSR Addresses
@@ -212,8 +218,9 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   assign PrivReturnVSM = sretM & (PrivilegeModeW == P.S_MODE) &  VirtModeW;
 
   // mtinst/htinst/mtval2 are derived from the trapped instruction (InstrM); not yet implemented.
-  assign NextMtinstM = CSRWriteValM;
-  assign NextHtinstM = CSRWriteValM;
+  // We write 0 on traps for now, which is spec compliant (indicating transformation not supported).
+  assign NextMtinstM = CSRWriteValM; // Only used for CSR write, trap update handled in reg
+  assign NextHtinstM = CSRWriteValM; // Only used for CSR write, trap update handled in reg
   assign NextMtval2M = '0;
 
   // Write enables for each CSR (from CSR instruction)
@@ -252,7 +259,13 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
 
 
   // MTINST
-  flopenr #(P.XLEN) MTINSTreg(clk, reset, WriteMTINSTM, NextMtinstM, MTINST_REGW);
+  // On TrapToM, we should write the transformed instruction. For now, 0.
+  // On WriteMTINSTM, we write CSRWriteValM.
+  logic [P.XLEN-1:0] NextMTINST_Trap;
+  assign NextMTINST_Trap = TrapM & ~TrapToHSM & ~TrapToVSM ? '0 : MTINST_REGW; // TrapToM
+  flopenr #(P.XLEN) MTINSTreg(clk, reset, WriteMTINSTM | (TrapM & ~TrapToHSM & ~TrapToVSM),
+                              (TrapM & ~TrapToHSM & ~TrapToVSM) ? '0 : NextMtinstM,
+                              MTINST_REGW);
 
   // MTVAL2
   flopenr #(P.XLEN) MTVAL2reg(clk, reset, WriteMTVAL2M, NextMtval2M, MTVAL2_REGW);
@@ -393,8 +406,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
     end
   end
   flopenr #(P.XLEN) HIEreg(clk, reset, (WriteHIEM | WriteVSIEM), NextHIE, HIE_REGW);
-  flopenr #(12)     HVIPreg(clk, reset, (WriteHVIPM | WriteVSIPM), NextHVIP, HVIP_REGW);
-  flopenr #(P.XLEN) HGEIEreg(clk, reset, WriteHGEIEM, CSRWriteValM, HGEIE_REGW);
+
 
   // VSIP/VSIE are aliases of HIP/HIE when delegated; otherwise read-only zero.
   assign HIP_PENDING = (HVIP_REGW | MIP_REGW) & HIP_MASK;
@@ -427,7 +439,8 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   flopenr #(P.XLEN) HTVALreg(clk, reset, (WriteHTVALM | HSTrapM), NextHTVAL, HTVAL_REGW);
 
   // HTINST: Written by CSR instructions and by hardware on traps
-  assign NextHTINST = HSTrapM ? NextHtinstM : CSRWriteValM;
+  // If HSTrapM, write 0 (placeholder). Else write CSR val.
+  assign NextHTINST = HSTrapM ? '0 : CSRWriteValM;
   flopenr #(P.XLEN) HTINSTreg(clk, reset, (WriteHTINSTM | HSTrapM), NextHTINST, HTINST_REGW);
 
   // VS CSRs: Guest-visible S-mode state
@@ -556,7 +569,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
       HENVCFG:    begin LegalAccessM = LegalHAccessM; CSRHReadValM = HENVCFG_REGW[P.XLEN-1:0]; end
       HENVCFGH:   begin LegalAccessM = LegalHAccessM & (P.XLEN == 32); CSRHReadValM = {{(P.XLEN-32){1'b0}}, HENVCFG_REGW[63:32]}; end
       HTVAL:      begin LegalAccessM = LegalHAccessM; CSRHReadValM = HTVAL_REGW; end
-      HIP:        begin LegalAccessM = LegalHAccessM; CSRHReadValM = {{(P.XLEN-12){1'b0}}, ((HVIP_REGW) & HIP_MASK)}; end
+      HIP:        begin LegalAccessM = LegalHAccessM; CSRHReadValM = {{(P.XLEN-12){1'b0}}, HIP_PENDING}; end
       HVIP:       begin LegalAccessM = LegalHAccessM; CSRHReadValM = {{(P.XLEN-12){1'b0}}, HVIP_REGW}; end
       HTINST:     begin LegalAccessM = LegalHAccessM; CSRHReadValM = HTINST_REGW; end
       HGATP:      begin LegalAccessM = LegalHAccessM; CSRHReadValM = HGATP_REGW; end
