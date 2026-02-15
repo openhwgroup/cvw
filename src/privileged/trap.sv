@@ -40,6 +40,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   input  logic [15:0]          MEDELEG_REGW,                                    // exception delegation SR
   input  logic [63:0]          HEDELEG_REGW,                                    // HS->VS exception delegation
   input  logic [11:0]          HIDELEG_REGW,                                    // HS->VS interrupt delegation
+  input  logic [P.XLEN-1:0]    HIE_REGW, HGEIE_REGW,                            // Hypervisor Interrupt Enables
   input  logic                 STATUS_MIE, STATUS_SIE,                          // machine/supervisor interrupt enables
   input  logic                 InstrValidM,                                     // current instruction is valid, not flushed
   input  logic                 CommittedM, CommittedF,                          // LSU/IFU has committed to a bus operation that can't be interrupted
@@ -69,17 +70,21 @@ module trap import cvw::*;  #(parameter cvw_t P) (
 
   assign MIntGlobalEnM = (PrivilegeModeW != P.M_MODE) | STATUS_MIE; // if M ints enabled or lower priv 3.1.9
   assign SIntGlobalEnM = (PrivilegeModeW == P.U_MODE) | ((PrivilegeModeW == P.S_MODE) & STATUS_SIE); // if in lower priv mode, or if S ints enabled and not in higher priv mode 3.1.9
-  assign PendingIntsM  = MIP_REGW & MIE_REGW;
+  assign PendingIntsM  = MIP_REGW & (MIE_REGW | (VirtModeW ? HIE_REGW[11:0] : 12'b0));
   assign IntPendingM   = |PendingIntsM;
   assign Committed     = CommittedM | CommittedF;
   assign EnabledIntsM  = (MIntGlobalEnM ? PendingIntsM & ~MIDELEG_REGW : '0) | (SIntGlobalEnM ? PendingIntsM & MIDELEG_REGW : '0);
   assign ValidIntsM    = Committed ? '0 : EnabledIntsM;
   assign InterruptM    = (|ValidIntsM) & InstrValidM & (~wfiM | wfiW); // suppress interrupt if the memory system has partially processed a request. Delay interrupt until wfi is in the W stage.
   // wfiW is to support possible but unlikely back to back wfi instructions. wfiM would be high in the M stage, while also in the W stage.
-  assign DelegateM     = P.S_SUPPORTED & (InterruptM ? MIDELEG_REGW[CauseM] : MEDELEG_REGW[CauseM]) &
+  /* verilator lint_off WIDTHTRUNC */
+  assign DelegateM     = P.S_SUPPORTED & (InterruptM ? ((CauseM < 12) ? MIDELEG_REGW[CauseM] : 1'b0) : ((CauseM < 16) ? MEDELEG_REGW[CauseM] : 1'b0)) &
                      (PrivilegeModeW == P.U_MODE | PrivilegeModeW == P.S_MODE);
-  assign CauseIdxM     = {2'b0, CauseM};
-  assign HidelegHit    = HIDELEG_REGW[CauseM];
+  /* verilator lint_on WIDTHTRUNC */
+  assign CauseIdxM     = {1'b0, CauseM};
+  /* verilator lint_off WIDTHTRUNC */
+  assign HidelegHit    = (CauseM < 12) ? HIDELEG_REGW[CauseM] : 1'b0;
+  /* verilator lint_on WIDTHTRUNC */
   assign HedelegHit    = HEDELEG_REGW[CauseIdxM];
   assign DelegateToVSM = P.H_SUPPORTED & VirtModeW & DelegateM &
                          (InterruptM ? HidelegHit : HedelegHit);
@@ -127,7 +132,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
     else if (InstrMisalignedFaultM)    CauseM = 5'd0;
     // coverage on
     else if (BreakpointFaultM)         CauseM = 5'd3;
-    else if (EcallFaultM)              CauseM = {3'b0, 2'b10, PrivilegeModeW};
+    else if (EcallFaultM)              CauseM = {1'b0, 2'b10, PrivilegeModeW};
     else if (StoreAmoMisalignedFaultM & ~P.ZICCLSM_SUPPORTED) CauseM = 5'd6;  // misaligned faults are higher priority if they always are taken
     else if (LoadMisalignedFaultM & ~P.ZICCLSM_SUPPORTED)     CauseM = 5'd4;
     else if (StoreAmoPageFaultM)       CauseM = 5'd15;

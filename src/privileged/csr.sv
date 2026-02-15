@@ -38,6 +38,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0]        PCM,                       // program counter, next PC going to trap/return logic
   input  logic [P.XLEN-1:0]        PCSpillM,                  // program counter, next PC going to trap/return logic aligned after an instruction spill
   input  logic [P.XLEN-1:0]        SrcAM, IEUAdrxTvalM,       // SrcA and memory address from IEU
+  input  logic [P.PA_BITS-1:0]     PAdrM,                     // Physical address from LSU
   input  logic                     CSRReadM, CSRWriteM,       // read or write CSR
   input  logic                     TrapM,                     // trap is occurring
   input  logic                     TrapToM, TrapToHSM, TrapToVSM,// resolved trap target
@@ -84,6 +85,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   output logic [15:0]              MEDELEG_REGW,
   output logic [63:0]              HEDELEG_REGW,
   output logic [11:0]              HIDELEG_REGW,
+  output logic [P.XLEN-1:0]        HIE_REGW, HGEIE_REGW,
   output logic [P.XLEN-1:0]        SATP_REGW,
   output logic [11:0]              MIP_REGW, MIE_REGW, MIDELEG_REGW,
   output logic                     STATUS_MIE, STATUS_SIE,
@@ -127,6 +129,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic                    UngatedCSRMWriteM;
   logic                    WriteFRMM, SetOrWriteFFLAGSM;
   logic [P.XLEN-1:0]       UnalignedNextEPCM, NextEPCM, NextMtvalM;
+  logic [P.XLEN-1:0]       NextHtvalM; // Value for htval on trap
   logic [5:0]              NextCauseM;
   logic [11:0]             CSRAdrM_In, CSRAdrM;
   logic                    IllegalCSRCAccessM, IllegalCSRMAccessM, IllegalCSRSAccessM, IllegalCSRUAccessM;
@@ -143,6 +146,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic [63:0]             MENVCFG_REGW;
   logic [63:0]             HENVCFG_REGW;
   logic [P.XLEN-1:0]       SENVCFG_REGW;
+  logic [P.XLEN-1:0]       SATP_REGW_INT, VSATP_REGW, HGATP_REGW; // Internal SATP and Hypervisor ATPs
   logic                    ENVCFG_STCE; // supervisor timer counter enable
   logic                    ENVCFG_FIOM; // fence implies io (presently not used)
   logic                    TrapGVAM;
@@ -177,7 +181,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   // Identify traps that write a guest virtual address to {m,s}tval.
   always_comb
     case (CauseM)
-      4'd0, 4'd1, 4'd3, 4'd4, 4'd5, 4'd6, 4'd7, 4'd12, 4'd13, 4'd15: CauseWritesTvalM = 1'b1;
+      5'd0, 5'd1, 5'd3, 5'd4, 5'd5, 5'd6, 5'd7, 5'd12, 5'd13, 5'd15: CauseWritesTvalM = 1'b1;
       default: CauseWritesTvalM = 1'b0;
     endcase
 
@@ -200,7 +204,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     logic VectoredM;
     logic [P.XLEN-1:0] TVecPlusCauseM;
     assign VectoredM = InterruptM & (TVecM[1:0] == 2'b01);
-    assign TVecPlusCauseM = {TVecAlignedM[P.XLEN-1:6], CauseM, 2'b00}; // 64-byte alignment allows concatenation rather than addition
+    assign TVecPlusCauseM = {TVecAlignedM[P.XLEN-1:7], CauseM, 2'b00}; // 64-byte alignment allows concatenation rather than addition
     mux2 #(P.XLEN) trapvecmux(TVecAlignedM, TVecPlusCauseM, VectoredM, TrapVectorM);
   end else
     assign TrapVectorM = TVecAlignedM; // unvectored interrupt handler can be at any word-aligned address. This is called Sstvecd
@@ -320,7 +324,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
       .CSRWriteValM, .PrivilegeModeW,
       .CSRSReadValM, .STVEC_REGW, .SEPC_REGW,
       .SCOUNTEREN_REGW,
-      .SATP_REGW, .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MTIME_CLINT, .STCE,
+      .SATP_REGW(SATP_REGW_INT), .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MTIME_CLINT, .STCE,
       .WriteSSTATUSM, .IllegalCSRSAccessM, .STimerInt, .SENVCFG_REGW);
   end else begin
     assign WriteSSTATUSM = 1'b0;
@@ -328,7 +332,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign SEPC_REGW = '0;
     assign STVEC_REGW = '0;
     assign SCOUNTEREN_REGW = '0;
-    assign SATP_REGW = '0;
+    assign SATP_REGW_INT = '0;
     assign IllegalCSRSAccessM = 1'b1;
     assign STimerInt = '0;
     assign SENVCFG_REGW = '0;
@@ -339,13 +343,13 @@ module csr import cvw::*;  #(parameter cvw_t P) (
       .CSRHWriteM, .CSRWriteM, .CSRAdrM, .CSRWriteValM,
       .PrivilegeModeW, .VirtModeW, .FRegWriteM, .WriteFRMM, .SetOrWriteFFLAGSM,
       .TrapGVAM, .VSCSRDirectM, .MIP_REGW,
-      .TrapM, .TrapToHSM, .TrapToVSM, .sretM, .InstrM,
-      .NextEPCM, .NextCauseM, .NextMtvalM, .NextHtvalM(NextMtvalM),
+      .TrapM, .TrapToHSM, .TrapToVSM, .sretM, .InstrM, .InstrOrigM,
+      .NextEPCM, .NextCauseM, .NextMtvalM, .NextHtvalM,
       .CSRHReadValM, .IllegalCSRHAccessM,
       .HSTATUS_SPV, .HSTATUS_VTSR, .HSTATUS_VTW, .HSTATUS_VTVM,
       .HSTATUS_VSBE, .VSSTATUS_SPP, .VSSTATUS_SUM, .VSSTATUS_MXR, .VSSTATUS_UBE, .VSSTATUS_FS,
-      .HEDELEG_REGW, .HIDELEG_REGW, .HCOUNTEREN_REGW, .HVIP_REGW, .HTIMEDELTA_REGW, .HENVCFG_REGW,
-      .VSTVEC_REGW, .VSEPC_REGW);
+      .HEDELEG_REGW, .HIDELEG_REGW, .HIE_REGW, .HGEIE_REGW, .HCOUNTEREN_REGW, .HVIP_REGW, .HTIMEDELTA_REGW, .HENVCFG_REGW,
+      .VSTVEC_REGW, .VSEPC_REGW, .VSATP_REGW, .HGATP_REGW);
   end else begin: no_csrh
     assign CSRHReadValM = '0;
     assign IllegalCSRHAccessM = 1'b1;
@@ -361,12 +365,34 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign VSSTATUS_FS = '0;
     assign HEDELEG_REGW = '0;
     assign HIDELEG_REGW = '0;
+    assign HIE_REGW = '0;
+    assign HGEIE_REGW = '0;
     assign HCOUNTEREN_REGW = '0;
     assign HVIP_REGW = '0;
     assign HTIMEDELTA_REGW = '0;
     assign HENVCFG_REGW = '0;
     assign VSTVEC_REGW = '0;
     assign VSEPC_REGW = '0;
+    assign VSATP_REGW = '0;
+    assign HGATP_REGW = '0;
+  end
+
+  // SATP Mux
+  if (P.H_SUPPORTED) begin: satp_mux
+      mux2 #(P.XLEN) satpmux(SATP_REGW_INT, VSATP_REGW, VirtModeW, SATP_REGW);
+  end else begin: satp_nomux
+      assign SATP_REGW = SATP_REGW_INT;
+  end
+
+  // NextHtvalM Logic
+  // Guest page faults (12, 13, 15) write GPA >> 2 to htval
+  always_comb begin
+      NextHtvalM = NextMtvalM; // Default to standard mtval
+      if (P.H_SUPPORTED & TrapToHSM) begin
+          if (CauseM == 12 || CauseM == 13 || CauseM == 15) begin
+             NextHtvalM = {{(P.XLEN-P.PA_BITS+2){1'b0}}, PAdrM[P.PA_BITS-1:2]};
+          end
+      end
   end
 
   // Effective status bits for VS-mode
