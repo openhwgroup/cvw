@@ -156,7 +156,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic [1:0]              VSSTATUS_FS;
   logic                    HSTATUS_VSBE;
   logic [31:0]             HCOUNTEREN_REGW;
-  logic [11:0]             HVIP_REGW;
+  logic [11:0]             HVIP_REGW, HIP_MIP_REGW;
   logic [63:0]             HTIMEDELTA_REGW;
   logic                    CSRHWriteM;
   logic [P.XLEN-1:0]       CSRHReadValM;
@@ -291,7 +291,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   csri #(P) csri(.clk, .reset,
     .CSRMWriteM, .CSRSWriteM, .CSRWriteValM, .CSRAdrM,
     .MExtInt, .SExtInt, .MTimerInt, .STimerInt, .MSwInt,
-    .HVIP_REGW,
+    .HIP_MIP_REGW,
     .MIDELEG_REGW, .ENVCFG_STCE, .MIP_REGW, .MIE_REGW, .MIP_REGW_writeable);
 
   csrsr #(P) csrsr(.clk, .reset, .StallW,
@@ -342,13 +342,15 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     csrh #(P) csrh(.clk, .reset,
       .CSRHWriteM, .CSRWriteM, .CSRAdrM, .CSRWriteValM,
       .PrivilegeModeW, .VirtModeW, .FRegWriteM, .WriteFRMM, .SetOrWriteFFLAGSM,
-      .TrapGVAM, .VSCSRDirectM, .MIP_REGW,
+      .TrapGVAM, .VSCSRDirectM, .MTIME_CLINT,
+      .STATUS_TVM, .MCOUNTEREN_TM(MCOUNTEREN_REGW[1]),
+      .MENVCFG_STCE(MENVCFG_REGW[63]), .MENVCFG_PBMTE(MENVCFG_REGW[62]), .MENVCFG_ADUE(MENVCFG_REGW[61]),
       .TrapM, .TrapToHSM, .TrapToVSM, .sretM, .InstrM, .InstrOrigM,
       .NextEPCM, .NextCauseM, .NextMtvalM, .NextHtvalM,
       .CSRHReadValM, .IllegalCSRHAccessM,
       .HSTATUS_SPV, .HSTATUS_VTSR, .HSTATUS_VTW, .HSTATUS_VTVM,
       .HSTATUS_VSBE, .VSSTATUS_SPP, .VSSTATUS_SUM, .VSSTATUS_MXR, .VSSTATUS_UBE, .VSSTATUS_FS,
-      .HEDELEG_REGW, .HIDELEG_REGW, .HIE_REGW, .HGEIE_REGW, .HCOUNTEREN_REGW, .HVIP_REGW, .HTIMEDELTA_REGW, .HENVCFG_REGW,
+      .HEDELEG_REGW, .HIDELEG_REGW, .HIE_REGW, .HGEIE_REGW, .HCOUNTEREN_REGW, .HVIP_REGW, .HIP_MIP_REGW, .HTIMEDELTA_REGW, .HENVCFG_REGW,
       .VSTVEC_REGW, .VSEPC_REGW, .VSATP_REGW, .HGATP_REGW);
   end else begin: no_csrh
     assign CSRHReadValM = '0;
@@ -369,6 +371,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign HGEIE_REGW = '0;
     assign HCOUNTEREN_REGW = '0;
     assign HVIP_REGW = '0;
+    assign HIP_MIP_REGW = '0;
     assign HTIMEDELTA_REGW = '0;
     assign HENVCFG_REGW = '0;
     assign VSTVEC_REGW = '0;
@@ -385,11 +388,11 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   end
 
   // NextHtvalM Logic
-  // Guest page faults (12, 13, 15) write GPA >> 2 to htval
+  // Guest page faults (20, 21, 23) write GPA >> 2 to htval.
   always_comb begin
       NextHtvalM = NextMtvalM; // Default to standard mtval
       if (P.H_SUPPORTED & TrapToHSM) begin
-          if (CauseM == 12 || CauseM == 13 || CauseM == 15) begin
+          if (CauseM == 20 || CauseM == 21 || CauseM == 23) begin
              NextHtvalM = {{(P.XLEN-P.PA_BITS+2){1'b0}}, PAdrM[P.PA_BITS-1:2]};
           end
       end
@@ -449,9 +452,10 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   end
 
    // Broadcast appropriate environment configuration based on privilege mode
-  assign ENVCFG_STCE =  (P.H_SUPPORTED & VirtModeW) ? HENVCFG_REGW[63] : MENVCFG_REGW[63]; // supervisor timer counter enable
-  assign ENVCFG_PBMTE = (P.H_SUPPORTED & VirtModeW) ? HENVCFG_REGW[62] : MENVCFG_REGW[62]; // page-based memory types enable
-  assign ENVCFG_ADUE  = (P.H_SUPPORTED & VirtModeW) ? HENVCFG_REGW[61] : MENVCFG_REGW[61]; // Hardware A/D Update enable
+  // menvcfg constrains corresponding henvcfg bits when V=1.
+  assign ENVCFG_STCE =  (P.H_SUPPORTED & VirtModeW) ? (HENVCFG_REGW[63] & MENVCFG_REGW[63]) : MENVCFG_REGW[63];
+  assign ENVCFG_PBMTE = (P.H_SUPPORTED & VirtModeW) ? (HENVCFG_REGW[62] & MENVCFG_REGW[62]) : MENVCFG_REGW[62];
+  assign ENVCFG_ADUE  = (P.H_SUPPORTED & VirtModeW) ? (HENVCFG_REGW[61] & MENVCFG_REGW[61]) : MENVCFG_REGW[61];
   assign ENVCFG_CBE =   (PrivilegeModeW == P.M_MODE) ? 4'b1111 :
                         (PrivilegeModeW == P.S_MODE | !P.S_SUPPORTED) ? ((P.H_SUPPORTED & VirtModeW) ? HENVCFG_REGW[7:4] : MENVCFG_REGW[7:4]) :
                                                                        (((P.H_SUPPORTED & VirtModeW) ? HENVCFG_REGW[7:4] : MENVCFG_REGW[7:4]) & SENVCFG_REGW[7:4]);

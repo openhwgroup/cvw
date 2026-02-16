@@ -177,6 +177,9 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
     end else
       CounterAllowedM = CounterEnM & (!P.S_SUPPORTED | PrivilegeModeW == P.S_MODE | SCounterEnM);
 
+    // TODO: Distinguish virtual-instruction vs illegal-instruction fault class for
+    // counter access denials in V modes per hypervisor spec (hcounteren/scounteren rules).
+
     if (CounterAllowedM) begin
       if (CSRAdrM >= MHPMEVENTBASE & CSRAdrM <= MHPMEVENTLAST) begin
         CSRCReadValM = '0; // mphmevent[3:31] tied to read-only zero

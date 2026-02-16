@@ -57,6 +57,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   logic                        Committed;                                       // LSU or IFU has committed to a bus operation that can't be interrupted
   logic                        BothInstrAccessFaultM, BothInstrPageFaultM;      // instruction or HPTW ITLB fill caused an Instruction Access Fault
   logic [11:0]                 PendingIntsM, ValidIntsM, EnabledIntsM;          // interrupts are pending, valid, or enabled
+  // TODO: Extend interrupt vectors to include bit 12 (SGEI) and bit 13 (LCOFI) when those sources are implemented.
   logic                        DelegateToVSM;                                  // trap delegated from HS to VS
   logic [5:0]                  CauseIdxM;                                      // cause index for 64-bit delegation CSRs
   logic                        HidelegHit, HedelegHit;
@@ -70,7 +71,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
 
   assign MIntGlobalEnM = (PrivilegeModeW != P.M_MODE) | STATUS_MIE; // if M ints enabled or lower priv 3.1.9
   assign SIntGlobalEnM = (PrivilegeModeW == P.U_MODE) | ((PrivilegeModeW == P.S_MODE) & STATUS_SIE); // if in lower priv mode, or if S ints enabled and not in higher priv mode 3.1.9
-  assign PendingIntsM  = MIP_REGW & (MIE_REGW | (VirtModeW ? HIE_REGW[11:0] : 12'b0));
+  assign PendingIntsM  = MIP_REGW & (MIE_REGW | (P.H_SUPPORTED ? HIE_REGW[11:0] : 12'b0));
   assign IntPendingM   = |PendingIntsM;
   assign Committed     = CommittedM | CommittedF;
   assign EnabledIntsM  = (MIntGlobalEnM ? PendingIntsM & ~MIDELEG_REGW : '0) | (SIntGlobalEnM ? PendingIntsM & MIDELEG_REGW : '0);
@@ -123,6 +124,9 @@ module trap import cvw::*;  #(parameter cvw_t P) (
     else if (ValidIntsM[9])            CauseM = 5'd9;  // Supervisor External Int
     else if (ValidIntsM[1])            CauseM = 5'd1;  // Supervisor Sw Int
     else if (ValidIntsM[5])            CauseM = 5'd5;  // Supervisor Timer Int
+    else if (P.H_SUPPORTED & ValidIntsM[10]) CauseM = 5'd10; // Virtual Supervisor External Int
+    else if (P.H_SUPPORTED & ValidIntsM[2])  CauseM = 5'd2;  // Virtual Supervisor Software Int
+    else if (P.H_SUPPORTED & ValidIntsM[6])  CauseM = 5'd6;  // Virtual Supervisor Timer Int
     else if (BothInstrPageFaultM)      CauseM = 5'd12;
     else if (VirtualInstrFaultM)       CauseM = 5'd22; // Virtual Instruction Fault
     else if (BothInstrAccessFaultM)    CauseM = 5'd1;
@@ -132,9 +136,11 @@ module trap import cvw::*;  #(parameter cvw_t P) (
     else if (InstrMisalignedFaultM)    CauseM = 5'd0;
     // coverage on
     else if (BreakpointFaultM)         CauseM = 5'd3;
-    else if (EcallFaultM)              CauseM = {1'b0, 2'b10, PrivilegeModeW};
+    else if (EcallFaultM)              CauseM = (VirtModeW & (PrivilegeModeW == P.S_MODE)) ? 5'd10
+                                                                                            : {1'b0, 2'b10, PrivilegeModeW};
     else if (StoreAmoMisalignedFaultM & ~P.ZICCLSM_SUPPORTED) CauseM = 5'd6;  // misaligned faults are higher priority if they always are taken
     else if (LoadMisalignedFaultM & ~P.ZICCLSM_SUPPORTED)     CauseM = 5'd4;
+    // TODO: Add guest-page-fault cause generation (20/21/23) when two-stage translation fault signals are integrated.
     else if (StoreAmoPageFaultM)       CauseM = 5'd15;
     else if (LoadPageFaultM)           CauseM = 5'd13;
     else if (StoreAmoAccessFaultM)     CauseM = 5'd7;
