@@ -17,7 +17,7 @@
 // either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
-#include "rvmodel_macros.h"
+#include "model_test.h"
 #include "arch_test.h"
 RVTEST_ISA("RV64IFDQZfh_Zicsr")
 

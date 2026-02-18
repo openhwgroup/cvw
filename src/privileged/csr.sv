@@ -52,7 +52,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic [4:0]               SetFflagsM,                // Set floating point flag bits in FCSR
   input  logic [1:0]               NextPrivilegeModeM,        // STATUS bits updated based on next privilege mode
   input  logic [1:0]               PrivilegeModeW,            // current privilege mode
-  input  logic [3:0]               CauseM,                    // Trap cause
+  input  logic [4:0]               CauseM,                    // Trap cause
   input  logic                     SelHPTW,                   // hardware page table walker active, so base endianness on supervisor mode
   // inputs for performance counters
   input  logic                     LoadStallD, StoreStallD,
@@ -161,7 +161,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     logic VectoredM;
     logic [P.XLEN-1:0] TVecPlusCauseM;
     assign VectoredM = InterruptM & (TVecM[1:0] == 2'b01);
-    assign TVecPlusCauseM = {TVecAlignedM[P.XLEN-1:6], CauseM, 2'b00}; // 64-byte alignment allows concatenation rather than addition
+    assign TVecPlusCauseM = {TVecAlignedM[P.XLEN-1:6], CauseM[3:0], 2'b00}; // 64-byte alignment allows concatenation rather than addition
     mux2 #(P.XLEN) trapvecmux(TVecAlignedM, TVecPlusCauseM, VectoredM, TrapVectorM);
   end else
     assign TrapVectorM = TVecAlignedM; // unvectored interrupt handler can be at any word-aligned address. This is called Sstvecd
