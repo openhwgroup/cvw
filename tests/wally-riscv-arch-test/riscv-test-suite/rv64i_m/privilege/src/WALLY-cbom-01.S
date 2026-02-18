@@ -23,7 +23,7 @@
 # This assembly file tests the cbo.inval, cbo.clean, and cbo.flush instructions of the RISC-V Zicbom extension.
 #
 
-#include "rvmodel_macros.h"
+#include "model_test.h"
 #include "arch_test.h"
 RVTEST_ISA("RV64I_Zicbom")
 # Test code region

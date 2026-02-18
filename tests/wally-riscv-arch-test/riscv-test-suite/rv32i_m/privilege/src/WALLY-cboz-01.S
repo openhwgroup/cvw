@@ -20,7 +20,7 @@
 # This assembly file tests the cbo.zero instruction of the RISC-V Zicboz extension.
 #
 
-#include "rvmodel_macros.h"
+#include "model_test.h"
 #include "arch_test.h"
 RVTEST_ISA("RV32I_Zicboz_Zicbom")
 # Test code region
