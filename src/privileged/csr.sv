@@ -113,7 +113,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic                    UngatedCSRMWriteM;
   logic                    WriteFRMM, SetOrWriteFFLAGSM;
   logic [P.XLEN-1:0]       UnalignedNextEPCM, NextEPCM, NextMtvalM;
-  logic [4:0]              NextCauseM;
+  logic [5:0]              NextCauseM;
   logic [11:0]             CSRAdrM;
   logic                    IllegalCSRCAccessM, IllegalCSRMAccessM, IllegalCSRSAccessM, IllegalCSRUAccessM;
   logic                    InsufficientCSRPrivilegeM;
@@ -202,7 +202,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   assign CSRAdrM = InstrM[31:20];
   assign UnalignedNextEPCM = TrapM ? PCM : CSRWriteValM;
   assign NextEPCM = P.ZCA_SUPPORTED ? {UnalignedNextEPCM[P.XLEN-1:1], 1'b0} : {UnalignedNextEPCM[P.XLEN-1:2], 2'b00}; // 3.1.15 alignment
-  assign NextCauseM = TrapM ? {InterruptM, CauseM}: {CSRWriteValM[P.XLEN-1], CSRWriteValM[3:0]};
+  assign NextCauseM = TrapM ? {InterruptM, CauseM}: {CSRWriteValM[P.XLEN-1], CSRWriteValM[4:0]};
   assign NextMtvalM = TrapM ? NextFaultMtvalM : CSRWriteValM;
   assign UngatedCSRMWriteM = CSRWriteM & (PrivilegeModeW == P.M_MODE);
   assign CSRMWriteM = UngatedCSRMWriteM & InstrValidNotFlushedM;
