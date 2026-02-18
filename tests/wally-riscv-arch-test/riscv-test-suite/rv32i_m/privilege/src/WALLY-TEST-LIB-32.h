@@ -21,7 +21,7 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-#include "model_test.h"
+#include "rvmodel_macros.h"
 #include "arch_test.h"
 
 .macro INIT_TESTS
