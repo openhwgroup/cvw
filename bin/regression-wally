@@ -407,9 +407,9 @@ def search_log_for_text(text, grepfile):
         nonrvcp_suites = ["buildroot", "all_lints"]
         if success and not passed:
             if not any(s in grepfile for s in nonrvcp_suites):
-                print(f"{bcolors.WARNING}{grepfile}: WARNING Success string found but no {rvcp_summary} PASSED{bcolors.ENDC}")
-        if not success:
-            print(f"{bcolors.WARNING}{grepfile}: WARNING No success string found in log file{bcolors.ENDC}")
+                print(f"{bcolors.WARNING}{grepfile}: WARNING '{text}'found but no {rvcp_summary} PASSED{bcolors.ENDC}")
+        if not success and passed:
+            print(f"{bcolors.WARNING}{grepfile}: WARNING No success string '{text}' found in log file{bcolors.ENDC}")
         return 0 if success else 1
 
 
