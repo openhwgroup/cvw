@@ -58,6 +58,7 @@ standard_tests = [
                     "arch64zba",  "arch64zbb",  "arch64zbc", "arch64zbs", "arch64vm_sv39", "arch64vm_sv48", "arch64vm_sv57", "arch64pmp", "arch64zicboz"]]
     ]
 
+
 # Separate test for short buildroot run through OpenSBI UART output
 tests_buildrootshort = [
                     ["buildroot", ["buildroot"], "--args +INSTR_LIMIT=1600000", # Instruction limit gets to first OpenSBI UART output
@@ -403,8 +404,10 @@ def search_log_for_text(text, grepfile):
             if "error:" in line.lower():
                 print(f"{bcolors.FAIL}{grepfile}: {line.strip()}{bcolors.ENDC}")
                 success = False
+        nonrvcp_suites = ["buildroot", "all_lints"]
         if success and not passed:
-            print(f"{bcolors.WARNING}{grepfile}: WARNING Success string found but no {rvcp_summary} PASSED{bcolors.ENDC}")
+            if not any(s in grepfile for s in nonrvcp_suites):
+                print(f"{bcolors.WARNING}{grepfile}: WARNING Success string found but no {rvcp_summary} PASSED{bcolors.ENDC}")
         if not success:
             print(f"{bcolors.WARNING}{grepfile}: WARNING No success string found in log file{bcolors.ENDC}")
         return 0 if success else 1
