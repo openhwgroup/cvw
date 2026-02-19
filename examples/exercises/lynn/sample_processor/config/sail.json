@@ -10,19 +10,33 @@
     },
     "xtval_nonzero": {
       "illegal_instruction": true,
-      "breakpoint": true,
+      "hardware_breakpoint": true,
+      "software_breakpoint": true,
       "load_address_misaligned": true,
       "load_access_fault": true,
+      "load_page_fault": true,
       "samo_address_misaligned": true,
       "samo_access_fault": true,
+      "samo_page_fault": true,
       "fetch_address_misaligned": true,
-      "fetch_access_fault": true
+      "fetch_access_fault": true,
+      "fetch_page_fault": true,
+      "reserved_exceptions": false,
+      "software_check": false
+    },
+    "reserved_behavior": {
+      "amocas_odd_register": "AMOCAS_Illegal",
+      "fcsr_rm": "Fcsr_RM_Illegal",
+      "pmpcfg_write_only": "PMP_ClearPermissions",
+      "rv32zdinx_odd_register": "Zdinx_Illegal",
+      "xenvcfg_cbie": "Xenvcfg_ClearPermissions"
     }
   },
   "memory": {
     "pmp": {
       "grain": 0,
       "count": 16,
+      "usable_count": 16,
       "tor_supported": true,
       "na4_supported": true,
       "napot_supported": true
@@ -125,6 +139,7 @@
     },
     "clock_frequency": 1000000000,
     "instructions_per_tick": 2,
+    "reservation_set_size_exp": 6,
     "wfi_is_nop": true
   },
   "extensions": {
@@ -153,6 +168,12 @@
       "supported": false
     },
     "U": {
+      "supported": false
+    },
+    "Zibi": {
+      "supported": false
+    },
+    "Zic64b": {
       "supported": false
     },
     "Zicbom": {
@@ -230,6 +251,9 @@
     "Zfinx": {
       "supported": false
     },
+    "Zdinx": {
+      "supported": false
+    },
     "Zca": {
       "supported": true
     },
@@ -297,6 +321,9 @@
     "Zhinxmin": {
       "supported": false
     },
+    "Zvabd": {
+      "supported": false
+    },
     "Zvfbfmin": {
       "supported": false
     },
@@ -345,8 +372,26 @@
     "Smcntrpmf": {
       "supported": false
     },
+    "Ssqosid": {
+      "supported": false,
+      "rcid_length": 1,
+      "mcid_length": 1
+    },
     "Sstc": {
       "supported": false
+    },
+    "Sstvala": {
+      "supported": false
+    },
+    "Stateen": {
+      "C_readonly_zero": false,
+      "SE0_readonly_zero": false,
+      "Smstateen": {
+        "supported": false
+      },
+      "Ssstateen": {
+        "supported": false
+      }
     },
     "Svinval": {
       "supported": false
