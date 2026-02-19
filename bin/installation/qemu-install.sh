@@ -51,7 +51,7 @@ if check_tool_version $QEMU_VERSION; then
     uv venv --managed-python --python 3.12
     uv pip install sphinx sphinx_rtd_theme pip setuptools
     QEMU_PYTHON="$RISCV/qemu/.venv/bin/python3"
-    ./configure --target-list=riscv64-softmmu --prefix="$RISCV" --python=$QEMU_PYTHON
+    ./configure --target-list=riscv64-softmmu,riscv32-softmmu --prefix="$RISCV" --python=$QEMU_PYTHON
     make -j "${NUM_THREADS}" 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
     make install 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
     if [ "$clean" = true ]; then
