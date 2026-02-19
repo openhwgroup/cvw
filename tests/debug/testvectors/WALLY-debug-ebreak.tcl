@@ -62,14 +62,18 @@ reset halt
 message [read_reg pc]
 message [read_reg dcsr]
 
-set DCSR [read_reg dcsr]
-set DCSRNEW [expr {$DCSR | 2 ** 15}]
-set_reg [list dcsr $DCSRNEW]
-
+#set DCSR [read_reg dcsr]
+#set DCSRNEW [expr {$DCSR | 2 ** 15}]
+#set_reg [list dcsr $DCSRNEW]
+riscv.cpu configure -ebreak halt
 message [read_reg dcsr]
 
 # Reset. Should already be halted once ebreak is hit.
 resume
+
+# NOTE: With polling off, running an extra halt command, even though
+# we expect to halt on an ebreak, is necessary to force OpenOCD to
+# update it's internal tracking state.
 halt
 message [read_reg pc]
 #echo "Printing PC value"
