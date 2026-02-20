@@ -162,7 +162,7 @@ endif
 # Build the vsim mode flags from GUI
 ifeq ($(GUI),1)
   VSIM_MODE_FLAGS :=
-  VSIM_DO := if {[file exists $(WAVES_DO)]} {do $(WAVES_DO)}; run -all
+  VSIM_DO := if {[file exists $(WAVES_DO)]} {do $(WAVES_DO)};
 else
   VSIM_MODE_FLAGS := -c
   VSIM_DO := run -all; quit -f
