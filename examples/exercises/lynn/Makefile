@@ -47,7 +47,7 @@ LINKER			?= $(PROCESSOR_CONFIG)/link.ld
 
 TB_TOP          ?= testbench
 TESTBENCH_FILES ?= $(TESTBENCH_DIR)/testbench.sv $(TESTBENCH_DIR)/ram1p1rwb.sv
-WAVES_DO        ?= $(CURDIR)/waves.do
+WAVES_DO        ?= $(TESTBENCH_DIR)/waves.do
 
 # ---- Repo paths cont ---- #
 COREMARK_DIR 	?= $(CURDIR)/coremark
@@ -162,7 +162,7 @@ endif
 # Build the vsim mode flags from GUI
 ifeq ($(GUI),1)
   VSIM_MODE_FLAGS :=
-  VSIM_DO := if {[file exists $(WAVES_DO)]} {do $(WAVES_DO)}; run -all
+  VSIM_DO := if {[file exists $(WAVES_DO)]} {do $(WAVES_DO)};
 else
   VSIM_MODE_FLAGS := -c
   VSIM_DO := run -all; quit -f
@@ -187,17 +187,11 @@ VSIM_PLUSARGS_BASE  ?= \
 	LOGFILE="$${ELF}.sim.log"; \
 	echo "[RUN] ELF: $$ELF"; \
 	echo "[VSIM] Using memfile $$MEMFILE (log: $$LOGFILE)"; \
-	if [ "$(GUI)" = "1" ]; then \
-	  $(VSIM) $(VSIM_FLAGS) $(VSIM_EXTRA_FLAGS) work.$(TB_TOP) \
-	    $(VSIM_PLUSARGS_BASE) $(VSIM_PLUSARGS_EXTRA) \
-	    -do "$(VSIM_DO)" \
-	    2>&1 | tee "$$LOGFILE"; \
-	else \
-	  $(VSIM) $(VSIM_MODE_FLAGS) $(VSIM_FLAGS) $(VSIM_EXTRA_FLAGS) work.$(TB_TOP) \
-	    $(VSIM_PLUSARGS_BASE) $(VSIM_PLUSARGS_EXTRA) \
-	    -do "$(VSIM_DO)" \
-	    > "$$LOGFILE" 2>&1; \
-	fi
+	$(VSIM) $(VSIM_MODE_FLAGS) $(VSIM_FLAGS) $(VSIM_EXTRA_FLAGS) work.$(TB_TOP) \
+		$(VSIM_PLUSARGS_BASE) $(VSIM_PLUSARGS_EXTRA) \
+		-do "$(VSIM_DO)" \
+		2>&1 | { [ "$(GUI)" = "1" ] && tee "$$LOGFILE" || cat >"$$LOGFILE"; }
+
 
 .PHONY: synth
 synth:
