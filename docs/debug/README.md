@@ -17,7 +17,7 @@ tool interoperability.
 
 ## Note on Spike Debug Compatibility
 
-The current Wally debug implementation does **not** include an initial Debug Module *program buffer* (`progbufsize = 0`). While this is allowed by the RISC-V Debug Specification (which permits implementations to rely on abstract register access instead of a program buffer)  (https://riscv.org/wp-content/uploads/2024/12/riscv-debug-release.pdf), some debugger workflows assume program-buffer execution is available.
+The current Wally debug implementation does **not** include an initial Debug Module *program buffer* (`progbufsize = 0`). While this is allowed by the RISC-V Debug Specification (which permits implementations to rely on abstract register access instead of a program buffer), some debugger workflows assume program-buffer execution is available.
 
 A recent Spike update (https://github.com/riscv-software-src/riscv-isa-sim/commit/5397899bb9eddba8c2f87d7d62e6303629ebed90) introduced stricter debug checks, including an assertion (around line 122) that may trigger when debugging a target that does not implement a program buffer.
 
