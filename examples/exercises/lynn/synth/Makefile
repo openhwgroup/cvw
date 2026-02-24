@@ -11,8 +11,8 @@ PROCESSOR_DIR   ?= $(CURDIR)/sample_processor/src
 INC_DIR       	?= $(CURDIR)/sample_processor/incdir
 
 SYNTH_TOP 		?= riscvsingle
-SYNTH_FILES 	?= $(CURDIR)/synth_top.sv
-LIB_FILES 		?= $(CURDIR)/dummy_mem_2ns_32.lib
+SYNTH_FILES 	?=
+LIB_FILES 		?=
 
 PROCESSOR_TOP 	?= riscvsingle
 

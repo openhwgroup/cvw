@@ -54,7 +54,7 @@ $(CONFIG):
 ifeq ($(LYNN), 1)
 	@mkdir -p $(OUTPUTDIR)/hdl
 	@echo "Copying HDL sources into $(OUTPUTDIR)/hdl"
-	@cp -f $(SYNTH_FILES) $(OUTPUTDIR)/hdl/
+# 	@cp -f $(SYNTH_FILES) $(OUTPUTDIR)/hdl/
 # 	@cp -f $(LIB_FILES) $(OUTPUTDIR)/config/
 	@find $(CONFIGDIR) $(HDLDIR) -type f \( -name "*.sv" -o -name "*.svh" -o -name "*.vh" -o -name "*.pkg" \) -exec cp -f {} $(OUTPUTDIR)/hdl \; || true
 else
