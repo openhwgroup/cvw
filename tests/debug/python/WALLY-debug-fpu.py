@@ -8,7 +8,7 @@ import struct
 def f32(x):
     return struct.unpack("<f", struct.pack("<f", x))[0]
 
-def bits(x):
+def fp_hex(x):
     return struct.unpack("<I", struct.pack("<f", x))[0]
 
 # ---- constants from assembly ----
@@ -32,7 +32,7 @@ for i in range(iterations):
 
     print(
         f"iter {i+1}: "
-        f"y = {f1:.10f}   bits=0x{bits(f1):08x}"
+        f"y = {f1:.10f}   hex=0x{fp_hex(f1):08x}"
     )
 
 print("\nReference 1/sqrt(2) =", 1/math.sqrt(2))
