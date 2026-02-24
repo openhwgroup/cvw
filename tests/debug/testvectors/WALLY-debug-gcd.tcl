@@ -1,4 +1,4 @@
-log_output build/log/WALLY-debug-ex.log
+log_output build/log/WALLY-debug-gcd.log
 debug_level 3
 init
 poll off
@@ -36,7 +36,7 @@ proc get_address {filename label} {
 puts [pwd]
 
 # Grab tests
-set objdump_file "build/WALLY-debug-ex.elf.objdump"
+set objdump_file "build/WALLY-debug-gcd.elf.objdump"
 set test1_addr [get_address $objdump_file test1]
 set test_end [get_address $objdump_file test_end]
 
@@ -50,7 +50,7 @@ halt
 puts [reg pc]
 
 # Begin halt/resume cycle to progress test
-set_reg [list t0 15]
+set_reg [list t0 3131961357]
 set_reg [list dpc $test1_addr]
 
 resume

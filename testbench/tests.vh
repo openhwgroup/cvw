@@ -4080,7 +4080,8 @@ string wally64debug[] = '{
   "WALLY-debug-dmactive",
   "WALLY-debug-03",
   "WALLY-debug-fpu",
-  "WALLY-debug-ex"
+  "WALLY-debug-gcd"
+//  "WALLY-debug-ebreak"
 };
 
 string wally64debug_jtag[] = '{
@@ -4089,5 +4090,6 @@ string wally64debug_jtag[] = '{
   "WALLY-debug-dmactive",
   "WALLY-debug-03",
   "WALLY-debug-fpu",
-  "WALLY-debug-ex"
+  "WALLY-debug-gcd"
+//  "WALLY-debug-ebreak"
 };
