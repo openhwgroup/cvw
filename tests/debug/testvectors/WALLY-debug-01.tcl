@@ -1,15 +1,72 @@
 log_output build/log/WALLY-debug-01.log
 debug_level 3
 init
-# Without this line it endlessly polls the processor, cluttering the
-# testvectors.
 poll off
-halt
-set pc1 [lindex [reg pc] 2]
-while {$pc1 != 0x0000000080000000} {
-    set pc1 [lindex [reg pc] 2]
-    puts "STUCK HERE!"
+
+######################################################################
+# Utility functions
+######################################################################
+
+# Utility function for scraping object dump files and grabbing label
+# addresses.
+proc get_address {filename label} {
+    if {[catch {set fd [open $filename r]} err]} {
+        error "Couldn't open $filename: $err"
+    } else {
+        puts "Successfully opened the file $filename"
+    }
+
+    # Iterate over every line and find the match. There should be only
+    # one match.
+    set regex "^(\[0-9a-fA-f\]{16})\\s+<${label}"
+    while {[gets $fd line] != -1} {
+        if {[regexp $regex $line match address]} {
+            # Convert address to OpenOCD format (e.g., 0x80000010)
+            return "0x[string range $address 0 15]"
+        }
+    }
+
+    error "Label not find in $filename: $label"
 }
-set_reg {dpc 0x80000002}
+
+# --------------------------------------------------------------------
+# Set up tests
+# --------------------------------------------------------------------
+# Base name for test
+puts [pwd]
+
+# Grab tests
+set objdump_file "build/WALLY-debug-01.elf.objdump"
+set test1_addr [get_address $objdump_file test1]
+set test_end [get_address $objdump_file test_end]
+
+# --------------------------------------------------------------------
+# Begin tests
+# --------------------------------------------------------------------
+halt
+
+# display current PC for debug purposes. This introduces DMI comands
+# for grabbing the PC value.
+puts [reg pc]
+
+# Begin halt/resume cycle to progress test
+set_reg [list t0 1234]
+set_reg [list dpc $test1_addr]
+
 resume
-#puts "Welp..."
+halt
+
+set_reg [list t0 24]
+set_reg [list dpc $test1_addr]
+
+resume
+halt
+
+set_reg [list t0 31]
+set_reg [list dpc $test1_addr]
+
+halt
+
+set_reg [list dpc $test_end]
+
+resume
