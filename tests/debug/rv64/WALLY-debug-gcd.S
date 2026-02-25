@@ -56,7 +56,6 @@ begin_signature:
    .fill 5*2, 4, 0xdeadbeef
 end_signature:
 
-
 .section .tohost, "aw", @progbits
 .align 6
 .globl tohost
