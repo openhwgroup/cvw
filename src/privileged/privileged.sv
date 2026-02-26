@@ -112,7 +112,8 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   output logic [P.XLEN-1:0] DPC,
   output logic              HaveReset,
   input  logic              HaveResetAck,
-  input  logic              ResetHaltReq
+  input  logic              ResetHaltReq,
+  output logic              ResumeAck
 );
 
   logic [3:0]               CauseM;                                         // trap cause
@@ -134,6 +135,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   logic                     HPTWInstrAccessFaultM;                          // Hardware page table access fault while fetching instruction PTE
   logic                     HPTWInstrPageFaultM;                            // Hardware page table page fault while fetching instruction PTE
   logic                     BreakpointFaultM, EcallFaultM;                  // breakpoint and Ecall traps should retire
+  logic                     EBreakM, EBreakS, EBreakU;
 
   logic                     wfiW;
 
@@ -166,7 +168,9 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .CSRReadValM, .CSRReadValW, .IllegalCSRAccessM, .BigEndianM,
     .DebugMode, .HaltReq, .ResumeReq, .DebugControl, .CSRDebugEnable, .DebugRegWDATA,
     .DebugRegAddr, .DebugRegWrite, .DebugResume, .DPC,
-    .HaveReset, .HaveResetAck, .ResetHaltReq);
+    .HaveReset, .HaveResetAck, .ResetHaltReq, .BreakpointFaultM,
+    .EBreakM, .EBreakS, .EBreakU,
+    .ResumeAck);
 
   // pipeline early-arriving trap sources
   privpiperegs ppr(.clk, .reset, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
@@ -181,5 +185,6 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .LoadPageFaultM, .StoreAmoPageFaultM, .PrivilegeModeW,
     .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW, .STATUS_MIE, .STATUS_SIE,
     .InstrValidM, .CommittedM, .CommittedF,
-    .TrapM, .wfiM, .wfiW, .InterruptM, .ExceptionM, .IntPendingM, .DelegateM, .CauseM);
+    .TrapM, .wfiM, .wfiW, .InterruptM, .ExceptionM, .IntPendingM, .DelegateM, .CauseM,
+    .EBreakM, .EBreakS, .EBreakU);
 endmodule

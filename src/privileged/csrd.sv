@@ -44,7 +44,10 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   output [P.XLEN-1:0]       DPC_REGW,
   output logic              HaveReset,
   input logic               HaveResetAck,
-  input logic               ResetHaltReq
+  input logic               ResetHaltReq,
+  input logic               BreakpointFaultM,
+  output logic              EBreakM, EBreakS, EBreakU,
+  output logic              ResumeAck
 );
 
   localparam DCSR = 12'h7B0;
@@ -57,6 +60,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   dbg_state_e state, state_n;
 
   logic NextHalt;
+  // logic AnyEbreak;
 
   // Write Enables
   logic      WriteDCSR;
@@ -73,6 +77,8 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   // Register Outputs
   //logic [31:0]       DCSR_REGW;
   // logic [P.XLEN-1:0] DPC_REGW;
+
+  logic              DebugBreakM, DebugBreakS, DebugBreakU;
 
   // DCSR Fields
   logic [3:0] debugver;
@@ -102,6 +108,14 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   // Need this for
   logic [2:0] NextCause;     // Cause of halt
   logic       ebreak;
+  logic       BreakModeM, BreakModeS, BreakModeU;
+  assign DebugBreakM = BreakpointFaultM & ebreakm & PrivilegeModeW == P.M_MODE;
+  assign DebugBreakS = BreakpointFaultM & ebreaks & PrivilegeModeW == P.S_MODE;
+  assign DebugBreakU = BreakpointFaultM & ebreaku & PrivilegeModeW == P.U_MODE;
+  assign ebreak = DebugBreakM | DebugBreakS | DebugBreakU;
+  assign EBreakM = ebreakm;
+  assign EBreakS = ebreaks;
+  assign EBreakU = ebreaku;
 
   // NOTE: When set to 0, mprven allows MPRV to be ignored while in
   // DebugMode. This can be added later. For now, tying it to 1
@@ -129,7 +143,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   // Need to assign ebreak appropriately for the combinational logic
   // below. Not sure what signals gets triggered for ebreak.
 
-  assign DCSRWriteValM = CSRDWriteM ?
+  assign DCSRWriteValM = CSRDWriteM & ~NextHalt ?
                          {CSRWriteValM[15], CSRWriteValM[13], CSRWriteValM[12], CSRWriteValM[11], CSRWriteValM[8:6], CSRWriteValM[2], CSRWriteValM[1:0]} :
                          {ebreakm, ebreaks, ebreaku, stepie, NextCause, step, PrivilegeModeW};
 
@@ -140,7 +154,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   ////////////////////////////////////////////////////////////////////
 
   flopenr #(dcsrwidth) DCSRreg(clk, reset, WriteDCSR,
-    {ebreakm, ebreaks, ebreaku, stepie, NextCause, step, PrivilegeModeW},
+    DCSRWriteValM,
     DCSR_REGW);
 
   flopenr #(P.XLEN) DPCreg(clk, reset, WriteDPC, DPCWriteValM, DPC_REGW);
@@ -185,7 +199,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
       state <= RUNNING;
     end else if (HaveReset & ResetHaltReq & InstrValidE) begin
       state <= HALTED;
-    end else if ((HaltReq | ResumeReq) & InstrValidE) begin // Using the requests as enables
+    end else if ((HaltReq | ResumeReq) & InstrValidE | ebreak) begin // Using the requests as enables
       state <= state_n;
     end
   end
@@ -194,6 +208,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
     case (state)
       RUNNING: begin
         if (HaltReq) state_n = HALTED;
+        else if (ebreak) state_n = HALTED;
         else state_n = RUNNING;
         end
       HALTED: begin
@@ -213,6 +228,18 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
       DebugResume <= 0;
     end else begin
       DebugResume <= (state == HALTED) && (state_n == RUNNING) & DPCset;
+    end
+  end
+
+  always @(posedge clk) begin
+    if (reset) begin
+      ResumeAck <= 1'b0;
+    end else if (state_n == HALTED && state == RUNNING) begin
+      ResumeAck <= 1'b1;
+    end else if (state_n == RUNNING && state == HALTED) begin
+      ResumeAck <= 1'b0;
+    end else begin
+      ResumeAck <= ResumeAck;
     end
   end
 
@@ -237,13 +264,12 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
     NextCause = '0;
     if (HaltReq) begin
       NextCause = 3'd3;
-    /*end else if (ebreak) begin
-      NextCause = 3'd1;*/
+    end else if (ebreak) begin
+      NextCause = 3'd1;
     end else begin
       NextCause = '0;
     end
   end
-
 
   // Have reset logic
   always_ff @(posedge clk) begin

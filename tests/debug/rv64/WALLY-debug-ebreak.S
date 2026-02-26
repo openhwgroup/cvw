@@ -8,6 +8,8 @@
 .globl rvtest_entry_point
 rvtest_entry_point:
    la t1, begin_signature
+   la t0, trap_handler
+   csrw mtvec, t0
 
 // Attempt ebreak, though it's not likely set the first time
 do_ebreak:
@@ -33,6 +35,9 @@ tohost_exit:
    la t0, tohost
    sw a0, 0(t0)
 1: j 1b
+
+trap_handler:
+   j .
 
 .data
 # Spike memory regions ###############################################

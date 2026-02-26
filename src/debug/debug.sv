@@ -63,7 +63,8 @@ module debug import cvw::*; #(parameter cvw_t P) (
   // Run State
   input  logic              HaveReset,
   output logic              HaveResetAck,
-  output logic              ResetHaltReq
+  output logic              ResetHaltReq,
+  input  logic              ResumeAck
 );
 
   typedef enum logic [6:0] {
@@ -125,6 +126,8 @@ module debug import cvw::*; #(parameter cvw_t P) (
   logic        setresethaltreq;
   logic        clrresethaltreq;
   // logic        resethaltreq;
+  logic        ResumeReqD;
+  logic        HaltReqD;
 
   // DMStatus fields
   logic        ndmresetpending;
@@ -360,8 +363,28 @@ module debug import cvw::*; #(parameter cvw_t P) (
   // Halt FSM
   // --------------------------------------------------------------------------
 
-  assign HaltReq = DMControl[31] & DMActive;
-  assign ResumeReq = DMControl[30];
+  // assign HaltReq = DMControl[31] & DMActive;
+  // assign ResumeReq = DMControl[30] & ~anyresumeack;
+
+  always @(posedge clk) begin
+    if (reset) begin
+      ResumeReqD <= 1'b0;
+    end else if (~DebugMode) begin
+      ResumeReqD <= DMControl[30];
+    end
+  end
+
+  always @(posedge clk) begin
+    if (reset) begin
+      HaltReqD <= 1'b0;
+    end else if (DebugMode) begin
+      HaltReqD <= DMControl[31];
+    end
+  end
+
+  assign ResumeReq = DMControl[30] & ~ResumeReqD;
+  assign HaltReq = DMControl[31] & ~HaltReqD & DMActive;
+
   assign hartreset = 1'b0;
   assign HaveResetAck = DMControl[28];
   assign NDMReset = DMControl[1];
@@ -397,6 +420,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
     case(CurrHaltState)
       RUNNING: begin
         if (HaltReq) NextHaltState = HALTING;
+        else if (DebugMode) NextHaltState = HALTED;
         else NextHaltState = RUNNING;
       end
       HALTING: begin
@@ -420,17 +444,21 @@ module debug import cvw::*; #(parameter cvw_t P) (
   assign allhalted = NextHaltState == HALTED | CurrHaltState == HALTED;
   assign anyhalted = NextHaltState == HALTED | CurrHaltState == HALTED;
 
-  always_ff @(posedge clk) begin
-    if (reset) begin
-      anyresumeack <= 1'b0;
-    end else if ((CurrHaltState == RESUMING) && (NextHaltState == RUNNING)) begin
-      anyresumeack <= 1'b1;
-    end else if ((CurrHaltState == HALTING) && (NextHaltState == RESUMING)) begin
-      anyresumeack <= 1'b0;
-    end else begin
-      anyresumeack <= anyresumeack;
-    end
-  end
+  // always_ff @(posedge clk) begin
+  //   if (reset) begin
+  //     anyresumeack <= 1'b0;
+  //   end else if ((CurrHaltState == RESUMING) && (NextHaltState == RUNNING)) begin
+  //     anyresumeack <= 1'b1;
+  //   end else if ((CurrHaltState == HALTING) && (NextHaltState == HALTED)) begin
+  //     anyresumeack <= 1'b0;
+  //   end else if ((CurrHaltState == RUNNING) && (NextHaltState == HALTED)) begin // Possibly extraneous case when ebreak occurs.
+  //     anyresumeack <= 1'b0;
+  //   end else begin
+  //     anyresumeack <= anyresumeack;
+  //   end
+  // end
+
+  assign anyresumeack = ResumeAck;
 
   // --------------------------------------------------------------------------
   // Abstract Command FSM
