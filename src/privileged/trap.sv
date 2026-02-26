@@ -45,13 +45,15 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   output logic                 ExceptionM,                                      // exception is occurring
   output logic                 IntPendingM,                                     // Interrupt is pending, might occur if enabled
   output logic                 DelegateM,                                       // Delegate trap to supervisor handler
-  output logic [3:0]           CauseM                                           // trap cause
+  output logic [3:0]           CauseM,                                          // trap cause
+  input  logic                 EBreakM, EBreakS, EBreakU
 );
 
   logic                        MIntGlobalEnM, SIntGlobalEnM;                    // Global interrupt enables
   logic                        Committed;                                       // LSU or IFU has committed to a bus operation that can't be interrupted
   logic                        BothInstrAccessFaultM, BothInstrPageFaultM;      // instruction or HPTW ITLB fill caused an Instruction Access Fault
   logic [11:0]                 PendingIntsM, ValidIntsM, EnabledIntsM;          // interrupts are pending, valid, or enabled
+  logic                        BreakpointFaultDebugM;
 
   ///////////////////////////////////////////
   // Determine pending enabled interrupts
@@ -80,12 +82,15 @@ module trap import cvw::*;  #(parameter cvw_t P) (
 
   assign BothInstrAccessFaultM = InstrAccessFaultM | HPTWInstrAccessFaultM;
   assign BothInstrPageFaultM = InstrPageFaultM | HPTWInstrPageFaultM;
+  assign BreakpointFaultDebugM = ((PrivilegeModeW == P.M_MODE & ~EBreakM)
+                                 | (PrivilegeModeW == P.S_MODE & ~EBreakS)
+                                 | (PrivilegeModeW == P.U_MODE & ~EBreakU)) & BreakpointFaultM;
   // coverage off -item e 1 -fecexprrow 2
   // excludes InstrMisalignedFaultM from coverage of this line, since misaligned instructions cannot occur in rv64gc.
   assign ExceptionM = InstrMisalignedFaultM | BothInstrAccessFaultM | IllegalInstrFaultM |
                       LoadMisalignedFaultM | StoreAmoMisalignedFaultM |
                       BothInstrPageFaultM | LoadPageFaultM | StoreAmoPageFaultM |
-                      BreakpointFaultM | EcallFaultM |
+                      BreakpointFaultDebugM | EcallFaultM |
                       LoadAccessFaultM | StoreAmoAccessFaultM;
   // coverage on
   assign TrapM = (ExceptionM & ~CommittedF) | InterruptM;

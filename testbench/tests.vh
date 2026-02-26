@@ -31,6 +31,8 @@
 `define CUSTOM "4"
 `define COVERAGE "5"
 `define BUILDROOT "6"
+`define DEBUGELFS "7"
+`define DEBUGTV "8"
 
 string tvpaths[] = '{
   "../../tests/riscof/work/riscv-arch-test/",
@@ -38,7 +40,10 @@ string tvpaths[] = '{
   "../../benchmarks/coremark/work/",
   "../../addins/embench-iot/",
   "../../tests/custom/work/",
-  "../../tests/coverage/"
+  "../../tests/coverage/",
+  "",
+  "../../tests/debug/build/",
+  "../../tests/debug/build/testvectors/"
 };
 
 string coverage64gc[] = '{
@@ -4057,4 +4062,36 @@ string ahb64[] = '{
 string ahb32[] = '{
   `RISCVARCHTEST,
   "rv32i_m/F/src/fadd_b11-01.S"
+};
+
+string wally32debug[] = '{
+  `DEBUGELFS,
+  "rv32i_m/privilege/src/WALLY-spi-01.S"
+};
+
+string wally32debug_jtag[] = '{
+  `DEBUGTV,
+  ""
+};
+
+string wally64debug[] = '{
+  `DEBUGELFS,
+  "WALLY-debug-01",
+  "WALLY-debug-02",
+  "WALLY-debug-dmactive",
+  "WALLY-debug-03",
+  "WALLY-debug-fpu",
+  "WALLY-debug-gcd",
+  "WALLY-debug-ebreak"
+};
+
+string wally64debug_jtag[] = '{
+  `DEBUGTV,
+  "WALLY-debug-01",
+  "WALLY-debug-02",
+  "WALLY-debug-dmactive",
+  "WALLY-debug-03",
+  "WALLY-debug-fpu",
+  "WALLY-debug-gcd",
+  "WALLY-debug-ebreak"
 };
