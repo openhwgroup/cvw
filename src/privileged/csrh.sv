@@ -200,6 +200,8 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   logic [63:0]       CSRWriteValExt;
   logic [1:0]        LegalizedHENVCFG_CBIE;
   logic              LegalVSatpModeM;
+  logic [P.XLEN-1:0] LegalizedVSatpWriteValM;
+  logic [P.XLEN-1:0] HGATPReadVal;
   logic              TrapToMM;
 
   if (P.XLEN == 64) begin: csrwriteext64
@@ -274,7 +276,16 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   assign WriteVSSCRATCHM  = ValidVSWrite & (CSRAdrM == VSSCRATCH);
   assign WriteVSEPCM      = ValidVSWrite & (CSRAdrM == VSEPC);
   assign WriteVSCAUSEM    = ValidVSWrite & (CSRAdrM == VSCAUSE);
-  assign WriteVSATPM      = ValidVSWrite & (CSRAdrM == VSATP) & P.VIRTMEM_SUPPORTED & LegalVSatpModeM;
+
+  if (SIM_COMPLIANCE) begin : write_vsatp_sim_compliance
+    // Spike-aligned behavior: legalize unsupported MODE writes only when V=0.
+    assign WriteVSATPM = ValidVSWrite & (CSRAdrM == VSATP) & P.VIRTMEM_SUPPORTED &
+                         (LegalVSatpModeM | ~VirtModeW);
+  end else begin : write_vsatp_spec
+    // Spec path: ignore unsupported MODE writes.
+    assign WriteVSATPM = ValidVSWrite & (CSRAdrM == VSATP) & P.VIRTMEM_SUPPORTED &
+                         LegalVSatpModeM;
+  end
   // Access to vstimecmp in V=1 is gated by mcounteren.TM, hcounteren.TM, and henvcfg.STCE.
   assign AllowVSTimecmpAccess = ~VirtModeW | (MCOUNTEREN_TM & HCOUNTEREN_REGW[1] & HENVCFG_REGW[63]);
   assign WriteVSTIMECMPM  = ValidVSWrite & (CSRAdrM == VSTIMECMP) & P.SSTC_SUPPORTED & AllowVSTimecmpAccess;
@@ -286,9 +297,11 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
                              (P.SV39_SUPPORTED & (CSRWriteValM[63:60] == P.SV39)) |
                              (P.SV48_SUPPORTED & (CSRWriteValM[63:60] == P.SV48)) |
                              (P.SV57_SUPPORTED & (CSRWriteValM[63:60] == P.SV57));
+    assign LegalizedVSatpWriteValM = LegalVSatpModeM ? CSRWriteValM : {4'h0, CSRWriteValM[59:0]};
   end else begin : legal_vsatp_mode_32
     assign LegalVSatpModeM = (CSRWriteValM[31] == 1'b0) |
                              (P.SV32_SUPPORTED & CSRWriteValM[31]);
+    assign LegalizedVSatpWriteValM = LegalVSatpModeM ? CSRWriteValM : {1'b0, CSRWriteValM[30:0]};
   end
 
 
@@ -531,7 +544,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   flopenr #(P.XLEN) VSCAUSEreg(clk, reset, (VSTrapM | WriteVSCAUSEM), NextVSCAUSE, VSCAUSE_REGW);
   flopenr #(P.XLEN) VSTVALreg(clk, reset, (VSTrapM | WriteVSTVALM), NextMtvalM, VSTVAL_REGW);
   if (P.VIRTMEM_SUPPORTED)
-    flopenr #(P.XLEN) VSATPreg(clk, reset, WriteVSATPM, CSRWriteValM, VSATP_REGW);
+    flopenr #(P.XLEN) VSATPreg(clk, reset, WriteVSATPM, LegalizedVSatpWriteValM, VSATP_REGW);
   else
     assign VSATP_REGW = '0;
 
@@ -555,12 +568,25 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
                              (P.SV48_SUPPORTED & CSRWriteValM[63:60] == 4'h9) |
                              (P.SV57_SUPPORTED & CSRWriteValM[63:60] == 4'hA);
 
-    // hgatp unsupported MODE writes are not ignored (unlike satp); legalize to a valid WARL value.
-    // Choose MODE=Bare with all remaining bits zero.
+    // hgatp unsupported MODE writes are not ignored, so legalize to a valid WARL value.
+    // Spec-compliant path (SIM_COMPLIANCE=0): choose MODE=Bare with all remaining bits zero.
     always_comb begin
       LegalizedHgatpWriteValM = CSRWriteValM;
-      if (~LegalHgatpModeM) LegalizedHgatpWriteValM = '0;
+      LegalizedHgatpWriteValM[59:58] = 2'b00;
+      if (~LegalHgatpModeM) begin
+        if (SIM_COMPLIANCE)
+          LegalizedHgatpWriteValM = {4'h0, 2'b00, CSRWriteValM[57:2], 2'b00};
+        else
+          LegalizedHgatpWriteValM = '0;
+      end
+      // In paged G-stage modes, hgatp.PPN[1:0] always read as zero.
+      else if (CSRWriteValM[63:60] != 4'h0)
+        LegalizedHgatpWriteValM[1:0] = 2'b00;
     end
+    assign HGATPReadVal = ((HGATP_REGW[63:60] == 4'h8) |
+                           (HGATP_REGW[63:60] == 4'h9) |
+                           (HGATP_REGW[63:60] == 4'hA)) ? {HGATP_REGW[63:60], 2'b00, HGATP_REGW[57:2], 2'b00}
+                                                        : {HGATP_REGW[63:60], 2'b00, HGATP_REGW[57:0]};
     flopenr #(P.XLEN) HGATPreg(clk, reset, WriteHGATPM, LegalizedHgatpWriteValM, HGATP_REGW);
   end else begin : hgatp32
     // RV32 HGATP Mode is in bit 31 (0=Bare, 1=Sv32x4)
@@ -570,8 +596,16 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
                              (P.SV32_SUPPORTED & CSRWriteValM[31] == 1'b1);
     always_comb begin
       LegalizedHgatpWriteValM = CSRWriteValM;
-      if (~LegalHgatpModeM) LegalizedHgatpWriteValM = '0;
+      // Bits [30:29] are defined to read as zero in RV32 hgatp.
+      LegalizedHgatpWriteValM[30:29] = 2'b00;
+      if (~LegalHgatpModeM)
+        LegalizedHgatpWriteValM = '0;
+      // In Sv32x4, hgatp.PPN[1:0] always read as zero.
+      else if (CSRWriteValM[31])
+        LegalizedHgatpWriteValM[1:0] = 2'b00;
     end
+    assign HGATPReadVal = HGATP_REGW[31] ? {HGATP_REGW[31], 2'b00, HGATP_REGW[28:2], 2'b00}
+                                         : {HGATP_REGW[31], 2'b00, HGATP_REGW[28:0]};
     flopenr #(P.XLEN) HGATPreg(clk, reset, WriteHGATPM, LegalizedHgatpWriteValM, HGATP_REGW);
   end
 
@@ -682,7 +716,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
       HIP:        begin LegalAccessM = LegalHAccessM; CSRHReadValM = {{(P.XLEN-13){1'b0}}, HIP_PENDING}; end
       HVIP:       begin LegalAccessM = LegalHAccessM; CSRHReadValM = {{(P.XLEN-12){1'b0}}, HVIP_REGW}; end
       HTINST:     begin LegalAccessM = LegalHAccessM; CSRHReadValM = HTINST_REGW; end
-      HGATP:      begin LegalAccessM = LegalHAccessM & ((PrivilegeModeW == P.M_MODE) | ~STATUS_TVM); CSRHReadValM = HGATP_REGW; end
+      HGATP:      begin LegalAccessM = LegalHAccessM & ((PrivilegeModeW == P.M_MODE) | ~STATUS_TVM); CSRHReadValM = HGATPReadVal; end
       HGEIP:      begin LegalAccessM = LegalHAccessM; CSRHReadValM = HGEIP_REGW; end
 
       VSSTATUS:   begin LegalAccessM = LegalVSAccessM; CSRHReadValM = VSSTATUS_REGW; end
