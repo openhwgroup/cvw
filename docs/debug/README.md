@@ -1,48 +1,54 @@
-# Wally Debug List
+# Wally Debug Support
 
-It is our hope that we will get to many of these items for Wally with
-the RISC-V Debug specification.  We have posted a MarkDown file that lists
-the capabilities we have implemented including the items we hope to
-implement soon.
+This repository documents debug support for **Wally**, an open-source RISC-V processor platform. The goal of this effort is to support the RISC-V Debug Specification while enabling reliable debugging in both simulation and hardware environments. Wally integrates debug functionality compatible with OpenOCD, Spike remote bitbang simulation, and physical JTAG debug adapters.
 
-### Supported RISC-V Debug Specification
-We are currently using the Debug specification with
-Version 1.0, Revised 2025-02-21
+---
 
+## Supported RISC-V Debug Specification
 
-### OpenOCD udev Rules Installation (Linux)
+Wally currently targets:
 
-This part explains how to install and activate the OpenOCD udev rules on a Linux system so that USB debug adapters can be used without running OpenOCD as root. These steps apply to FTDI-based JTAG adapters, CMSIS-DAP/DAPLink devices, ST-Link, J-Link in OpenOCD mode, and many RISC-V debug probes.  These updates are done separately, because its not an OpenOCD dependency and a system policy configuration.  We did this as a precaution in case it interferes with shared hardware access.
+**RISC-V Debug Specification — Version 1.0 (Revised 2025-02-21)**
 
-Open a terminal and ensure the system package list and required utilities are installed. On Ubuntu or Debian systems run:
+Development continues toward expanded functionality and improved
+tool interoperability.
 
-```bash
-sudo apt-get update
-sudo apt-get install -y udev usbutils
+---
+
+## Note on Spike Debug Compatibility
+
+The current Wally debug implementation does **not** include an initial Debug Module *program buffer* (`progbufsize = 0`). While this is allowed by the RISC-V Debug Specification (which permits implementations to rely on abstract register access instead of a program buffer), some debugger workflows assume program-buffer execution is available.
+
+A recent Spike update (https://github.com/riscv-software-src/riscv-isa-sim/commit/5397899bb9eddba8c2f87d7d62e6303629ebed90) introduced stricter debug checks, including an assertion (around line 122 of riscv/debug_module.cc) that may trigger when debugging a target that does not implement a program buffer.
+
+As a result, users may observe assertion failures or unexpected debugger behavior when using newer versions of Spike together with Wally debug.
+
+This limitation is temporary. Future Wally debug revisions will include program buffer support, improving compatibility with Spike, OpenOCD, and standard RISC-V debug workflows.
+
+---
+
+## OpenOCD udev Rules Installation (Linux)
+
+USB debug adapters typically require root privileges. Installing the OpenOCD udev rules allows OpenOCD to access supported debug probes without using `sudo`.
+
+The rules file is provided with OpenOCD:
+
+```
+contrib/60-openocd.rules
 ```
 
-On RHEL, Rocky, or Alma Linux systems run:
-
-```bash
-sudo dnf install -y systemd-udev usbutils
-```
-
-Verify that the OpenOCD udev rules file exists in the OpenOCD source tree. The file is provided by OpenOCD and is located at contrib/60-openocd.rules. If your OpenOCD source directory is named openocd-code, verify the file with:
-
-```bash
-ls openocd-code/contrib/60-openocd.rules
-```
-
-If the file does not exist, obtain or update the OpenOCD source tree before continuing.
-
-Copy the OpenOCD udev rules file into the system udev rules directory:
+Install it with:
 
 ```bash
 sudo cp openocd-code/contrib/60-openocd.rules /etc/udev/rules.d/
+sudo udevadm control --reload-rules
+sudo udevadm trigger
 ```
 
-Verify that the file was copied successfully:
+After installation, unplug and reconnect the debug adapter.  You may also need to log out and back in if group permissions change.
+
+OpenOCD should then run normally as a user as an example here:
 
 ```bash
-ls -l /etc/udev/rules.d/60-openocd.rules
+openocd -f tests/debug/openocd.cfg
 ```
