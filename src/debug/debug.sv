@@ -366,24 +366,74 @@ module debug import cvw::*; #(parameter cvw_t P) (
   // assign HaltReq = DMControl[31] & DMActive;
   // assign ResumeReq = DMControl[30] & ~anyresumeack;
 
-  always @(posedge clk) begin
+  typedef enum logic [1:0] {RESUMEREQIDLE, RESUMEREQUEST, RESUMEWAITCLEAR} ResumeReqState;
+  ResumeReqState CurrResumeReq;
+  ResumeReqState NextResumeReq;
+
+  always_ff @(posedge clk) begin
     if (reset) begin
-      ResumeReqD <= 1'b0;
-    end else if (~DebugMode) begin
-      ResumeReqD <= DMControl[30];
+      CurrResumeReq <= RESUMEREQIDLE;
+    end else begin
+      CurrResumeReq <= NextResumeReq;
     end
   end
 
-  always @(posedge clk) begin
+  always_comb begin
+    case(CurrResumeReq)
+      RESUMEREQIDLE: begin
+        if (DMControl[30] & DebugMode) NextResumeReq = RESUMEREQUEST;
+        else NextResumeReq = RESUMEREQIDLE;
+      end
+
+      RESUMEREQUEST: begin
+        if (~DebugMode) NextResumeReq = RESUMEWAITCLEAR;
+        else NextResumeReq = RESUMEREQUEST;
+      end
+
+      RESUMEWAITCLEAR: begin
+        if (~DMControl[30]) NextResumeReq = RESUMEREQIDLE;
+        else NextResumeReq = RESUMEWAITCLEAR;
+      end
+
+      default: NextResumeReq = RESUMEREQIDLE;
+    endcase
+  end
+
+  typedef enum logic [1:0] {HALTREQIDLE, HALTREQUEST, WAITFORCLEAR} HaltReqState;
+  HaltReqState CurrHaltReq;
+  HaltReqState NextHaltReq;
+
+  always_ff @(posedge clk) begin
     if (reset) begin
-      HaltReqD <= 1'b0;
-    end else if (DebugMode) begin
-      HaltReqD <= DMControl[31];
+      CurrHaltReq <= HALTREQIDLE;
+    end else begin
+      CurrHaltReq <= NextHaltReq;
     end
   end
 
-  assign ResumeReq = DMControl[30] & ~ResumeReqD;
-  assign HaltReq = DMControl[31] & ~HaltReqD & DMActive;
+  always_comb begin
+    case(CurrHaltReq)
+      HALTREQIDLE: begin
+        if (DMControl[31] & ~DebugMode) NextHaltReq = HALTREQUEST;
+        else NextHaltReq = HALTREQIDLE;
+      end
+
+      HALTREQUEST: begin
+        if (DebugMode) NextHaltReq = WAITFORCLEAR;
+        else NextHaltReq = HALTREQUEST;
+      end
+
+      WAITFORCLEAR: begin
+        if (~DMControl[31]) NextHaltReq = HALTREQIDLE;
+        else NextHaltReq = WAITFORCLEAR;
+      end
+
+      default: NextHaltReq = HALTREQIDLE;
+    endcase
+  end
+
+  assign ResumeReq = (CurrResumeReq == RESUMEREQUEST);
+  assign HaltReq = (CurrHaltReq == HALTREQUEST) & DMActive;
 
   assign hartreset = 1'b0;
   assign HaveResetAck = DMControl[28];
