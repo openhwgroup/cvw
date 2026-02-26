@@ -58,6 +58,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   input  logic                    sfencevmaM,                           // Virtual memory address fence, invalidate TLB entries
   output logic                    DCacheStallM,                         // D$ busy with multicycle operation
   output logic [P.XLEN-1:0]       IEUAdrxTvalM,                         // IEUAdrM, but could be spilled onto the next cacheline or virtual page.
+  output logic [P.PA_BITS-1:0]    PAdrM,                                // Physical memory address
   // fpu
   input  logic [P.FLEN-1:0]       FWriteDataM,                          // Write data from FPU
   input  logic                    FpLoadStoreM,                         // Selects FPU as store for write data
@@ -100,7 +101,6 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
 
   logic [P.XLEN+1:0]     IEUAdrExtM;                             // Memory stage address zero-extended to PA_BITS or XLEN whichever is longer
   logic [P.XLEN+1:0]     IEUAdrExtE;                             // Execution stage address zero-extended to PA_BITS or XLEN whichever is longer
-  logic [P.PA_BITS-1:0]  PAdrM;                                  // Physical memory address
   logic [P.XLEN+1:0]     IHAdrM;                                 // Either IEU or HPTW memory address
 
   logic [1:0]            PreLSURWM;                              // IEU or HPTW Read/Write signal

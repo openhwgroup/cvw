@@ -38,6 +38,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic [31:0]       InstrM,                                         // Instruction
   input  logic [31:0]       InstrOrigM,                                     // Original compressed or uncompressed instruction in Memory stage for Illegal Instruction MTVAL
   input  logic [P.XLEN-1:0] IEUAdrxTvalM,                                   // address from IEU
+  input  logic [P.PA_BITS-1:0] PAdrM,                                       // Physical address from LSU
   input  logic [P.XLEN-1:0] PCM,                                            // program counter
   input  logic [P.XLEN-1:0] PCSpillM,                                       // program counter
   // control signals
@@ -100,9 +101,12 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   output logic              wfiM, IntPendingM                               // Stall in Memory stage for WFI until interrupt pending or timeout
 );
 
-  logic [3:0]               CauseM;                                         // trap cause
+  logic [4:0]               CauseM;                                         // trap cause
   logic [15:0]              MEDELEG_REGW;                                   // exception delegation CSR
   logic [11:0]              MIDELEG_REGW;                                   // interrupt delegation CSR
+  logic [63:0]              HEDELEG_REGW;                                   // HS->VS exception delegation CSR
+  logic [11:0]              HIDELEG_REGW;                                   // HS->VS interrupt delegation CSR
+  logic [P.XLEN-1:0]        HIE_REGW, HGEIE_REGW;                           // Hypervisor Interrupt Enables
   logic                     sretM, mretM;                                   // supervisor / machine return instruction
   logic                     IllegalCSRAccessM;                              // Illegal access to CSR
   logic                     IllegalIEUFPUInstrM;                            // Illegal IEU or FPU instruction, delayed to Mem stage
@@ -122,29 +126,42 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
 
   logic                     wfiW;
 
+    // --- Hypervisor ---
+  logic                     NextVirtModeM;   // next V (from privmode)
+  logic                     VirtModeW;       // current V (from privmode)
+  logic                     MSTATUS_MPV;     // from CSR (prev V for MRET)
+  logic                     HSTATUS_SPV;     // from CSR (prev V for SRET in HS)
+  logic                     HSTATUS_VTSR, HSTATUS_VTW, HSTATUS_VTVM;
+  logic                     VSSTATUS_SPP;
+  logic                     TrapToM, TrapToHSM, TrapToVSM; // trap target one-hots
+
   // track the current privilege level
   privmode #(P) privmode(.clk, .reset, .StallW, .TrapM, .mretM, .sretM, .DelegateM,
-    .STATUS_MPP, .STATUS_SPP, .NextPrivilegeModeM, .PrivilegeModeW);
+    .STATUS_MPP, .STATUS_SPP, .VSSTATUS_SPP, .MSTATUS_MPV, .HSTATUS_SPV, .TrapToM, .TrapToHSM, .TrapToVSM,
+    .NextPrivilegeModeM, .PrivilegeModeW, .NextVirtModeM, .VirtModeW);
 
   // decode privileged instructions
+  logic VirtualInstrFaultM;
   privdec #(P) pmd(.clk, .reset, .StallW, .FlushW, .InstrM(InstrM[31:7]),
     .PrivilegedM, .IllegalIEUFPUInstrM, .IllegalCSRAccessM,
-    .PrivilegeModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_TW, .IllegalInstrFaultM,
+    .PrivilegeModeW, .VirtModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_TW,
+    .HSTATUS_VTSR, .HSTATUS_VTVM, .HSTATUS_VTW, .IllegalInstrFaultM, .VirtualInstrFaultM,
     .EcallFaultM, .BreakpointFaultM, .sretM, .mretM, .RetM, .wfiM, .wfiW, .sfencevmaM);
 
   // Control and Status Registers
   csr #(P) csr(.clk, .reset, .FlushM, .FlushW, .StallE, .StallM, .StallW,
-    .InstrM, .InstrOrigM, .PCM, .PCSpillM, .SrcAM, .IEUAdrxTvalM,
-    .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .InterruptM,
+    .InstrM, .InstrOrigM, .PCM, .PCSpillM, .SrcAM, .IEUAdrxTvalM, .PAdrM,
+    .CSRReadM, .CSRWriteM, .TrapM, .TrapToM, .TrapToHSM, .TrapToVSM, .mretM, .sretM, .InterruptM,
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
     .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD, .StoreStallD,
     .BPDirWrongM, .BTAWrongM, .RASPredPCWrongM, .BPWrongM,
     .sfencevmaM, .ExceptionM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
     .IClassWrongM, .IClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
-    .NextPrivilegeModeM, .PrivilegeModeW, .CauseM, .SelHPTW,
-    .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TVM,
+    .NextPrivilegeModeM, .PrivilegeModeW, .VirtModeW, .CauseM, .SelHPTW,
+    .STATUS_MPP, .MSTATUS_MPV, .STATUS_SPP, .STATUS_TSR, .STATUS_TVM,
     .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TW, .STATUS_FS,
-    .MEDELEG_REGW, .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
+    .HSTATUS_SPV, .HSTATUS_VTSR, .HSTATUS_VTW, .HSTATUS_VTVM, .VSSTATUS_SPP,
+    .MEDELEG_REGW, .HEDELEG_REGW, .HIDELEG_REGW, .HIE_REGW, .HGEIE_REGW, .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
     .SATP_REGW, .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
     .SetFflagsM, .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE,
     .EPCM, .TrapVectorM,
@@ -160,8 +177,10 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .InstrMisalignedFaultM, .InstrAccessFaultM, .HPTWInstrAccessFaultM, .HPTWInstrPageFaultM, .IllegalInstrFaultM,
     .BreakpointFaultM, .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
     .LoadAccessFaultM, .StoreAmoAccessFaultM, .EcallFaultM, .InstrPageFaultM,
-    .LoadPageFaultM, .StoreAmoPageFaultM, .PrivilegeModeW,
-    .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW, .STATUS_MIE, .STATUS_SIE,
+    .LoadPageFaultM, .StoreAmoPageFaultM, .VirtualInstrFaultM,
+    .PrivilegeModeW, .VirtModeW,
+    .MIP_REGW, .MIE_REGW, .HIE_REGW, .HGEIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW, .HEDELEG_REGW, .HIDELEG_REGW, .STATUS_MIE, .STATUS_SIE,
     .InstrValidM, .CommittedM, .CommittedF,
-    .TrapM, .wfiM, .wfiW, .InterruptM, .ExceptionM, .IntPendingM, .DelegateM, .CauseM);
+    .TrapM, .wfiM, .wfiW, .InterruptM, .ExceptionM, .IntPendingM, .DelegateM, .CauseM,
+    .TrapToM, .TrapToHSM, .TrapToVSM);
 endmodule
