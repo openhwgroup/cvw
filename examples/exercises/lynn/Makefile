@@ -235,6 +235,7 @@ coremark:
 act4:
 	@$(MAKE) -C $(ACT4_TEST_DIR) \
 		RISCV_ARCH_TEST=$(RISCV_ARCH_TEST) \
+		CONFIG_FILES=$(PROCESSOR_CONFIG)/test_config.yaml \
 		populate
 
 # test: run ALL .elf files in ACT4_TEST_DIR in parallel with -j
@@ -254,17 +255,6 @@ test: | act4
 %.dis: %.bin
 	@riscv64-unknown-elf-objdump -D -b binary -m riscv:rv32 $< > $@
 	@echo "Wrote $@"
-
-# .PHONY: arch-test
-# arch-test: Makefile $(ACT4_TEST_DIR)/test_config.yaml
-# 	uv run --with $(WALLY)/addins/riscv-arch-test-cvw/framework make -C \
-# 	$(WALLY)/addins/riscv-arch-test-cvw \
-# 	CONFIG_FILES=$(ACT4_TEST_DIR)/test_config.yaml \
-# 	WORKDIR=$(ARCH_WORK_DIR)
-# Target flow below but using substitute above while act4 broken
-# 	$(MAKE) -C $(RISCV_ARCH_TEST) \
-#    CONFIG_FILE=$(AC4_TEST_DIR)/test_config.yaml \
-#    WORKDIR=$(ACT4_TEST_DIR)/work
 
 # ----  Bug lab  ---- #
 
@@ -286,7 +276,6 @@ clean-coremark:
 	$(MAKE) -C $(COREMARK_DIR) clean
 
 clean-act4:
-	$(MAKE) -C $(RISCV_ARCH_TEST) clean
 	$(MAKE) -C $(ACT4_TEST_DIR) clean
 
 clean-synth:
