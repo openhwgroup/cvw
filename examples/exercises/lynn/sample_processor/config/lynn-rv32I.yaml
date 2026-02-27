@@ -7,7 +7,6 @@ name: lynn-rv32I
 description: The rv32I configuration of Lynn SoC project chip
 implemented_extensions:
   - { name: I, version: ">= 2.1" }
-  - { name: Zmmul, version: ">= 1.0" }
   - { name: Sm, version: ">= 1.11.0" }
   - { name: Smhpm, version: ">= 1.11.0" }
   - { name: Zicntr, version: ">= 2.0" }
