@@ -77,8 +77,8 @@ module hazard (
   //   any resume.
   assign FlushDCause = TrapM | RetM | CSRWriteFenceM | BPWrongE | DebugResume;
   assign FlushECause = TrapM | RetM | CSRWriteFenceM |(BPWrongE & ~(DivBusyE | FDivBusyE)) | DebugResume;
-  assign FlushMCause = TrapM | RetM | CSRWriteFenceM;
-  assign FlushWCause = TrapM & ~WFIInterruptedM;
+  assign FlushMCause = TrapM | RetM | CSRWriteFenceM | DebugResume;
+  assign FlushWCause = TrapM & ~WFIInterruptedM | DebugResume;
 
   // Stall causes
   //  Most data dependency stalls are identified in the decode stage
