@@ -21,7 +21,6 @@ $(STAMP): Makefile
 		CONFIG_FILES=$(CONFIG_FILES) \
 		WORKDIR=$(WORK_DIR) \
 		EXTENSIONS=I \
-		DEBUG=True \
 		--jobs $$(nproc)
 	@rm -f $(ELFS_DIR)/Zicntr/*csrrc*
 	@rm -f $(ELFS_DIR)/Zihpm/*csrrc*
