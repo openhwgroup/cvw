@@ -1,3 +1,8 @@
+# sail_test.h
+# RVMODEL macro definitions for Sail reference model
+# Jordan Carlin jcarlin@hmc.edu October 2025
+# SPDX-License-Identifier: BSD-3-Clause
+
 #ifndef _COMPLIANCE_MODEL_H
 #define _COMPLIANCE_MODEL_H
 
@@ -5,29 +10,40 @@
         .pushsection .tohost,"aw",@progbits;                \
         .align 8; .global tohost; tohost: .dword 0;         \
         .align 8; .global fromhost; fromhost: .dword 0;     \
-        .popsection;
+        .popsection
 
+##### STARTUP #####
+
+# Perform boot operations. Can be empty.
+#define RVMODEL_BOOT
+
+##### TERMINATION #####
+
+# Terminate test with a pass indication.
+# When the test is run in simulation, this should end the simulation.
 #define RVMODEL_HALT_PASS  \
   li x1, 1                ;\
   la t0, tohost           ;\
   write_tohost_pass:      ;\
     sw x1, 0(t0)          ;\
     sw x0, 4(t0)          ;\
-  self_loop_pass:         ;\
-    j self_loop_pass      ;\
+    j write_tohost_pass   ;\
 
+# Terminate test with a fail indication.
+# When the test is run in simulation, this should end the simulation.
 #define RVMODEL_HALT_FAIL \
   li x1, 3                ;\
   la t0, tohost           ;\
   write_tohost_fail:      ;\
     sw x1, 0(t0)          ;\
     sw x0, 4(t0)          ;\
-  self_loop_fail:         ;\
-    j self_loop_fail      ;\
+    j write_tohost_fail   ;\
 
-#define RVMODEL_BOOT \
-  la sp, _stack_top
+##### IO #####
 
+# Initialization steps needed prior to writing to the console
+# _R1, _R2, and _R3 can be used as temporary registers if needed.
+# Do not modify any other registers (or make sure to restore them).
 #define RVMODEL_IO_INIT(_R1, _R2, _R3)
 
 # Prints a null-terminated string using a DUT specific mechanism.
@@ -35,13 +51,15 @@
 # _R1, _R2, and _R3 can be used as temporary registers if needed.
 # Do not modify any other registers (or make sure to restore them).
 #define RVMODEL_IO_WRITE_STR(_R1, _R2, _R3, _STR_PTR)               \
-  la _R2, tohost ; /* transmit character */ \
-  li _R3, 0x01010000;\
 1:                           ;                       \
   lbu _R1, 0(_STR_PTR)        ;/* Load byte */        \
   beqz _R1, 3f                ;/* Exit if null */     \
-  sb _R1, 0(_R2) ; \
-  sw _R1, 4(_R2) ; \
+2: /* htif_putc */           ;                      \
+  la _R2, tohost       ;   \
+  sw _R1, 0(_R2)     ; \
+  /* device=1 (terminal), cmd=1 (output) */ \
+  li _R1, 0x01010000 ;\
+  sw _R1, 4(_R2)   ;\
   addi _STR_PTR, _STR_PTR, 1 ;/* Next char */        \
   j 1b                       ;/* Loop */             \
 3:
