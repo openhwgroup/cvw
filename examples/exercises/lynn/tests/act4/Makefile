@@ -8,22 +8,28 @@ RISCV_ARCH_TEST ?= $(WALLY)/addins/riscv-arch-test-cvw
 WORK_DIR        ?= $(CURDIR)/work
 STAMP           := $(WORK_DIR)/copy_stamp
 
+ELFS_DIR 		?= $(WORK_DIR)/lynn-rv32I/elfs/rv32i
+
+CONFIG_FILES 	?=
+
 .PHONY: populate
 populate: $(STAMP)
 
 $(STAMP): Makefile
 	@mkdir -p $(WORK_DIR)
 	@$(MAKE) -C $(RISCV_ARCH_TEST) \
-		CONFIG_FILES=$(RISCV_ARCH_TEST)/config/sail/sail-RVI20U32/test_config.yaml \
-		EXTENSIONS=I,Zicntr,Zihpm,Zicsr,Zmmul \
+		CONFIG_FILES=$(CONFIG_FILES) \
+		WORKDIR=$(WORK_DIR) \
+		EXTENSIONS=I \
 		DEBUG=True \
 		--jobs $$(nproc)
-	@cp -r $(RISCV_ARCH_TEST)/work/sail-RVI20U32/elfs/rv32i/I/* $(WORK_DIR)/
+	@rm -f $(ELFS_DIR)/Zicntr/*csrrc*
+	@rm -f $(ELFS_DIR)/Zihpm/*csrrc*
 	@touch $(STAMP)
 
 .PHONY: list-elfs
 list-elfs:
-	@find -L $(WORK_DIR) -type f -name '*.elf' | sort
+	@find -L $(ELFS_DIR) -type f -name '*.elf' | sort
 
 .PHONY: clean
 clean:
