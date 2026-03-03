@@ -231,7 +231,6 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
    // Needs to be delayed so StallF can be low
    // -----------------------------------------------------------------------------
 
-   // JES: Dont think we need to gate with DPCset
    always @(posedge clk) begin
       if (reset) begin
          DebugResume <= 0;
@@ -255,7 +254,6 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
     end
   end
 
-
   always_comb begin
     case(resack_state)
       RESACKLOW: begin
@@ -277,17 +275,8 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
     endcase
   end
 
-   // always @(posedge clk) begin
-   //    if (reset) begin
-   //      ResumeAck <= 1'b0;
-   //    end else if (state_n == RUNNING & state == HALTED) begin
-   //      ResumeAck <= 1'b1;
-   //    end else begin
-   //      ResumeAck <= ResumeAck;
-   //   end
-   // end
-
-  assign ResumeAck = (resack_state == RESACKHIGH);
+   // This allows a momentary clear right after receiving a ResumeRequest
+   assign ResumeAck = (resack_state == RESACKHIGH);
 
    // -----------------------------------------------------------------------------
    // DPCset: track whether DPC was explicitly written while halted (optional).
@@ -303,16 +292,6 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
          DPCset <= 1'b1;
       end
    end
-
-   /*
-   always_ff @(posedge clk) begin
-      if (reset | ~DebugMode) begin
-         DPCset <= 0;
-      end else if (CSRDWriteM & (CSRAdrM == DPC)) begin
-         DPCset <= 1'b1;
-      end
-   end
-    */
 
    // -----------------------------------------------------------------------------
    // Halt cause: latch on entry into HALTED.
