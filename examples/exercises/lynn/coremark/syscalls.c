@@ -77,8 +77,8 @@ void computeStats(int difference)
     counters[i++] = csr; \
   } while (0)
 
-  READ_CTR(mcycle);         // counters[0]
-  READ_CTR(minstret);       // counters[1]
+  READ_CTR(cycle);         // counters[0]
+  READ_CTR(instret);       // counters[1]
   READ_CTR(mhpmcounter3);   // counters[2]
   READ_CTR(mhpmcounter4);   // counters[3]
   READ_CTR(mhpmcounter5);   // counters[4]
@@ -148,8 +148,8 @@ void _init(int cid, int nc)
 
   // Counter stats here
 
-  ee_printf("Cycles (mcycle) %ld\n",              counters[0]);
-  ee_printf("Instructions Retired (minstret) %ld\n", counters[1]);
+  ee_printf("Cycles (rdcycle) %ld\n",              counters[0]);
+  ee_printf("Instructions Retired (rdinstret) %ld\n", counters[1]);
 
   // Lab-required meanings:
   ee_printf("Add Instructions (hpm3) %ld\n",      counters[2]);
