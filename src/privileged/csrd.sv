@@ -33,7 +33,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   input logic               CSRDWriteM,
   input logic [P.XLEN-1:0]  CSRWriteValM,
   input logic [11:0]        CSRAdrM,
-  input logic               InstrValid,
+  input logic               InstrValidE,
   output logic [P.XLEN-1:0] CSRDReadValM,
   input logic [1:0]         PrivilegeModeW,
 
@@ -54,6 +54,9 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   localparam DPC = 12'h7B1;
   localparam DSCRATCH0 = 12'h7B2;
   localparam DSCRATCH1 = 12'h7B3;
+
+  typedef enum logic {RUNNING, HALTED} dbg_state_e;
+  dbg_state_e state, state_n;
 
   logic NextHalt;
   // logic AnyEbreak;
@@ -191,15 +194,12 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   // Halt FSM
   ////////////////////////////////////////////////////////////////////
 
-   typedef enum logic {RUNNING, HALTED} dbg_state_e;
-   dbg_state_e state, state_n;
-
   always_ff @(posedge clk) begin
     if (reset) begin
       state <= RUNNING;
-    end else if (HaveReset & ResetHaltReq & InstrValid) begin
+    end else if (HaveReset & ResetHaltReq & InstrValidE) begin
       state <= HALTED;
-    end else if ((HaltReq | ResumeReq) & InstrValid | ebreak) begin // Using the requests as enables
+    end else if ((HaltReq | ResumeReq) & InstrValidE | ebreak) begin // Using the requests as enables
       state <= state_n;
     end
   end
