@@ -62,15 +62,34 @@ static uintptr_t syscall(uintptr_t which, uint64_t arg0, uint64_t arg1, uint64_t
   return magic_mem[0];
 }
 
-#define NUM_COUNTERS 3
+#define NUM_COUNTERS 10
 static uintptr_t counters[NUM_COUNTERS];
 static char* counter_names[NUM_COUNTERS];
 
-void setStats()
-{
-  // not currently implemented
-}
 
+void computeStats(int difference)
+{
+  int i = 0;
+#define READ_CTR(name) do { \
+    while (i >= NUM_COUNTERS) ; \
+    uintptr_t csr = read_csr(name); \
+    if (difference) {csr -= counters[i]; counter_names[i] = #name;} \
+    counters[i++] = csr; \
+  } while (0)
+
+  READ_CTR(mcycle);         // counters[0]
+  READ_CTR(minstret);       // counters[1]
+  READ_CTR(mhpmcounter3);   // counters[2]
+  READ_CTR(mhpmcounter4);   // counters[3]
+  READ_CTR(mhpmcounter5);   // counters[4]
+  READ_CTR(mhpmcounter6);   // counters[5]
+  READ_CTR(mhpmcounter7);   // counters[6]
+  READ_CTR(mhpmcounter8);   // counters[7]
+  READ_CTR(mhpmcounter9);   // counters[8]
+  READ_CTR(mhpmcounter10);  // counters[9]
+
+#undef READ_CTR
+}
 void __attribute__((noreturn)) tohost_exit(uintptr_t code)
 {
   tohost = (code << 1) | 1;
@@ -121,12 +140,30 @@ void _init(int cid, int nc)
 {
   init_tls();
   thread_entry(cid, nc);
-  setStats();
+  computeStats(0);
 
   // only single-threaded programs should ever get here.
   int ret = main(0, 0);
+  computeStats(1);
 
-  // Can implement printing counter stats here
+  // Counter stats here
+
+  ee_printf("Cycles (mcycle) %ld\n",              counters[0]);
+  ee_printf("Instructions Retired (minstret) %ld\n", counters[1]);
+
+  // Lab-required meanings:
+  ee_printf("Add Instructions (hpm3) %ld\n",      counters[2]);
+  ee_printf("Branches Evaluated (hpm4) %ld\n",    counters[3]);
+  ee_printf("Branches Taken (hpm5) %ld\n",        counters[4]);
+
+  // Implementation-defined (your choice):
+  ee_printf("Custom Counter 6 (hpm6) %ld\n",      counters[5]);
+  ee_printf("Custom Counter 7 (hpm7) %ld\n",      counters[6]);
+  ee_printf("Custom Counter 8 (hpm8) %ld\n",      counters[7]);
+  ee_printf("Custom Counter 9 (hpm9) %ld\n",      counters[8]);
+  ee_printf("Custom Counter 10 (hpm10) %ld\n",    counters[9]);
+
+  ee_printf("Done printing performance counters\n");
 
   exit(ret);
 }
