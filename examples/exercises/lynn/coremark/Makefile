@@ -52,7 +52,7 @@ cmscript_files := \
 
 cmconfig_files := \
   $(WALLY_PORT_DIR)/core_portme.h $(CURDIR)/core_portme.c $(WALLY_PORT_DIR)/core_portme.mak \
-  $(CURDIR)/crt.S $(WALLY_PORT_DIR)/encoding.h $(CURDIR)/util.h $(CURDIR)/syscalls.c \
+  $(CURDIR)/crt.S $(CURDIR)/encoding.h $(CURDIR)/util.h $(CURDIR)/syscalls.c \
   $(LINKER)
 
 .PHONY: all

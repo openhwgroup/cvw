@@ -77,9 +77,9 @@ static uintptr_t insn_len(uintptr_t pc)
 #define stringify_1(s) #s
 #define stringify(s) stringify_1(s)
 #define stats(code, iter) do { \
-    unsigned long _c = -read_csr(mcycle), _i = -read_csr(instret); \
+    unsigned long _c = -read_csr(cycle), _i = -read_csr(instret); \
     code; \
-    _c += read_csr(mcycle), _i += read_csr(instret); \
+    _c += read_csr(cycle), _i += read_csr(instret); \
     if (cid == 0) \
       printf("\n%s: %ld cycles, %ld.%ld cycles/iter, %ld.%ld CPI\n", \
              stringify(code), _c, _c/iter, 10*_c/iter%10, _c/_i, 10*_c/_i%10); \

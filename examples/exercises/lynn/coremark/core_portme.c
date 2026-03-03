@@ -114,6 +114,14 @@ void portable_free(void *p) {
     #define read_csr(reg) ({ unsigned long __tmp; \
        asm volatile ("csrr %0, " #reg : "=r"(__tmp)); \
        __tmp; })
+    #define read_csr64(reg) ({ \
+       unsigned long __hi, __lo, __tmp; \
+       do { \
+         asm volatile ("csrr %0, " #reg "h" : "=r"(__hi)); \
+         asm volatile ("csrr %0, " #reg : "=r"(__lo)); \
+         asm volatile ("csrr %0, " #reg "h" : "=r"(__tmp)); \
+       } while (__hi != __tmp); \
+       ((unsigned long long)__hi << 32) | __lo; })
   // #if (XLEN==64)
   //   typedef unsigned long long ee_ptr_int;
   // #else
@@ -130,15 +138,15 @@ void portable_free(void *p) {
 #if SAMPLE_TIME_IMPLEMENTATION
 /** Define Host specific (POSIX), or target specific global time variables. */
 static CORETIMETYPE start_time_val, stop_time_val;
-static unsigned long start_instr_val, stop_instr_val;
+static unsigned long long start_instr_val, stop_instr_val;
 
 /* Function: minstretFunc
   This function will count the number of instructions.
 */
-unsigned long minstretFunc(void)
+unsigned long long minstretFunc(void)
 {
-  unsigned long minstretRead = read_csr(instret);
-  //ee_printf("Minstret is %lu\n", minstretRead);
+  unsigned long long minstretRead = read_csr64(instret);
+  //ee_printf("Minstret is %llu\n", minstretRead);
   return minstretRead;
 }
 
@@ -147,9 +155,9 @@ unsigned long minstretFunc(void)
   MINSTRET csr to determine the number of machine instructions retired between two points
   of time
 */
-unsigned long minstretDiff(void)
+unsigned long long minstretDiff(void)
 {
-  unsigned long minstretDifference = MYTIMEDIFF(stop_instr_val, start_instr_val);
+  unsigned long long minstretDifference = MYTIMEDIFF(stop_instr_val, start_instr_val);
   return minstretDifference;
 }
 
@@ -200,7 +208,7 @@ void stop_time(void) {
 */
 CORE_TICKS get_time(void) {
   CORE_TICKS elapsed=(CORE_TICKS)(MYTIMEDIFF(stop_time_val, start_time_val));
-  unsigned long instructions = minstretDiff();
+  unsigned long long instructions = minstretDiff();
   ee_ptr_int cm100 = 1000000000 / elapsed;  // coremark score * 100
   ee_ptr_int cpi100 = elapsed*100/instructions; // CPI * 100
   ee_printf("   WALLY CoreMark Results (from get_time)\n");

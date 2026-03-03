@@ -63,7 +63,7 @@ static uintptr_t syscall(uintptr_t which, uint64_t arg0, uint64_t arg1, uint64_t
 }
 
 #define NUM_COUNTERS 10
-static uintptr_t counters[NUM_COUNTERS];
+static unsigned long long counters[NUM_COUNTERS];
 static char* counter_names[NUM_COUNTERS];
 
 
@@ -72,7 +72,7 @@ void computeStats(int difference)
   int i = 0;
 #define READ_CTR(name) do { \
     while (i >= NUM_COUNTERS) ; \
-    uintptr_t csr = read_csr(name); \
+    unsigned long long csr = read_csr64(name); \
     if (difference) {csr -= counters[i]; counter_names[i] = #name;} \
     counters[i++] = csr; \
   } while (0)
@@ -148,20 +148,20 @@ void _init(int cid, int nc)
 
   // Counter stats here
 
-  ee_printf("Cycles (rdcycle) %ld\n",              counters[0]);
-  ee_printf("Instructions Retired (rdinstret) %ld\n", counters[1]);
+  ee_printf("Cycles (rdcycle) %lld\n",              counters[0]);
+  ee_printf("Instructions Retired (rdinstret) %lld\n", counters[1]);
 
   // Lab-required meanings:
-  ee_printf("Add Instructions (hpm3) %ld\n",      counters[2]);
-  ee_printf("Branches Evaluated (hpm4) %ld\n",    counters[3]);
-  ee_printf("Branches Taken (hpm5) %ld\n",        counters[4]);
+  ee_printf("Add Instructions (hpm3) %lld\n",      counters[2]);
+  ee_printf("Branches Evaluated (hpm4) %lld\n",    counters[3]);
+  ee_printf("Branches Taken (hpm5) %lld\n",        counters[4]);
 
   // Implementation-defined (your choice):
-  ee_printf("Custom Counter 6 (hpm6) %ld\n",      counters[5]);
-  ee_printf("Custom Counter 7 (hpm7) %ld\n",      counters[6]);
-  ee_printf("Custom Counter 8 (hpm8) %ld\n",      counters[7]);
-  ee_printf("Custom Counter 9 (hpm9) %ld\n",      counters[8]);
-  ee_printf("Custom Counter 10 (hpm10) %ld\n",    counters[9]);
+  ee_printf("Custom Counter 6 (hpm6) %lld\n",      counters[5]);
+  ee_printf("Custom Counter 7 (hpm7) %lld\n",      counters[6]);
+  ee_printf("Custom Counter 8 (hpm8) %lld\n",      counters[7]);
+  ee_printf("Custom Counter 9 (hpm9) %lld\n",      counters[8]);
+  ee_printf("Custom Counter 10 (hpm10) %lld\n",    counters[9]);
 
   ee_printf("Done printing performance counters\n");
 
