@@ -140,13 +140,13 @@ void _init(int cid, int nc)
 {
   init_tls();
   thread_entry(cid, nc);
-  //computeStats(0);
+  //computeStats(0); // TODO uncomment to update counters array
 
-  // only single-threaded programs should ever get here.
+  // Run coremark
   int ret = main(0, 0);
-  //computeStats(1);
+  //computeStats(1); // TODO uncomment to update counters array
 
-  // Counter stats here
+  // Counter print stats
 
   ee_printf("Cycles (rdcycle) %lld\n",              counters[0]);
   ee_printf("Instructions Retired (rdinstret) %lld\n", counters[1]);
