@@ -16,7 +16,7 @@
 
 `define MaxInstrSizeWords 1048576
 // 16384
-`define MaxDataSizeWords 1048576
+`define MaxDataSizeWords 2097152
 
 `define MTIME_POINTER (`XLEN'h0200bff8)
 

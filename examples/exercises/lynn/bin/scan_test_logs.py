@@ -78,13 +78,13 @@ def main():
     if failed:
         print("❌ Failed tests:")
         for f in failed:
-            print(f"  {f}")
+            print(f"  {f.resolve()}")
         print()
 
     if passed:
         print("✅ Passed tests:")
         for p in passed:
-            print(f"  {p}")
+            print(f"  {p.resolve()}")
         print()
 
     if not_completed_unclassified:
@@ -93,13 +93,13 @@ def main():
         else:
             print(f"⚠️  Logs without '{COMPLETED_STR}':")
         for u in not_completed_unclassified:
-            print(f"  {u}")
+            print(f"  {u.resolve()}")
         print()
 
     if unreadable:
         print("⚠️  Unreadable logs:")
         for u in unreadable:
-            print(f"  {u}")
+            print(f"  {u.resolve()}")
         print()
 
     # Exit status: fail build if any test failed

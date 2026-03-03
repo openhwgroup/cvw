@@ -51,8 +51,8 @@ cmscript_files := \
   $(cmbase)/core_matrix.c $(cmbase)/core_state.c $(cmbase)/core_util.c
 
 cmconfig_files := \
-  $(WALLY_PORT_DIR)/core_portme.h $(WALLY_PORT_DIR)/core_portme.c $(WALLY_PORT_DIR)/core_portme.mak \
-  $(CURDIR)/crt.S $(WALLY_PORT_DIR)/encoding.h $(WALLY_PORT_DIR)/util.h $(CURDIR)/syscalls.c \
+  $(WALLY_PORT_DIR)/core_portme.h $(CURDIR)/core_portme.c $(WALLY_PORT_DIR)/core_portme.mak \
+  $(CURDIR)/crt.S $(CURDIR)/encoding.h $(CURDIR)/util.h $(CURDIR)/syscalls.c \
   $(LINKER)
 
 .PHONY: all
