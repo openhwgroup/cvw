@@ -33,7 +33,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   input logic               CSRDWriteM,
   input logic [P.XLEN-1:0]  CSRWriteValM,
   input logic [11:0]        CSRAdrM,
-  input logic               InstrValidE,
+  input logic               InstrValid,
   output logic [P.XLEN-1:0] CSRDReadValM,
   input logic [1:0]         PrivilegeModeW,
 
@@ -198,9 +198,9 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   always_ff @(posedge clk) begin
     if (reset) begin
       state <= RUNNING;
-    end else if (HaveReset & ResetHaltReq & InstrValidE) begin
+    end else if (HaveReset & ResetHaltReq & InstrValid) begin
       state <= HALTED;
-    end else if ((HaltReq | ResumeReq) & InstrValidE | ebreak) begin // Using the requests as enables
+    end else if ((HaltReq | ResumeReq) & InstrValid | ebreak) begin // Using the requests as enables
       state <= state_n;
     end
   end
