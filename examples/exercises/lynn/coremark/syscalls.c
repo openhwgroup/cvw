@@ -140,11 +140,11 @@ void _init(int cid, int nc)
 {
   init_tls();
   thread_entry(cid, nc);
-  computeStats(0);
+  //computeStats(0);
 
   // only single-threaded programs should ever get here.
   int ret = main(0, 0);
-  computeStats(1);
+  //computeStats(1);
 
   // Counter stats here
 
