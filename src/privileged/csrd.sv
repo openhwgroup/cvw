@@ -224,7 +224,6 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
 
    // -----------------------------------------------------------------------------
    // DebugResume: internal pulse when leaving HALTED.
-   // If you truly need it delayed 1 cycle to let StallF drop, keep the FF as below.
    // Needs to be delayed so StallF can be low
    // -----------------------------------------------------------------------------
 
