@@ -66,6 +66,10 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   logic      WriteDPC;
   logic      WriteCause;
 
+  // ResumeAck state definitions
+  typedef enum logic [1:0] {RESACKLOW, RESACKCLEAR, RESACKHIGH} resack_state_e;
+  resack_state_e resack_state, next_resack_state;
+
   // Need this for resuming
   logic      DPCset;
 
@@ -242,17 +246,48 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
    // (This matches common OpenOCD expectations better than a 1-cycle pulse.)
    // -----------------------------------------------------------------------------
 
-   always @(posedge clk) begin
+
+  always_ff @(posedge clk) begin
     if (reset) begin
-      ResumeAck <= 1'b0;
-    end else if (state_n == HALTED && state == RUNNING) begin
-      ResumeAck <= 1'b1;
-    end else if (state_n == RUNNING && state == HALTED) begin
-      ResumeAck <= 1'b0;
+      resack_state <= RESACKLOW;
     end else begin
-      ResumeAck <= ResumeAck;
+      resack_state <= next_resack_state;
     end
-   end
+  end
+
+
+  always_comb begin
+    case(resack_state)
+      RESACKLOW: begin
+        if (ResumeReq) next_resack_state = RESACKCLEAR;
+        else next_resack_state = RESACKLOW;
+      end
+
+      RESACKCLEAR: begin
+        if (state == RUNNING) next_resack_state = RESACKHIGH;
+        else next_resack_state = RESACKCLEAR;
+      end
+
+      RESACKHIGH: begin
+        if (ResumeReq) next_resack_state = RESACKCLEAR;
+        else next_resack_state = RESACKHIGH;
+      end
+
+      default: next_resack_state = RESACKCLEAR;
+    endcase
+  end
+
+   // always @(posedge clk) begin
+   //    if (reset) begin
+   //      ResumeAck <= 1'b0;
+   //    end else if (state_n == RUNNING & state == HALTED) begin
+   //      ResumeAck <= 1'b1;
+   //    end else begin
+   //      ResumeAck <= ResumeAck;
+   //   end
+   // end
+
+  assign ResumeAck = (resack_state == RESACKHIGH);
 
    // -----------------------------------------------------------------------------
    // DPCset: track whether DPC was explicitly written while halted (optional).
