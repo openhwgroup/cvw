@@ -55,10 +55,6 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   localparam DSCRATCH0 = 12'h7B2;
   localparam DSCRATCH1 = 12'h7B3;
 
-  // Halting states
-  typedef enum logic {RUNNING, HALTED} dbg_state_e;
-   dbg_state_e state, state_n;
-
   logic NextHalt;
   // logic AnyEbreak;
 
@@ -192,8 +188,11 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   end
 
   ////////////////////////////////////////////////////////////////////
-  // Halt Machine
+  // Halt FSM
   ////////////////////////////////////////////////////////////////////
+
+   typedef enum logic {RUNNING, HALTED} dbg_state_e;
+   dbg_state_e state, state_n;
 
   always_ff @(posedge clk) begin
     if (reset) begin
