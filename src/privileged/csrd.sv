@@ -252,7 +252,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
     end else begin
       ResumeAck <= ResumeAck;
     end
-  end
+   end
 
    // -----------------------------------------------------------------------------
    // DPCset: track whether DPC was explicitly written while halted (optional).
