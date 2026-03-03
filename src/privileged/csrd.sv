@@ -57,7 +57,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
 
   // Halting states
   typedef enum logic {RUNNING, HALTED} dbg_state_e;
-  dbg_state_e state, state_n;
+   dbg_state_e state, state_n;
 
   logic NextHalt;
   // logic AnyEbreak;
@@ -144,7 +144,8 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   // below. Not sure what signals gets triggered for ebreak.
 
   assign DCSRWriteValM = CSRDWriteM & ~NextHalt ?
-                         {CSRWriteValM[15], CSRWriteValM[13], CSRWriteValM[12], CSRWriteValM[11], CSRWriteValM[8:6], CSRWriteValM[2], CSRWriteValM[1:0]} :
+                         {CSRWriteValM[15], CSRWriteValM[13], CSRWriteValM[12], CSRWriteValM[11],
+                          CSRWriteValM[8:6], CSRWriteValM[2], CSRWriteValM[1:0]} :
                          {ebreakm, ebreaks, ebreaku, stepie, NextCause, step, PrivilegeModeW};
 
   assign DPCWriteValM = WriteDPC & (state == HALTED) ? CSRWriteValM : PCM;
@@ -177,9 +178,9 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
       IllegalCSRDAccessM = 1'b0;
       case (CSRAdrM)
         DCSR: begin
-          CSRDReadValM = {debugver, 1'b0, extcause, 4'd0, cetrig, pelp, ebreakvs, ebreakvu,
-                          ebreakm, 1'b0, ebreaks, ebreaku, stepie, stopcount, stoptime,
-                          cause, v, mprven, nmip, step, prv};
+           CSRDReadValM = {debugver, 1'b0, extcause, 4'd0, cetrig, pelp, ebreakvs, ebreakvu,
+                           ebreakm, 1'b0, ebreaks, ebreaku, stepie, stopcount, stoptime,
+                           cause, v, mprven, nmip, step, prv};
         end
         DPC: CSRDReadValM = DPC_REGW;
         default:  begin
@@ -222,16 +223,28 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   assign DebugMode = (state == HALTED);
   // assign DebugResume = (state == HALTED) && (state_n == RUNNING);
 
-  // Needs to be delayed so StallF can be low
-  always @(posedge clk) begin
-    if (reset) begin
-      DebugResume <= 0;
-    end else begin
-      DebugResume <= (state == HALTED) && (state_n == RUNNING) & DPCset;
-    end
-  end
+   // -----------------------------------------------------------------------------
+   // DebugResume: internal pulse when leaving HALTED.
+   // If you truly need it delayed 1 cycle to let StallF drop, keep the FF as below.
+   // Needs to be delayed so StallF can be low
+   // -----------------------------------------------------------------------------
 
-  always @(posedge clk) begin
+   // JES: Dont think we need to gate with DPCset
+   always @(posedge clk) begin
+      if (reset) begin
+         DebugResume <= 0;
+      end else begin
+         DebugResume <= (state == HALTED) && (state_n == RUNNING) & DPCset;
+      end
+   end
+
+   // -----------------------------------------------------------------------------
+   // ResumeAck: resumeack handshake.
+   // Set when resume is accepted; clear when debugger drops ResumeReq.
+   // (This matches common OpenOCD expectations better than a 1-cycle pulse.)
+   // -----------------------------------------------------------------------------
+
+   always @(posedge clk) begin
     if (reset) begin
       ResumeAck <= 1'b0;
     end else if (state_n == HALTED && state == RUNNING) begin
@@ -243,25 +256,48 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
     end
   end
 
-  always_ff @(posedge clk) begin
-    if (reset | ~DebugMode) begin
-      DPCset <= 0;
-    end else if (CSRDWriteM & (CSRAdrM == DPC)) begin
-      DPCset <= 1'b1;
-    end
-  end
+   // -----------------------------------------------------------------------------
+   // DPCset: track whether DPC was explicitly written while halted (optional).
+   // Clear when leaving HALTED. Set on CSR write to DPC while HALTED.
+   // -----------------------------------------------------------------------------
 
-  // Halt cause
-  // 000: No cause - Reset
-  // 001: ebreak
-  // 010: trigger
-  // 011: haltreg
-  // 100: step
-  // 101: resethaltreq
-  // 110: group (no groups implemented)
-  // 111: other (refer to extcause)
-  always_comb begin
-    NextCause = '0;
+   always_ff @(posedge clk) begin
+      if (reset) begin
+         DPCset <= 1'b0;
+      end else if (state_n != HALTED) begin
+         DPCset <= 1'b0;
+      end else if ((state == HALTED) && CSRDWriteM && (CSRAdrM == DPC)) begin
+         DPCset <= 1'b1;
+      end
+   end
+
+   /*
+   always_ff @(posedge clk) begin
+      if (reset | ~DebugMode) begin
+         DPCset <= 0;
+      end else if (CSRDWriteM & (CSRAdrM == DPC)) begin
+         DPCset <= 1'b1;
+      end
+   end
+    */
+
+   // -----------------------------------------------------------------------------
+   // Halt cause: latch on entry into HALTED.
+   // (This avoids combinational ambiguity and “wrong cause” when multiple signals
+   //  overlap.)
+   // -----------------------------------------------------------------------------
+
+   // 000: No cause - Reset
+   // 001: ebreak
+   // 010: trigger
+   // 011: haltreg
+   // 100: step
+   // 101: resethaltreq
+   // 110: group (no groups implemented)
+   // 111: other (refer to extcause)
+
+   always_comb begin
+      NextCause = '0;
     if (HaltReq) begin
       NextCause = 3'd3;
     end else if (ebreak) begin
@@ -271,7 +307,9 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
     end
   end
 
-  // Have reset logic
+   // -----------------------------------------------------------------------------
+   // HaveReset
+   // -----------------------------------------------------------------------------
   always_ff @(posedge clk) begin
     if (reset) begin
       HaveReset <= 1'b1;
