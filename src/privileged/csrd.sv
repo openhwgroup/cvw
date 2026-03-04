@@ -116,7 +116,10 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   // Need this for
   logic [2:0] NextCause;     // Cause of halt
   logic       ebreak;
-  logic       BreakModeM, BreakModeS, BreakModeU;
+  logic       BreakModeM;
+  logic       BreakModeS;
+  logic       BreakModeU;
+
   assign DebugBreakM = BreakpointFaultM & ebreakm & PrivilegeModeW == P.M_MODE;
   assign DebugBreakS = BreakpointFaultM & ebreaks & PrivilegeModeW == P.S_MODE;
   assign DebugBreakU = BreakpointFaultM & ebreaku & PrivilegeModeW == P.U_MODE;
