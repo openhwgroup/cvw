@@ -62,6 +62,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
 
   typedef enum logic {RUNNING, HALTED} dbg_state_e;
   dbg_state_e state, state_n;
+
   // ResumeAck state definitions
   typedef enum logic [1:0] {RESACKLOW, RESACKCLEAR, RESACKHIGH} resack_state_e;
   resack_state_e resack_state, next_resack_state;
@@ -82,7 +83,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]        DPCWriteValM;
 
   // Register Outputs
-  //logic [31:0]       DCSR_REGW;
+  // logic [31:0]       DCSR_REGW;
   // logic [P.XLEN-1:0] DPC_REGW;
 
   logic                     DebugBreakM;
@@ -164,10 +165,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   // CSRs
   ////////////////////////////////////////////////////////////////////
 
-  flopenr #(dcsrwidth) DCSRreg(clk, reset, WriteDCSR,
-    DCSRWriteValM,
-    DCSR_REGW);
-
+  flopenr #(dcsrwidth) DCSRreg(clk, reset, WriteDCSR, DCSRWriteValM, DCSR_REGW);
   flopenr #(P.XLEN) DPCreg(clk, reset, WriteDPC, DPCWriteValM, DPC_REGW);
   // assign DPC = DPC_REGW;
 
@@ -304,6 +302,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
    //  overlap.)
    // -----------------------------------------------------------------------------
 
+   // See Section 4.9 of Debug Specification 1.0 (Access: R)
    // 000: No cause - Reset
    // 001: ebreak
    // 010: trigger
