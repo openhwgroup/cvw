@@ -49,76 +49,75 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   input logic               HaveResetAck,
   input logic               ResetHaltReq,
   input logic               BreakpointFaultM,
-  output logic              EBreakM, EBreakS, EBreakU,
+  output logic              EBreakM,
+  output logic              EBreakS,
+  output logic              EBreakU,
   output logic              ResumeAck
 );
 
-  localparam DCSR = 12'h7B0;
-  localparam DPC = 12'h7B1;
-  localparam DSCRATCH0 = 12'h7B2;
-  localparam DSCRATCH1 = 12'h7B3;
+  localparam                DCSR = 12'h7B0;
+  localparam                DPC = 12'h7B1;
+  localparam                DSCRATCH0 = 12'h7B2;
+  localparam                DSCRATCH1 = 12'h7B3;
 
   typedef enum logic {RUNNING, HALTED} dbg_state_e;
   dbg_state_e state, state_n;
-
-  logic NextHalt;
-  // logic AnyEbreak;
-
-  // Write Enables
-  logic      WriteDCSR;
-  logic      WriteDPC;
-  logic      WriteCause;
-
   // ResumeAck state definitions
   typedef enum logic [1:0] {RESACKLOW, RESACKCLEAR, RESACKHIGH} resack_state_e;
   resack_state_e resack_state, next_resack_state;
 
+  logic                     NextHalt;
+  // logic AnyEbreak;
+
+  // Write Enables
+  logic                     WriteDCSR;
+  logic                     WriteDPC;
+  logic                     WriteCause;
+
   // Need this for resuming
-  logic      DPCset;
+  logic                     DPCset;
 
   // WriteVals
-  logic [31:0] DCSRWriteValM;
-  logic [P.XLEN-1:0] DPCWriteValM;
+  logic [31:0]              DCSRWriteValM;
+  logic [P.XLEN-1:0]        DPCWriteValM;
 
   // Register Outputs
   //logic [31:0]       DCSR_REGW;
   // logic [P.XLEN-1:0] DPC_REGW;
 
-  logic       DebugBreakM;
-  logic       DebugBreakS;
-  logic       DebugBreakU;
+  logic                     DebugBreakM;
+  logic                     DebugBreakS;
+  logic                     DebugBreakU;
 
   // DCSR Fields
-  logic [3:0] debugver;
-  logic [2:0] extcause;  // Irrelevant -> unimplemented
-  logic       cetrig;    // Not implemented
-  logic       pelp;      // Not implemented
-  logic       ebreakvs;  // Not implemented
-  logic       ebreakvu;  // Not implemented
-  logic       ebreakm;   // Must be implemented
-  logic       ebreaks;   // Must be implemented
-  logic       ebreaku;   // Must be implemented
-  logic       stepie;    // Must be implemented
-  logic       stopcount; // Hardcoded to 0, but should implement
-  logic       stoptime;  // Hardcoded to 0, but should implement
-  logic [2:0] cause;     // Cause of halt
-  logic       v;         // Not implemented - related to virtualization
-  logic       mprven;    // See note...
-  logic       nmip;      // Non-maskable interrupt. Tying to 0
-  logic       step;      // Need to implement this. How to track 1 instruction completing?
-  logic [1:0] prv;       // Privilege Mode at halt. Set so mode changes when resumed.
+  logic [3:0]               debugver;
+  logic [2:0]               extcause;  // Irrelevant -> unimplemented
+  logic                     cetrig;    // Not implemented
+  logic                     pelp;      // Not implemented
+  logic                     ebreakvs;  // Not implemented
+  logic                     ebreakvu;  // Not implemented
+  logic                     ebreakm;   // Must be implemented
+  logic                     ebreaks;   // Must be implemented
+  logic                     ebreaku;   // Must be implemented
+  logic                     stepie;    // Must be implemented
+  logic                     stopcount; // Hardcoded to 0, but should implement
+  logic                     stoptime;  // Hardcoded to 0, but should implement
+  logic [2:0]               cause;     // Cause of halt
+  logic                     v;         // Not implemented - related to virtualization
+  logic                     mprven;    // See note...
+  logic                     nmip;      // Non-maskable interrupt. Tying to 0
+  logic                     step;      // Need to implement this. How to track 1 instruction completing?
+  logic [1:0]               prv;       // Privilege Mode at halt. Set so mode changes when resumed.
 
   localparam dcsrwidth = ($bits(ebreakm) + $bits(ebreaks) + $bits(ebreaku) +
     $bits(stepie) + $bits(cause) + $bits(step) + $bits(prv));
 
-  logic [dcsrwidth-1:0]       DCSR_REGW;
-
-  // Need this for
-  logic [2:0] NextCause;     // Cause of halt
-  logic       ebreak;
-  logic       BreakModeM;
-  logic       BreakModeS;
-  logic       BreakModeU;
+  logic [dcsrwidth-1:0]     DCSR_REGW;
+  logic [2:0]               NextCause;  // Cause of halt
+  logic                     ebreak;
+  logic                     BreakModeM;
+  logic                     BreakModeS;
+  logic                     BreakModeU;
 
   assign DebugBreakM = BreakpointFaultM & ebreakm & PrivilegeModeW == P.M_MODE;
   assign DebugBreakS = BreakpointFaultM & ebreaks & PrivilegeModeW == P.S_MODE;
@@ -251,7 +250,6 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
    // Set when resume is accepted; clear when debugger drops ResumeReq.
    // (This matches common OpenOCD expectations better than a 1-cycle pulse.)
    // -----------------------------------------------------------------------------
-
 
   always_ff @(posedge clk) begin
     if (reset) begin
