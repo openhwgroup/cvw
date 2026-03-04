@@ -326,6 +326,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
    // -----------------------------------------------------------------------------
    // HaveReset
    // -----------------------------------------------------------------------------
+
   always_ff @(posedge clk) begin
     if (reset) begin
       HaveReset <= 1'b1;
