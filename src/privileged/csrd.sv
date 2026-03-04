@@ -110,6 +110,11 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   logic                     step;      // Need to implement this. How to track 1 instruction completing?
   logic [1:0]               prv;       // Privilege Mode at halt. Set so mode changes when resumed.
 
+   // jes: taken from debug specification 4.9.1, 0x7b0
+   // dcsr[31:0] = {debugver[3:0], 1'b0, extcause[2:0], 4'b0, cetrig, pelp,
+   // ebreakvs, ebreakvu, ebreakm, 1'b0, ebreaks, ebreaku, stepie, stopcount,
+   // stoptime, cause[2:0], v, mprven, nmip, step, prv[1:0]}
+
   localparam dcsrwidth = ($bits(ebreakm) + $bits(ebreaks) + $bits(ebreaku) +
     $bits(stepie) + $bits(cause) + $bits(step) + $bits(prv));
 
@@ -168,10 +173,10 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   flopenr #(dcsrwidth) DCSRreg(clk, reset, WriteDCSR, DCSRWriteValM, DCSR_REGW);
   flopenr #(P.XLEN) DPCreg(clk, reset, WriteDPC, DPCWriteValM, DPC_REGW);
 
-  assign ebreakm = DCSR_REGW[dcsrwidth - 1];
-  assign ebreaks = DCSR_REGW[dcsrwidth - 2];
-  assign ebreaku = DCSR_REGW[dcsrwidth - 3];
-  assign stepie = DCSR_REGW[dcsrwidth - 4];
+  assign ebreakm = DCSR_REGW[dcsrwidth-1];
+  assign ebreaks = DCSR_REGW[dcsrwidth-2];
+  assign ebreaku = DCSR_REGW[dcsrwidth-3];
+  assign stepie = DCSR_REGW[dcsrwidth-4];
   assign cause = DCSR_REGW[dcsrwidth-5:dcsrwidth-7];
   assign step = DCSR_REGW[2];
   assign prv = DCSR_REGW[1:0];
