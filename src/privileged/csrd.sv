@@ -1,7 +1,10 @@
 //////////////////////////////////////////////////////////////////////
 // csrd.sv
 //
-// Written: Jacob Pease jacobpease@protonmail.com 19 September 2025
+// Written:  Jacob Pease jacobpease@protonmail.com
+//           James E. Stine james.stine@okstate.edu
+// Created:  19 September 2025
+// Modified: 1 March 2026
 //
 // Purpose: Debug Control and Status Registers
 //          See RISC-V Privileged Mode Specification 20190608
@@ -81,7 +84,9 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   //logic [31:0]       DCSR_REGW;
   // logic [P.XLEN-1:0] DPC_REGW;
 
-  logic              DebugBreakM, DebugBreakS, DebugBreakU;
+  logic       DebugBreakM;
+  logic       DebugBreakS;
+  logic       DebugBreakU;
 
   // DCSR Fields
   logic [3:0] debugver;
@@ -224,7 +229,6 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   end
 
   assign DebugMode = (state == HALTED);
-  // assign DebugResume = (state == HALTED) && (state_n == RUNNING);
 
    // -----------------------------------------------------------------------------
    // DebugResume: internal pulse when leaving HALTED.
