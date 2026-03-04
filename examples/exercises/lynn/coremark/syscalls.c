@@ -140,11 +140,11 @@ void _init(int cid, int nc)
 {
   init_tls();
   thread_entry(cid, nc);
-  //computeStats(0); // TODO uncomment to update counters array
+  computeStats(0); // TODO uncomment to update counters array
 
   // Run coremark
   int ret = main(0, 0);
-  //computeStats(1); // TODO uncomment to update counters array
+  computeStats(1); // TODO uncomment to update counters array
 
   // Counter print stats
 
