@@ -167,7 +167,6 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
 
   flopenr #(dcsrwidth) DCSRreg(clk, reset, WriteDCSR, DCSRWriteValM, DCSR_REGW);
   flopenr #(P.XLEN) DPCreg(clk, reset, WriteDPC, DPCWriteValM, DPC_REGW);
-  // assign DPC = DPC_REGW;
 
   assign ebreakm = DCSR_REGW[dcsrwidth - 1];
   assign ebreaks = DCSR_REGW[dcsrwidth - 2];
