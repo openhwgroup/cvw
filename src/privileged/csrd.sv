@@ -239,7 +239,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
    // Needs to be delayed so StallF can be low
    // -----------------------------------------------------------------------------
 
-   always @(posedge clk) begin
+   always_ff @(posedge clk) begin
       if (reset) begin
          DebugResume <= 0;
       end else begin
