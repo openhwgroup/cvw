@@ -64,34 +64,7 @@ static uintptr_t syscall(uintptr_t which, uint64_t arg0, uint64_t arg1, uint64_t
 
 #define NUM_COUNTERS 10
 static unsigned long long counters[NUM_COUNTERS];
-#define NUM_COUNTERS 10
-static unsigned long long counters[NUM_COUNTERS];
 static char* counter_names[NUM_COUNTERS];
-
-
-void computeStats(int difference)
-{
-  int i = 0;
-#define READ_CTR(name) do { \
-    while (i >= NUM_COUNTERS) ; \
-    unsigned long long csr = read_csr64(name); \
-    if (difference) {csr -= counters[i]; counter_names[i] = #name;} \
-    counters[i++] = csr; \
-  } while (0)
-
-  READ_CTR(cycle);         // counters[0]
-  READ_CTR(instret);       // counters[1]
-  READ_CTR(hpmcounter3);   // counters[2]
-  READ_CTR(hpmcounter4);   // counters[3]
-  READ_CTR(hpmcounter5);   // counters[4]
-  READ_CTR(hpmcounter6);   // counters[5]
-  READ_CTR(hpmcounter7);   // counters[6]
-  READ_CTR(hpmcounter8);   // counters[7]
-  READ_CTR(hpmcounter9);   // counters[8]
-  READ_CTR(hpmcounter10);  // counters[9]
-
-#undef READ_CTR
-}
 
 void computeStats(int difference)
 {
