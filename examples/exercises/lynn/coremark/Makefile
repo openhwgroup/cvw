@@ -55,17 +55,36 @@ cmconfig_files := \
   $(CURDIR)/crt.S $(WALLY_PORT_DIR)/encoding.h $(CURDIR)/util.h $(CURDIR)/syscalls.c \
   $(LINKER)
 
-.PHONY: all
+CC := $(TOOLPREFIX)gcc
+
+# Flags from upstream core_portme.mak (previously added silently by the upstream Makefile)
+CFLAGS := $(PORT_CFLAGS) \
+    -mcmodel=medany \
+    -fno-tree-loop-distribute-patterns \
+    -fno-common \
+    -I$(cmbase) -I$(WALLY_PORT_DIR) \
+    -T $(LINKER) \
+    -DFLAGS_STR='"$(PORT_CFLAGS)"'
+LFLAGS := -static-libgcc -lgcc -lm -lgcc
+
+# ---- Source files ----
+CM_SRCS := \
+    $(cmbase)/core_main.c $(cmbase)/core_list_join.c \
+    $(cmbase)/core_matrix.c $(cmbase)/core_state.c $(cmbase)/core_util.c
+
+PORT_SRCS := $(CURDIR)/core_portme.c $(CURDIR)/syscalls.c $(CURDIR)/crt.S
+
+SRCS    := $(CM_SRCS) $(PORT_SRCS)
+HEADERS := $(cmbase)/coremark.h $(WALLY_PORT_DIR)/core_portme.h \
+           $(WALLY_PORT_DIR)/encoding.h $(CURDIR)/util.h
+
+.PHONY: all clean
+
 all: $(WORK_DIR)/coremark.bare.riscv.elf
 
-$(WORK_DIR)/coremark.bare.riscv.elf: $(cmscript_files) $(cmconfig_files) Makefile
-	@mkdir -p $(WORK_DIR)/portdir
-	@cp -f $(cmconfig_files) $(WORK_DIR)/portdir
-	@$(MAKE) -C $(cmbase) PORT_DIR=$(WORK_DIR)/portdir compile XCFLAGS="$(PORT_CFLAGS)"
+$(WORK_DIR)/coremark.bare.riscv.elf: $(SRCS) $(HEADERS) $(LINKER) Makefile
 	@mkdir -p $(WORK_DIR)
-	@mv $(cmbase)/coremark.bare.riscv $(WORK_DIR)/coremark.bare.riscv.elf
+	$(CC) $(CFLAGS) $(SRCS) -o $@ $(LFLAGS)
 
-.PHONY: clean
 clean:
-	-@$(MAKE) -C $(cmbase) clean
 	rm -rf $(WORK_DIR)
