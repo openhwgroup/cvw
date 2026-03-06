@@ -3,13 +3,13 @@
 # kacassidy@hmc.edu
 # 1/22/26
 
-XLEN       ?= 32
-ARCH       ?= rv$(XLEN)i_zicsr
+XLEN       ?=
+ARCH       ?=
 ABI        ?= $(if $(findstring 64,$(XLEN)),lp64,ilp32)
 
 TOOLPREFIX ?= riscv64-unknown-elf-
 
-LINKER     ?= $(CURDIR)/../sample_processor/config/link.ld
+LINKER     ?=
 
 WORK_DIR   ?= $(CURDIR)/work
 
