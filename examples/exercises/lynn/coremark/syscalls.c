@@ -66,7 +66,6 @@ static uintptr_t syscall(uintptr_t which, uint64_t arg0, uint64_t arg1, uint64_t
 static unsigned long long counters[NUM_COUNTERS];
 static char* counter_names[NUM_COUNTERS];
 
-
 void computeStats(int difference)
 {
   int i = 0;
