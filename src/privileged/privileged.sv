@@ -42,6 +42,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0] PCSpillM,                                       // program counter
   // control signals
   input  logic              InstrValidM,                                    // Current instruction is valid (not flushed)
+  input  logic              InstrValidE,                                    // Current valid instruction in Execute stage (needed for debug reset on halt)
   input  logic              CommittedM, CommittedF,                         // current instruction is using bus; don't interrupt
   input  logic              PrivilegedM,                                    // privileged instruction
   // processor events for performance counter logging
@@ -77,6 +78,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic [4:0]        SetFflagsM,                                     // set FCSR flags from FPU
   input  logic              SelHPTW,                                        // HPTW in use.  Causes system to use S-mode endianness for accesses
   // CSR outputs
+  output logic [P.XLEN-1:0] CSRReadValM,
   output logic [P.XLEN-1:0] CSRReadValW,                                    // Value read from CSR
   output logic [1:0]        PrivilegeModeW,                                 // current privilege mode
   output logic [P.XLEN-1:0] SATP_REGW,                                      // supervisor address translation register
@@ -97,7 +99,21 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic              InvalidateICacheM,                              // fence instruction
   output logic              BigEndianM,                                     // Use big endian in current privilege mode
   // Fault outputs
-  output logic              wfiM, IntPendingM                               // Stall in Memory stage for WFI until interrupt pending or timeout
+  output logic              wfiM, IntPendingM,                              // Stall in Memory stage for WFI until interrupt pending or timeout
+  // Debug Mode
+  output logic              DebugMode,
+  input  logic              HaltReq, ResumeReq,
+  input  logic              DebugControl, CSRDebugEnable,
+  // output logic [P.XLEN-1:0] DebugCSRRDATA,
+  input  logic [P.XLEN-1:0] DebugRegWDATA,
+  input  logic [11:0]       DebugRegAddr,
+  input  logic              DebugRegWrite,
+  output logic              DebugResume,
+  output logic [P.XLEN-1:0] DPC,
+  output logic              HaveReset,
+  input  logic              HaveResetAck,
+  input  logic              ResetHaltReq,
+  output logic              ResumeAck
 );
 
   logic [3:0]               CauseM;                                         // trap cause
@@ -119,6 +135,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   logic                     HPTWInstrAccessFaultM;                          // Hardware page table access fault while fetching instruction PTE
   logic                     HPTWInstrPageFaultM;                            // Hardware page table page fault while fetching instruction PTE
   logic                     BreakpointFaultM, EcallFaultM;                  // breakpoint and Ecall traps should retire
+  logic                     EBreakM, EBreakS, EBreakU;
 
   logic                     wfiW;
 
@@ -137,7 +154,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .InstrM, .InstrOrigM, .PCM, .PCSpillM, .SrcAM, .IEUAdrxTvalM,
     .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .InterruptM,
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
-    .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD, .StoreStallD,
+    .MTIME_CLINT, .InstrValidM, .InstrValidE, .FRegWriteM, .LoadStallD, .StoreStallD,
     .BPDirWrongM, .BTAWrongM, .RASPredPCWrongM, .BPWrongM,
     .sfencevmaM, .ExceptionM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
     .IClassWrongM, .IClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
@@ -148,7 +165,12 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .SATP_REGW, .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
     .SetFflagsM, .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE,
     .EPCM, .TrapVectorM,
-    .CSRReadValW, .IllegalCSRAccessM, .BigEndianM);
+    .CSRReadValM, .CSRReadValW, .IllegalCSRAccessM, .BigEndianM,
+    .DebugMode, .HaltReq, .ResumeReq, .DebugControl, .CSRDebugEnable, .DebugRegWDATA,
+    .DebugRegAddr, .DebugRegWrite, .DebugResume, .DPC,
+    .HaveReset, .HaveResetAck, .ResetHaltReq, .BreakpointFaultM,
+    .EBreakM, .EBreakS, .EBreakU,
+    .ResumeAck);
 
   // pipeline early-arriving trap sources
   privpiperegs ppr(.clk, .reset, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
@@ -163,5 +185,6 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .LoadPageFaultM, .StoreAmoPageFaultM, .PrivilegeModeW,
     .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW, .STATUS_MIE, .STATUS_SIE,
     .InstrValidM, .CommittedM, .CommittedF,
-    .TrapM, .wfiM, .wfiW, .InterruptM, .ExceptionM, .IntPendingM, .DelegateM, .CauseM);
+    .TrapM, .wfiM, .wfiW, .InterruptM, .ExceptionM, .IntPendingM, .DelegateM, .CauseM,
+    .EBreakM, .EBreakS, .EBreakU);
 endmodule

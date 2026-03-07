@@ -63,7 +63,9 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   input  logic                SDCIn,            // SDC DATA[0]     to     SPI DI
   output logic                SDCCmd,           // SDC CMD         from   SPI DO
   output logic [3:0]          SDCCS,            // SDC Card Detect from   SPI CS
-  output logic                SDCCLK            // SDC Clock       from   SPI Clock
+  output logic                SDCCLK,           // SDC Clock       from   SPI Clock
+  input  logic                tck, tms, tdi,
+  output logic                tdo
 );
 
   // Uncore signals
@@ -73,14 +75,47 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic [63:0]                MTIME_CLINT;      // from CLINT to CSRs
   logic                       MExtInt,SExtInt;  // from PLIC
 
+  // Debug signals
+  logic [6:0]                 DMIADDR;
+  logic [31:0]                DMIDATA;
+  logic [1:0]                 DMIOP;
+  logic                       DMIREADY;
+  logic                       DMIVALID;
+
+  logic [31:0]                DMIRSPDATA;
+  logic [1:0]                 DMIRSPOP;
+  logic                       DMIRSPREADY;
+  logic                       DMIRSPVALID;
+
+  logic                       NDMReset;
+  logic                       HaltReq;
+  logic                       ResumeReq;
+  logic                       DebugMode;
+  logic                       DebugControl;
+  logic                       GPRDebugEnable;
+  logic                       CSRDebugEnable;
+  logic                       FPRDebugEnable;
+  logic [P.XLEN-1:0]          DebugRegRDATA;
+  logic [P.XLEN-1:0]          DebugRegWDATA;
+  logic [11:0]                DebugRegAddr;
+  logic                       DebugRegWrite;
+  logic                       HaveReset;
+  logic                       HaveResetAck;
+  logic                       ResetHaltReq;
+  logic                       ResumeAck;
+
+
   // synchronize reset to SOC clock domain
   synchronizer resetsync(.clk, .d(reset_ext), .q(reset));
 
   // instantiate processor and internal memories
-  wallypipelinedcore #(P) core(.clk, .reset,
+  wallypipelinedcore #(P) core(.clk, .reset(reset | NDMReset),
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
-    .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .ExternalStall
+    .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .ExternalStall,
+    .DebugMode, .HaltReq, .ResumeReq, .DebugControl, .GPRDebugEnable, .CSRDebugEnable, .FPRDebugEnable,
+    .DebugRegRDATA, .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite,
+    .HaveReset, .HaveResetAck, .ResetHaltReq, .ResumeAck
    );
 
   // instantiate uncore if a bus interface exists
@@ -95,5 +130,31 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
             MTIME_CLINT, GPIOOUT, GPIOEN, UARTSout, SPIOut, SPICS, SPICLK, SDCCmd, SDCCS, SDCCLK} = '0;
   end
 
+  if (P.DEBUG_SUPPORTED) begin : debug
+    dtm #(P) dtm(.clk, .reset, .tck, .tms, .tdi, .tdo,
+      .DMIADDR, .DMIDATA, .DMIOP, .DMIREADY, .DMIVALID,
+      .DMIRSPDATA, .DMIRSPOP, .DMIRSPREADY, .DMIRSPVALID);
+
+    debug #(P) debug(.clk, .reset, .NDMReset, .HaltReq, .ResumeReq, .DebugMode, .DebugControl,
+      .GPRDebugEnable, .CSRDebugEnable, .FPRDebugEnable,
+      .DMIADDR, .DMIDATA, .DMIOP, .DMIREADY, .DMIVALID,
+      .DMIRSPDATA, .DMIRSPOP, .DMIRSPREADY, .DMIRSPVALID,
+      .DebugRegRDATA, .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite,
+      .HaveReset, .HaveResetAck, .ResetHaltReq, .ResumeAck);
+  end else begin
+    assign tdo = 1'bz;
+    assign GPRDebugEnable = 0;
+    assign CSRDebugEnable = 0;
+    assign FPRDebugEnable = 0;
+    assign DebugRegWDATA = '0;
+    assign DebugRegAddr = '0;
+    assign DebugRegWrite = 0;
+    assign DebugControl = 0;
+    assign HaltReq = 0;
+    assign ResumeReq = 0;
+    assign NDMReset = 0;
+    assign HaveResetAck = 0;
+    assign ResetHaltReq = 0;
+  end
 
 endmodule
