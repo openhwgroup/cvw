@@ -30,6 +30,9 @@ dosteps:
    addi t1, t1, 4
    li t0, 0x1337c0d3
    sw t0, 0(t1)
+   addi t1, t1, 4
+   li t0, 0x00fa11ed
+   sw t0, 0(t1)
 
 test_end:
    # fence.i

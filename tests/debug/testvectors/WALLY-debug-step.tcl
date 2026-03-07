@@ -59,12 +59,13 @@ set test_end [get_address $objdump_file test_end]
 # Halt if ebreak did not halt
 halt
 
-# Reset. Should already be halted once ebreak is hit.
 set_reg [list dpc $dosteps]
+riscv dmi_write 0x16 0x700
 step
 step
 step
 step
 step
 step
+set_reg [list dpc $test_end]
 resume
