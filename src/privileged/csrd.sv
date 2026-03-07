@@ -207,12 +207,14 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   // Halt FSM
   ////////////////////////////////////////////////////////////////////
 
+  logic StepHoldEnable;
+
   always_ff @(posedge clk) begin
     if (reset) begin
       state <= RUNNING;
     end else if (HaveReset & ResetHaltReq & InstrValid) begin
       state <= HALTED;
-    end else if ((HaltReq | ResumeReq) & InstrValid | ebreak) begin // Using the requests as enables
+    end else if ((HaltReq | ResumeReq | StepHoldEnable) & InstrValid | ebreak) begin // Using the requests as enables
       state <= state_n;
     end
   end
@@ -222,6 +224,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
       RUNNING: begin
         if (HaltReq) state_n = HALTED;
         else if (ebreak) state_n = HALTED;
+        else if (step & InstrValid & ~DebugResume) state_n = HALTED;
         else state_n = RUNNING;
         end
       HALTED: begin
@@ -230,6 +233,16 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
         end
       default: state_n = RUNNING;
     endcase
+  end
+
+  always_ff @(posedge clk) begin
+    if (reset) begin
+      StepHoldEnable <= 1'b0;
+    end else if (step & ResumeReq) begin
+      StepHoldEnable <= 1'b1;
+    end else if (InstrValid) begin
+      StepHoldEnable <= 1'b0;
+    end
   end
 
   assign DebugMode = (state == HALTED);
@@ -322,6 +335,8 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
       NextCause = 3'd3;
     end else if (ebreak) begin
       NextCause = 3'd1;
+    end else if (step & InstrValid) begin
+      NextCause = 3'd4;
     end else begin
       NextCause = '0;
     end
