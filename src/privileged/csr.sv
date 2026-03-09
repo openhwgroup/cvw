@@ -38,7 +38,6 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0]        PCM,                       // program counter, next PC going to trap/return logic
   input  logic [P.XLEN-1:0]        PCSpillM,                  // program counter, next PC going to trap/return logic aligned after an instruction spill
   input  logic [P.XLEN-1:0]        SrcAM, IEUAdrxTvalM,       // SrcA and memory address from IEU
-  input  logic [P.PA_BITS-1:0]     PAdrM,                     // Physical address from LSU
   input  logic                     CSRReadM, CSRWriteM,       // read or write CSR
   input  logic                     TrapM,                     // trap is occurring
   input  logic                     TrapToM, TrapToHSM, TrapToVSM,// resolved trap target
@@ -115,7 +114,6 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]       CSRRWM, CSRRSM, CSRRCM;
   logic [P.XLEN-1:0]       CSRWriteValM;
   logic [P.XLEN-1:0]       MSTATUS_REGW, SSTATUS_REGW, MSTATUSH_REGW;
-  logic                    STATUS_SPP_INT, STATUS_SIE_INT;
   logic                    STATUS_MXR_INT, STATUS_SUM_INT;
   logic [1:0]              STATUS_FS_INT;
   logic                    BigEndianM_Int;
@@ -150,7 +148,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic                    ENVCFG_STCE; // supervisor timer counter enable
   logic                    ENVCFG_FIOM; // fence implies io (presently not used)
   logic                    TrapGVAM;
-  logic                    CauseWritesTvalM;
+  logic                    TrapWritesVAToTvalM;
   logic                    VSCSRDirectM;
   logic                    VSSTATUS_SUM, VSSTATUS_MXR, VSSTATUS_UBE;
   logic [1:0]              VSSTATUS_FS;
@@ -178,11 +176,14 @@ module csr import cvw::*;  #(parameter cvw_t P) (
       default:                NextFaultMtvalM = '0; // Ecall, interrupts
     endcase
 
-  // Identify traps that write a guest virtual address to {m,s}tval.
+  // Identify traps that write a virtual address to tval.
+  // Guest-page-fault causes are included for future two-stage support.
   always_comb
     case (CauseM)
-      5'd0, 5'd1, 5'd3, 5'd4, 5'd5, 5'd6, 5'd7, 5'd12, 5'd13, 5'd15: CauseWritesTvalM = 1'b1;
-      default: CauseWritesTvalM = 1'b0;
+      5'd0, 5'd1, 5'd3, 5'd4, 5'd5, 5'd6, 5'd7, 5'd12, 5'd13, 5'd15, 5'd20, 5'd21, 5'd23:
+        TrapWritesVAToTvalM = 1'b1;
+      default:
+        TrapWritesVAToTvalM = 1'b0;
     endcase
 
   ///////////////////////////////////////////
@@ -192,11 +193,11 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   // Select trap vector from STVEC/MTVEC (and VSTVEC when H is supported) and word-align
   if (P.H_SUPPORTED) begin: tvec_h
     mux2 #(P.XLEN) stvecselmux(STVEC_REGW, VSTVEC_REGW, TrapToVSM, STVecSelM);
-    mux2 #(P.XLEN) tvecmux(STVecSelM, MTVEC_REGW, TrapToM, TVecM);
   end else begin: tvec_noh
-    assign SelMtvecM = (NextPrivilegeModeM == P.M_MODE);
-    mux2 #(P.XLEN) tvecmux(STVEC_REGW, MTVEC_REGW, SelMtvecM, TVecM);
+    assign STVecSelM = STVEC_REGW;
   end
+  assign SelMtvecM = P.H_SUPPORTED ? TrapToM : (NextPrivilegeModeM == P.M_MODE);
+  mux2 #(P.XLEN) tvecmux(STVecSelM, MTVEC_REGW, SelMtvecM, TVecM);
   assign TVecAlignedM = {TVecM[P.XLEN-1:2], 2'b00};
 
   // Support vectored interrupts
@@ -257,7 +258,9 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     mux2 #(12) csradrmux(CSRAdrM_In, {CSRAdrM_In[11:10], 2'b10, CSRAdrM_In[7:0]}, MapVSCSR, CSRAdrM);
     // Track direct VS CSR accesses while V=1 (virtual-instruction behavior).
     assign VSCSRDirectM = VirtModeW & (CSRAdrM_In[9:8] == 2'b10);
-    assign TrapGVAM = TrapM & ExceptionM & VirtModeW & CauseWritesTvalM;
+    // GVA gets set when traps from virtualized execution write a VA to tval.
+    // TODO: Include HS-mode HLV/HLVX/HSV fault cases when those paths are integrated.
+    assign TrapGVAM = TrapM & ExceptionM & VirtModeW & TrapWritesVAToTvalM;
   end else begin: csradr_noh
     assign CSRAdrM = CSRAdrM_In;
     assign VSCSRDirectM = 1'b0;
@@ -299,8 +302,8 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     .TrapM, .FRegWriteM, .NextPrivilegeModeM, .PrivilegeModeW, .VirtModeW, .TrapGVAM,
     .mretM, .sretM, .WriteFRMM, .SetOrWriteFFLAGSM, .CSRWriteValM, .SelHPTW,
     .MSTATUS_REGW, .SSTATUS_REGW, .MSTATUSH_REGW,
-    .STATUS_MPP, .MSTATUS_MPV, .STATUS_SPP(STATUS_SPP_INT), .STATUS_TSR, .STATUS_TW,
-    .STATUS_MIE, .STATUS_SIE(STATUS_SIE_INT), .STATUS_MXR(STATUS_MXR_INT), .STATUS_SUM(STATUS_SUM_INT),
+    .STATUS_MPP, .MSTATUS_MPV, .STATUS_SPP, .STATUS_TSR, .STATUS_TW,
+    .STATUS_MIE, .STATUS_SIE, .STATUS_MXR(STATUS_MXR_INT), .STATUS_SUM(STATUS_SUM_INT),
     .STATUS_MPRV, .STATUS_TVM, .STATUS_FS(STATUS_FS_INT), .BigEndianM(BigEndianM_Int));
 
   csrm #(P) csrm(.clk, .reset,
@@ -387,20 +390,10 @@ module csr import cvw::*;  #(parameter cvw_t P) (
       assign SATP_REGW = SATP_REGW_INT;
   end
 
-  // NextHtvalM Logic
-  // Guest page faults (20, 21, 23) write GPA >> 2 to htval.
-  always_comb begin
-      NextHtvalM = NextMtvalM; // Default to standard mtval
-      if (P.H_SUPPORTED & TrapToHSM) begin
-          if (CauseM == 20 || CauseM == 21 || CauseM == 23) begin
-             NextHtvalM = {{(P.XLEN-P.PA_BITS+2){1'b0}}, PAdrM[P.PA_BITS-1:2]};
-          end
-      end
-  end
+  // Until two-stage translation is integrated, htval trap writes stay zero.
+  assign NextHtvalM = '0;
 
   // Effective status bits for VS-mode
-  assign STATUS_SPP = STATUS_SPP_INT;
-  assign STATUS_SIE = STATUS_SIE_INT;
   if (P.H_SUPPORTED) begin: status_vs
     assign STATUS_MXR = VirtModeW ? VSSTATUS_MXR : STATUS_MXR_INT;
     assign STATUS_SUM = VirtModeW ? VSSTATUS_SUM : STATUS_SUM_INT;

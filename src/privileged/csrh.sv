@@ -455,8 +455,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
     if (WriteHIEM) begin
       NextHIE = CSRWriteValM & HIE_WRITE_MASK;
       // GEILEN=0: SGEIE is read-only zero.
-      if (SIM_COMPLIANCE)   NextHIE[12] = 1'b1;
-      else if (GEILEN == 0) NextHIE[12] = 1'b0;
+      if (GEILEN == 0 & ~SIM_COMPLIANCE) NextHIE[12] = 1'b0;
     end
     if (WriteVSIEM) begin
       if (HIDELEG_REGW[2])  NextHIE[2]  = CSRWriteValM[1]; // SSIE -> VSSIE

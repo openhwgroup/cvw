@@ -38,7 +38,6 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic [31:0]       InstrM,                                         // Instruction
   input  logic [31:0]       InstrOrigM,                                     // Original compressed or uncompressed instruction in Memory stage for Illegal Instruction MTVAL
   input  logic [P.XLEN-1:0] IEUAdrxTvalM,                                   // address from IEU
-  input  logic [P.PA_BITS-1:0] PAdrM,                                       // Physical address from LSU
   input  logic [P.XLEN-1:0] PCM,                                            // program counter
   input  logic [P.XLEN-1:0] PCSpillM,                                       // program counter
   // control signals
@@ -127,7 +126,6 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   logic                     wfiW;
 
     // --- Hypervisor ---
-  logic                     NextVirtModeM;   // next V (from privmode)
   logic                     VirtModeW;       // current V (from privmode)
   logic                     MSTATUS_MPV;     // from CSR (prev V for MRET)
   logic                     HSTATUS_SPV;     // from CSR (prev V for SRET in HS)
@@ -137,8 +135,8 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
 
   // track the current privilege level
   privmode #(P) privmode(.clk, .reset, .StallW, .TrapM, .mretM, .sretM, .DelegateM,
-    .STATUS_MPP, .STATUS_SPP, .VSSTATUS_SPP, .MSTATUS_MPV, .HSTATUS_SPV, .TrapToM, .TrapToHSM, .TrapToVSM,
-    .NextPrivilegeModeM, .PrivilegeModeW, .NextVirtModeM, .VirtModeW);
+    .STATUS_MPP, .STATUS_SPP, .VSSTATUS_SPP, .MSTATUS_MPV, .HSTATUS_SPV, .TrapToVSM,
+    .NextPrivilegeModeM, .PrivilegeModeW, .VirtModeW);
 
   // decode privileged instructions
   logic VirtualInstrFaultM;
@@ -150,7 +148,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
 
   // Control and Status Registers
   csr #(P) csr(.clk, .reset, .FlushM, .FlushW, .StallE, .StallM, .StallW,
-    .InstrM, .InstrOrigM, .PCM, .PCSpillM, .SrcAM, .IEUAdrxTvalM, .PAdrM,
+    .InstrM, .InstrOrigM, .PCM, .PCSpillM, .SrcAM, .IEUAdrxTvalM,
     .CSRReadM, .CSRWriteM, .TrapM, .TrapToM, .TrapToHSM, .TrapToVSM, .mretM, .sretM, .InterruptM,
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
     .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD, .StoreStallD,
