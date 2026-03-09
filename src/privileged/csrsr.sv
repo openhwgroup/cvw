@@ -157,8 +157,6 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
       STATUS_MXR_INT  <= 1'b0;
       STATUS_SUM_INT  <= 1'b0;
       STATUS_MPRV_INT <= 1'b0; // Per Priv 3.3
-      STATUS_MPV      <= 1'b0;
-      STATUS_GVA      <= 1'b0;
       STATUS_FS_INT   <= 2'b00; // leave floating-point off until activated, even if F_SUPPORTED
       STATUS_MPP      <= 2'b00;
       STATUS_SPP      <= 1'b0;
@@ -179,8 +177,6 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
           STATUS_MPIE <= STATUS_MIE;
           STATUS_MIE  <= 1'b0;
           STATUS_MPP  <= PrivilegeModeW;
-          STATUS_MPV  <= P.H_SUPPORTED & VirtModeW;
-          STATUS_GVA  <= P.H_SUPPORTED & TrapGVAM;
         end else if (P.S_SUPPORTED) begin // supervisor mode
           STATUS_SPIE <= STATUS_SIE;
           STATUS_SIE  <= 1'b0;
@@ -191,7 +187,6 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
         STATUS_MPIE     <= 1'b1; //
         STATUS_MPP      <= P.U_SUPPORTED ? P.U_MODE : P.M_MODE; // set MPP to lowest supported privilege level
         STATUS_MPRV_INT <= STATUS_MPRV_INT & (STATUS_MPP == P.M_MODE); // page 21 of privileged spec.
-        STATUS_MPV      <= 1'b0;
       end else if (sretM & P.S_SUPPORTED & ~VirtModeW) begin
         STATUS_SIE      <= STATUS_SPIE; // restore global interrupt enable
         STATUS_SPIE     <= P.S_SUPPORTED;
@@ -214,17 +209,11 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
         STATUS_UBE      <= P.U_SUPPORTED & P.BIGENDIAN_SUPPORTED & CSRWriteValM[6];
         STATUS_MBE      <= nextMBE;
         STATUS_SBE      <= nextSBE;
-        if (P.XLEN == 64) begin
-          STATUS_MPV    <= P.H_SUPPORTED & CSRWriteValExt[39];
-          STATUS_GVA    <= P.H_SUPPORTED & CSRWriteValExt[38];
-        end
       // coverage off
       // MSTATUSH only exists in 32-bit configurations, will not be hit on rv64gc
       end else if ((P.XLEN == 32) & WriteMSTATUSHM) begin
         STATUS_MBE      <= P.BIGENDIAN_SUPPORTED & CSRWriteValM[5];
         STATUS_SBE      <= P.S_SUPPORTED & P.BIGENDIAN_SUPPORTED & CSRWriteValM[4];
-        STATUS_MPV      <= P.H_SUPPORTED & CSRWriteValM[7];
-        STATUS_GVA      <= P.H_SUPPORTED & CSRWriteValM[6];
       // coverage on
       end else if (P.S_SUPPORTED & WriteSSTATUSM) begin // write a subset of the STATUS bits
         STATUS_MXR_INT  <= P.S_SUPPORTED & CSRWriteValM[19];
@@ -236,4 +225,28 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
         STATUS_UBE      <= P.U_SUPPORTED & P.BIGENDIAN_SUPPORTED & CSRWriteValM[6];
       end else if (~VirtModeW & (FRegWriteM | WriteFRMM | SetOrWriteFFLAGSM)) STATUS_FS_INT <= 2'b11;
     end
+
+  if (P.H_SUPPORTED) begin: mpv_gva
+    always_ff @(posedge clk)
+      if (reset) begin
+        STATUS_MPV <= 1'b0;
+        STATUS_GVA <= 1'b0;
+      end else if (~StallW) begin
+        if (TrapM & (NextPrivilegeModeM == P.M_MODE)) begin
+          STATUS_MPV <= VirtModeW;
+          STATUS_GVA <= TrapGVAM;
+        end else if (mretM) begin
+          STATUS_MPV <= 1'b0;
+        end else if (WriteMSTATUSM & (P.XLEN == 64)) begin
+          STATUS_MPV <= CSRWriteValExt[39];
+          STATUS_GVA <= CSRWriteValExt[38];
+        end else if ((P.XLEN == 32) & WriteMSTATUSHM) begin
+          STATUS_MPV <= CSRWriteValM[7];
+          STATUS_GVA <= CSRWriteValM[6];
+        end
+      end
+  end else begin: no_mpv_gva
+    assign STATUS_MPV = 1'b0;
+    assign STATUS_GVA = 1'b0;
+  end
 endmodule

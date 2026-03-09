@@ -176,15 +176,19 @@ module csr import cvw::*;  #(parameter cvw_t P) (
       default:                NextFaultMtvalM = '0; // Ecall, interrupts
     endcase
 
-  // Identify traps that write a virtual address to tval.
-  // Guest-page-fault causes are included for future two-stage support.
-  always_comb
-    case (CauseM)
-      5'd0, 5'd1, 5'd3, 5'd4, 5'd5, 5'd6, 5'd7, 5'd12, 5'd13, 5'd15, 5'd20, 5'd21, 5'd23:
-        TrapWritesVAToTvalM = 1'b1;
-      default:
-        TrapWritesVAToTvalM = 1'b0;
-    endcase
+  if (P.H_SUPPORTED) begin: trapwritesva
+    // Identify traps that write a virtual address to tval.
+    // Guest-page-fault causes are included for future two-stage support.
+    always_comb
+      case (CauseM)
+        5'd0, 5'd1, 5'd3, 5'd4, 5'd5, 5'd6, 5'd7, 5'd12, 5'd13, 5'd15, 5'd20, 5'd21, 5'd23:
+          TrapWritesVAToTvalM = 1'b1;
+        default:
+          TrapWritesVAToTvalM = 1'b0;
+      endcase
+  end else begin: no_trapwritesva
+    assign TrapWritesVAToTvalM = 1'b0;
+  end
 
   ///////////////////////////////////////////
   // Trap Vectoring & Returns; vectored traps must be aligned to 64-byte address boundaries
