@@ -169,7 +169,7 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   assign CounterEnM = MCOUNTEREN_REGW[CounterNumM];
   assign SCounterEnM = SCOUNTEREN_REGW[CounterNumM];
   assign HCounterEnM = HCOUNTEREN_REGW[CounterNumM];
-  if (P.H_SUPPORTED) begin: counterallow_h
+  if (P.H_SUPPORTED) begin: counterreadable_h
     always_comb begin
       if (PrivilegeModeW == P.M_MODE)
         CounterAllowedM = 1'b1;
@@ -180,9 +180,9 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
         else
           CounterAllowedM = CounterEnM & HCounterEnM & SCounterEnM;
       end else
-        CounterAllowedM = CounterEnM & (!P.S_SUPPORTED | PrivilegeModeW == P.S_MODE | SCounterEnM);
+        CounterAllowedM = CounterEnM & (PrivilegeModeW == P.S_MODE | SCounterEnM);
     end
-  end else begin: counterallow_noh
+  end else begin: counterreadable_noh
     always_comb begin
       if (PrivilegeModeW == P.M_MODE)
         CounterAllowedM = 1'b1;
@@ -192,7 +192,7 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   end
 
   always_comb begin
-    CSRCReadValM = '0;
+    CSRCReadValM = '0; // default value
     IllegalCSRCAccessM = 1'b0;
 
     // TODO: Distinguish virtual-instruction vs illegal-instruction fault class for
@@ -205,20 +205,18 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
         if (P.XLEN==64) begin // 64-bit counter reads
           // Veri lator doesn't realize this only occurs for XLEN=64
           /* verilator lint_off WIDTH */
-           if      (CSRAdrM == TIME & ~CSRWriteM)  CSRCReadValM = UseTimeVirtM ? TimeVirt : MTIME_CLINT; // TIME register is a shadow of the memory-mapped MTIME from the CLINT
+          if      (CSRAdrM == TIME & ~CSRWriteM)  CSRCReadValM = UseTimeVirtM ? TimeVirt : MTIME_CLINT; // TIME register is a shadow of the memory-mapped MTIME from the CLINT
           /* verilator lint_on WIDTH */
           else if (CSRAdrM >= MHPMCOUNTERBASE & CSRAdrM < MHPMCOUNTERBASE+P.COUNTERS & CSRAdrM != MTIME)
                   CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
           else if (CSRAdrM >= HPMCOUNTERBASE  & CSRAdrM  < HPMCOUNTERBASE+P.COUNTERS & ~CSRWriteM)  // read-only
                   CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
-          else
-                  IllegalCSRCAccessM = 1'b1;  // requested CSR doesn't exist
+          else IllegalCSRCAccessM = 1'b1;  // requested CSR doesn't exist
         end else begin // 32-bit counter reads
           // Veril ator doesn't realize this only occurs for XLEN=32
           /* verilator lint_off WIDTH */
-            if      (CSRAdrM == TIME & ~CSRWriteM)  CSRCReadValM = UseTimeVirtM ? TimeVirt[31:0] : MTIME_CLINT[31:0];// TIME register is a shadow of the memory-mapped MTIME from the CLINT
-            else if (CSRAdrM == TIMEH & ~CSRWriteM) CSRCReadValM = UseTimeVirtM ? TimeVirt[63:32] : MTIME_CLINT[63:32];
-
+          if      (CSRAdrM == TIME & ~CSRWriteM)  CSRCReadValM = UseTimeVirtM ? TimeVirt[31:0] : MTIME_CLINT[31:0];// TIME register is a shadow of the memory-mapped MTIME from the CLINT
+          else if (CSRAdrM == TIMEH & ~CSRWriteM) CSRCReadValM = UseTimeVirtM ? TimeVirt[63:32] : MTIME_CLINT[63:32];
           /* verilator lint_on WIDTH */
           else if (CSRAdrM >= MHPMCOUNTERBASE  & CSRAdrM < MHPMCOUNTERBASE+P.COUNTERS & CSRAdrM != MTIME)
                   CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
@@ -228,12 +226,10 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
                   CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
           else if (CSRAdrM >= HPMCOUNTERHBASE  & CSRAdrM < HPMCOUNTERHBASE+P.COUNTERS  & ~CSRWriteM)   // read-only
                   CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
-          else
-                  IllegalCSRCAccessM = 1'b1; // requested CSR doesn't exist
+          else    IllegalCSRCAccessM = 1'b1; // requested CSR doesn't exist
         end
       end
-    end else
-      IllegalCSRCAccessM = 1'b1; // no privileges for this csr
+    end else IllegalCSRCAccessM = 1'b1; // no privileges for this csr
   end
 endmodule
 
