@@ -149,14 +149,12 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic                    ENVCFG_FIOM; // fence implies io (presently not used)
   logic                    TrapGVAM;
   logic                    TrapWritesVAToTvalM;
-  logic                    VSCSRDirectM;
   logic                    VSSTATUS_SUM, VSSTATUS_MXR, VSSTATUS_UBE;
   logic [1:0]              VSSTATUS_FS;
   logic                    HSTATUS_VSBE;
   logic [31:0]             HCOUNTEREN_REGW;
   logic [11:0]             HVIP_REGW, HIP_MIP_REGW;
   logic [63:0]             HTIMEDELTA_REGW;
-  logic                    CSRHWriteM;
   logic [P.XLEN-1:0]       CSRHReadValM;
   logic                    IllegalCSRHAccessM;
 
@@ -260,14 +258,11 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     // In VS-mode, map S-level CSR addresses to the VS CSR space by rewriting [9:8] from 01 to 10.
     assign MapVSCSR = VirtModeW & (PrivilegeModeW == P.S_MODE) & (CSRAdrM_In[9:8] == 2'b01);
     mux2 #(12) csradrmux(CSRAdrM_In, {CSRAdrM_In[11:10], 2'b10, CSRAdrM_In[7:0]}, MapVSCSR, CSRAdrM);
-    // Track direct VS CSR accesses while V=1 (virtual-instruction behavior).
-    assign VSCSRDirectM = VirtModeW & (CSRAdrM_In[9:8] == 2'b10);
     // GVA gets set when traps from virtualized execution write a VA to tval.
     // TODO: Include HS-mode HLV/HLVX/HSV fault cases when those paths are integrated.
     assign TrapGVAM = TrapM & ExceptionM & VirtModeW & TrapWritesVAToTvalM;
   end else begin: csradr_noh
     assign CSRAdrM = CSRAdrM_In;
-    assign VSCSRDirectM = 1'b0;
     assign TrapGVAM = 1'b0;
   end
   assign UnalignedNextEPCM = TrapM ? PCM : CSRWriteValM;
@@ -278,11 +273,6 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   assign CSRMWriteM = UngatedCSRMWriteM & InstrValidNotFlushedM;
   assign CSRSWriteM = CSRWriteM & (|PrivilegeModeW) & InstrValidNotFlushedM;
   assign CSRUWriteM = CSRWriteM  & InstrValidNotFlushedM;
-  if (P.H_SUPPORTED) begin: csrhwrite
-    assign CSRHWriteM = CSRWriteM & (PrivilegeModeW != P.U_MODE) & InstrValidNotFlushedM;
-  end else begin: csrhwrite_noh
-    assign CSRHWriteM = 1'b0;
-  end
   if (P.H_SUPPORTED) begin: trap_sel_h
     assign MTrapM = TrapM & TrapToM;
     assign STrapM = TrapM & TrapToHSM & P.S_SUPPORTED;
@@ -347,12 +337,12 @@ module csr import cvw::*;  #(parameter cvw_t P) (
 
   if (P.H_SUPPORTED) begin:csrh
     csrh #(P) csrh(.clk, .reset,
-      .CSRHWriteM, .CSRWriteM, .CSRAdrM, .CSRWriteValM,
+      .CSRMWriteM, .CSRSWriteM, .CSRWriteM, .CSRAdrM, .CSRWriteValM,
       .PrivilegeModeW, .VirtModeW, .FRegWriteM, .WriteFRMM, .SetOrWriteFFLAGSM,
-      .TrapGVAM, .VSCSRDirectM, .MTIME_CLINT,
+      .TrapGVAM, .MTIME_CLINT,
       .STATUS_TVM, .MCOUNTEREN_TM(MCOUNTEREN_REGW[1]),
       .MENVCFG_STCE(MENVCFG_REGW[63]), .MENVCFG_PBMTE(MENVCFG_REGW[62]), .MENVCFG_ADUE(MENVCFG_REGW[61]),
-      .TrapM, .TrapToHSM, .TrapToVSM, .sretM, .InstrM, .InstrOrigM,
+      .TrapToM, .TrapToHSM, .TrapToVSM, .sretM, .InstrM, .InstrOrigM,
       .NextEPCM, .NextCauseM, .NextMtvalM, .NextHtvalM,
       .CSRHReadValM, .IllegalCSRHAccessM,
       .HSTATUS_SPV, .HSTATUS_VTSR, .HSTATUS_VTW, .HSTATUS_VTVM,
