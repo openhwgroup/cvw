@@ -131,7 +131,6 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic [P.XLEN-1:0]             WriteDataM;
   logic [P.XLEN-1:0]             IEUAdrM;
   logic [P.XLEN-1:0]             IEUAdrxTvalM;
-  logic [P.PA_BITS-1:0]          PAdrM;
   logic [P.LLEN-1:0]             ReadDataW;
   logic                          CommittedM;
 
@@ -226,7 +225,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .MemRWE, .MemRWM, .Funct3M, .Funct7M(InstrM[31:25]), .AtomicM,
     .CommittedM, .DCacheMiss, .DCacheAccess, .SquashSCW,
     .FpLoadStoreM, .FWriteDataM, .IEUAdrE, .IEUAdrM, .WriteDataM,
-    .ReadDataW, .FlushDCacheM, .CMOpM, .LSUPrefetchM, .PAdrM,
+    .ReadDataW, .FlushDCacheM, .CMOpM, .LSUPrefetchM,
     // connected to ahb (all stay the same)
     .LSUHADDR,  .HRDATA, .LSUHWDATA, .LSUHWSTRB, .LSUHSIZE,
     .LSUHBURST, .LSUHTRANS, .LSUHWRITE, .LSUHREADY,
@@ -302,7 +301,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .InstrMisalignedFaultM, .IllegalIEUFPUInstrD,
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
       .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
-      .MTIME_CLINT, .IEUAdrxTvalM, .PAdrM, .SetFflagsM,
+      .MTIME_CLINT, .IEUAdrxTvalM, .SetFflagsM,
       .InstrAccessFaultF, .HPTWInstrAccessFaultF, .HPTWInstrPageFaultF, .LoadAccessFaultM, .StoreAmoAccessFaultM, .SelHPTW,
       .PrivilegeModeW, .SATP_REGW,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS,

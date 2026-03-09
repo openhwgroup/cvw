@@ -60,7 +60,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   // TODO: Extend interrupt vectors to include bit 12 (SGEI) and bit 13 (LCOFI) when those sources are implemented.
   logic                        DelegateToVSM;                                  // trap delegated from HS to VS
   logic [5:0]                  CauseIdxM;                                      // cause index for 64-bit delegation CSRs
-  logic                        HidelegHit, HedelegHit;
+  logic                        HidelegHitM, HedelegHitM;
 
   ///////////////////////////////////////////
   // Determine pending enabled interrupts
@@ -84,14 +84,14 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   /* verilator lint_on WIDTHTRUNC */
   assign CauseIdxM     = {1'b0, CauseM};
   /* verilator lint_off WIDTHTRUNC */
-  assign HidelegHit    = (CauseM < 12) ? HIDELEG_REGW[CauseM] : 1'b0;
+  assign HidelegHitM   = (CauseM < 12) ? HIDELEG_REGW[CauseM] : 1'b0;
   /* verilator lint_on WIDTHTRUNC */
-  assign HedelegHit    = HEDELEG_REGW[CauseIdxM];
+  assign HedelegHitM   = HEDELEG_REGW[CauseIdxM];
   assign DelegateToVSM = P.H_SUPPORTED & VirtModeW & DelegateM &
-                         (InterruptM ? HidelegHit : HedelegHit);
+                         (InterruptM ? HidelegHitM : HedelegHitM);
 
-  assign TrapToVSM = DelegateToVSM;
-  assign TrapToHSM = DelegateM & ~TrapToVSM;
+  assign TrapToVSM = TrapM & DelegateToVSM;
+  assign TrapToHSM = TrapM & DelegateM & ~TrapToVSM;
   assign TrapToM   = TrapM & ~TrapToHSM & ~TrapToVSM;
 
   ///////////////////////////////////////////

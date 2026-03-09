@@ -125,7 +125,7 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   assign IllegalPrivilegedInstrM = PrivilegedM & ~(sretM|mretM|ecallM|ebreakM|wfiM|sfencevmaM);
 
   // Virtual Instruction Exception Detection
-  // TODO: Vikram revisit this and ensure everything here matches spec
+  // TODO: Complete full hypervisor virtual-instruction matrix (hypervisor.adoc: norm:H_cause_virtual_instruction).
   logic is_sret, is_hfence;
   assign is_sret = (InstrM[31:20] == 12'b000100000010) & rs1zeroM;
   assign is_hfence = (InstrM[31:25] == 7'b0010001 | InstrM[31:25] == 7'b0110001) & rdzeroM; // hfence.vvma | hfence.gvma
