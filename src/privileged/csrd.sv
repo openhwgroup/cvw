@@ -51,8 +51,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   input logic               BreakpointFaultM,
   output logic              EBreakM,
   output logic              EBreakS,
-  output logic              EBreakU,
-  output logic              ResumeAck
+  output logic              EBreakU
 );
 
   localparam                DCSR = 12'h7B0;
@@ -259,44 +258,6 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
          DebugResume <= (state == HALTED) && (state_n == RUNNING) & DPCset;
       end
    end
-
-   // -----------------------------------------------------------------------------
-   // ResumeAck: resumeack handshake.
-   // Set when resume is accepted; clear when debugger drops ResumeReq.
-   // (This matches common OpenOCD expectations better than a 1-cycle pulse.)
-   // -----------------------------------------------------------------------------
-
-  always_ff @(posedge clk) begin
-    if (reset) begin
-      resack_state <= RESACKLOW;
-    end else begin
-      resack_state <= next_resack_state;
-    end
-  end
-
-  always_comb begin
-    case(resack_state)
-      RESACKLOW: begin
-        if (ResumeReq) next_resack_state = RESACKCLEAR;
-        else next_resack_state = RESACKLOW;
-      end
-
-      RESACKCLEAR: begin
-        if (state == RUNNING) next_resack_state = RESACKHIGH;
-        else next_resack_state = RESACKCLEAR;
-      end
-
-      RESACKHIGH: begin
-        if (ResumeReq) next_resack_state = RESACKCLEAR;
-        else next_resack_state = RESACKHIGH;
-      end
-
-      default: next_resack_state = RESACKCLEAR;
-    endcase
-  end
-
-   // This allows a momentary clear right after receiving a ResumeRequest
-   assign ResumeAck = (resack_state == RESACKHIGH);
 
    // -----------------------------------------------------------------------------
    // DPCset: track whether DPC was explicitly written while halted (optional).

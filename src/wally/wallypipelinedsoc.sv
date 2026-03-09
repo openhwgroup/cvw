@@ -102,7 +102,6 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic                       HaveReset;
   logic                       HaveResetAck;
   logic                       ResetHaltReq;
-  logic                       ResumeAck;
 
 
   // synchronize reset to SOC clock domain
@@ -115,7 +114,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .ExternalStall,
     .DebugMode, .HaltReq, .ResumeReq, .DebugControl, .GPRDebugEnable, .CSRDebugEnable, .FPRDebugEnable,
     .DebugRegRDATA, .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite,
-    .HaveReset, .HaveResetAck, .ResetHaltReq, .ResumeAck
+    .HaveReset, .HaveResetAck, .ResetHaltReq
    );
 
   // instantiate uncore if a bus interface exists
@@ -140,7 +139,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
       .DMIADDR, .DMIDATA, .DMIOP, .DMIREADY, .DMIVALID,
       .DMIRSPDATA, .DMIRSPOP, .DMIRSPREADY, .DMIRSPVALID,
       .DebugRegRDATA, .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite,
-      .HaveReset, .HaveResetAck, .ResetHaltReq, .ResumeAck);
+      .HaveReset, .HaveResetAck, .ResetHaltReq);
   end else begin
     assign tdo = 1'bz;
     assign GPRDebugEnable = 0;

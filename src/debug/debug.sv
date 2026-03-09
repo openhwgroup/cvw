@@ -139,6 +139,9 @@ module debug import cvw::*; #(parameter cvw_t P) (
   logic [2:0]  cmderr;
   logic [3:0]  datacount;
 
+  // Resume Ack States and Signals
+  typedef enum logic [1:0] {RESACKLOW, RESACKCLEAR, RESACKHIGH} resack_state_e;
+  resack_state_e resack_state, next_resack_state;
   logic allresumeack;
   logic anyresumeack;
 
@@ -508,7 +511,44 @@ module debug import cvw::*; #(parameter cvw_t P) (
   //   end
   // end
 
-  assign anyresumeack = ResumeAck;
+  // -----------------------------------------------------------------------------
+  // ResumeAck: resumeack handshake.
+  // Set when resume is accepted; clear when debugger drops ResumeReq.
+  // (This matches common OpenOCD expectations better than a 1-cycle pulse.)
+  // -----------------------------------------------------------------------------
+
+  always_ff @(posedge clk) begin
+    if (reset) begin
+      resack_state <= RESACKLOW;
+    end else begin
+      resack_state <= next_resack_state;
+    end
+  end
+
+  always_comb begin
+    case(resack_state)
+      RESACKLOW: begin
+        if (ResumeReq) next_resack_state = RESACKCLEAR;
+        else next_resack_state = RESACKLOW;
+      end
+
+      RESACKCLEAR: begin
+        if (~DebugMode) next_resack_state = RESACKHIGH;
+        else next_resack_state = RESACKCLEAR;
+      end
+
+      RESACKHIGH: begin
+        if (ResumeReq) next_resack_state = RESACKCLEAR;
+        else next_resack_state = RESACKHIGH;
+      end
+
+      default: next_resack_state = RESACKCLEAR;
+    endcase
+  end
+
+
+  // This allows a momentary clear right after receiving a ResumeRequest
+  assign anyresumeack = (resack_state == RESACKHIGH);
 
   // --------------------------------------------------------------------------
   // Abstract Command FSM

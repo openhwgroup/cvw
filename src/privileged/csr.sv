@@ -110,8 +110,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic                     HaveResetAck,
   input  logic                     ResetHaltReq,
   input  logic                     BreakpointFaultM,
-  output logic                     EBreakM, EBreakS, EBreakU,
-  output logic                     ResumeAck
+  output logic                     EBreakM, EBreakS, EBreakU
 );
 
   localparam MIP = 12'h344;
@@ -317,8 +316,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
       .CSRDWriteM, .CSRWriteValM, .CSRAdrM, .InstrValid(InstrValidM), .CSRDReadValM, .PrivilegeModeW,
       .DebugMode, .PCM, .IllegalCSRDAccessM, .DebugResume, .DPC_REGW(DPC),
       .HaveReset, .HaveResetAck, .ResetHaltReq, .BreakpointFaultM,
-      .EBreakM, .EBreakS, .EBreakU,
-      .ResumeAck);
+      .EBreakM, .EBreakS, .EBreakU);
   end else begin
     assign DebugMode = 1'b0;
     assign CSRDReadValM = '0;
@@ -329,7 +327,6 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign EBreakM = 0;
     assign EBreakS = 0;
     assign EBreakU = 0;
-    assign ResumeAck = 0;
   end
 
    // Broadcast appropriate environment configuration based on privilege mode
