@@ -92,6 +92,9 @@ module trap import cvw::*;  #(parameter cvw_t P) (
     assign DelegateM = P.S_SUPPORTED & (InterruptM ? MIDELEG_REGW[CauseM] : MEDELEG_REGW[CauseM]) &
                        (PrivilegeModeW == P.U_MODE | PrivilegeModeW == P.S_MODE);
   end
+  // Trap target one-hots.
+  // With H: select M/HS/VS trap entry. Without H: TrapToHSM/TrapToVSM are tied low,
+  // and TrapToM marks only non-delegated traps (delegated traps are S traps via DelegateM).
   if (P.H_SUPPORTED) begin: trapto_vs_h
     assign CauseIdxM     = {1'b0, CauseM};
     /* verilator lint_off WIDTHTRUNC */
@@ -101,6 +104,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
     assign DelegateToVSM = VirtModeW & DelegateM & (InterruptM ? HidelegHitM : HedelegHitM);
     assign TrapToVSM     = TrapM & DelegateToVSM;
     assign TrapToHSM     = TrapM & DelegateM & ~TrapToVSM;
+    assign TrapToM       = TrapM & ~TrapToHSM & ~TrapToVSM;
   end else begin: trapto_vs_noh
     assign CauseIdxM     = '0;
     assign HidelegHitM   = 1'b0;
@@ -108,11 +112,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
     assign DelegateToVSM = 1'b0;
     assign TrapToVSM     = 1'b0;
     assign TrapToHSM     = 1'b0;
-  end
-  if (P.H_SUPPORTED) begin: traptom_h
-    assign TrapToM = TrapM & ~TrapToHSM & ~TrapToVSM;
-  end else begin: traptom_noh
-    assign TrapToM = TrapM;
+    assign TrapToM       = TrapM & ~DelegateM; // TrapToM is not consumed in non-H paths, but keep it semantically correct for observability/future reuse.
   end
 
   ///////////////////////////////////////////
