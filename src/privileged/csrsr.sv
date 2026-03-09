@@ -55,13 +55,6 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
   logic [1:0] STATUS_SXL, STATUS_UXL, STATUS_XS, STATUS_FS_INT, STATUS_MPP_NEXT;
   logic STATUS_MPIE, STATUS_SPIE, STATUS_UBE, STATUS_SBE, STATUS_MBE;
   logic nextMBE, nextSBE;
-  logic [63:0] CSRWriteValExt;
-
-  if (P.XLEN == 64) begin: csrwriteext64
-    assign CSRWriteValExt = CSRWriteValM;
-  end else begin: csrwriteext32
-    assign CSRWriteValExt = {32'b0, CSRWriteValM};
-  end
 
   // STATUS REGISTER FIELD
   // See Privileged Spec Section 3.1.6
@@ -227,24 +220,39 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
     end
 
   if (P.H_SUPPORTED) begin: mpv_gva
-    always_ff @(posedge clk)
-      if (reset) begin
-        STATUS_MPV <= 1'b0;
-        STATUS_GVA <= 1'b0;
-      end else if (~StallW) begin
-        if (TrapM & (NextPrivilegeModeM == P.M_MODE)) begin
-          STATUS_MPV <= VirtModeW;
-          STATUS_GVA <= TrapGVAM;
-        end else if (mretM) begin
+    if (P.XLEN == 64) begin: mpv_gva64
+      always_ff @(posedge clk)
+        if (reset) begin
           STATUS_MPV <= 1'b0;
-        end else if (WriteMSTATUSM & (P.XLEN == 64)) begin
-          STATUS_MPV <= CSRWriteValExt[39];
-          STATUS_GVA <= CSRWriteValExt[38];
-        end else if ((P.XLEN == 32) & WriteMSTATUSHM) begin
-          STATUS_MPV <= CSRWriteValM[7];
-          STATUS_GVA <= CSRWriteValM[6];
+          STATUS_GVA <= 1'b0;
+        end else if (~StallW) begin
+          if (TrapM & (NextPrivilegeModeM == P.M_MODE)) begin
+            STATUS_MPV <= VirtModeW;
+            STATUS_GVA <= TrapGVAM;
+          end else if (mretM) begin
+            STATUS_MPV <= 1'b0;
+          end else if (WriteMSTATUSM) begin
+            STATUS_MPV <= CSRWriteValM[39];
+            STATUS_GVA <= CSRWriteValM[38];
+          end
         end
-      end
+    end else begin: mpv_gva32
+      always_ff @(posedge clk)
+        if (reset) begin
+          STATUS_MPV <= 1'b0;
+          STATUS_GVA <= 1'b0;
+        end else if (~StallW) begin
+          if (TrapM & (NextPrivilegeModeM == P.M_MODE)) begin
+            STATUS_MPV <= VirtModeW;
+            STATUS_GVA <= TrapGVAM;
+          end else if (mretM) begin
+            STATUS_MPV <= 1'b0;
+          end else if (WriteMSTATUSHM) begin
+            STATUS_MPV <= CSRWriteValM[7];
+            STATUS_GVA <= CSRWriteValM[6];
+          end
+        end
+    end
   end else begin: no_mpv_gva
     assign STATUS_MPV = 1'b0;
     assign STATUS_GVA = 1'b0;
