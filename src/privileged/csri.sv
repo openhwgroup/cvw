@@ -86,7 +86,13 @@ module csri import cvw::*;  #(parameter cvw_t P) (
     else if (WriteSIEM) MIE_REGW <= (CSRWriteValM[11:0] & 12'h222 & MIDELEG_REGW) | (MIE_REGW & 12'h888); // only S fields
 
   // TODO: Add SGEIP alias at bit 12 once MIP/MIE buses are widened beyond 12 bits.
-  assign MIP_REGW = {MExtInt,   HIP_MIP_REGW[10], SExtInt|MIP_REGW_writeable[9],  1'b0,
-                     MTimerInt, HIP_MIP_REGW[6],  STIP,                            1'b0,
-                     MSwInt,    HIP_MIP_REGW[2],  MIP_REGW_writeable[1],           1'b0};
+  if (P.H_SUPPORTED) begin : mip_h
+    assign MIP_REGW = {MExtInt,   HIP_MIP_REGW[10], SExtInt|MIP_REGW_writeable[9],  1'b0,
+                       MTimerInt, HIP_MIP_REGW[6],  STIP,                            1'b0,
+                       MSwInt,    HIP_MIP_REGW[2],  MIP_REGW_writeable[1],           1'b0};
+  end else begin : mip_noh
+    assign MIP_REGW = {MExtInt,   1'b0, SExtInt|MIP_REGW_writeable[9],  1'b0,
+                       MTimerInt, 1'b0, STIP,                            1'b0,
+                       MSwInt,    1'b0, MIP_REGW_writeable[1],           1'b0};
+  end
 endmodule

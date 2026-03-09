@@ -51,7 +51,10 @@ module privmode import cvw::*;  #(parameter cvw_t P) (
         if (P.S_SUPPORTED & DelegateM) NextPrivilegeModeM = P.S_MODE;
         else                           NextPrivilegeModeM = P.M_MODE;
       end else if (mretM)              NextPrivilegeModeM = STATUS_MPP;
-      else if (sretM)              NextPrivilegeModeM = {1'b0, (VirtModeW ? VSSTATUS_SPP : STATUS_SPP)};
+      else if (sretM) begin
+        if (P.H_SUPPORTED)             NextPrivilegeModeM = {1'b0, (VirtModeW ? VSSTATUS_SPP : STATUS_SPP)};
+        else                           NextPrivilegeModeM = {1'b0, STATUS_SPP};
+      end
 
       else                             NextPrivilegeModeM = PrivilegeModeW;
     end

@@ -71,15 +71,26 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   assign sfencewinvalM  = (InstrM[31:20] == 12'b000110000000) & rs1zeroM & rdzeroM;
   assign sfenceinvalirM = (InstrM[31:20] == 12'b000110000001) & rs1zeroM & rdzeroM;
   assign presfencevmaM  = (InstrM[31:25] ==  7'b0001001)                 & rdzeroM;
-  assign hfencevvmaM    = (InstrM[31:25] ==  7'b0010001)                 & rdzeroM; // hfence.vvma
-  assign hfencegvmaM    = (InstrM[31:25] ==  7'b0110001)                 & rdzeroM; // hfence.gvma
+  if (P.H_SUPPORTED) begin: hfence_decode_h
+    assign hfencevvmaM  = (InstrM[31:25] ==  7'b0010001)                 & rdzeroM; // hfence.vvma
+    assign hfencegvmaM  = (InstrM[31:25] ==  7'b0110001)                 & rdzeroM; // hfence.gvma
+  end else begin: hfence_decode_noh
+    assign hfencevvmaM  = 1'b0;
+    assign hfencegvmaM  = 1'b0;
+  end
   assign vmaM           =  presfencevmaM | (sinvalvmaM & P.SVINVAL_SUPPORTED);      // sfence.vma or sinval.vma
   assign fenceinvalM    = (sfencewinvalM | sfenceinvalirM) & P.SVINVAL_SUPPORTED;   // sfence.w.inval or sfence.inval.ir
 
   // In VS-mode, use hstatus.V* bits instead of mstatus.T* bits.
-  assign TSRM = VirtModeW ? HSTATUS_VTSR : STATUS_TSR;
-  assign TVMM = VirtModeW ? HSTATUS_VTVM : STATUS_TVM;
-  assign TWM  = VirtModeW ? HSTATUS_VTW : STATUS_TW;
+  if (P.H_SUPPORTED) begin: status_bits_h
+    assign TSRM = VirtModeW ? HSTATUS_VTSR : STATUS_TSR;
+    assign TVMM = VirtModeW ? HSTATUS_VTVM : STATUS_TVM;
+    assign TWM  = VirtModeW ? HSTATUS_VTW : STATUS_TW;
+  end else begin: status_bits_noh
+    assign TSRM = STATUS_TSR;
+    assign TVMM = STATUS_TVM;
+    assign TWM  = STATUS_TW;
+  end
 
   assign sretM =      PrivilegedM & (InstrM[31:20] == 12'b000100000010) & rs1zeroM & P.S_SUPPORTED &
                       (PrivilegeModeW == P.M_MODE | PrivilegeModeW == P.S_MODE & ~TSRM);
@@ -93,7 +104,7 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   assign sfencevmaM = PrivilegedM & P.VIRTMEM_SUPPORTED &
                       ((PrivilegeModeW == P.M_MODE & (vmaM | fenceinvalM)) |
                        (PrivilegeModeW == P.S_MODE & (vmaM & ~TVMM  | fenceinvalM)) |
-                       (PrivilegeModeW == P.S_MODE & ~VirtModeW & (hfencevvmaM | hfencegvmaM))); // hfence treated as sfence.vma in HS
+                       (P.H_SUPPORTED & (PrivilegeModeW == P.S_MODE & ~VirtModeW & (hfencevvmaM | hfencegvmaM)))); // hfence treated as sfence.vma in HS
 
   ///////////////////////////////////////////
   // WFI timeout Privileged Spec 3.1.6.5
@@ -125,25 +136,30 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   assign IllegalPrivilegedInstrM = PrivilegedM & ~(sretM|mretM|ecallM|ebreakM|wfiM|sfencevmaM);
 
   // Virtual Instruction Exception Detection
-  // TODO: Complete full hypervisor virtual-instruction matrix (hypervisor.adoc: norm:H_cause_virtual_instruction).
-  logic is_sret, is_hfence;
-  assign is_sret = (InstrM[31:20] == 12'b000100000010) & rs1zeroM;
-  assign is_hfence = (InstrM[31:25] == 7'b0010001 | InstrM[31:25] == 7'b0110001) & rdzeroM; // hfence.vvma | hfence.gvma
+  if (P.H_SUPPORTED) begin: virtinstr
+    // TODO: Complete full hypervisor virtual-instruction matrix (hypervisor.adoc: norm:H_cause_virtual_instruction).
+    logic is_sret, is_hfence;
+    logic VSTSRFault, VTVMFault, HFenceFault, VSTimecmpFault;
+    logic is_satp_access, is_stimecmp_access;
 
-  logic VSTSRFault, VTVMFault, HFenceFault, VSTimecmpFault;
-  assign VSTSRFault = PrivilegedM & is_sret & VirtModeW & HSTATUS_VTSR;
-  assign HFenceFault = PrivilegedM & is_hfence & VirtModeW;
+    assign is_sret = (InstrM[31:20] == 12'b000100000010) & rs1zeroM;
+    assign is_hfence = (InstrM[31:25] == 7'b0010001 | InstrM[31:25] == 7'b0110001) & rdzeroM; // hfence.vvma | hfence.gvma
 
-  logic is_satp_access, is_stimecmp_access;
-  assign is_satp_access = (InstrM[31:20] == 12'h180);
-  assign is_stimecmp_access = (InstrM[31:20] == 12'h14D) | ((P.XLEN == 32) & (InstrM[31:20] == 12'h15D)) |
-                              (InstrM[31:20] == 12'h24D) | ((P.XLEN == 32) & (InstrM[31:20] == 12'h25D));
-  // In VS-mode, satp and SFENCE/SINVAL are virtualized when hstatus.VTVM=1.
-  assign VTVMFault = PrivilegedM & VirtModeW & HSTATUS_VTVM & (is_satp_access | vmaM);
-  // Accesses to (v)stimecmp blocked in V=1 are HS-qualified and should raise virtual-instruction.
-  assign VSTimecmpFault = VirtModeW & IllegalCSRAccessM & is_stimecmp_access & P.SSTC_SUPPORTED;
+    assign VSTSRFault = PrivilegedM & is_sret & VirtModeW & HSTATUS_VTSR;
+    assign HFenceFault = PrivilegedM & is_hfence & VirtModeW;
 
-  assign VirtualInstrFaultM = VSTSRFault | HFenceFault | VTVMFault | VSTimecmpFault;
+    assign is_satp_access = (InstrM[31:20] == 12'h180);
+    assign is_stimecmp_access = (InstrM[31:20] == 12'h14D) | ((P.XLEN == 32) & (InstrM[31:20] == 12'h15D)) |
+                                (InstrM[31:20] == 12'h24D) | ((P.XLEN == 32) & (InstrM[31:20] == 12'h25D));
+    // In VS-mode, satp and SFENCE/SINVAL are virtualized when hstatus.VTVM=1.
+    assign VTVMFault = PrivilegedM & VirtModeW & HSTATUS_VTVM & (is_satp_access | vmaM);
+    // Accesses to (v)stimecmp blocked in V=1 are HS-qualified and should raise virtual-instruction.
+    assign VSTimecmpFault = VirtModeW & IllegalCSRAccessM & is_stimecmp_access & P.SSTC_SUPPORTED;
+
+    assign VirtualInstrFaultM = VSTSRFault | HFenceFault | VTVMFault | VSTimecmpFault;
+  end else begin: novirtinstr
+    assign VirtualInstrFaultM = 1'b0;
+  end
 
   // Prevent double-reporting. If it's Virtual, it's not Illegal.
   assign IllegalInstrFaultM = (IllegalIEUFPUInstrM | IllegalPrivilegedInstrM | IllegalCSRAccessM |

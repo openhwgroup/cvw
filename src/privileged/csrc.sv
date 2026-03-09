@@ -87,10 +87,17 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   logic [63:0]             HPMCOUNTERPlusM[P.COUNTERS-1:0];
   logic [P.XLEN-1:0]       NextHPMCOUNTERM[P.COUNTERS-1:0];
   logic [63:0]             TimeVirt;
+  logic                    UseTimeVirtM;
   genvar                   i;
 
   // Interface signals
-  assign TimeVirt = MTIME_CLINT + HTIMEDELTA_REGW;
+  if (P.H_SUPPORTED) begin: timevirt_h
+    assign TimeVirt = MTIME_CLINT + HTIMEDELTA_REGW;
+    assign UseTimeVirtM = VirtModeW;
+  end else begin: timevirt_noh
+    assign TimeVirt = '0;
+    assign UseTimeVirtM = 1'b0;
+  end
   flopenrc #(1) LoadStallEReg(.clk, .reset, .clear(1'b0), .en(~StallE), .d(LoadStallD), .q(LoadStallE));  // don't flush the load stall during a load stall.
   flopenrc #(1) LoadStallMReg(.clk, .reset, .clear(FlushM), .en(~StallM), .d(LoadStallE), .q(LoadStallM));
 
@@ -162,20 +169,31 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   assign CounterEnM = MCOUNTEREN_REGW[CounterNumM];
   assign SCounterEnM = SCOUNTEREN_REGW[CounterNumM];
   assign HCounterEnM = HCOUNTEREN_REGW[CounterNumM];
+  if (P.H_SUPPORTED) begin: counterallow_h
+    always_comb begin
+      if (PrivilegeModeW == P.M_MODE)
+        CounterAllowedM = 1'b1;
+      else if (VirtModeW) begin
+        // In VS/VU, hcounteren further gates counter access.
+        if (PrivilegeModeW == P.S_MODE)
+          CounterAllowedM = CounterEnM & HCounterEnM;
+        else
+          CounterAllowedM = CounterEnM & HCounterEnM & SCounterEnM;
+      end else
+        CounterAllowedM = CounterEnM & (!P.S_SUPPORTED | PrivilegeModeW == P.S_MODE | SCounterEnM);
+    end
+  end else begin: counterallow_noh
+    always_comb begin
+      if (PrivilegeModeW == P.M_MODE)
+        CounterAllowedM = 1'b1;
+      else
+        CounterAllowedM = CounterEnM & (!P.S_SUPPORTED | PrivilegeModeW == P.S_MODE | SCounterEnM);
+    end
+  end
+
   always_comb begin
     CSRCReadValM = '0;
     IllegalCSRCAccessM = 1'b0;
-    CounterAllowedM = 1'b0;
-    if (PrivilegeModeW == P.M_MODE)
-      CounterAllowedM = 1'b1;
-    else if (P.H_SUPPORTED & VirtModeW) begin
-      // In VS/VU, hcounteren further gates counter access.
-      if (PrivilegeModeW == P.S_MODE)
-        CounterAllowedM = CounterEnM & HCounterEnM;
-      else
-        CounterAllowedM = CounterEnM & HCounterEnM & SCounterEnM;
-    end else
-      CounterAllowedM = CounterEnM & (!P.S_SUPPORTED | PrivilegeModeW == P.S_MODE | SCounterEnM);
 
     // TODO: Distinguish virtual-instruction vs illegal-instruction fault class for
     // counter access denials in V modes per hypervisor spec (hcounteren/scounteren rules).
@@ -187,7 +205,7 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
         if (P.XLEN==64) begin // 64-bit counter reads
           // Veri lator doesn't realize this only occurs for XLEN=64
           /* verilator lint_off WIDTH */
-           if      (CSRAdrM == TIME & ~CSRWriteM)  CSRCReadValM = (P.H_SUPPORTED & VirtModeW) ? TimeVirt : MTIME_CLINT; // TIME register is a shadow of the memory-mapped MTIME from the CLINT
+           if      (CSRAdrM == TIME & ~CSRWriteM)  CSRCReadValM = UseTimeVirtM ? TimeVirt : MTIME_CLINT; // TIME register is a shadow of the memory-mapped MTIME from the CLINT
           /* verilator lint_on WIDTH */
           else if (CSRAdrM >= MHPMCOUNTERBASE & CSRAdrM < MHPMCOUNTERBASE+P.COUNTERS & CSRAdrM != MTIME)
                   CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
@@ -198,8 +216,8 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
         end else begin // 32-bit counter reads
           // Veril ator doesn't realize this only occurs for XLEN=32
           /* verilator lint_off WIDTH */
-            if      (CSRAdrM == TIME & ~CSRWriteM)  CSRCReadValM = (P.H_SUPPORTED & VirtModeW) ? TimeVirt[31:0] : MTIME_CLINT[31:0];// TIME register is a shadow of the memory-mapped MTIME from the CLINT
-            else if (CSRAdrM == TIMEH & ~CSRWriteM) CSRCReadValM = (P.H_SUPPORTED & VirtModeW) ? TimeVirt[63:32] : MTIME_CLINT[63:32];
+            if      (CSRAdrM == TIME & ~CSRWriteM)  CSRCReadValM = UseTimeVirtM ? TimeVirt[31:0] : MTIME_CLINT[31:0];// TIME register is a shadow of the memory-mapped MTIME from the CLINT
+            else if (CSRAdrM == TIMEH & ~CSRWriteM) CSRCReadValM = UseTimeVirtM ? TimeVirt[63:32] : MTIME_CLINT[63:32];
 
           /* verilator lint_on WIDTH */
           else if (CSRAdrM >= MHPMCOUNTERBASE  & CSRAdrM < MHPMCOUNTERBASE+P.COUNTERS & CSRAdrM != MTIME)
