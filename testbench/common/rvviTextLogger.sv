@@ -2,21 +2,36 @@
 // rvviTextLogger.sv
 //
 // Written: Sadhvi Narayanan sanarayanan@hmc.edu
+//
+// Purpose: Converts the rvviTrace interface to RVVI-TEXT format for use with coverage tools, reference models, and analysis
+//
 // Generic RVVI-TRACE to RVVI-TEXT converter
 // Works with any RISC-V processor implementing RVVI-TRACE
+// A component of the Wally configurable RISC-V project.
 //
-// Converts the rvviTrace interface to RVVI-TEXT format
-// for use with coverage tools, reference models, and analysis
+// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
-// Fully parameterized - no processor-specific dependencies
-///////////////////////////////////////////
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+//
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
+// may obtain a copy of the License at
+//
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
+// and limitations under the License.
+////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 module rvviTextLogger #(
     parameter string VENDOR_NAME = "cvw",
     parameter int VENDOR_MAJOR = 1,
     parameter int VENDOR_MINOR = 0
 ) (
-    rvviTrace rvvi  // Only input for now - RVVI-TRACE interface
+    rvviTrace rvvi
 );
 
     // Extract standard parameters from the interface
@@ -28,7 +43,7 @@ module rvviTextLogger #(
     localparam int RETIRE = rvvi.RETIRE;
 
     // File handling
-    integer file;
+    integer file_handle;
     string filename;
 
     // Track current hart (for general processors, multi-core)
@@ -38,7 +53,7 @@ module rvviTextLogger #(
     logic [1:0] prev_mode[NHART];
     logic prev_mode_virt[NHART];
 
-    // Track expected retirement slot (moved to module scope)
+    // Track expected retirement slot
     int expected_slot[NHART];
 
     // Track ORDER for each hart (auto-increments per spec)
@@ -57,14 +72,13 @@ module rvviTextLogger #(
     initial begin
         // Get filename from plusarg, default if not provided
         if (!$value$plusargs("rvvi_trace_file=%s", filename)) begin
-            filename = "logs/rvvi_trace.txt";
+            filename = "rvvi_trace.txt";
         end
 
-        file = $fopen(filename, "w");
+        file_handle = $fopen(filename, "w");
 
-        if (file == 0) begin
-            $display("ERROR: rvviTextLogger could not open %s for writing", filename);
-            $finish;
+        if (file_handle == 0) begin
+            $fatal(1, "rvviTextLogger could not open %s for writing", filename);
         end
 
         $display("rvviTextLogger: Writing RVVI-TEXT trace to %s", filename);
@@ -72,15 +86,13 @@ module rvviTextLogger #(
                  ILEN, XLEN, FLEN, VLEN, NHART, RETIRE);
 
         // Write RVVI-TEXT header
-        $fwrite(file, "VERSION 0 1\n");
-        $fwrite(file, "VENDOR \"%s\" %0d %0d\n", VENDOR_NAME, VENDOR_MAJOR, VENDOR_MINOR);
-        $fwrite(file, "PARAMS 6 ILEN %0d XLEN %0d FLEN %0d VLEN %0d NHART %0d RETIRE %0d\n",
+        $fwrite(file_handle, "VERSION 0 3\n");
+        $fwrite(file_handle, "VENDOR \"%s\" %0d %0d\n", VENDOR_NAME, VENDOR_MAJOR, VENDOR_MINOR);
+        $fwrite(file_handle, "PARAMS 6 ILEN %0d XLEN %0d FLEN %0d VLEN %0d NHART %0d RETIRE %0d\n",
                 ILEN, XLEN, FLEN, VLEN, NHART, RETIRE);
 
         // Write initial HART 0 (default hart)
-        if (NHART > 0) begin
-            $fwrite(file, "HART 0\n");
-        end
+        $fwrite(file_handle, "HART 0\n");
 
         // Initialize mode tracking
         for (int i = 0; i < NHART; i++) begin
@@ -95,10 +107,6 @@ module rvviTextLogger #(
         last_cycle_output = 0;
         last_time_output = $time;
     end
-
-
-    // NET CHANGES - Track External Signal Transitions (may not be needed or correct)
-    // essentially, if something externally changes (like interrupt) we pull from the rvviTrace interface
 
     // MAIN TRACE - Process All Harts and Retirement Slots
     always_ff @(posedge rvvi.clk) begin
@@ -135,14 +143,14 @@ module rvviTextLogger #(
 
         // HART switching (only if changed)
         if (hart != current_hart) begin
-            $fwrite(file, "HART %0d\n", hart);
+            $fwrite(file_handle, "HART %0d", hart);
             current_hart = hart;
         end
 
         // ISSUE (retirement slot) - only needed for superscalar
         // According to RVVI-TEXT spec, slot auto-increments
         if (retire_slot != expected_slot[hart] && RETIRE > 1) begin
-            $fwrite(file, "ISSUE %0d\n", retire_slot);
+            $fwrite(file_handle, "ISSUE %0d", retire_slot);
         end
         expected_slot[hart] = (retire_slot + 1) % RETIRE;
 
@@ -151,7 +159,7 @@ module rvviTextLogger #(
         // The spec says order auto-increments after each RET/TRAP
         // We output ORDER when we need to override the expected value
         if (rvvi.order[retire_slot][hart] != order_counter[hart]) begin
-            $fwrite(file, "ORDER %0d ", rvvi.order[retire_slot][hart]);
+            $fwrite(file_handle, "ORDER %0d ", rvvi.order[retire_slot][hart]);
             order_counter[hart] = rvvi.order[retire_slot][hart];
         end
 
@@ -159,7 +167,7 @@ module rvviTextLogger #(
         // Only output if cycles have elapsed since last output
         // cycle_delta = total_cycles - last_cycle_output;
         // if (cycle_delta > 0) begin
-        //     $fwrite(file, "CYCLE %0d ", cycle_delta);
+        //     $fwrite(file_handle, "CYCLE %0d ", cycle_delta);
         //     last_cycle_output = total_cycles;
         // end
 
@@ -167,32 +175,32 @@ module rvviTextLogger #(
         // // Spec says time is in units of TIMESCALE (default picoseconds)
         // time_delta = $time - last_time_output;
         // if (time_delta > 0) begin
-        //     $fwrite(file, "TIME %0d ", time_delta);
+        //     $fwrite(file_handle, "TIME %0d ", time_delta);
         //     last_time_output = $time;
         // end
 
 
         // RET or TRAP
         if (rvvi.trap[retire_slot][hart]) begin
-            $fwrite(file, "TRAP ");
+            $fwrite(file_handle, "TRAP ");
         end else begin
-            $fwrite(file, "RET ");
+            $fwrite(file_handle, "RET ");
         end
 
         // PC (formatted based on XLEN)
         if (XLEN == 32) begin
-            $fwrite(file, "0x%08h ", rvvi.pc_rdata[retire_slot][hart]);
+            $fwrite(file_handle, "0x%08h ", rvvi.pc_rdata[retire_slot][hart]);
         end else if (XLEN == 64) begin
-            $fwrite(file, "0x%016h ", rvvi.pc_rdata[retire_slot][hart]);
+            $fwrite(file_handle, "0x%016h ", rvvi.pc_rdata[retire_slot][hart]);
         end else begin
-            $fwrite(file, "0x%h ", rvvi.pc_rdata[retire_slot][hart]);
+            $fatal(1, "Unsupported XLEN: %0d", XLEN);
         end
 
         // Instruction encoding (width depends on compressed/full)
         if (insn_bytes == 2) begin
-            $fwrite(file, "0x%04h ", insn[15:0]);
+            $fwrite(file_handle, "0x%04h ", insn[15:0]);
         end else begin
-            $fwrite(file, "0x%08h ", insn);
+            $fwrite(file_handle, "0x%08h ", insn);
         end
 
         // Write register and state changes
@@ -201,13 +209,12 @@ module rvviTextLogger #(
         writeVRChanges(hart, retire_slot);
         writeCSRChanges(hart, retire_slot);
         writeModeChanges(hart, retire_slot);
-        writeProcessorState(hart, retire_slot);
 
         // Update order counter for next instruction (auto-increment algorithm)
         order_counter[hart]++;
 
         // End of line
-        $fwrite(file, "\n");
+        $fwrite(file_handle, "\n");
     endtask
 
 
@@ -215,7 +222,7 @@ module rvviTextLogger #(
     task automatic writeGPRChanges(int hart, int retire_slot);
         string reg_name;
 
-        // 32 registers to look at
+        // wallyTracer NUM_REGS handles the correct number of registers based on E-extension support
         for (int i = 0; i < 32; i++) begin
             if (rvvi.x_wb[retire_slot][hart][i]) begin
                 // Get register name
@@ -223,11 +230,11 @@ module rvviTextLogger #(
 
                 // Format with register index, name, and value
                 if (XLEN == 32) begin
-                    $fwrite(file, "X %2d '%s' 0x%08h ", i, reg_name, rvvi.x_wdata[retire_slot][hart][i]);
+                    $fwrite(file_handle, "X %2d '%s' 0x%08h ", i, reg_name, rvvi.x_wdata[retire_slot][hart][i]);
                 end else if (XLEN == 64) begin
-                    $fwrite(file, "X %2d '%s' 0x%016h ", i, reg_name, rvvi.x_wdata[retire_slot][hart][i]);
+                    $fwrite(file_handle, "X %2d '%s' 0x%016h ", i, reg_name, rvvi.x_wdata[retire_slot][hart][i]);
                 end else begin
-                    $fwrite(file, "X %0d '%s' 0x%h ", i, reg_name, rvvi.x_wdata[retire_slot][hart][i]);
+                    $fatal(1, "Unsupported XLEN: %0d", XLEN);
                 end
             end
         end
@@ -246,13 +253,13 @@ module rvviTextLogger #(
 
                     // Format: F <index> <value>
                     if (FLEN == 32) begin
-                        $fwrite(file, "F %2d '%s' 0x%08h ", i, reg_name, rvvi.f_wdata[retire_slot][hart][i]);
+                        $fwrite(file_handle, "F %2d '%s' 0x%08h ", i, reg_name, rvvi.f_wdata[retire_slot][hart][i]);
                     end else if (FLEN == 64) begin
-                        $fwrite(file, "F %2d '%s' 0x%016h ", i, reg_name, rvvi.f_wdata[retire_slot][hart][i]);
+                        $fwrite(file_handle, "F %2d '%s' 0x%016h ", i, reg_name, rvvi.f_wdata[retire_slot][hart][i]);
                     end else if (FLEN == 128) begin
-                        $fwrite(file, "F %2d '%s' 0x%032h ", i, reg_name, rvvi.f_wdata[retire_slot][hart][i]);
+                        $fwrite(file_handle, "F %2d '%s' 0x%032h ", i, reg_name, rvvi.f_wdata[retire_slot][hart][i]);
                     end else begin
-                        $fwrite(file, "F %0d '%s' 0x%h ", i, reg_name, rvvi.f_wdata[retire_slot][hart][i]);
+                        $fatal(1, "Unsupported FLEN: %0d", FLEN);
                     end
                 end
             end
@@ -260,13 +267,13 @@ module rvviTextLogger #(
     endtask
 
 
-    // Write Vector Register Changes (can't find this in wallyTracer - double check)
+    // Write Vector Register Changes
     task automatic writeVRChanges(int hart, int retire_slot);
         if (VLEN > 0) begin
             for (int i = 0; i < 32; i++) begin
                 if (rvvi.v_wb[retire_slot][hart][i]) begin
                     // Format: V <index> <value>
-                    $fwrite(file, "V 0x%2h 0x%h ", i, rvvi.v_wdata[retire_slot][hart][i]);
+                    $fwrite(file_handle, "V %2d 0x%h ", i, rvvi.v_wdata[retire_slot][hart][i]);
                 end
             end
         end
@@ -278,15 +285,15 @@ module rvviTextLogger #(
         for (int i = 0; i < 4096; i++) begin
             if (rvvi.csr_wb[retire_slot][hart][i]) begin
                 // Skip auto-incrementing performance counters
-                if (i == 'hb00 || i == 'hb02) continue;  // Skip mcycle and minstret for now
+                // if (i == 'hb00 || i == 'hb02) continue;  // Skip mcycle and minstret for now
 
                 // Format: C <address_hex> <value_hex>
                 if (XLEN == 32) begin
-                    $fwrite(file, "C 0x%03h 0x%08h ", i, rvvi.csr[retire_slot][hart][i]);
+                    $fwrite(file_handle, "C 0x%03h 0x%08h ", i, rvvi.csr[retire_slot][hart][i]);
                 end else if (XLEN == 64) begin
-                    $fwrite(file, "C 0x%03h 0x%016h ", i, rvvi.csr[retire_slot][hart][i]);
+                    $fwrite(file_handle, "C 0x%03h 0x%016h ", i, rvvi.csr[retire_slot][hart][i]);
                 end else begin
-                    $fwrite(file, "C 0x%03h 0x%h ", i, rvvi.csr[retire_slot][hart][i]);
+                    $fatal(1, "Unsupported XLEN: %0d", XLEN);
                 end
             end
         end
@@ -299,38 +306,18 @@ module rvviTextLogger #(
         logic virt_changed;
 
         mode_changed = (rvvi.mode[retire_slot][hart] != prev_mode[hart]);
-        // virt_changed = (rvvi.mode_virt[hart] != prev_mode_virt[hart]);
+        // virt_changed = (rvvi.insn[retire_slot][hart].mode_virt != prev_mode_virt[hart]);
 
-        // MODE - Only write if changed
         if (mode_changed) begin
-            $fwrite(file, "MODE 0x%h ", rvvi.mode[retire_slot][hart]);
+            $fwrite(file_handle, "MODE 0x%02h ", rvvi.mode[retire_slot][hart]);
             prev_mode[hart] = rvvi.mode[retire_slot][hart];
         end
 
-        // VIRT - Only write if changed and non-zero
-        // if (virt_changed && rvvi.mode_virt[hart]) begin
-        //     $fwrite(file, "VIRT %0d ", rvvi.mode_virt[hart]);
-        //     prev_mode_virt[hart] = rvvi.mode_virt[hart];
+        // if (virt_changed) begin
+        //     $fwrite(file_handle, "VIRT %0d ", rvvi.insn[retire_slot][hart].mode_virt);
+        //     prev_mode_virt[hart] = rvvi.insn[retire_slot][hart].mode_virt;
         // end
     endtask
-
-
-    // Write Processor State
-    task automatic writeProcessorState(int hart, int retire_slot);
-        // INTR - First instruction of interrupt handler
-        if (rvvi.intr[retire_slot][hart]) begin
-            $fwrite(file, "INTR 1 ");
-        end
-
-        // HALT - Processor halted (e.g., WFI)
-        if (rvvi.halt[retire_slot][hart]) begin
-            $fwrite(file, "HALT 1 ");
-        end
-
-        // DM - Debug mode
-        // TODO: do we need something for debug mode?
-    endtask
-
 
     // FUNCTION: Get GPR Name
     function automatic string getGPRName(int idx);
@@ -420,8 +407,8 @@ module rvviTextLogger #(
 
     // Close File on Simulation End
     final begin
-        if (file != 0) begin
-            $fclose(file);
+        if (file_handle != 0) begin
+            $fclose(file_handle);
             $display("rvviTextLogger: Trace file closed: %s", filename);
         end
     end
