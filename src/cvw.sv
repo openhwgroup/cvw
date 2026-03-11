@@ -303,6 +303,9 @@ typedef struct packed {
   logic [5:0] ABITS;
   int         DTM_INSTR_WIDTH;
 
+  // Trigger Module
+  logic       TRIG_SUPPORTED;
+
 } cvw_t;
 
 endpackage
