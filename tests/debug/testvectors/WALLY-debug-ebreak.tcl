@@ -59,7 +59,7 @@ set write_val [get_address $objdump_file write_val]
 
 # Halt if ebreak did not halt
 reset halt
-message [read_reg pc]
+#message [read_reg pc]
 message [read_reg dcsr]
 
 #set DCSR [read_reg dcsr]
