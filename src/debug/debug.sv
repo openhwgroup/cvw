@@ -655,7 +655,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
         16'h0300, 16'h0301, 16'h0305,
           16'h0341, 16'h0342, 16'h0343,
           16'h07B0, 16'h07B1, 16'h07B2,
-          16'h07A0, 16'h07A1, 16'h07A4: begin // CSRs
+          16'h07A0, 16'h07A1, 16'h07A2, 16'h07A4: begin // CSRs
             ValidCommand = 1;
             NextGPRDebugEnable = 0;
             NextFPRDebugEnable = 0;

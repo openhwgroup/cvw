@@ -314,7 +314,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     privileged #(P) priv(
       .clk, .reset,
       .FlushD, .FlushE, .FlushM, .FlushW, .StallD, .StallE, .StallM, .StallW,
-      .CSRReadM, .CSRWriteM, .SrcAM, .PCM, .PCSpillM,
+      .CSRReadM, .CSRWriteM, .SrcAM, .PCE, .PCM, .PCSpillM,
       .InstrM, .InstrOrigM, .CSRReadValM, .CSRReadValW, .EPCM, .TrapVectorM,
       .RetM, .TrapM, .sfencevmaM, .InvalidateICacheM, .DCacheStallM, .ICacheStallF,
       .InstrValidM, .InstrValidE, .CommittedM, .CommittedF,

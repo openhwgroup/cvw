@@ -41,6 +41,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   input logic [1:0]         PrivilegeModeW,
 
   output logic              DebugMode,
+  input logic [P.XLEN-1:0]  PCE,
   input logic [P.XLEN-1:0]  PCM,
   output logic              IllegalCSRDAccessM,
   output logic              DebugResume,
@@ -163,7 +164,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
                           CSRWriteValM[8:6], CSRWriteValM[2], CSRWriteValM[1:0]} :
                          {ebreakm, ebreaks, ebreaku, stepie, NextCause, step, PrivilegeModeW};
 
-  assign DPCWriteValM = WriteDPC & (state == HALTED) ? CSRWriteValM : PCM;
+  assign DPCWriteValM = WriteDPC & (state == HALTED) ? CSRWriteValM : ebreak ? PCM : PCE;
 
   ////////////////////////////////////////////////////////////////////
   // CSRs
