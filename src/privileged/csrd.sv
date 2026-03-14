@@ -214,7 +214,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
       state <= RUNNING;
     end else if (HaveReset & ResetHaltReq & InstrValid) begin
       state <= HALTED;
-    end else if ((HaltReq | ResumeReq | StepHoldEnable) & InstrValid | ebreak) begin // Using the requests as enables
+    end else if ((HaltReq | ResumeReq | StepHoldEnable) | ebreak) begin // Using the requests as enables
       state <= state_n;
     end
   end
@@ -224,7 +224,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
       RUNNING: begin
         if (HaltReq) state_n = HALTED;
         else if (ebreak) state_n = HALTED;
-        else if (step & InstrValidE & ~DebugResume) state_n = HALTED;
+        else if (step & InstrValid & ~DebugResume) state_n = HALTED;
         else state_n = RUNNING;
         end
       HALTED: begin
