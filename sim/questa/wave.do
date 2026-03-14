@@ -721,6 +721,7 @@ add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/pri
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/ebreaku
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/state
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/state_n
+add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/StepHoldEnable
 add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/StartCommand
 add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/ValidCommand
 add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/ValidSize
