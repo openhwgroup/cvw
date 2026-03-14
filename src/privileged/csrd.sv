@@ -37,12 +37,12 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   input logic [P.XLEN-1:0]  CSRWriteValM,
   input logic [11:0]        CSRAdrM,
   input logic               InstrValid,
+  input logic               InstrValidE,
   output logic [P.XLEN-1:0] CSRDReadValM,
   input logic [1:0]         PrivilegeModeW,
 
   output logic              DebugMode,
-  input logic [P.XLEN-1:0]  PCE,
-  input logic [P.XLEN-1:0]  PCM,
+  input logic [P.XLEN-1:0]  PCE, PCM,
   output logic              IllegalCSRDAccessM,
   output logic              DebugResume,
   output [P.XLEN-1:0]       DPC_REGW,
@@ -224,7 +224,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
       RUNNING: begin
         if (HaltReq) state_n = HALTED;
         else if (ebreak) state_n = HALTED;
-        else if (step & InstrValid & ~DebugResume) state_n = HALTED;
+        else if (step & InstrValidE & ~DebugResume) state_n = HALTED;
         else state_n = RUNNING;
         end
       HALTED: begin
