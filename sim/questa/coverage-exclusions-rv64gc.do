@@ -368,6 +368,8 @@ set line [GetLineNum ${SRC}/ebu/ebufsmarb.sv "BeatCounter\\("]
 coverage exclude -scope /dut/core/ebu/ebu/ebufsmarb -linerange $line-$line -item e 1 -fecexprrow 1
 set line [GetLineNum ${SRC}/ebu/ebufsmarb.sv "FinalBeatReg\\("]
 coverage exclude -scope /dut/core/ebu/ebu/ebufsmarb -linerange $line-$line -item e 1 -fecexprrow 1
+set line [GetLineNum ${SRC}/ebu/ebufsmarb.sv "ARBITRATE: if"]
+coverage exclude -scope /dut/core/ebu/ebu/ebufsmarb -linerange $line-$line -item c 1 -feccondrow 2
 
 set line [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm AtomicElse"]
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line  -item bc 1
