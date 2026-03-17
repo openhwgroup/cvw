@@ -52,7 +52,11 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   input logic               BreakpointFaultM,
   output logic              EBreakM,
   output logic              EBreakS,
-  output logic              EBreakU
+  output logic              EBreakU,
+  input logic [P.XLEN-1:0]  IEUAdrM,
+  input logic               PCSrcE,
+  input logic               FlushM,
+  input logic               StallM
 );
 
   localparam                DCSR = 12'h7B0;
@@ -77,6 +81,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
 
   // Need this for resuming
   logic                     DPCset;
+  logic                     PCSrcM;
 
   // WriteVals
   logic [31:0]              DCSRWriteValM;
@@ -159,12 +164,14 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   // Need to assign ebreak appropriately for the combinational logic
   // below. Not sure what signals gets triggered for ebreak.
 
+  flopenrc #(1) PCSrcMReg (clk, reset, FlushM, ~StallM, PCSrcE, PCSrcM);
+
   assign DCSRWriteValM = CSRDWriteM & ~NextHalt ?
                          {CSRWriteValM[15], CSRWriteValM[13], CSRWriteValM[12], CSRWriteValM[11],
                           CSRWriteValM[8:6], CSRWriteValM[2], CSRWriteValM[1:0]} :
                          {ebreakm, ebreaks, ebreaku, stepie, NextCause, step, PrivilegeModeW};
 
-  assign DPCWriteValM = WriteDPC & (state == HALTED) ? CSRWriteValM : ebreak ? PCM : PCE;
+  assign DPCWriteValM = WriteDPC & (state == HALTED) ? CSRWriteValM : ebreak ? PCM : PCSrcM ? IEUAdrM : PCE;
 
   ////////////////////////////////////////////////////////////////////
   // CSRs

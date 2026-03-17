@@ -744,6 +744,7 @@ add wave -noupdate -group Debug -expand -group abstract /testbench/dut/core/priv
 add wave -noupdate -group Debug -expand -group abstract /testbench/dut/core/priv/priv/csr/CSRAdrM
 add wave -noupdate -group Debug -expand -group abstract /testbench/dut/core/priv/priv/csr/CSRReadValM
 add wave -noupdate -group Debug -expand -group abstract /testbench/dut/core/priv/priv/csr/CSRWriteValM
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/core/priv/priv/csr/EPCM
 
 
 

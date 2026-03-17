@@ -111,7 +111,9 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic                     HaveResetAck,
   input  logic                     ResetHaltReq,
   input  logic                     BreakpointFaultM,
-  output logic                     EBreakM, EBreakS, EBreakU
+  output logic                     EBreakM, EBreakS, EBreakU,
+  input  logic [P.XLEN-1:0]        IEUAdrM,
+  input  logic                     PCSrcE
 );
 
   localparam MIP = 12'h344;
@@ -318,10 +320,11 @@ module csr import cvw::*;  #(parameter cvw_t P) (
 
   if (P.DEBUG_SUPPORTED) begin : debug
     csrd #(P) csrd(.clk, .reset, .HaltReq, .ResumeReq,
-      .CSRDWriteM, .CSRWriteValM, .CSRAdrM, .InstrValid(InstrValidM), .CSRDReadValM, .PrivilegeModeW,
+      .CSRDWriteM, .CSRWriteValM, .CSRAdrM, .InstrValid(InstrValidM), .InstrValidE, .CSRDReadValM, .PrivilegeModeW,
       .DebugMode, .PCE, .PCM, .IllegalCSRDAccessM, .DebugResume, .DPC_REGW(DPC),
       .HaveReset, .HaveResetAck, .ResetHaltReq, .BreakpointFaultM,
-      .EBreakM, .EBreakS, .EBreakU);
+      .EBreakM, .EBreakS, .EBreakU,
+      .IEUAdrM, .PCSrcE, .FlushM, .StallM);
   end else begin
     assign DebugMode = 1'b0;
     assign CSRDReadValM = '0;
