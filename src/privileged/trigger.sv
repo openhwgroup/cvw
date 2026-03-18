@@ -51,7 +51,6 @@ module trigger import cvw::*;  #(parameter cvw_t P) (
   localparam TDATA2  = 12'h7a2;
   localparam TINFO   = 12'h7a4;
 
-
   always_comb begin
     if (DebugMode == 1 | PrivilegeModeW == P.M_MODE) begin
       IllegalCSRTrigAccessM = 1'b0;

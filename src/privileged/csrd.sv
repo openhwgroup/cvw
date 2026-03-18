@@ -72,7 +72,6 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   resack_state_e resack_state, next_resack_state;
 
   logic                     NextHalt;
-  // logic AnyEbreak;
 
   // Write Enables
   logic                     WriteDCSR;
@@ -86,11 +85,6 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   // WriteVals
   // logic [31:0]              DCSRWriteValM;
   logic [P.XLEN-1:0]        DPCWriteValM;
-
-  // Register Outputs
-  // logic [31:0]       DCSR_REGW;
-  // logic [P.XLEN-1:0] DPC_REGW;
-
   logic                     DebugBreakM;
   logic                     DebugBreakS;
   logic                     DebugBreakU;
@@ -115,11 +109,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   logic                     step;      // Need to implement this. How to track 1 instruction completing?
   logic [1:0]               prv;       // Privilege Mode at halt. Set so mode changes when resumed.
 
-   // jes: taken from debug specification 4.9.1, 0x7b0
-   // dcsr[31:0] = {debugver[3:0], 1'b0, extcause[2:0], 4'b0, cetrig, pelp,
-   // ebreakvs, ebreakvu, ebreakm, 1'b0, ebreaks, ebreaku, stepie, stopcount,
-   // stoptime, cause[2:0], v, mprven, nmip, step, prv[1:0]}
-
+   // debug specification 4.9.1, 0x7b0
   localparam dcsrwidth = ($bits(ebreakm) + $bits(ebreaks) + $bits(ebreaku) +
     $bits(stepie) + $bits(cause) + $bits(step) + $bits(prv));
 
