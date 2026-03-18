@@ -84,7 +84,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   logic                     PCSrcM;
 
   // WriteVals
-  logic [31:0]              DCSRWriteValM;
+  // logic [31:0]              DCSRWriteValM;
   logic [P.XLEN-1:0]        DPCWriteValM;
 
   // Register Outputs
@@ -123,6 +123,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   localparam dcsrwidth = ($bits(ebreakm) + $bits(ebreaks) + $bits(ebreaku) +
     $bits(stepie) + $bits(cause) + $bits(step) + $bits(prv));
 
+  logic [dcsrwidth-1:0]              DCSRWriteValM;
   logic [dcsrwidth-1:0]     DCSR_REGW;
   logic [2:0]               NextCause;  // Cause of halt
   logic                     ebreak;
@@ -164,6 +165,8 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   // Need to assign ebreak appropriately for the combinational logic
   // below. Not sure what signals gets triggered for ebreak.
 
+  // Need to revisit this, as there is already a PCSrcM register in
+  // the branch predictor.
   flopenrc #(1) PCSrcMReg (clk, reset, FlushM, ~StallM, PCSrcE, PCSrcM);
 
   assign DCSRWriteValM = CSRDWriteM & ~NextHalt ?

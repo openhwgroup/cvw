@@ -4084,7 +4084,8 @@ string wally64debug[] = '{
   "WALLY-debug-gcd",
   "WALLY-debug-ebreak",
   "WALLY-debug-step",
-  "WALLY-debug-step-loop"
+  "WALLY-debug-step-loop",
+  "WALLY-debug-step-jump"
 };
 
 string wally64debug_jtag[] = '{
@@ -4097,5 +4098,6 @@ string wally64debug_jtag[] = '{
   "WALLY-debug-gcd",
   "WALLY-debug-ebreak",
   "WALLY-debug-step",
-  "WALLY-debug-step-loop"
+  "WALLY-debug-step-loop",
+  "WALLY-debug-step-jump"
 };
