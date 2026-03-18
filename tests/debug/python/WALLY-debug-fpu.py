@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+#
+# WALLY-debug-fpu.py
+# jacob.pease@okstate.edu 18 March 2026
+# james.stine@okstate.edu 18 March 2026
+#
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 import math
 import struct

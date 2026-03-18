@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+#
+# WALLY-debug-gcd.py
+# jacob.pease@okstate.edu 18 March 2026
+# james.stine@okstate.edu 18 March 2026
+#
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 a = 0x67B16B7B  # 1739680635
 b = 0x4015F8C2  # 1075181762
