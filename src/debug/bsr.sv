@@ -29,10 +29,13 @@
 
 module bsr #(parameter WIDTH=8) (
     input logic [WIDTH-1:0]  DataIn,
-    input logic              ScanIn,
-    input logic              ShiftDR, ClockDR, UpdateDR, Mode,
+    input logic             ScanIn,
+    input logic              ShiftDR,
+    input logic              ClockDR,
+    input logic              UpdateDR,
+    input logic              Mode,
     output logic [WIDTH-1:0] Qout,
-    output logic             ScanOut
+    output logic         ScanOut
 );
    logic [WIDTH-1:0]         shiftreg;
    logic [WIDTH-1:0]         y;
@@ -45,4 +48,4 @@ module bsr #(parameter WIDTH=8) (
 
    assign Qout = Mode ? y : DataIn;
    assign ScanOut = shiftreg[0];
-endmodule // bsr
+endmodule
