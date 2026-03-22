@@ -92,6 +92,16 @@ source "$WALLY"/bin/installation/qemu-install.sh
 source "$WALLY"/bin/installation/spike-install.sh
 
 
+# Boost (https://www.boost.org/)
+# The Boost C++ library is required by Whisper. A recent version compiled with C++20 is needed.
+source "$WALLY"/bin/installation/boost-install.sh
+
+
+# Whisper (https://github.com/tenstorrent/whisper)
+# Whisper is a RISC-V instruction set simulator (ISS) developed by Tenstorrent.
+source "$WALLY"/bin/installation/whisper-install.sh
+
+
 # RISC-V Sail Model (https://github.com/riscv/sail-riscv)
 # The RISC-V Sail Model is the golden reference model for RISC-V. It is written in Sail.
 # Sail is a formal specification language designed for describing the semantics of an ISA.
