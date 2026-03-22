@@ -47,6 +47,11 @@ else
 fi
 
 
+# mise (https://mise.jdx.dev/)
+# mise is a development environment setup tool for managing tool versions and environment variables.
+source "$WALLY"/bin/installation/mise-install.sh
+
+
 # uv (https://docs.astral.sh/uv/)
 # uv is a Python package manager and virtual environment tool.
 source "$WALLY"/bin/installation/uv-install.sh
