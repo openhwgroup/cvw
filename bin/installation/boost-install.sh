@@ -53,7 +53,7 @@ if check_tool_version $BOOST_VERSION; then
     ./bootstrap.sh --prefix="$RISCV" 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
     # Whisper compiles with C++20 and statically links Boost, so Boost must be built
     # with matching C++ standard (cxxflags) and as a static library (link=static).
-    ./b2 -j"${NUM_THREADS}" cxxflags="-std=c++20" link=static install 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
+    ./b2 -j"${NUM_THREADS}" cxxflags="-std=c++20" install 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
     cd "$RISCV"
     if [ "$clean" = true ]; then
         rm -rf "boost_${BOOST_VERSION_UNDERSCORE}"
