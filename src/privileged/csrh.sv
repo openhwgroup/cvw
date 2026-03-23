@@ -53,7 +53,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   input  logic [31:0]       InstrM,           // Instruction for mtinst/htinst decode
   input  logic [P.XLEN-1:0] NextEPCM,         // EPC value for trap/return
   input  logic [5:0]        NextCauseM,       // Exception/interrupt cause
-  input  logic [P.XLEN-1:0] NextMtvalM,       // Value for {v,s,}tval on trap
+  input  logic [P.XLEN-1:0] NextTvalM,       // Value for {v,s,}tval on trap
   input  logic [P.XLEN-1:0] NextHtvalM,       // Value for htval on trap
   input  logic [31:0]       InstrOrigM,       // Original compressed or uncompressed instruction for mtinst/htinst
 
@@ -88,9 +88,8 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   logic [5:0]        HSTATUS_VGEIN;
   logic [1:0]        HSTATUS_VSXL, HSTATUS_HUPMM;
   logic              VSSTATUS_SD, VSSTATUS_SPELP, VSSTATUS_SDT;
-  logic              VSSTATUS_MXR_INT, VSSTATUS_SUM_INT;
   logic              VSSTATUS_SPIE, VSSTATUS_SIE;
-  logic [1:0]        VSSTATUS_FS_INT, VSSTATUS_XS, VSSTATUS_UXL, VSSTATUS_VS;
+  logic [1:0]        VSSTATUS_XS, VSSTATUS_UXL, VSSTATUS_VS;
   logic [P.XLEN-1:0] NextHIE;
   logic [P.XLEN-1:0] HIE_WRITE_MASK;
   logic [11:0]       VSIE_REGW;
@@ -150,8 +149,10 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   localparam [11:0] HIDELEG_MASK = 12'h444;
   localparam [11:0] HVIP_MASK    = 12'h444; // Only VSSIP[2], VSTIP[6], VSEIP[10] are writable (spec 7.4.4)
   localparam [12:0] HIP_MASK     = 13'h1444; // Active standard HIP bits: SGEIP[12], VSEIP[10], VSTIP[6], VSSIP[2]
-  // TODO: work on GEILEN implementation - for now, keeping at 0 is spec compliant
-  localparam int unsigned GEILEN = 0;
+  // GEILEN controls writability of guest-external interrupt CSRs.
+  // Spec path keeps GEILEN=0 until full guest external interrupt plumbing is integrated.
+  // SIM path uses maximal GEILEN (31/63) to match reference-model CSR accessibility.
+  localparam int unsigned GEILEN = SIM_COMPLIANCE ? (P.XLEN-1) : 0;
   // Include all standard HIE bits in the architectural mask; SGEIE writability is GEILEN-gated in write logic.
   localparam [12:0] HIE_MASK     = 13'h1444;
 
@@ -201,6 +202,8 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   logic              LegalVSatpModeM;
   logic [P.XLEN-1:0] LegalizedVSatpWriteValM;
   logic [P.XLEN-1:0] HGATPReadVal;
+  logic [P.XLEN-1:0] HGEIEWriteMaskM;
+  logic [P.XLEN-1:0] NextHGEIEM;
 
   // CBIE has WARL encoding; 2'b10 is reserved and is legalized to 2'b00.
   assign LegalizedHENVCFG_CBIE = (CSRWriteValM[5:4] == 2'b10) ? 2'b00 : CSRWriteValM[5:4];
@@ -213,7 +216,10 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   logic VSCSRDirectM;
   logic LegalAccessM;
 
-  // Direct VS-CSR access while V=1 (address class 0x2**).
+  // Direct VS-CSR access uses CSR address class 0x2** (CSR[9:8]=2'b10).
+  // Per H spec, when V=1 guest software accesses virtualized S-state via S-CSR
+  // encodings (e.g., sstatus substitutes to vsstatus); direct 0x2** VS CSR
+  // encodings from VS are treated as illegal accesses.
   assign VSCSRDirectM = VirtModeW & (InstrM[29:28] == 2'b10);
 
   // H-CSRs are accessible in M-Mode or HS-Mode.
@@ -237,9 +243,9 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
 
   // mtinst/htinst/mtval2 are derived from the trapped instruction (InstrM); not yet implemented.
   // We write 0 on traps for now, which is spec compliant (indicating transformation not supported).
-  assign NextMtinstM = TrapToM ? '0 : CSRWriteValM;
+  assign NextMtinstM = TrapToM   ? '0 : CSRWriteValM;
   assign NextHtinstM = TrapToHSM ? '0 : CSRWriteValM;
-  assign NextMtval2M = TrapToM ? '0 : CSRWriteValM;
+  assign NextMtval2M = TrapToM   ? '0 : CSRWriteValM;
 
   // Write enables for each CSR (from CSR instruction)
   assign WriteMTINSTM     = CSRMWriteM & (CSRAdrM == MTINST);
@@ -265,54 +271,46 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   assign WriteHTINSTM     = ValidHWriteM & (CSRAdrM == HTINST);
   assign WriteHGATPM      = ValidHWriteM & (CSRAdrM == HGATP) &
                             ((PrivilegeModeW == P.M_MODE) | ~STATUS_TVM);
-  // GEILEN=0 (guest external interrupts unimplemented): HGEIP remains 0.
-  // TODO: Add external interrupt handling and GEILEN parameterization.
+  // HGEIP is pending-interrupt state from external interrupt fabric.
+  // Until that source is integrated, keep it read-only.
   assign WriteHGEIPM      = 1'b0;
   assign WriteVSTVECM     = ValidVSWriteM & (CSRAdrM == VSTVEC);
   assign WriteVSSCRATCHM  = ValidVSWriteM & (CSRAdrM == VSSCRATCH);
   assign WriteVSEPCM      = ValidVSWriteM & (CSRAdrM == VSEPC);
   assign WriteVSCAUSEM    = ValidVSWriteM & (CSRAdrM == VSCAUSE);
 
-  if (SIM_COMPLIANCE) begin : write_vsatp_sim_compliance
-    // Spike-aligned behavior: legalize unsupported MODE writes only when V=0.
-    assign WriteVSATPM = ValidVSWriteM & (CSRAdrM == VSATP) & P.VIRTMEM_SUPPORTED &
-                         (LegalVSatpModeM | ~VirtModeW);
-  end else begin : write_vsatp_spec
-    // Spec path: ignore unsupported MODE writes.
-    assign WriteVSATPM = ValidVSWriteM & (CSRAdrM == VSATP) & P.VIRTMEM_SUPPORTED &
-                         LegalVSatpModeM;
-  end
+  // For unsupported MODE writes, choose satp-like behavior (ignore write).
+  // This is spec-compliant for V=0 and required for satp writes when V=1.
+  assign WriteVSATPM = P.VIRTMEM_SUPPORTED & ValidVSWriteM & (CSRAdrM == VSATP) &
+                       LegalVSatpModeM;
+
   // Access to vstimecmp in V=1 is gated by mcounteren.TM, hcounteren.TM, and henvcfg.STCE.
+  // TODO: Need menvcfg.STCE as well (19.3)
   assign AllowVSTimecmpAccessM = ~VirtModeW | (MCOUNTEREN_TM & HCOUNTEREN_REGW[1] & HENVCFG_REGW[63]);
-  assign WriteVSTIMECMPM  = ValidVSWriteM & (CSRAdrM == VSTIMECMP) & P.SSTC_SUPPORTED & AllowVSTimecmpAccessM;
-  assign WriteVSTIMECMPHM = (P.XLEN == 32) & P.SSTC_SUPPORTED &
-                            (ValidVSWriteM & (CSRAdrM == VSTIMECMPH)) & AllowVSTimecmpAccessM;
+  assign WriteVSTIMECMPM  = P.SSTC_SUPPORTED & ValidVSWriteM & (CSRAdrM == VSTIMECMP) & AllowVSTimecmpAccessM;
+  assign WriteVSTIMECMPHM = P.SSTC_SUPPORTED & (P.XLEN == 32) & (ValidVSWriteM & (CSRAdrM == VSTIMECMPH)) & AllowVSTimecmpAccessM;
 
   if (P.XLEN == 64) begin : legal_vsatp_mode_64
     assign LegalVSatpModeM = (CSRWriteValM[63:60] == 4'h0) |
                              (P.SV39_SUPPORTED & (CSRWriteValM[63:60] == P.SV39)) |
                              (P.SV48_SUPPORTED & (CSRWriteValM[63:60] == P.SV48)) |
                              (P.SV57_SUPPORTED & (CSRWriteValM[63:60] == P.SV57));
-    assign LegalizedVSatpWriteValM = LegalVSatpModeM ? CSRWriteValM : {4'h0, CSRWriteValM[59:0]};
+    assign LegalizedVSatpWriteValM = CSRWriteValM;
   end else begin : legal_vsatp_mode_32
-    assign LegalVSatpModeM = (CSRWriteValM[31] == 1'b0) |
-                             (P.SV32_SUPPORTED & CSRWriteValM[31]);
-    assign LegalizedVSatpWriteValM = LegalVSatpModeM ? CSRWriteValM : {1'b0, CSRWriteValM[30:0]};
+    assign LegalVSatpModeM = (CSRWriteValM[31] == 1'b0) | (P.SV32_SUPPORTED & CSRWriteValM[31]);
+    assign LegalizedVSatpWriteValM = CSRWriteValM;
   end
 
 
   // MTINST
   // On traps to M, mtinst is written with trap information; writing zero is always compliant.
-  flopenr #(P.XLEN) MTINSTreg(clk, reset, (WriteMTINSTM | TrapToM),
-                              NextMtinstM, MTINST_REGW);
+  flopenr #(P.XLEN) MTINSTreg(clk, reset, (WriteMTINSTM | TrapToM), NextMtinstM, MTINST_REGW);
 
   // MTVAL2
   // On traps to M, mtval2 is written with trap information; writing zero is always compliant.
   // TODO: Consider using paddr; mtval2 is written with either zero or the guest physical
   // address that faulted, shifted right by 2 bits
-  flopenr #(P.XLEN) MTVAL2reg(clk, reset, (WriteMTVAL2M | TrapToM),
-                              NextMtval2M, MTVAL2_REGW);
-
+  flopenr #(P.XLEN) MTVAL2reg(clk, reset, (WriteMTVAL2M | TrapToM), NextMtval2M, MTVAL2_REGW);
 
   // HSTATUS
   // HS-visible virtualization control; SPV tracks prior V on HS traps and clears on HS sret.
@@ -333,15 +331,21 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
         HSTATUS_SPVP <= PrivilegeModeW[0];
       HSTATUS_GVA <= TrapGVAM;
     end else if (SretFromHSM) begin
+      // SRET in HS-mode (V=0) must clear hstatus.SPV.
       HSTATUS_SPV <= 1'b0;
     end else if (WriteHSTATUSM) begin
-      HSTATUS_VSBE  <= 1'b0; // P.BIGENDIAN_SUPPORTED & CSRWriteValM[5];
+      HSTATUS_VSBE  <= P.BIGENDIAN_SUPPORTED & CSRWriteValM[5];
       HSTATUS_GVA   <= CSRWriteValM[6];
       HSTATUS_SPV   <= CSRWriteValM[7];
       HSTATUS_SPVP  <= CSRWriteValM[8];
       HSTATUS_HU    <= P.U_SUPPORTED & CSRWriteValM[9];
-      // GEILEN=0 (guest external interrupts unimplemented): VGEIN is WARL read-only 0.
-      HSTATUS_VGEIN <= 6'b0; // CSRWriteValM[17:12];
+      // VGEIN is WARL and depends on GEILEN. With GEILEN=0 it is read-only zero.
+      if (GEILEN == 0)
+        HSTATUS_VGEIN <= 6'b0;
+      else if (P.XLEN == 32)
+        HSTATUS_VGEIN <= {1'b0, CSRWriteValM[16:12]};
+      else
+        HSTATUS_VGEIN <= CSRWriteValM[17:12];
       HSTATUS_VTVM  <= CSRWriteValM[20];
       HSTATUS_VTW   <= CSRWriteValM[21];
       HSTATUS_VTSR  <= CSRWriteValM[22];
@@ -363,15 +367,12 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
 
   // VSSTATUS
   // Guest-visible SSTATUS state, updated on VS traps/returns or CSR writes.
-  assign VSSTATUS_MXR = VSSTATUS_MXR_INT;
-  assign VSSTATUS_SUM = P.VIRTMEM_SUPPORTED & VSSTATUS_SUM_INT;
-  assign VSSTATUS_FS  = P.F_SUPPORTED ? VSSTATUS_FS_INT : 2'b00;
-  assign VSSTATUS_XS  = 2'b00;
-  assign VSSTATUS_VS  = 2'b00;
-  assign VSSTATUS_SPELP = 1'b0;
-  assign VSSTATUS_SDT = 1'b0;
+  assign VSSTATUS_XS  = 2'b00;  // Custom extensions not supported
+  assign VSSTATUS_VS  = 2'b00;  // Vector not supported
+  assign VSSTATUS_SPELP = 1'b0; // Landing pads not supported
+  assign VSSTATUS_SDT = 1'b0;   // Double trap not supported
   assign VSSTATUS_SD  = (VSSTATUS_FS == 2'b11) | (VSSTATUS_XS == 2'b11) | (VSSTATUS_VS == 2'b11);
-  assign VSSTATUS_UXL = P.U_SUPPORTED ? ((P.XLEN == 64) ? 2'b10 : 2'b01) : 2'b00;
+  assign VSSTATUS_UXL = HSTATUS_VSXL;
 
   if (P.XLEN == 64) begin : vsstatus64
     assign VSSTATUS_REGW = {VSSTATUS_SD, 29'b0, VSSTATUS_UXL, 7'b0,
@@ -391,9 +392,9 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   // VSSTATUS update mirrors SSTATUS ordering in csrsr for easier sharing.
   always_ff @(posedge clk)
     if (reset) begin
-      VSSTATUS_MXR_INT <= 1'b0;
-      VSSTATUS_SUM_INT <= 1'b0;
-      VSSTATUS_FS_INT  <= 2'b00;
+      VSSTATUS_MXR     <= 1'b0;
+      VSSTATUS_SUM     <= 1'b0;
+      VSSTATUS_FS      <= 2'b00;
       VSSTATUS_SPP     <= 1'b0;
       VSSTATUS_SPIE    <= 1'b0;
       VSSTATUS_SIE     <= 1'b0;
@@ -407,16 +408,15 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
       VSSTATUS_SPIE <= 1'b1;
       VSSTATUS_SPP  <= 1'b0;
     end else if (WriteVSSTATUSM) begin
-      VSSTATUS_MXR_INT <= CSRWriteValM[19];
-      VSSTATUS_SUM_INT <= P.VIRTMEM_SUPPORTED & CSRWriteValM[18];
-      VSSTATUS_FS_INT  <= CSRWriteValM[14:13];
+      VSSTATUS_MXR     <= CSRWriteValM[19];
+      VSSTATUS_SUM     <= P.VIRTMEM_SUPPORTED & CSRWriteValM[18];
+      VSSTATUS_FS      <= P.F_SUPPORTED ? CSRWriteValM[14:13] : 2'b00;
       VSSTATUS_SPP     <= CSRWriteValM[8];
       VSSTATUS_SPIE    <= CSRWriteValM[5];
       VSSTATUS_SIE     <= CSRWriteValM[1];
-      // Spike appears to treat VSSTATUS.UBE as read-only zero; SIM_COMPLIANCE forces 0 for test alignment.
-      VSSTATUS_UBE     <= SIM_COMPLIANCE ? 1'b0 : (P.U_SUPPORTED & P.BIGENDIAN_SUPPORTED & CSRWriteValM[6]);
+      VSSTATUS_UBE     <= P.U_SUPPORTED & P.BIGENDIAN_SUPPORTED & CSRWriteValM[6];
     end else if (VirtModeW & (FRegWriteM | WriteFRMM | SetOrWriteFFLAGSM)) begin
-      VSSTATUS_FS_INT  <= 2'b11;
+      VSSTATUS_FS  <= 2'b11;
     end
 
   // Exception and Interrupt Delegation Registers
@@ -447,7 +447,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
     if (WriteHIEM) begin
       NextHIE = CSRWriteValM & HIE_WRITE_MASK;
       // GEILEN=0: SGEIE is read-only zero.
-      if (GEILEN == 0 & ~SIM_COMPLIANCE) NextHIE[12] = 1'b0;
+      if (GEILEN == 0) NextHIE[12] = 1'b0;
     end
     if (WriteVSIEM) begin
       if (HIDELEG_REGW[2])  NextHIE[2]  = CSRWriteValM[1]; // SSIE -> VSSIE
@@ -510,8 +510,15 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   flopenr #(12) HVIPreg(clk, reset, (WriteHVIPM | WriteHIPM | (WriteVSIPM & HIDELEG_REGW[2])), NextHVIPM, HVIP_REGW);
   assign VSIP_REGW = (HIP_PENDING[11:0] & HIDELEG_REGW) >> 1;
 
-  // GEILEN=0 (guest external interrupts unimplemented): HGEIE is WARL read-only 0.
-  flopenr #(P.XLEN) HGEIEreg(clk, reset, WriteHGEIEM, '0, HGEIE_REGW);
+  // TODO: do this without a for loop
+  // hgeie bits GEILEN:1 are writable; all others are read-only zero.
+  always_comb begin
+    HGEIEWriteMaskM = '0;
+    for (int i = 1; i <= GEILEN && i < P.XLEN; i++)
+      HGEIEWriteMaskM[i] = 1'b1;
+  end
+  assign NextHGEIEM = CSRWriteValM & HGEIEWriteMaskM;
+  flopenr #(P.XLEN) HGEIEreg(clk, reset, WriteHGEIEM, NextHGEIEM, HGEIE_REGW);
 
   // HTVAL: Written by CSR instructions and by hardware on traps
   assign NextHTVALM = TrapToHSM ? NextHtvalM : CSRWriteValM;
@@ -532,7 +539,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   assign NextVSCAUSEM = TrapToVSM ? {NextCauseM[5], {(P.XLEN-6){1'b0}}, NextCauseM[4:0]}
                                 : CSRWriteValM;
   flopenr #(P.XLEN) VSCAUSEreg(clk, reset, (TrapToVSM | WriteVSCAUSEM), NextVSCAUSEM, VSCAUSE_REGW);
-  flopenr #(P.XLEN) VSTVALreg(clk, reset, (TrapToVSM | WriteVSTVALM), NextMtvalM, VSTVAL_REGW);
+  flopenr #(P.XLEN) VSTVALreg(clk, reset, (TrapToVSM | WriteVSTVALM), NextTvalM, VSTVAL_REGW);
   if (P.VIRTMEM_SUPPORTED)
     flopenr #(P.XLEN) VSATPreg(clk, reset, WriteVSATPM, LegalizedVSatpWriteValM, VSATP_REGW);
   else
@@ -559,16 +566,12 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
                              (P.SV57_SUPPORTED & CSRWriteValM[63:60] == 4'hA);
 
     // hgatp unsupported MODE writes are not ignored, so legalize to a valid WARL value.
-    // Spec-compliant path (SIM_COMPLIANCE=0): choose MODE=Bare with all remaining bits zero.
+    // Use one behavior for both spec and simulation: force MODE=Bare and keep other fields.
     always_comb begin
       LegalizedHgatpWriteValM = CSRWriteValM;
       LegalizedHgatpWriteValM[59:58] = 2'b00;
-      if (~LegalHgatpModeM) begin
-        if (SIM_COMPLIANCE)
-          LegalizedHgatpWriteValM = {4'h0, 2'b00, CSRWriteValM[57:2], 2'b00};
-        else
-          LegalizedHgatpWriteValM = '0;
-      end
+      if (~LegalHgatpModeM)
+        LegalizedHgatpWriteValM = {4'h0, 2'b00, CSRWriteValM[57:2], 2'b00};
       // In paged G-stage modes, hgatp.PPN[1:0] always read as zero.
       else if (CSRWriteValM[63:60] != 4'h0)
         LegalizedHgatpWriteValM[1:0] = 2'b00;
@@ -589,7 +592,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
       // Bits [30:29] are defined to read as zero in RV32 hgatp.
       LegalizedHgatpWriteValM[30:29] = 2'b00;
       if (~LegalHgatpModeM)
-        LegalizedHgatpWriteValM = '0;
+        LegalizedHgatpWriteValM = {1'b0, 2'b00, CSRWriteValM[28:2], 2'b00};
       // In Sv32x4, hgatp.PPN[1:0] always read as zero.
       else if (CSRWriteValM[31])
         LegalizedHgatpWriteValM[1:0] = 2'b00;
@@ -679,7 +682,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
     flopenr #(P.XLEN) HTIMEDELTAreg(clk, reset, WriteHTIMEDELTAM, CSRWriteValM, HTIMEDELTA_REGW[31:0]);
     flopenr #(P.XLEN) HTIMEDELTAHreg(clk, reset, WriteHTIMEDELTAHM, CSRWriteValM, HTIMEDELTA_REGW[63:32]);
   end
-  // GEILEN=0 (guest external interrupts unimplemented): HGEIP remains 0.
+  // HGEIP is sourced by platform interrupt logic; keep zero until that path is integrated.
   flopenr #(P.XLEN) HGEIPreg(clk, reset, WriteHGEIPM, '0, HGEIP_REGW);
 
 
