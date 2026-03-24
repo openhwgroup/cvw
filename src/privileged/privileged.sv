@@ -38,7 +38,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic [31:0]       InstrM,                                         // Instruction
   input  logic [31:0]       InstrOrigM,                                     // Original compressed or uncompressed instruction in Memory stage for Illegal Instruction MTVAL
   input  logic [P.XLEN-1:0] IEUAdrxTvalM,                                   // address from IEU
-  input  logic [P.XLEN-1:0] PCE,
+  input  logic [P.XLEN-1:0] NextValidPCE,
   input  logic [P.XLEN-1:0] PCM,                                            // program counter
   input  logic [P.XLEN-1:0] PCSpillM,                                       // program counter
   // control signals
@@ -104,7 +104,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   // Debug Mode
   output logic              DebugMode,
   input  logic              HaltReq, ResumeReq,
-  input  logic              DebugControl, CSRDebugEnable,
+  input  logic              CSRDebugEnable,
   // output logic [P.XLEN-1:0] DebugCSRRDATA,
   input  logic [P.XLEN-1:0] DebugRegWDATA,
   input  logic [11:0]       DebugRegAddr,
@@ -153,7 +153,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
 
   // Control and Status Registers
   csr #(P) csr(.clk, .reset, .FlushM, .FlushW, .StallE, .StallM, .StallW,
-    .InstrM, .InstrOrigM, .PCE, .PCM, .PCSpillM, .SrcAM, .IEUAdrxTvalM,
+    .InstrM, .InstrOrigM, .NextValidPCE, .PCM, .PCSpillM, .SrcAM, .IEUAdrxTvalM,
     .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .InterruptM,
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
     .MTIME_CLINT, .InstrValidM, .InstrValidE, .FRegWriteM, .LoadStallD, .StoreStallD,
@@ -168,7 +168,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .SetFflagsM, .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE,
     .EPCM, .TrapVectorM,
     .CSRReadValM, .CSRReadValW, .IllegalCSRAccessM, .BigEndianM,
-    .DebugMode, .HaltReq, .ResumeReq, .DebugControl, .CSRDebugEnable, .DebugRegWDATA,
+    .DebugMode, .HaltReq, .ResumeReq, .CSRDebugEnable, .DebugRegWDATA,
     .DebugRegAddr, .DebugRegWrite, .DebugResume, .DPC,
     .HaveReset, .HaveResetAck, .ResetHaltReq, .BreakpointFaultM,
     .EBreakM, .EBreakS, .EBreakU,

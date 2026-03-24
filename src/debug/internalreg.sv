@@ -28,15 +28,15 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module internalreg #(parameter WIDTH = 8)
-   (input logic              tck,
-    input logic        tdi,
-    input logic        resetn,
-    input logic [WIDTH-1:0]  DataIn,
-    input logic [WIDTH-1:0]  val,
-    input logic        ShiftDR,
-    input logic        ClockDR,
+   (input  logic             tck,
+    input  logic             tdi,
+    input  logic             resetn,
+    input  logic [WIDTH-1:0] DataIn,
+    input  logic [WIDTH-1:0] val,
+    input  logic             ShiftDR,
+    input  logic             ClockDR,
     output logic [WIDTH-1:0] y,
-    output logic       tdo);
+    output logic             tdo);
 
    always @(posedge tck) begin
       if (~resetn) begin

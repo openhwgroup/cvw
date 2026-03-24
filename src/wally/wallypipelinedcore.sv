@@ -48,7 +48,6 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
    input  logic                  ExternalStall,
    output logic                  DebugMode,
    input  logic                  HaltReq, ResumeReq,
-   input  logic                  DebugControl,
    input  logic                  GPRDebugEnable,
    input  logic                  CSRDebugEnable,
    input  logic                  FPRDebugEnable,
@@ -185,9 +184,10 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          wfiM, IntPendingM;
 
   // Debug Signals
-  logic [P.XLEN-1:0]             DebugIEURDATA;
-  logic [P.XLEN-1:0]             DebugFPURDATA;
+  logic [P.XLEN-1:0]             DebugR1D;
+  logic [P.XLEN-1:0]             DebugFRD1D;
   logic                          DebugResume;
+  logic [P.XLEN-1:0]             NextValidPCE;
   logic [P.XLEN-1:0]             DPC;
 
   // instruction fetch unit: PC, branch prediction, instruction cache
@@ -212,7 +212,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_ADUE, .ITLBWriteF, .sfencevmaM, .ITLBMissOrUpdateAF,
     // pmp/pma (inside mmu) signals.
     .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW, .InstrAccessFaultF,
-    .DebugResume, .DPC
+    .DebugResume, .NextValidPCE, .DPC
   );
 
   // integer execution unit: integer register file, datapath and controller
@@ -239,8 +239,8 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
      .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
      .StructuralStallD, .LoadStallD, .StoreStallD, .PCSrcE,
      .CSRReadM, .CSRWriteM, .PrivilegedM, .CSRWriteFenceM, .InvalidateICacheM,
-     .DebugMode, .DebugControl, .GPRDebugEnable,
-     .DebugIEURDATA, .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite
+     .DebugMode, .GPRDebugEnable,
+     .DebugR1D, .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite
   );
 
   lsu #(P) lsu(
@@ -314,7 +314,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     privileged #(P) priv(
       .clk, .reset,
       .FlushD, .FlushE, .FlushM, .FlushW, .StallD, .StallE, .StallM, .StallW,
-      .CSRReadM, .CSRWriteM, .SrcAM, .PCE, .PCM, .PCSpillM,
+      .CSRReadM, .CSRWriteM, .SrcAM, .NextValidPCE, .PCM, .PCSpillM,
       .InstrM, .InstrOrigM, .CSRReadValM, .CSRReadValW, .EPCM, .TrapVectorM,
       .RetM, .TrapM, .sfencevmaM, .InvalidateICacheM, .DCacheStallM, .ICacheStallF,
       .InstrValidM, .InstrValidE, .CommittedM, .CommittedF,
@@ -332,7 +332,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS,
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
       .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .wfiM, .IntPendingM, .BigEndianM,
-      .DebugMode, .HaltReq, .ResumeReq, .DebugControl, .CSRDebugEnable,
+      .DebugMode, .HaltReq, .ResumeReq, .CSRDebugEnable,
       .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite, .DebugResume, .DPC,
       .HaveReset, .HaveResetAck, .ResetHaltReq,
       .IEUAdrM, .PCSrcE);
@@ -385,9 +385,8 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .SetFflagsM,                         // FPU flags (to privileged unit)
       .FIntDivResultW,
       .DebugMode,
-      .DebugControl,
       .FPRDebugEnable,
-      .DebugFPURDATA,
+      .DebugFRD1D,
       .DebugRegWDATA,
       .DebugRegAddr,
       .DebugRegWrite
@@ -400,9 +399,9 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
 
   if (P.DEBUG_SUPPORTED) begin
     if (P.F_SUPPORTED) begin
-      mux3 #(P.XLEN) debugregmux(DebugIEURDATA, CSRReadValM, DebugFPURDATA, {FPRDebugEnable, CSRDebugEnable}, DebugRegRDATA);
+      mux3 #(P.XLEN) debugregmux(DebugR1D, CSRReadValM, DebugFRD1D, {FPRDebugEnable, CSRDebugEnable}, DebugRegRDATA);
     end else begin
-      mux2 #(P.XLEN) debugregmux(DebugIEURDATA, CSRReadValM, CSRDebugEnable, DebugRegRDATA);
+      mux2 #(P.XLEN) debugregmux(DebugR1D, CSRReadValM, CSRDebugEnable, DebugRegRDATA);
     end
   end else begin
     assign DebugRegRDATA = '0;

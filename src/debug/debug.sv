@@ -36,7 +36,6 @@ module debug import cvw::*; #(parameter cvw_t P) (
   output logic              HaltReq,
   output logic              ResumeReq,
   input  logic              DebugMode,
-  output logic              DebugControl,
   output logic              GPRDebugEnable,
   output logic              CSRDebugEnable,
   output logic              FPRDebugEnable,
@@ -592,7 +591,6 @@ module debug import cvw::*; #(parameter cvw_t P) (
 
   assign aarsize = Command[22:20];
   // assign StartCommand = DMIVALID & DMIRSPREADY & (DMIADDR == COMMAND) & ~|cmderr;
-  assign DebugControl = StartCommand;
   //assign DebugRegAddr = Command[11:0];
   assign DebugRegWrite = Command[16] & StartCommand;
 

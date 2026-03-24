@@ -75,9 +75,8 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   input  logic [4:0]        RdW,                     // Destination register
   // Debug abstract register r/w signals
   input  logic              DebugMode,
-  input  logic              DebugControl,
   input  logic              GPRDebugEnable,
-  output logic [P.XLEN-1:0] DebugIEURDATA,
+  output logic [P.XLEN-1:0] DebugR1D,
   input  logic [P.XLEN-1:0] DebugRegWDATA,
   input  logic [11:0]       DebugRegAddr,
   input  logic              DebugRegWrite
@@ -109,23 +108,23 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
 
   // Debug Spec muxing of regfile inputs
   if (P.DEBUG_SUPPORTED) begin
-    mux2 #(5) rfreadaddrmux (Rs1D, DebugRegAddr[4:0], DebugControl & GPRDebugEnable, Rs1);
-    mux2 #(5) rfwriteaddrmux (RdW, DebugRegAddr[4:0], DebugControl & GPRDebugEnable, Rd);
-    mux2 #(P.XLEN) rfwdatamux (ResultW, DebugRegWDATA, DebugControl & GPRDebugEnable, Result);
+    mux2 #(5) rfreadaddrmux (Rs1D, DebugRegAddr[4:0], GPRDebugEnable, Rs1);
+    mux2 #(5) rfwriteaddrmux (RdW, DebugRegAddr[4:0], GPRDebugEnable, Rd);
+    mux2 #(P.XLEN) rfwdatamux (ResultW, DebugRegWDATA, GPRDebugEnable, Result);
     assign RegWrite = DebugMode ? DebugRegWrite & GPRDebugEnable : RegWriteW;
+    // Return regfile read to Debug Module
+    assign DebugR1D = R1D;
   end else begin
     assign Rs1 = Rs1D;
     assign Rd = RdW;
     assign Result = ResultW;
     assign RegWrite = RegWriteW;
+    assign DebugR1D = '0;
   end
 
   // Decode stage
   regfile #(P.XLEN, P.E_SUPPORTED) regf(clk, reset, RegWrite, Rs1, Rs2D, Rd, Result, R1D, R2D);
   extend #(P)        ext(.InstrD(InstrD[31:7]), .ImmSrcD, .ImmExtD);
-
-  // Return regfile read to Debug Module
-  assign DebugIEURDATA = R1D;
 
   // Execute stage pipeline register and logic
   flopenrc #(P.XLEN) RD1EReg(clk, reset, FlushE, ~StallE, R1D, R1E);

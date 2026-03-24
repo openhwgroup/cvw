@@ -29,17 +29,18 @@
 
 // `include "debug.vh"
 
-module data_reg #(parameter INSTWIDTH = 5, parameter ABITS = 6'd7) (
-  input logic                     tck,
-  input logic                     tdi,
-  input logic                     resetn,
-  input logic [INSTWIDTH-1:0]     currentInst,
-  input logic                     ShiftDR, ClockDR, UpdateDR,
-  input logic [31:0]              dtmcs_next,
-  output logic [31:0]             dtmcs,
-  input logic [ABITS + 34 - 1:0]  dmi_next,
-  output logic [ABITS + 34 - 1:0] dmi,
-  output logic                    tdo
+
+module data_reg import cvw::*; #(parameter cvw_t P) (
+  input logic                         tck,
+  input logic                         tdi,
+  input logic                         resetn,
+  input logic [P.DTM_INSTR_WIDTH-1:0] currentInst,
+  input logic                         ShiftDR, ClockDR, UpdateDR,
+  input logic [31:0]                  dtmcs_next,
+  output logic [31:0]                 dtmcs,
+  input logic [P.ABITS + 34 - 1:0]    dmi_next,
+  output logic [P.ABITS + 34 - 1:0]   dmi,
+  output logic                        tdo
 );
 
   logic        tdo_idcode;
@@ -50,8 +51,6 @@ module data_reg #(parameter INSTWIDTH = 5, parameter ABITS = 6'd7) (
   // CV-Wally marchid is 0x24
   // https://github.com/riscv/riscv-isa-manual/blob/main/marchid.md
   // OpenHW JEDEC 0x1002ac05 (mfg: 0x602 (Open HW Group), part: 0x002a, ver: 0x1)
-  logic [31:0]                  JEDEC;
-  assign JEDEC = 32'h1002ac05;
 
   typedef enum logic [4:0] {
     BYPASS = 5'b11111,
@@ -61,14 +60,14 @@ module data_reg #(parameter INSTWIDTH = 5, parameter ABITS = 6'd7) (
   } DTMINST;
 
   // ID Code
-  idreg #(32) idcode(tck, tdi, resetn, JEDEC, ShiftDR, ClockDR, tdo_idcode);
+  idreg #(32) idcode(tck, tdi, resetn, P.JEDEC, ShiftDR, ClockDR, tdo_idcode);
 
-  // DTMCS
-  internalreg #(32) dtmcsreg(tck, tdi, resetn, dtmcs_next, {11'b0, 3'd4, 6'd0, 2'b0, ABITS, 4'b1},
+  // DTMCS TODO (JACOB): Debug Spec Section 6.1.4
+  internalreg #(32) dtmcsreg(tck, tdi, resetn, dtmcs_next, {11'b0, 3'd4, 6'd0, 2'b0, P.ABITS, 4'b1},
   ShiftDR, ClockDR, dtmcs, tdo_dtmcs);
 
   // DMI
-  internalreg #(ABITS + 34) dmireg(tck, tdi, resetn, dmi_next, {(ABITS + 34){1'b0}},
+  internalreg #(P.ABITS + 34) dmireg(tck, tdi, resetn, dmi_next, {(P.ABITS + 34){1'b0}},
   ShiftDR, ClockDR, dmi, tdo_dmi);
 
   // BYPASS
@@ -83,7 +82,7 @@ module data_reg #(parameter INSTWIDTH = 5, parameter ABITS = 6'd7) (
       IDCODE  : tdo = tdo_idcode;
       DTMCS   : tdo = tdo_dtmcs;
       DMIREG  : tdo = tdo_dmi;
-      BYPASS  : tdo = tdo_idcode;
+      BYPASS  : tdo = tdo_idcode; // OpenOCD bug: doesn't change to IDCODE before trying to read the IDCODE, then crashes.
       default : tdo = tdo_idcode; // Bypass instruction 11111 and 00000
     endcase
   end

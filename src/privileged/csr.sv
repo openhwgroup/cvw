@@ -35,7 +35,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic                     StallE, StallM, StallW,
   input  logic [31:0]              InstrM,                    // current instruction
   input  logic [31:0]              InstrOrigM,                // Original compressed or uncompressed instruction in Memory stage for Illegal Instruction MTVAL
-  input  logic [P.XLEN-1:0]        PCE,
+  input  logic [P.XLEN-1:0]        NextValidPCE,
   input  logic [P.XLEN-1:0]        PCM,                       // program counter, next PC going to trap/return logic
   input  logic [P.XLEN-1:0]        PCSpillM,                  // program counter, next PC going to trap/return logic aligned after an instruction spill
   input  logic [P.XLEN-1:0]        SrcAM, IEUAdrxTvalM,       // SrcA and memory address from IEU
@@ -100,7 +100,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   // Debug Signals
   output logic                     DebugMode,
   input  logic                     HaltReq, ResumeReq,
-  input  logic                     DebugControl, CSRDebugEnable,
+  input  logic                     CSRDebugEnable,
   // output logic [P.XLEN-1:0]     DebugCSRRDATA,
   input  logic [P.XLEN-1:0]        DebugRegWDATA,
   input  logic [11:0]              DebugRegAddr,
@@ -321,7 +321,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   if (P.DEBUG_SUPPORTED) begin : debug
     csrd #(P) csrd(.clk, .reset, .HaltReq, .ResumeReq,
       .CSRDWriteM, .CSRWriteValM, .CSRAdrM, .InstrValid(InstrValidM), .InstrValidE, .CSRDReadValM, .PrivilegeModeW,
-      .DebugMode, .PCE, .PCM, .IllegalCSRDAccessM, .DebugResume, .DPC_REGW(DPC),
+      .DebugMode, .NextValidPCE, .PCM, .IllegalCSRDAccessM, .DebugResume, .DPC_REGW(DPC),
       .HaveReset, .HaveResetAck, .ResetHaltReq, .BreakpointFaultM,
       .EBreakM, .EBreakS, .EBreakU,
       .IEUAdrM, .PCSrcE, .FlushM, .StallM);

@@ -42,7 +42,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   input logic [1:0]         PrivilegeModeW,
 
   output logic              DebugMode,
-  input logic [P.XLEN-1:0]  PCE, PCM,
+  input logic [P.XLEN-1:0]  NextValidPCE, PCM,
   output logic              IllegalCSRDAccessM,
   output logic              DebugResume,
   output [P.XLEN-1:0]       DPC_REGW,
@@ -164,7 +164,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
                           CSRWriteValM[8:6], CSRWriteValM[2], CSRWriteValM[1:0]} :
                          {ebreakm, ebreaks, ebreaku, stepie, NextCause, step, PrivilegeModeW};
 
-  assign DPCWriteValM = WriteDPC & (state == HALTED) ? CSRWriteValM : ebreak ? PCM : PCSrcM ? IEUAdrM : PCE;
+  assign DPCWriteValM = WriteDPC & (state == HALTED) ? CSRWriteValM : ebreak ? PCM : PCSrcM ? IEUAdrM : NextValidPCE;
 
   ////////////////////////////////////////////////////////////////////
   // CSRs
@@ -214,7 +214,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
       state <= RUNNING;
     end else if (HaveReset & ResetHaltReq & InstrValid) begin
       state <= HALTED;
-    end else if ((HaltReq | ResumeReq | StepHoldEnable) | ebreak) begin // Using the requests as enables
+    end else if (HaltReq | ResumeReq | StepHoldEnable | ebreak) begin // Using the requests as enables
       state <= state_n;
     end
   end

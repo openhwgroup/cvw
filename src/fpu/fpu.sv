@@ -64,9 +64,8 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   output logic [P.XLEN-1:0]    FIntDivResultW,                     // Result from integer division (to IEU)
   // Debug signals
   input  logic              DebugMode,
-  input  logic              DebugControl,
   input  logic              FPRDebugEnable,
-  output logic [P.XLEN-1:0] DebugFPURDATA,
+  output logic [P.XLEN-1:0] DebugFRD1D,
   input  logic [P.XLEN-1:0] DebugRegWDATA,
   input  logic [11:0]       DebugRegAddr,
   input  logic              DebugRegWrite
@@ -197,12 +196,12 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
               .Adr1D, .Adr2D, .Adr3D, .Adr1E, .Adr2E, .Adr3E);
 
   if (P.DEBUG_SUPPORTED) begin
-    mux2 #(5) rfreadaddrmux (InstrD[19:15], DebugRegAddr[4:0], DebugControl & FPRDebugEnable, a1);
-    mux2 #(5) rfwriteaddrmux (RdW, DebugRegAddr[4:0], DebugControl & FPRDebugEnable, Rd);
-    mux2 #(P.FLEN) rfwdatamux (FResultW, DebugRegWDATA, DebugControl & FPRDebugEnable, Result);
+    mux2 #(5) rfreadaddrmux (InstrD[19:15], DebugRegAddr[4:0], FPRDebugEnable, a1);
+    mux2 #(5) rfwriteaddrmux (RdW, DebugRegAddr[4:0], FPRDebugEnable, Rd);
+    mux2 #(P.FLEN) rfwdatamux (FResultW, DebugRegWDATA, FPRDebugEnable, Result);
     assign RegWrite = DebugMode ? DebugRegWrite & FPRDebugEnable : FRegWriteW;
   end else begin
-    assign DebugFPURDATA = '0;
+    assign DebugFRD1D = '0;
     assign RegWrite = FRegWriteW;
     assign Rd = RdW;
     assign a1 = InstrD[19:15];
@@ -215,7 +214,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
     .a4(Rd), .wd4(Result),
     .rd1(FRD1D), .rd2(FRD2D), .rd3(FRD3D));
 
-  assign DebugFPURDATA = FRD1D;
+  assign DebugFRD1D = FRD1D;
   // D/E pipeline registers
   flopenrc #(P.FLEN) DEReg1(clk, reset, FlushE, ~StallE, FRD1D, FRD1E);
   flopenrc #(P.FLEN) DEReg2(clk, reset, FlushE, ~StallE, FRD2D, FRD2E);

@@ -4085,7 +4085,8 @@ string wally64debug[] = '{
   "WALLY-debug-ebreak",
   "WALLY-debug-step",
   "WALLY-debug-step-loop",
-  "WALLY-debug-step-jump"
+  "WALLY-debug-step-jump",
+  "WALLY-debug-committed"
 };
 
 string wally64debug_jtag[] = '{
@@ -4099,5 +4100,6 @@ string wally64debug_jtag[] = '{
   "WALLY-debug-ebreak",
   "WALLY-debug-step",
   "WALLY-debug-step-loop",
-  "WALLY-debug-step-jump"
+  "WALLY-debug-step-jump",
+  "WALLY-debug-committed"
 };

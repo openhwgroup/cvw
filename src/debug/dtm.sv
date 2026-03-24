@@ -109,23 +109,24 @@ module dtm import cvw::*; #(parameter cvw_t P) (
     tdo_ir, currentInst);
 
   // tdr = Test Data Register
-  data_reg tdr (tck, tdi, resetn, currentInst, ShiftDR, ClockDR, UpdateDR,
+  data_reg #(P) tdr (tck, tdi, resetn, currentInst, ShiftDR, ClockDR, UpdateDR,
     DTMCSNext, dtmcs, DMINext, dmi, tdo_dr);
 
   // Choose output of tdo
-  always_comb begin
-    case(select)
-      1'b0: tdo_mux = tdo_dr;
-      1'b1: tdo_mux = tdo_ir;
-    endcase
-  end
+  mux2 #(1) tdomux (tdo_dr, tdo_ir, select, tdo_mux);
 
-  // FIXME: may be problematic (investigate)
+  // According to the IEEE 1149.1 JTAG specification, TDO is
+  // transmitted on the falling edge.
   flop #(1) tdo_ff (~tck, tdo_mux, tdo_delayed);
+
+  // NOTE: Push the tristate logic for this to the IO cell
   assign tdo = enable ? tdo_delayed : 1'bz;
-  // The JTAG-side of the DTM runs on TCK, while the Debug Module
-  // (DM) and DMI bus live on our system clock, we need a clean
-  // clock-domain crossing (CDC) between them.
+
+  // The JTAG-side of the DTM runs on TCK, while the Debug Module (DM)
+  // and DMI bus live on our system clock, we need a clean
+  // clock-domain crossing (CDC) between them. After updating the DMI
+  // register, then it is safe to drive the DMI with the value stored
+  // in the DMI data register.
   synchronizer updatesync (clk, UpdateDR, UpdateDRSync);
 
   always_ff @(posedge clk) begin
@@ -148,8 +149,6 @@ module dtm import cvw::*; #(parameter cvw_t P) (
       DTMHardReset <= 0;
       DMIReset <= 0;
     end else if (UpdateDTMCS) begin
-      // DMIReset <= dtmcs.dmireset;
-      // DTMHardReset <= dtmcs.dtmhardreset;
       DMIReset <= dtmcs[17];
       DTMHardReset <= dtmcs[16];
     end else if (DMIReset) begin
@@ -171,25 +170,18 @@ module dtm import cvw::*; #(parameter cvw_t P) (
   // DMI
   always_ff @(posedge clk) begin
     if (reset | ~resetn | DTMHardReset) begin
-      //dmi_next_reg.op <= NOP;
       DMINextReg[1:0] <= NOP;
-      // dmi_req.ready <= 1'b1;
       DMIREADY <= 1'b1;
       DMIVALID <= 1'b0;
-      //dmi_req.valid <= 1'b0;
       DMIState <= IDLE;
     end else begin
       case(DMIState)
         IDLE: begin
           if (UpdateDMI) begin
-            //dmi_req.addr <= dmi.addr;
-            //dmi_req.data <= dmi.data;
             DMIADDR <= dmi[P.ABITS+34-1:34];
             DMIDATA <= dmi[33:2];
-            DMINextReg <= dmi[33:2]; // Added this here because of Spike Discrepencies
+            DMINextReg <= dmi[33:2];
             if ((dmi[1:0] == RD) | (dmi[1:0] == WR)) begin
-              //dmi_req.op <= dmi.op;
-              //dmi_req.valid <= 1'b1;
               DMIOP <= dmi[1:0];
               DMIVALID <= 1'b1;
               DMIState <= BUSY;
@@ -200,24 +192,17 @@ module dtm import cvw::*; #(parameter cvw_t P) (
         end
         BUSY: begin
           if (DMIRSPVALID) begin
-            //dmi_req.op <= NOP;
-            //dmi_req.valid <= 1'b0;
-            //dmi_next_reg.data <= dmi_rsp.data;
-            //dmi_next_reg.op <= dmi_rsp.op;
             DMIOP <= NOP;
             DMIVALID <= 1'b0;
-            // This whole if block was added because of Spike discrepencies.
             if (DMIOP == 2'b01) begin
               DMINextReg[33:2] <= DMIRSPDATA;
             end else begin
               DMINextReg[33:2] <= dmi[33:2];
             end
-            // If above block is removed, uncomment the following.
-            // DMINextReg[33:2] <= DMIRSPDATA;
             DMINextReg[1:0] <= DMIRSPOP;
             DMIState <= IDLE;
           end else begin
-            DMINextReg[33:2] <= dmi[33:2]; // Ahem... Spike discrepency.
+            DMINextReg[33:2] <= dmi[33:2];
             DMIState <= BUSY;
           end
         end
@@ -226,11 +211,6 @@ module dtm import cvw::*; #(parameter cvw_t P) (
     end
   end
 
-  // assign dmi_next.addr = dmi_req.addr;
-  // assign dmi_next.data = dmi_next_reg.data;
-  // assign dmi_next.op = Sticky ? 2'b11 : dmi_next_reg.op;
-
   assign DMINext = {DMIADDR, DMINextReg[33:2], Sticky ? 2'b11 : DMINextReg[1:0]};
-
 
 endmodule
