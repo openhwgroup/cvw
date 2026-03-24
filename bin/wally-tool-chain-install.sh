@@ -92,14 +92,15 @@ source "$WALLY"/bin/installation/qemu-install.sh
 source "$WALLY"/bin/installation/spike-install.sh
 
 
-# Boost (https://www.boost.org/)
-# The Boost C++ library is required by Whisper. A recent version compiled with C++20 is needed.
-source "$WALLY"/bin/installation/boost-install.sh
-
 
 # Whisper (https://github.com/tenstorrent/whisper)
 # Whisper is a RISC-V instruction set simulator (ISS) developed by Tenstorrent.
-source "$WALLY"/bin/installation/whisper-install.sh
+# The boost libraries (needed for Whisper) do not compile correctly on Debian 11 or Ubuntu 20.04
+if (( DEBIAN_VERSION != 11 )) && (( UBUNTU_VERSION != 20 )); then
+    source "$WALLY"/bin/installation/whisper-install.sh
+else
+    echo -e "${WARNING_COLOR}Skipping Whisper installation due to incompatible Boost libraries on Debian 11 or Ubuntu 20.04.${ENDC}"
+fi
 
 
 # RISC-V Sail Model (https://github.com/riscv/sail-riscv)

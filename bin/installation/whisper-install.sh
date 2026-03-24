@@ -38,9 +38,12 @@ if [ -z "$FAMILY" ]; then
     source "${dir}"/../wally-environment-check.sh
 fi
 
+# Boost (https://www.boost.org/)
+# The Boost C++ library is required by Whisper. A recent version compiled with C++20 is needed.
+source "$WALLY"/bin/installation/boost-install.sh
+
 # Whisper (https://github.com/tenstorrent/whisper)
 # Whisper is a RISC-V instruction set simulator (ISS) developed by Tenstorrent.
-# It requires the Boost library (installed separately via boost-install.sh).
 section_header "Installing/Updating Whisper"
 STATUS="whisper"
 cd "$RISCV"
