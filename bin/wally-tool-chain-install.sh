@@ -92,7 +92,6 @@ source "$WALLY"/bin/installation/qemu-install.sh
 source "$WALLY"/bin/installation/spike-install.sh
 
 
-
 # Whisper (https://github.com/tenstorrent/whisper)
 # Whisper is a RISC-V instruction set simulator (ISS) developed by Tenstorrent.
 # The boost libraries (needed for Whisper) do not compile correctly on Debian 11 or Ubuntu 20.04
