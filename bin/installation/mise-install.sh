@@ -27,7 +27,7 @@
 ## and limitations under the License.
 ################################################################################################
 
-MISE_VERSION=v2026.3.10
+MISE_VERSION=v2026.3.13 # Latest version as of March 23, 2026
 
 set -e # break on error
 # If run standalone, check environment. Otherwise, use info from main install script
