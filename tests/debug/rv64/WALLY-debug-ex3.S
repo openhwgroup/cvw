@@ -6,17 +6,19 @@
 rvtest_entry_point:
    la   t2, begin_signature
 
-   # Set t0 = 42, then read debug CSRs
-   li   t0, 42            # t0 = 42
+   # Read M-mode CSRs
+   csrr a0, mstatus       # read mstatus -> a0
+   csrr a1, misa          # read misa    -> a1
 
-   csrr a0, dcsr          # read dcsr      -> a0
-   csrr a1, dscratch0     # read dscratch0 -> a1
-   csrr a2, dscratch1     # read dscratch1 -> a2
+   # Write 42 to mscratch and read it back
+   li   t0, 42
+   csrw mscratch, t0      # write 42 -> mscratch
+   csrr a2, mscratch      # read mscratch -> a2 (should be 42)
 
 test1:
-   sd a0, 0(t2)           # dcsr value
-   sd a1, 8(t2)           # dscratch0 value
-   sd a2, 16(t2)          # dscratch1 value
+   sd a0, 0(t2)           # mstatus value
+   sd a1, 8(t2)           # misa value
+   sd a2, 16(t2)          # mscratch value (should be 42)
    addi t2, t2, 24
 1: j 1b
 
