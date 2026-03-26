@@ -1,5 +1,4 @@
-set TESTNAME WALLY-debug-step
-log_output build/log/$TESTNAME.log
+log_output build/log/WALLY-debug-ex1.log
 debug_level 3
 init
 poll off
@@ -30,42 +29,33 @@ proc get_address {filename label} {
     error "Label not find in $filename: $label"
 }
 
-# Reads a register and converts it's hexadecimal value into an
-# integer value.
-proc read_reg {register} {
-    set regval [lindex [reg $register] 2]
-    return [expr {$regval}]
-}
-
-proc message {STR} {
-    global TESTNAME
-    echo $TESTNAME:
-    echo $STR
-}
-
 # --------------------------------------------------------------------
 # Set up tests
 # --------------------------------------------------------------------
+# Base name for test
+puts [pwd]
 
 # Grab tests
-set objdump_file "build/$TESTNAME.elf.objdump"
-set dosteps [get_address $objdump_file dosteps]
+set objdump_file "build/WALLY-debug-ex1.elf.objdump"
+set test1_addr [get_address $objdump_file test1]
 set test_end [get_address $objdump_file test_end]
 
 # --------------------------------------------------------------------
 # Begin tests
 # --------------------------------------------------------------------
-
-# Halt if ebreak did not halt
 halt
 
-set_reg [list dpc $dosteps]
-riscv dmi_write 0x16 0x700
-step
-step
-step
-step
-step
-step
+# display current PC for debug purposes. This introduces DMI comands
+# for grabbing the PC value.
+puts [reg pc]
+
+# Begin halt/resume cycle to progress test
+set_reg [list t0 24]
+set_reg [list dpc $test1_addr]
+
+resume
+halt
+
 set_reg [list dpc $test_end]
+
 resume
