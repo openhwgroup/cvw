@@ -4083,10 +4083,13 @@ string wally64debug[] = '{
   "WALLY-debug-fpu",
   "WALLY-debug-gcd",
   "WALLY-debug-ebreak",
-  "WALLY-debug-step",
   "WALLY-debug-step-loop",
   "WALLY-debug-step-jump",
-  "WALLY-debug-committed"
+  "WALLY-debug-committed",
+  "WALLY-debug-ex1",
+  "WALLY-debug-ex2",
+//  "WALLY-debug-ex3",
+  "WALLY-debug-ex4"
 };
 
 string wally64debug_jtag[] = '{
@@ -4098,8 +4101,11 @@ string wally64debug_jtag[] = '{
   "WALLY-debug-fpu",
   "WALLY-debug-gcd",
   "WALLY-debug-ebreak",
-  "WALLY-debug-step",
   "WALLY-debug-step-loop",
   "WALLY-debug-step-jump",
-  "WALLY-debug-committed"
+  "WALLY-debug-committed",
+  "WALLY-debug-ex1",
+  "WALLY-debug-ex2",
+//  "WALLY-debug-ex3",
+  "WALLY-debug-ex4"
 };
