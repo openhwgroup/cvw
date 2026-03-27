@@ -19,7 +19,7 @@ $RISCV/bin/wally-tool-chain-install.sh
 
 This script will automatically download, build, and install `riscv-openocd`
 along with the rest of the Wally toolchain components. The `$RISCV` environment
-variable should be set per setup.sh to your toolchain installation directory
+variable should be set per `setup.sh` to your toolchain installation directory
 before running the script.
 
 ### Why a Separate Fork?
