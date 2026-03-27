@@ -2,7 +2,65 @@
 
 This repository documents debug support for **Wally**, an open-source RISC-V processor platform. The goal of this effort is to support the RISC-V Debug Specification while enabling reliable debugging in both simulation and hardware environments. Wally integrates debug functionality compatible with OpenOCD, Spike remote bitbang simulation, and physical JTAG debug adapters.
 
----
+## OpenOCD for RISC-V
+
+This repository uses a separate fork of OpenOCD maintained by the RISC-V
+community, available at:
+```
+https://github.com/riscv/riscv-openocd
+```
+
+### Why a Separate Fork?
+
+The official OpenOCD mainline was slow to merge RISC-V support, so the
+RISC-V community (primarily SiFive) maintained an independent fork to track
+the evolving RISC-V debug specification. Key reasons the fork exists:
+
+- **Evolving debug spec** — the RISC-V External Debug Support specification
+  went through significant revisions (0.11 → 0.13 → 1.0) while hardware was
+  already being shipped, requiring frequent implementation updates that
+  mainline OpenOCD could not absorb quickly enough
+- **Hardware availability** — SiFive and others were shipping silicon that
+  needed a working debugger before upstream review cycles could complete
+- **Slow upstream process** — mainline OpenOCD has a small maintainer team
+  and large feature sets take considerable time to review and merge
+
+RISC-V support has since been progressively upstreamed into mainline OpenOCD,
+so the gap between the two has narrowed. However, `riscv-openocd` may still
+carry newer debug spec features or bug fixes ahead of mainline.
+
+### Key Components
+
+**DTM (Debug Transport Module)** — sits between JTAG and the debug module.
+It exposes a small set of JTAG registers (`dtmcs`, `dmi`) that OpenOCD uses
+to issue DMI transactions. The DTM handles the clock domain crossing between
+the JTAG TCK domain and the core's system clock domain.
+
+**DMI (Debug Module Interface)** — a simple address/data/op bus. OpenOCD
+reads and writes DMI registers to control the debug module. Key registers
+include `dmcontrol` (halt/resume), `dmstatus` (hart state), `abstractcs`
+(abstract command control), `data0`/`data1` (data exchange), and
+`progbuf0`–`progbufN` (program buffer for executing arbitrary instructions).
+
+**Debug Module (DM)** — the on-chip hardware block that implements the debug
+spec. It can:
+- Halt and resume harts
+- Reset harts or the whole system
+- Execute abstract commands (read/write GPRs and CSRs directly)
+- Execute arbitrary instructions via the Program Buffer
+- Trigger hardware breakpoints via the Trigger Module
+
+**Program Buffer** — a small instruction memory (typically 2–16 instructions)
+that the debug module can fill with arbitrary RISC-V instructions and execute
+on the halted hart. This is the mechanism used to access Debug Mode-only CSRs
+(`dcsr`, `dscratch0`, `dscratch1`) and to perform memory access, since those
+CSRs are only accessible when the hart is in Debug Mode.
+
+**Trigger Module** — a set of hardware comparators that can fire on
+instruction addresses (breakpoints) or data addresses/values (watchpoints),
+causing the hart to enter Debug Mode without software intervention. Configured
+via the `tselect`, `tdata1`, and `tdata2` CSRs from M-mode.
+
 
 ## Supported RISC-V Debug Specification
 
