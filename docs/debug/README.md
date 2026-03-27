@@ -9,6 +9,18 @@ community, available at:
 ```
 https://github.com/riscv/riscv-openocd
 ```
+## Installation
+
+OpenOCD for RISC-V is installed as part of the Wally toolchain. To install,
+run the provided installation script:
+```bash
+$RISCV/bin/wally-tool-chain-install.sh
+```
+
+This script will automatically download, build, and install `riscv-openocd`
+along with the rest of the Wally toolchain components. The `$RISCV` environment
+variable should be set per setup.sh to your toolchain installation directory
+before running the script.
 
 ### Why a Separate Fork?
 
