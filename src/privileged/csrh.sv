@@ -135,26 +135,13 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   localparam VSTIMECMP  = 12'h24D;
   localparam VSTIMECMPH = 12'h25D;
 
-  // In some cases, using SPIKE as a reference model for testing causes mismatches due to spec implementation mismatches (supported configs, etc)
-  // Set SIM_COMPLIANCE = 1 to match SPIKE behavior
-  // Set SIM_COMPLIANCE = 0 to match intended Wally & spec behavior
-  localparam SIM_COMPLIANCE = 1;
-
-  logic [63:0] HEDELEG_MASK;
-  // RV32 + SIM_COMPLIANCE matches Spike's permissive upper-half write behavior via hedelegh.
-  // Spec-oriented path keeps unsupported upper bits read-only zero.
-  if (P.XLEN == 32 && SIM_COMPLIANCE) assign HEDELEG_MASK = 64'hFFFF_FFFF_000C_B1FF;
-  else                                assign HEDELEG_MASK = 64'h0000_0000_000C_B1FF;
+  localparam [63:0] HEDELEG_MASK = 64'h0000_0000_000C_B1FF;
   // HIDELEG: only VS-level interrupts (VSSIP/VSTIP/VSEIP) are writable.
   localparam [11:0] HIDELEG_MASK = 12'h444;
   localparam [11:0] HVIP_MASK    = 12'h444; // Only VSSIP[2], VSTIP[6], VSEIP[10] are writable (spec 7.4.4)
-  localparam [12:0] HIP_MASK     = 13'h1444; // Active standard HIP bits: SGEIP[12], VSEIP[10], VSTIP[6], VSSIP[2]
-  // GEILEN controls writability of guest-external interrupt CSRs.
-  // Spec path keeps GEILEN=0 until full guest external interrupt plumbing is integrated.
-  // SIM path uses maximal GEILEN (31/63) to match reference-model CSR accessibility.
-  localparam int unsigned GEILEN = SIM_COMPLIANCE ? (P.XLEN-1) : 0;
-  // Include all standard HIE bits in the architectural mask; SGEIE writability is GEILEN-gated in write logic.
-  localparam [12:0] HIE_MASK     = 13'h1444;
+  // No guest-external interrupt source is wired in yet, so GEILEN is architecturally zero.
+  localparam int unsigned GEILEN = 0;
+  localparam [12:0] HIE_MASK = (GEILEN == 0) ? 13'h0444 : 13'h1444;
 
   // Write Enables for CSR instructions
   logic WriteMTINSTM;
@@ -197,7 +184,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   logic              VSTIP_CMP_PENDING;
   logic              HIP_SGEIP_PENDING, HIP_VSEIP_PENDING, HIP_VSTIP_PENDING, HIP_VSSIP_PENDING;
   logic [P.XLEN-1:0] VSTVECWriteValM;
-  logic [63:0]       NextHENVCFGM;
+  logic [63:0]       NextHENVCFGM, HENVCFG_REGW_INT;
   logic [1:0]        LegalizedHENVCFG_CBIE;
   logic              LegalVSatpModeM;
   logic [P.XLEN-1:0] LegalizedVSatpWriteValM;
@@ -265,11 +252,11 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   assign WriteHENVCFGHM   = (P.XLEN == 32) & (ValidHWriteM & (CSRAdrM == HENVCFGH));
   assign WriteHTVALM      = ValidHWriteM & (CSRAdrM == HTVAL);
   assign WriteVSTVALM     = ValidVSWriteM & (CSRAdrM == VSTVAL);
-  assign WriteVSIPM       = ValidVSWriteM & (CSRAdrM == VSIP);
+  assign WriteVSIPM       = ValidVSWriteM & (CSRAdrM == VSIP) & HIDELEG_REGW[2];
   assign WriteHVIPM       = ValidHWriteM & (CSRAdrM == HVIP);
   assign WriteHIPM        = ValidHWriteM & (CSRAdrM == HIP);
   assign WriteHTINSTM     = ValidHWriteM & (CSRAdrM == HTINST);
-  assign WriteHGATPM      = ValidHWriteM & (CSRAdrM == HGATP) &
+  assign WriteHGATPM      = P.VIRTMEM_SUPPORTED & ValidHWriteM & (CSRAdrM == HGATP) &
                             ((PrivilegeModeW == P.M_MODE) | ~STATUS_TVM);
   // HGEIP is pending-interrupt state from external interrupt fabric.
   // Until that source is integrated, keep it read-only.
@@ -285,7 +272,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
                        LegalVSatpModeM;
 
   // Access to vstimecmp in V=1 is gated by mcounteren.TM, hcounteren.TM, and henvcfg.STCE.
-  // TODO: Need menvcfg.STCE as well (19.3)
+  // henvcfg.STCE is already constrained by menvcfg.STCE in the architectural HENVCFG view below.
   assign AllowVSTimecmpAccessM = ~VirtModeW | (MCOUNTEREN_TM & HCOUNTEREN_REGW[1] & HENVCFG_REGW[63]);
   assign WriteVSTIMECMPM  = P.SSTC_SUPPORTED & ValidVSWriteM & (CSRAdrM == VSTIMECMP) & AllowVSTimecmpAccessM;
   assign WriteVSTIMECMPHM = P.SSTC_SUPPORTED & (P.XLEN == 32) & (ValidVSWriteM & (CSRAdrM == VSTIMECMPH)) & AllowVSTimecmpAccessM;
@@ -485,38 +472,27 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   assign HIP_VSTIP_PENDING = HVIP_REGW[6]  | VSTIP_CMP_PENDING;
   assign HIP_VSSIP_PENDING = HVIP_REGW[2];
   assign HIP_PENDING = {HIP_SGEIP_PENDING, 1'b0, HIP_VSEIP_PENDING, 3'b0,
-                        HIP_VSTIP_PENDING, 3'b0, HIP_VSSIP_PENDING, 2'b0} & HIP_MASK;
+                        HIP_VSTIP_PENDING, 3'b0, HIP_VSSIP_PENDING, 2'b0};
   assign HIP_MIP_REGW = HIP_PENDING[11:0];
 
-  always_comb begin
-    VSIE_REGW = 12'b0;
-    if (HIDELEG_REGW[2])  VSIE_REGW[1] = HIE_REGW[2];
-    if (HIDELEG_REGW[6])  VSIE_REGW[5] = HIE_REGW[6];
-    if (HIDELEG_REGW[10]) VSIE_REGW[9] = HIE_REGW[10];
-    // LCOFIE not supported; keep bit 13 at 0.
-  end
+  assign VSIE_REGW = (HIE_REGW[11:0] & HIDELEG_REGW & HIDELEG_MASK) >> 1;
 
-  // HVIP writable bits are VSSIP/VSTIP/VSEIP. In HIP, only VSSIP is writable (alias to HVIP.VSSIP).
-  // VSIP writes can update VSSIP only when hideleg[2] is set.
+  // hvip holds the writable virtual interrupt sources.
+  // hip.VSSIP aliases hvip.VSSIP, and vsip.SSIP aliases hip.VSSIP only when hideleg[2] is set.
   always_comb begin
     NextHVIPM = HVIP_REGW;
     if (WriteHVIPM)
       NextHVIPM = (HVIP_REGW & ~HVIP_MASK) | (CSRWriteValM[11:0] & HVIP_MASK);
     if (WriteHIPM)
       NextHVIPM[2] = CSRWriteValM[2];
-    if (WriteVSIPM & HIDELEG_REGW[2])
+    if (WriteVSIPM)
       NextHVIPM[2] = CSRWriteValM[1];
   end
-  flopenr #(12) HVIPreg(clk, reset, (WriteHVIPM | WriteHIPM | (WriteVSIPM & HIDELEG_REGW[2])), NextHVIPM, HVIP_REGW);
+  flopenr #(12) HVIPreg(clk, reset, (WriteHVIPM | WriteHIPM | WriteVSIPM), NextHVIPM, HVIP_REGW);
   assign VSIP_REGW = (HIP_PENDING[11:0] & HIDELEG_REGW) >> 1;
 
-  // TODO: do this without a for loop
   // hgeie bits GEILEN:1 are writable; all others are read-only zero.
-  always_comb begin
-    HGEIEWriteMaskM = '0;
-    for (int i = 1; i <= GEILEN && i < P.XLEN; i++)
-      HGEIEWriteMaskM[i] = 1'b1;
-  end
+  assign HGEIEWriteMaskM = {{(P.XLEN-GEILEN-1){1'b0}}, {GEILEN{1'b1}}, 1'b0};
   assign NextHGEIEM = CSRWriteValM & HGEIEWriteMaskM;
   flopenr #(P.XLEN) HGEIEreg(clk, reset, WriteHGEIEM, NextHGEIEM, HGEIE_REGW);
 
@@ -529,9 +505,8 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   flopenr #(P.XLEN) HTINSTreg(clk, reset, (WriteHTINSTM | TrapToHSM), NextHtinstM, HTINST_REGW);
 
   // VS CSRs: Guest-visible S-mode state
-  // VSTVEC: preserve base bits [XLEN-1:2], force MODE[1:0] to 01 (vect) or 00 (direct).
-  assign VSTVECWriteValM = CSRWriteValM[0] ? {CSRWriteValM[P.XLEN-1:2], 2'b01} :
-                                              {CSRWriteValM[P.XLEN-1:2], 2'b00};
+  // vstvec.MODE bit 1 is read-only zero; bit 0 selects Direct/Vectored.
+  assign VSTVECWriteValM = {CSRWriteValM[P.XLEN-1:2], 1'b0, CSRWriteValM[0]};
   flopenr #(P.XLEN) VSTVECreg(clk, reset, WriteVSTVECM, VSTVECWriteValM, VSTVEC_REGW);
   flopenr #(P.XLEN) VSSCRATCHreg(clk, reset, WriteVSSCRATCHM, CSRWriteValM, VSSCRATCH_REGW);
   flopenr #(P.XLEN) VSEPCreg(clk, reset, (TrapToVSM | WriteVSEPCM), NextEPCM, VSEPC_REGW);
@@ -555,51 +530,42 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   end else assign VSTIMECMP_REGW = '0;
 
   // Address Translation
-  if (P.XLEN == 64) begin : hgatp64
-    logic LegalHgatpModeM;
-    logic [P.XLEN-1:0] LegalizedHgatpWriteValM;
-    // HGATP Mode is in bits 63:60
-    // Modes: 0=Bare, 8=Sv39x4, 9=Sv48x4, 10=Sv57x4
-    assign LegalHgatpModeM = CSRWriteValM[63:60] == 4'h0 |
-                             (P.SV39_SUPPORTED & CSRWriteValM[63:60] == 4'h8) |
-                             (P.SV48_SUPPORTED & CSRWriteValM[63:60] == 4'h9) |
-                             (P.SV57_SUPPORTED & CSRWriteValM[63:60] == 4'hA);
+  if (P.VIRTMEM_SUPPORTED) begin : hgatp
+    if (P.XLEN == 64) begin : hgatp64
+      logic LegalHgatpModeM;
+      logic [P.XLEN-1:0] LegalizedHgatpWriteValM;
 
-    // hgatp unsupported MODE writes are not ignored, so legalize to a valid WARL value.
-    // Use one behavior for both spec and simulation: force MODE=Bare and keep other fields.
-    always_comb begin
-      LegalizedHgatpWriteValM = CSRWriteValM;
-      LegalizedHgatpWriteValM[59:58] = 2'b00;
-      if (~LegalHgatpModeM)
-        LegalizedHgatpWriteValM = {4'h0, 2'b00, CSRWriteValM[57:2], 2'b00};
-      // In paged G-stage modes, hgatp.PPN[1:0] always read as zero.
-      else if (CSRWriteValM[63:60] != 4'h0)
-        LegalizedHgatpWriteValM[1:0] = 2'b00;
+      assign LegalHgatpModeM = (CSRWriteValM[63:60] == 4'h0) |
+                               (P.SV39_SUPPORTED & (CSRWriteValM[63:60] == 4'h8)) |
+                               (P.SV48_SUPPORTED & (CSRWriteValM[63:60] == 4'h9)) |
+                               (P.SV57_SUPPORTED & (CSRWriteValM[63:60] == 4'hA));
+
+      // hgatp unsupported MODE writes are WARL, not ignored.
+      always_comb begin
+        LegalizedHgatpWriteValM = CSRWriteValM;
+        LegalizedHgatpWriteValM[59:58] = 2'b00;
+        LegalizedHgatpWriteValM[1:0]   = 2'b00;
+        if (~LegalHgatpModeM)
+          LegalizedHgatpWriteValM[63:60] = 4'h0;
+      end
+
+      assign HGATPReadVal = {HGATP_REGW[63:60], 2'b00, HGATP_REGW[57:2], 2'b00};
+      flopenr #(P.XLEN) HGATPreg(clk, reset, WriteHGATPM, LegalizedHgatpWriteValM, HGATP_REGW);
+    end else begin : hgatp32
+      logic [P.XLEN-1:0] LegalizedHgatpWriteValM;
+
+      always_comb begin
+        LegalizedHgatpWriteValM = CSRWriteValM;
+        LegalizedHgatpWriteValM[30:29] = 2'b00;
+        LegalizedHgatpWriteValM[1:0]   = 2'b00;
+      end
+
+      assign HGATPReadVal = {HGATP_REGW[31], 2'b00, HGATP_REGW[28:2], 2'b00};
+      flopenr #(P.XLEN) HGATPreg(clk, reset, WriteHGATPM, LegalizedHgatpWriteValM, HGATP_REGW);
     end
-    assign HGATPReadVal = ((HGATP_REGW[63:60] == 4'h8) |
-                           (HGATP_REGW[63:60] == 4'h9) |
-                           (HGATP_REGW[63:60] == 4'hA)) ? {HGATP_REGW[63:60], 2'b00, HGATP_REGW[57:2], 2'b00}
-                                                        : {HGATP_REGW[63:60], 2'b00, HGATP_REGW[57:0]};
-    flopenr #(P.XLEN) HGATPreg(clk, reset, WriteHGATPM, LegalizedHgatpWriteValM, HGATP_REGW);
-  end else begin : hgatp32
-    // RV32 HGATP Mode is in bit 31 (0=Bare, 1=Sv32x4)
-    logic LegalHgatpModeM;
-    logic [P.XLEN-1:0] LegalizedHgatpWriteValM;
-    assign LegalHgatpModeM = CSRWriteValM[31] == 1'b0 |
-                             (P.SV32_SUPPORTED & CSRWriteValM[31] == 1'b1);
-    always_comb begin
-      LegalizedHgatpWriteValM = CSRWriteValM;
-      // Bits [30:29] are defined to read as zero in RV32 hgatp.
-      LegalizedHgatpWriteValM[30:29] = 2'b00;
-      if (~LegalHgatpModeM)
-        LegalizedHgatpWriteValM = {1'b0, 2'b00, CSRWriteValM[28:2], 2'b00};
-      // In Sv32x4, hgatp.PPN[1:0] always read as zero.
-      else if (CSRWriteValM[31])
-        LegalizedHgatpWriteValM[1:0] = 2'b00;
-    end
-    assign HGATPReadVal = HGATP_REGW[31] ? {HGATP_REGW[31], 2'b00, HGATP_REGW[28:2], 2'b00}
-                                         : {HGATP_REGW[31], 2'b00, HGATP_REGW[28:0]};
-    flopenr #(P.XLEN) HGATPreg(clk, reset, WriteHGATPM, LegalizedHgatpWriteValM, HGATP_REGW);
+  end else begin : no_hgatp
+    assign HGATPReadVal = '0;
+    assign HGATP_REGW = '0;
   end
 
   // Configuration & Timers
@@ -608,7 +574,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   // HENVCFG: Conditional bit masking based on supported features (similar to MENVCFG in csrm.sv)
   if (P.XLEN == 64) begin : henvcfg_update_64
     always_comb begin
-      NextHENVCFGM = HENVCFG_REGW;
+      NextHENVCFGM = HENVCFG_REGW_INT;
       if (WriteHENVCFGM) begin
         // Mask WPRI/unsupported fields to 0 per spec.
         NextHENVCFGM[31:0] = {
@@ -620,15 +586,12 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
           1'b0,                                   // SSE (Zicfiss) unsupported
           1'b0,                                   // LPE (Zicfilp) unsupported
           1'b0,                                   // WPRI
-          // FIOM is defined by the spec (not tied to virtmem support).
-          // Spike appears to treat FIOM as read-only zero; SIM_COMPLIANCE forces 0 for test alignment.
-          (SIM_COMPLIANCE ? 1'b0 : CSRWriteValM[0]) // FIOM
+          CSRWriteValM[0]                         // FIOM
         };
         NextHENVCFGM[63:32] = {
-          // Spike appears to treat STCE/PBMTE/ADUE as read-only zero; SIM_COMPLIANCE forces 0 for test alignment.
-          (SIM_COMPLIANCE ? 1'b0 : (CSRWriteValM[63] & P.SSTC_SUPPORTED & MENVCFG_STCE)),   // STCE
-          (SIM_COMPLIANCE ? 1'b0 : (CSRWriteValM[62] & P.SVPBMT_SUPPORTED & MENVCFG_PBMTE)), // PBMTE
-          (SIM_COMPLIANCE ? 1'b0 : (CSRWriteValM[61] & P.SVADU_SUPPORTED & MENVCFG_ADUE)),   // ADUE
+          CSRWriteValM[63] & P.SSTC_SUPPORTED & MENVCFG_STCE,      // STCE
+          CSRWriteValM[62] & P.SVPBMT_SUPPORTED & MENVCFG_PBMTE,   // PBMTE
+          CSRWriteValM[61] & P.SVADU_SUPPORTED & MENVCFG_ADUE,     // ADUE
           1'b0,                                   // WPRI
           1'b0,                                   // DTE (Ssdbltrp) unsupported
           1'b0,                                   // WPRI
@@ -640,7 +603,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
     end
   end else begin : henvcfg_update_32
     always_comb begin
-      NextHENVCFGM = HENVCFG_REGW;
+      NextHENVCFGM = HENVCFG_REGW_INT;
       if (WriteHENVCFGM) begin
         // Mask WPRI/unsupported fields to 0 per spec.
         NextHENVCFGM[31:0] = {
@@ -652,18 +615,15 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
           1'b0,                                   // SSE (Zicfiss) unsupported
           1'b0,                                   // LPE (Zicfilp) unsupported
           1'b0,                                   // WPRI
-          // FIOM is defined by the spec (not tied to virtmem support).
-          // Spike appears to treat FIOM as read-only zero; SIM_COMPLIANCE forces 0 for test alignment.
-          (SIM_COMPLIANCE ? 1'b0 : CSRWriteValM[0]) // FIOM
+          CSRWriteValM[0]                         // FIOM
         };
       end
       if (WriteHENVCFGHM) begin
         // Mask WPRI/unsupported fields to 0 per spec.
         NextHENVCFGM[63:32] = {
-          // Spike appears to treat STCE/PBMTE/ADUE as read-only zero; SIM_COMPLIANCE forces 0 for test alignment.
-          (SIM_COMPLIANCE ? 1'b0 : (CSRWriteValM[31] & P.SSTC_SUPPORTED & MENVCFG_STCE)),   // STCE
-          (SIM_COMPLIANCE ? 1'b0 : (CSRWriteValM[30] & P.SVPBMT_SUPPORTED & MENVCFG_PBMTE)), // PBMTE
-          (SIM_COMPLIANCE ? 1'b0 : (CSRWriteValM[29] & P.SVADU_SUPPORTED & MENVCFG_ADUE)),   // ADUE
+          CSRWriteValM[31] & P.SSTC_SUPPORTED & MENVCFG_STCE,      // STCE
+          CSRWriteValM[30] & P.SVPBMT_SUPPORTED & MENVCFG_PBMTE,   // PBMTE
+          CSRWriteValM[29] & P.SVADU_SUPPORTED & MENVCFG_ADUE,     // ADUE
           1'b0,                                   // WPRI
           1'b0,                                   // DTE (Ssdbltrp) unsupported
           1'b0,                                   // WPRI
@@ -675,7 +635,12 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
     end
   end
 
-  flopenr #(64) HENVCFGreg(clk, reset, (WriteHENVCFGM | WriteHENVCFGHM), NextHENVCFGM, HENVCFG_REGW);
+  flopenr #(64) HENVCFGreg(clk, reset, (WriteHENVCFGM | WriteHENVCFGHM), NextHENVCFGM, HENVCFG_REGW_INT);
+  // menvcfg can dynamically force STCE/PBMTE/ADUE to read as zero in henvcfg.
+  assign HENVCFG_REGW = {HENVCFG_REGW_INT[63] & MENVCFG_STCE,
+                         HENVCFG_REGW_INT[62] & MENVCFG_PBMTE,
+                         HENVCFG_REGW_INT[61] & MENVCFG_ADUE,
+                         HENVCFG_REGW_INT[60:0]};
   if (P.XLEN == 64) begin : htimedelta_regs_64
     flopenr #(P.XLEN) HTIMEDELTAreg(clk, reset, WriteHTIMEDELTAM, CSRWriteValM, HTIMEDELTA_REGW);
   end else begin : htimedelta_regs_32
@@ -720,7 +685,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
       VSCAUSE:    begin LegalAccessM = LegalVSAccessM; CSRHReadValM = VSCAUSE_REGW; end
       VSTVAL:     begin LegalAccessM = LegalVSAccessM; CSRHReadValM = VSTVAL_REGW; end
       VSIP:       begin LegalAccessM = LegalVSAccessM; CSRHReadValM = {{(P.XLEN-12){1'b0}}, VSIP_REGW}; end
-      VSATP:      begin LegalAccessM = LegalVSAccessM & P.VIRTMEM_SUPPORTED; CSRHReadValM = VSATP_REGW; end
+      VSATP:      begin LegalAccessM = LegalVSAccessM; CSRHReadValM = VSATP_REGW; end
       VSTIMECMP:  begin LegalAccessM = LegalVSAccessM & P.SSTC_SUPPORTED & AllowVSTimecmpAccessM; CSRHReadValM = VSTIMECMP_REGW[P.XLEN-1:0]; end
       VSTIMECMPH: begin LegalAccessM = LegalVSAccessM & P.SSTC_SUPPORTED & (P.XLEN == 32) & AllowVSTimecmpAccessM; CSRHReadValM = {{(P.XLEN-32){1'b0}}, VSTIMECMP_REGW[63:32]}; end
 
