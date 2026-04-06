@@ -120,7 +120,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]       STVEC_REGW, MTVEC_REGW;
   logic [P.XLEN-1:0]       MEPC_REGW, SEPC_REGW;
   logic [P.XLEN-1:0]       VSTVEC_REGW, VSEPC_REGW;
-  logic [P.XLEN-1:0]       SEPCSelM, STVecSelM;
+  logic [P.XLEN-1:0]       SEPCSel, STVecSelM;
   logic [31:0]             MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW;
   logic                    WriteMSTATUSM, WriteMSTATUSHM, WriteSSTATUSM;
   logic                    CSRMWriteM, CSRSWriteM, CSRUWriteM;
@@ -222,8 +222,8 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   if (P.H_SUPPORTED) begin: epc_h
     logic UseVSEPCM;
     assign UseVSEPCM = VirtModeW | (sretM & (PrivilegeModeW == P.S_MODE) & ~VirtModeW & HSTATUS_SPV);
-    mux2 #(P.XLEN) sepcselmux(SEPC_REGW, VSEPC_REGW, UseVSEPCM, SEPCSelM);
-    mux2 #(P.XLEN) epcmux(SEPCSelM, MEPC_REGW, mretM, EPCM);
+    mux2 #(P.XLEN) sepcselmux(SEPC_REGW, VSEPC_REGW, UseVSEPCM, SEPCSel);
+    mux2 #(P.XLEN) epcmux(SEPCSel, MEPC_REGW, mretM, EPCM);
   end else begin: epc_noh
     mux2 #(P.XLEN) epcmux(SEPC_REGW, MEPC_REGW, mretM, EPCM);
   end
