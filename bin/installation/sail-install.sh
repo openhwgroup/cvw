@@ -27,7 +27,7 @@
 ## and limitations under the License.
 ################################################################################################
 
-RISCV_SAIL_MODEL_VERSION=0.9 # Last release as of Oct 16, 2025
+RISCV_SAIL_MODEL_VERSION=0.10 # Last release as of Feb 16, 2026
 
 set -e # break on error
 # If run standalone, check environment. Otherwise, use info from main install script

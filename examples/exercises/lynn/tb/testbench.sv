@@ -16,7 +16,7 @@
 
 `define MaxInstrSizeWords 1048576
 // 16384
-`define MaxDataSizeWords 1048576
+`define MaxDataSizeWords 2097152
 
 `define MTIME_POINTER (`XLEN'h0200bff8)
 
@@ -209,9 +209,9 @@ end
 
 /* ------- MTIME DATA REQUEST ------- */
 
-assign TestbenchRequest = (DataAdr == `MTIME_POINTER);
+assign TestbenchRequest = (DataAdr == `MTIME_POINTER) | (DataAdr == `MTIME_POINTER + 4);
 
-logic [`XLEN-1:0] cycle_count;
+logic [63:0] cycle_count;
 
 always_ff @(posedge clk) begin
   if (reset) cycle_count <= 0;
@@ -222,7 +222,8 @@ end
 always_ff @(negedge clk) begin
   TestbenchRequestReadData = 'x;
   if (TestbenchRequest && MemEn && !WriteEn) begin
-    TestbenchRequestReadData = cycle_count;
+    if (DataAdr == `MTIME_POINTER)      TestbenchRequestReadData = cycle_count[31:0];
+    if (DataAdr == `MTIME_POINTER + 4)  TestbenchRequestReadData = cycle_count[63:32];
   end
 end
 

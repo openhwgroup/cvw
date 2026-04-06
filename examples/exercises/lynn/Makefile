@@ -20,7 +20,7 @@ SAIL_TRACE_FLAGS 	?= --trace-all
 
 # ----    Synthesis Configuration ---- #
 SYNTH_TECH 			?= sky130 #tsmc28 #tsmc28psyn
-SYNTH_TOP 			?= synth_top # change to different module to find critical path of a specific module
+SYNTH_TOP 			?= $(PROCESSOR_TOP) # change to different module to find critical path of a specific module
 
 # ----    Coremark Configuration ---- #
 
@@ -47,7 +47,7 @@ LINKER			?= $(PROCESSOR_CONFIG)/link.ld
 
 TB_TOP          ?= testbench
 TESTBENCH_FILES ?= $(TESTBENCH_DIR)/testbench.sv $(TESTBENCH_DIR)/ram1p1rwb.sv
-WAVES_DO        ?= $(CURDIR)/waves.do
+WAVES_DO        ?= $(TESTBENCH_DIR)/waves.do
 
 # ---- Repo paths cont ---- #
 COREMARK_DIR 	?= $(CURDIR)/coremark
@@ -162,7 +162,7 @@ endif
 # Build the vsim mode flags from GUI
 ifeq ($(GUI),1)
   VSIM_MODE_FLAGS :=
-  VSIM_DO := if {[file exists $(WAVES_DO)]} {do $(WAVES_DO)}; run -all
+  VSIM_DO := if {[file exists $(WAVES_DO)]} {do $(WAVES_DO)};
 else
   VSIM_MODE_FLAGS := -c
   VSIM_DO := run -all; quit -f
@@ -187,20 +187,14 @@ VSIM_PLUSARGS_BASE  ?= \
 	LOGFILE="$${ELF}.sim.log"; \
 	echo "[RUN] ELF: $$ELF"; \
 	echo "[VSIM] Using memfile $$MEMFILE (log: $$LOGFILE)"; \
-	if [ "$(GUI)" = "1" ]; then \
-	  $(VSIM) $(VSIM_FLAGS) $(VSIM_EXTRA_FLAGS) work.$(TB_TOP) \
-	    $(VSIM_PLUSARGS_BASE) $(VSIM_PLUSARGS_EXTRA) \
-	    -do "$(VSIM_DO)" \
-	    2>&1 | tee "$$LOGFILE"; \
-	else \
-	  $(VSIM) $(VSIM_MODE_FLAGS) $(VSIM_FLAGS) $(VSIM_EXTRA_FLAGS) work.$(TB_TOP) \
-	    $(VSIM_PLUSARGS_BASE) $(VSIM_PLUSARGS_EXTRA) \
-	    -do "$(VSIM_DO)" \
-	    > "$$LOGFILE" 2>&1; \
-	fi
+	$(VSIM) $(VSIM_MODE_FLAGS) $(VSIM_FLAGS) $(VSIM_EXTRA_FLAGS) work.$(TB_TOP) \
+		$(VSIM_PLUSARGS_BASE) $(VSIM_PLUSARGS_EXTRA) \
+		-do "$(VSIM_DO)" \
+		2>&1 | { [ "$(GUI)" = "1" ] && tee "$$LOGFILE" || cat >"$$LOGFILE"; }
+
 
 .PHONY: synth
-synth:
+synth: lint
 	$(MAKE) -C $(SYNTH_DIR) \
 		SYNTH_TECH=$(SYNTH_TECH) PROCESSOR_DIR=$(PROCESSOR_DIR) INC_DIR=$(INC_DIR) \
 		PROCESSOR_TOP=$(PROCESSOR_TOP) XLEN=$(XLEN) SYNTH_TOP=$(SYNTH_TOP)
@@ -241,6 +235,7 @@ coremark:
 act4:
 	@$(MAKE) -C $(ACT4_TEST_DIR) \
 		RISCV_ARCH_TEST=$(RISCV_ARCH_TEST) \
+		CONFIG_FILES=$(PROCESSOR_CONFIG)/test_config.yaml \
 		populate
 
 # test: run ALL .elf files in ACT4_TEST_DIR in parallel with -j
@@ -260,17 +255,6 @@ test: | act4
 %.dis: %.bin
 	@riscv64-unknown-elf-objdump -D -b binary -m riscv:rv32 $< > $@
 	@echo "Wrote $@"
-
-# .PHONY: arch-test
-# arch-test: Makefile $(ACT4_TEST_DIR)/test_config.yaml
-# 	uv run --with $(WALLY)/addins/riscv-arch-test-cvw/framework make -C \
-# 	$(WALLY)/addins/riscv-arch-test-cvw \
-# 	CONFIG_FILES=$(ACT4_TEST_DIR)/test_config.yaml \
-# 	WORKDIR=$(ARCH_WORK_DIR)
-# Target flow below but using substitute above while act4 broken
-# 	$(MAKE) -C $(RISCV_ARCH_TEST) \
-#    CONFIG_FILE=$(AC4_TEST_DIR)/test_config.yaml \
-#    WORKDIR=$(ACT4_TEST_DIR)/work
 
 # ----  Bug lab  ---- #
 
@@ -292,7 +276,6 @@ clean-coremark:
 	$(MAKE) -C $(COREMARK_DIR) clean
 
 clean-act4:
-	$(MAKE) -C $(RISCV_ARCH_TEST) clean
 	$(MAKE) -C $(ACT4_TEST_DIR) clean
 
 clean-synth:

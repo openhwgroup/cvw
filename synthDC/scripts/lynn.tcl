@@ -123,7 +123,6 @@ foreach f $sv_files {
     analyze -format sverilog -lib WORK {*}$analyze_defs $f
 }
 
-
 # If wrapper=0, we want to run against a specific module and pass
 # width to DC
 if { $wrapper == 1 } {
@@ -219,6 +218,30 @@ if {$drive == "FLOP"} {
     set_input_delay 0.0 -max -clock $my_clk $all_in_ex_clk
     set_output_delay 0.0 -max -clock $my_clk [all_outputs]
 }
+
+#####################################################################
+# External memory interface timing model
+# Goal: model SRAM read-data arriving 2ns after clk edge at our inputs
+#####################################################################
+
+# Instruction memory read data (coming INTO chip)
+set_input_delay 3.0 -clock $my_clk -max [get_ports {Instr[*]}]
+set_input_delay 0.2 -clock $my_clk -min [get_ports {Instr[*]}]
+
+# Instruction memory address (going OUT of chip)
+set_output_delay [expr $my_period - 0.5] -clock $my_clk -max [get_ports {PC[*]}]
+set_output_delay 0.0 -clock $my_clk -min [get_ports {PC[*]}]
+
+# Data memory read data (coming INTO chip)
+set_input_delay 3.0 -clock $my_clk -max [get_ports {MemReadData[*]}]
+set_input_delay 0.2 -clock $my_clk -min [get_ports {MemReadData[*]}]
+
+# Data memory control/address/write data (going OUT of chip)
+set_output_delay [expr $my_period - 0.5] -clock $my_clk -max \
+    [get_ports {MemEn WriteEn WriteByteEn[*] DataAdr[*] WriteData[*]}]
+
+set_output_delay 0.0 -clock $my_clk -min \
+    [get_ports {MemEn WriteEn WriteByteEn[*] DataAdr[*] WriteData[*]}]
 
 # Setting load constraint on output ports
 if {$tech == "sky130"} {
