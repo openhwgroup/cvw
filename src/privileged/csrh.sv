@@ -62,7 +62,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   output logic              HSTATUS_SPV,
   output logic              HSTATUS_VTSR, HSTATUS_VTW, HSTATUS_VTVM,
   output logic              HSTATUS_VSBE,
-  output logic              VSSTATUS_SPP,
+  output logic              VSSTATUS_SPP, VSSTATUS_SIE,
   output logic              VSSTATUS_SUM, VSSTATUS_MXR, VSSTATUS_UBE,
   output logic [1:0]        VSSTATUS_FS,
   output logic [63:0]       HEDELEG_REGW,
@@ -88,7 +88,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   logic [5:0]        HSTATUS_VGEIN;
   logic [1:0]        HSTATUS_VSXL, HSTATUS_HUPMM;
   logic              VSSTATUS_SD, VSSTATUS_SPELP, VSSTATUS_SDT;
-  logic              VSSTATUS_SPIE, VSSTATUS_SIE;
+  logic              VSSTATUS_SPIE;
   logic [1:0]        VSSTATUS_XS, VSSTATUS_UXL, VSSTATUS_VS;
   logic [P.XLEN-1:0] NextHIE;
   logic [P.XLEN-1:0] HIE_WRITE_MASK;

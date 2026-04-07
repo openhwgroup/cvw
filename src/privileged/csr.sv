@@ -80,8 +80,8 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   output logic                     STATUS_SPP, STATUS_TSR, STATUS_TVM,
   output logic                     HSTATUS_SPV,
   output logic                     HSTATUS_VTSR, HSTATUS_VTW, HSTATUS_VTVM,
-  output logic                     VSSTATUS_SPP,
-  output logic [15:0]              MEDELEG_REGW,
+  output logic                     VSSTATUS_SPP, VSSTATUS_SIE,
+  output logic [63:0]              MEDELEG_REGW,
   output logic [63:0]              HEDELEG_REGW,
   output logic [11:0]              HIDELEG_REGW,
   output logic [P.XLEN-1:0]        HIE_REGW, HGEIE_REGW,
@@ -138,6 +138,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]       TVecM,NextFaultTvalM;
   logic                    MTrapM, STrapM;
   logic                    SelMtvecM;
+  logic [4:0]              TrapCauseCodeM;
   logic [P.XLEN-1:0]       TVecAlignedM;
   logic                    InstrValidNotFlushedM;
   logic                    STimerInt;
@@ -192,6 +193,23 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign TrapWritesVAToTvalM = 1'b0;
   end
 
+  if (P.H_SUPPORTED) begin: trapcause_h
+    // H spec translates delegated VS interrupt causes 10/6/2 into 9/5/1 for VS trap state and vectoring.
+    always_comb
+      if (TrapToVSM & InterruptM)
+        case (CauseM)
+          5'd10: TrapCauseCodeM = 5'd9;
+          5'd6:  TrapCauseCodeM = 5'd5;
+          5'd2:  TrapCauseCodeM = 5'd1;
+          default:
+            TrapCauseCodeM = CauseM;
+        endcase
+      else
+        TrapCauseCodeM = CauseM;
+  end else begin: trapcause_noh
+    assign TrapCauseCodeM = CauseM;
+  end
+
   ///////////////////////////////////////////
   // Trap Vectoring & Returns; vectored traps must be aligned to 64-byte address boundaries
   ///////////////////////////////////////////
@@ -211,7 +229,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     logic VectoredM;
     logic [P.XLEN-1:0] TVecPlusCauseM;
     assign VectoredM = InterruptM & (TVecM[1:0] == 2'b01);
-    assign TVecPlusCauseM = {TVecAlignedM[P.XLEN-1:6], CauseM[3:0], 2'b00}; // 64-byte alignment allows concatenation rather than addition
+    assign TVecPlusCauseM = {TVecAlignedM[P.XLEN-1:6], TrapCauseCodeM[3:0], 2'b00}; // 64-byte alignment allows concatenation rather than addition
     mux2 #(P.XLEN) trapvecmux(TVecAlignedM, TVecPlusCauseM, VectoredM, TrapVectorM);
   end else
     assign TrapVectorM = TVecAlignedM; // unvectored interrupt handler can be at any word-aligned address. This is called Sstvecd
@@ -271,7 +289,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   end
   assign UnalignedNextEPCM = TrapM ? PCM : CSRWriteValM;
   assign NextEPCM = P.ZCA_SUPPORTED ? {UnalignedNextEPCM[P.XLEN-1:1], 1'b0} : {UnalignedNextEPCM[P.XLEN-1:2], 2'b00}; // 3.1.15 alignment
-  assign NextCauseM = TrapM ? {InterruptM, CauseM}: {CSRWriteValM[P.XLEN-1], CSRWriteValM[4:0]};
+  assign NextCauseM = TrapM ? {InterruptM, TrapCauseCodeM}: {CSRWriteValM[P.XLEN-1], CSRWriteValM[4:0]};
   assign NextTvalM = TrapM ? NextFaultTvalM : CSRWriteValM;
   assign UngatedCSRMWriteM = CSRWriteM & (PrivilegeModeW == P.M_MODE);
   assign CSRMWriteM = UngatedCSRMWriteM & InstrValidNotFlushedM;
@@ -297,7 +315,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
 
   csrsr #(P) csrsr(.clk, .reset, .StallW,
     .WriteMSTATUSM, .WriteMSTATUSHM, .WriteSSTATUSM,
-    .TrapM, .FRegWriteM, .NextPrivilegeModeM, .PrivilegeModeW, .VirtModeW, .TrapGVAM,
+    .TrapToM, .TrapToHSM, .FRegWriteM, .PrivilegeModeW, .VirtModeW, .TrapGVAM,
     .mretM, .sretM, .WriteFRMM, .SetOrWriteFFLAGSM, .CSRWriteValM, .SelHPTW,
     .MSTATUS_REGW, .SSTATUS_REGW, .MSTATUSH_REGW,
     .STATUS_MPP, .MSTATUS_MPV, .STATUS_SPP, .STATUS_TSR, .STATUS_TW,
@@ -350,7 +368,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
       .NextEPCM, .NextCauseM, .NextTvalM, .NextHtvalM,
       .CSRHReadValM, .IllegalCSRHAccessM,
       .HSTATUS_SPV, .HSTATUS_VTSR, .HSTATUS_VTW, .HSTATUS_VTVM,
-      .HSTATUS_VSBE, .VSSTATUS_SPP, .VSSTATUS_SUM, .VSSTATUS_MXR, .VSSTATUS_UBE, .VSSTATUS_FS,
+      .HSTATUS_VSBE, .VSSTATUS_SPP, .VSSTATUS_SIE, .VSSTATUS_SUM, .VSSTATUS_MXR, .VSSTATUS_UBE, .VSSTATUS_FS,
       .HEDELEG_REGW, .HIDELEG_REGW, .HIE_REGW, .HGEIE_REGW, .HCOUNTEREN_REGW, .HVIP_REGW, .HIP_MIP_REGW, .HTIMEDELTA_REGW, .HENVCFG_REGW,
       .VSTVEC_REGW, .VSEPC_REGW, .VSATP_REGW, .HGATP_REGW);
   end else begin: no_csrh
@@ -362,6 +380,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign HSTATUS_VTVM = 1'b0;
     assign HSTATUS_VSBE = 1'b0;
     assign VSSTATUS_SPP = 1'b0;
+    assign VSSTATUS_SIE = 1'b0;
     assign VSSTATUS_SUM = 1'b0;
     assign VSSTATUS_MXR = 1'b0;
     assign VSSTATUS_UBE = 1'b0;

@@ -101,7 +101,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
 );
 
   logic [4:0]               CauseM;                                         // trap cause
-  logic [15:0]              MEDELEG_REGW;                                   // exception delegation CSR
+  logic [63:0]              MEDELEG_REGW;                                   // exception delegation CSR
   logic [11:0]              MIDELEG_REGW;                                   // interrupt delegation CSR
   logic [63:0]              HEDELEG_REGW;                                   // HS->VS exception delegation CSR
   logic [11:0]              HIDELEG_REGW;                                   // HS->VS interrupt delegation CSR
@@ -130,7 +130,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   logic                     MSTATUS_MPV;     // from CSR (prev V for MRET)
   logic                     HSTATUS_SPV;     // from CSR (prev V for SRET in HS)
   logic                     HSTATUS_VTSR, HSTATUS_VTW, HSTATUS_VTVM;
-  logic                     VSSTATUS_SPP;
+  logic                     VSSTATUS_SPP, VSSTATUS_SIE;
   logic                     TrapToM, TrapToHSM, TrapToVSM; // trap target one-hots
 
   // track the current privilege level
@@ -158,7 +158,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .NextPrivilegeModeM, .PrivilegeModeW, .VirtModeW, .CauseM, .SelHPTW,
     .STATUS_MPP, .MSTATUS_MPV, .STATUS_SPP, .STATUS_TSR, .STATUS_TVM,
     .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TW, .STATUS_FS,
-    .HSTATUS_SPV, .HSTATUS_VTSR, .HSTATUS_VTW, .HSTATUS_VTVM, .VSSTATUS_SPP,
+    .HSTATUS_SPV, .HSTATUS_VTSR, .HSTATUS_VTW, .HSTATUS_VTVM, .VSSTATUS_SPP, .VSSTATUS_SIE,
     .MEDELEG_REGW, .HEDELEG_REGW, .HIDELEG_REGW, .HIE_REGW, .HGEIE_REGW, .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
     .SATP_REGW, .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
     .SetFflagsM, .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE,
@@ -177,7 +177,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .LoadAccessFaultM, .StoreAmoAccessFaultM, .EcallFaultM, .InstrPageFaultM,
     .LoadPageFaultM, .StoreAmoPageFaultM, .VirtualInstrFaultM,
     .PrivilegeModeW, .VirtModeW,
-    .MIP_REGW, .MIE_REGW, .HIE_REGW, .HGEIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW, .HEDELEG_REGW, .HIDELEG_REGW, .STATUS_MIE, .STATUS_SIE,
+    .MIP_REGW, .MIE_REGW, .HIE_REGW, .HGEIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW, .HEDELEG_REGW, .HIDELEG_REGW, .STATUS_MIE, .STATUS_SIE, .VSSTATUS_SIE,
     .InstrValidM, .CommittedM, .CommittedF,
     .TrapM, .wfiM, .wfiW, .InterruptM, .ExceptionM, .IntPendingM, .DelegateM, .CauseM,
     .TrapToM, .TrapToHSM, .TrapToVSM);

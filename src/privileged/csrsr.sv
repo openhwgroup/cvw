@@ -31,8 +31,8 @@
 module csrsr import cvw::*;  #(parameter cvw_t P) (
   input  logic              clk, reset, StallW,
   input  logic              WriteMSTATUSM, WriteMSTATUSHM, WriteSSTATUSM,
-  input  logic              TrapM, FRegWriteM,
-  input  logic [1:0]        NextPrivilegeModeM, PrivilegeModeW,
+  input  logic              TrapToM, TrapToHSM, FRegWriteM,
+  input  logic [1:0]        PrivilegeModeW,
   input  logic              VirtModeW,
   input  logic              TrapGVAM,            // Trap writes guest virtual address to tval
   input  logic              mretM, sretM,
@@ -161,20 +161,16 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
       STATUS_SBE      <= 1'b0;
       STATUS_UBE      <= 1'b0;
     end else if (~StallW) begin
-      if (TrapM) begin
-        // Update interrupt enables per Privileged Spec p. 21
-        // y = PrivilegeModeW
-        // x = NextPrivilegeModeM
-        // Modes: 11 = Machine, 01 = Supervisor, 00 = User
-        if (NextPrivilegeModeM == P.M_MODE) begin
-          STATUS_MPIE <= STATUS_MIE;
-          STATUS_MIE  <= 1'b0;
-          STATUS_MPP  <= PrivilegeModeW;
-        end else if (P.S_SUPPORTED) begin // supervisor mode
-          STATUS_SPIE <= STATUS_SIE;
-          STATUS_SIE  <= 1'b0;
-          STATUS_SPP  <= PrivilegeModeW[0];
-       end
+      // Trap entry updates depend on the resolved target:
+      // M traps update mstatus, while HS traps update HS sstatus.
+      if (TrapToM) begin
+        STATUS_MPIE <= STATUS_MIE;
+        STATUS_MIE  <= 1'b0;
+        STATUS_MPP  <= PrivilegeModeW;
+      end else if (P.S_SUPPORTED & TrapToHSM) begin
+        STATUS_SPIE <= STATUS_SIE;
+        STATUS_SIE  <= 1'b0;
+        STATUS_SPP  <= PrivilegeModeW[0];
       end else if (mretM) begin // Privileged 3.1.6.1
         STATUS_MIE      <= STATUS_MPIE; // restore global interrupt enable
         STATUS_MPIE     <= 1'b1; //
@@ -226,7 +222,7 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
           STATUS_MPV <= 1'b0;
           STATUS_GVA <= 1'b0;
         end else if (~StallW) begin
-          if (TrapM & (NextPrivilegeModeM == P.M_MODE)) begin
+          if (TrapToM) begin
             STATUS_MPV <= VirtModeW;
             STATUS_GVA <= TrapGVAM;
           end else if (mretM) begin
@@ -242,7 +238,7 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
           STATUS_MPV <= 1'b0;
           STATUS_GVA <= 1'b0;
         end else if (~StallW) begin
-          if (TrapM & (NextPrivilegeModeM == P.M_MODE)) begin
+          if (TrapToM) begin
             STATUS_MPV <= VirtModeW;
             STATUS_GVA <= TrapGVAM;
           end else if (mretM) begin

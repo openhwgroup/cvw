@@ -43,7 +43,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   output logic [P.XLEN-1:0]        CSRMReadValM, MTVEC_REGW,
   output logic [P.XLEN-1:0]        MEPC_REGW,
   output logic [31:0]              MCOUNTEREN_REGW, MCOUNTINHIBIT_REGW,
-  output logic [15:0]              MEDELEG_REGW,
+  output logic [63:0]              MEDELEG_REGW,
   output logic [11:0]              MIDELEG_REGW,
   /* verilator lint_off UNDRIVEN */ // PMP registers are only used when PMP_ENTRIES > 0
   output var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW[P.PMP_ENTRIES-1:0],
@@ -59,9 +59,11 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]               MSCRATCH_REGW, MTVAL_REGW, MCAUSE_REGW;
   logic [P.XLEN-1:0]               MENVCFGH_REGW;
   logic [P.XLEN-1:0]               TVECWriteValM;
-  logic                            WriteMTVECM, WriteMEDELEGM, WriteMIDELEGM;
+  logic                            WriteMTVECM, WriteMEDELEGM, WriteMEDELEGHM, WriteMIDELEGM;
   logic                            WriteMSCRATCHM, WriteMEPCM, WriteMCAUSEM, WriteMTVALM;
   logic                            WriteMCOUNTERENM, WriteMCOUNTINHIBITM;
+  logic [63:0]                     NextMEDELEGM;
+  logic [11:0]                     NextMIDELEGM;
 
   // Machine CSRs
   localparam MVENDORID     = 12'hF11;
@@ -78,6 +80,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   localparam MCOUNTEREN    = 12'h306;
   localparam MENVCFG       = 12'h30A;
   localparam MSTATUSH      = 12'h310;
+  localparam MEDELEGH      = 12'h312;
   localparam MENVCFGH      = 12'h31A;
   localparam MCOUNTINHIBIT = 12'h320;
   localparam MSCRATCH      = 12'h340;
@@ -101,9 +104,13 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   /* verilator lint_off UNUSEDPARAM */
   // Constants
   localparam ZERO = {(P.XLEN){1'b0}};
-  // when compressed instructions are supported, there can't be misaligned instructions
-  localparam MEDELEG_MASK  = P.ZCA_SUPPORTED ? 16'hB3FE : 16'hB3FF;
-  localparam MIDELEG_MASK  = 12'h222; // we choose to not make machine interrupts delegable
+  // medeleg is architecturally 64 bits; enable the implemented H causes (VS ECALL and virtual instruction)
+  // in addition to the existing delegatable base causes. When compressed instructions are supported,
+  // there cannot be instruction-address-misaligned exceptions.
+  localparam [63:0] MEDELEG_MASK = (P.ZCA_SUPPORTED ? 64'h0000_0000_0000_B3FE : 64'h0000_0000_0000_B3FF) |
+                                   (P.H_SUPPORTED ? 64'h0000_0000_0040_0400 : 64'h0000_0000_0000_0000);
+  localparam [11:0] MIDELEG_MASK = 12'h222; // only standard S-level interrupt delegation bits are writable
+  localparam [11:0] MIDELEG_RO1  = P.H_SUPPORTED ? 12'h444 : 12'h000; // VS-level interrupts are always delegated past M
   localparam Gm1 = P.PMP_G > 0 ? P.PMP_G - 1 : 0; // max(G-1, 0)
 
  // There are PMP_ENTRIES = 0, 16, or 64 PMPADDR registers, each of which has its own flop
@@ -156,6 +163,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   assign WriteMSTATUSHM      = CSRMWriteM & (CSRAdrM == MSTATUSH) & (P.XLEN==32);
   assign WriteMTVECM         = CSRMWriteM & (CSRAdrM == MTVEC);
   assign WriteMEDELEGM       = CSRMWriteM & (CSRAdrM == MEDELEG);
+  assign WriteMEDELEGHM      = CSRMWriteM & (CSRAdrM == MEDELEGH) & (P.XLEN==32);
   assign WriteMIDELEGM       = CSRMWriteM & (CSRAdrM == MIDELEG);
   assign WriteMSCRATCHM      = CSRMWriteM & (CSRAdrM == MSCRATCH);
   assign WriteMEPCM          = MTrapM | (CSRMWriteM & (CSRAdrM == MEPC));
@@ -170,9 +178,23 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   assign TVECWriteValM = CSRWriteValM[0] ? {CSRWriteValM[P.XLEN-1:6], 6'b000001} : {CSRWriteValM[P.XLEN-1:2], 2'b00};
   flopenr #(P.XLEN) MTVECreg(clk, reset, WriteMTVECM, TVECWriteValM, MTVEC_REGW);
   if (P.S_SUPPORTED) begin:deleg // DELEG registers should exist
-    flopenr #(16) MEDELEGreg(clk, reset, WriteMEDELEGM, CSRWriteValM[15:0] & MEDELEG_MASK, MEDELEG_REGW);
-    flopenr #(12) MIDELEGreg(clk, reset, WriteMIDELEGM, CSRWriteValM[11:0] & MIDELEG_MASK, MIDELEG_REGW);
-  end else assign {MEDELEG_REGW, MIDELEG_REGW} = '0;
+    if (P.XLEN == 64) begin: medelegrv64
+      assign NextMEDELEGM = WriteMEDELEGM ? (CSRWriteValM & MEDELEG_MASK) : MEDELEG_REGW;
+    end else begin: medelegrv32
+      always_comb begin
+        NextMEDELEGM = MEDELEG_REGW;
+        if (WriteMEDELEGM)  NextMEDELEGM[31:0]  = CSRWriteValM[31:0] & MEDELEG_MASK[31:0];
+        if (WriteMEDELEGHM) NextMEDELEGM[63:32] = CSRWriteValM[31:0] & MEDELEG_MASK[63:32];
+      end
+    end
+    flopenr #(64) MEDELEGreg(clk, reset, (WriteMEDELEGM | WriteMEDELEGHM), NextMEDELEGM, MEDELEG_REGW);
+
+    assign NextMIDELEGM = (CSRWriteValM[11:0] & MIDELEG_MASK) | MIDELEG_RO1;
+    flopenl #(12) MIDELEGreg(clk, reset, WriteMIDELEGM, NextMIDELEGM, MIDELEG_RO1, MIDELEG_REGW);
+  end else begin
+    assign MEDELEG_REGW = '0;
+    assign MIDELEG_REGW = '0;
+  end
 
   flopenr #(P.XLEN) MSCRATCHreg(clk, reset, WriteMSCRATCHM, CSRWriteValM, MSCRATCH_REGW);
   flopenr #(P.XLEN) MEPCreg(clk, reset, WriteMEPCM, NextEPCM, MEPC_REGW);
@@ -234,7 +256,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   always_comb begin
     entry = '0;
     CSRMReadValM = '0;
-    IllegalCSRMAccessM = !(P.S_SUPPORTED) & (CSRAdrM == MEDELEG | CSRAdrM == MIDELEG); // trap on DELEG register access when no S or N-mode
+    IllegalCSRMAccessM = ~P.S_SUPPORTED & ((CSRAdrM == MEDELEG) | (CSRAdrM == MEDELEGH) | (CSRAdrM == MIDELEG)); // trap on DELEG register access when no S-mode
     if ($unsigned(CSRAdrM) >= PMPADDR0 & $unsigned(CSRAdrM) < PMPADDR0 + P.PMP_ENTRIES)
       CSRMReadValM = {{(P.XLEN-(P.PA_BITS-2)){1'b0}}, PMPADDR_ARRAY_REGW[CSRAdrM - PMPADDR0]}; // read PMPADDR entry with lsbs aligned to grain based on NAPOT vs. TOR
     else if ($unsigned(CSRAdrM) >= PMPCFG0 & $unsigned(CSRAdrM) < PMPCFG0 + P.PMP_ENTRIES/4 & (P.XLEN==32 | CSRAdrM[0] == 0)) begin
@@ -259,7 +281,10 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
       MSTATUSH:      if (P.XLEN==32) CSRMReadValM = MSTATUSH_REGW;
                      else IllegalCSRMAccessM = 1'b1;
       MTVEC:         CSRMReadValM = MTVEC_REGW;
-      MEDELEG:       CSRMReadValM = {{(P.XLEN-16){1'b0}}, MEDELEG_REGW};
+      MEDELEG:       if (P.XLEN == 64) CSRMReadValM = MEDELEG_REGW;
+                     else               CSRMReadValM = MEDELEG_REGW[31:0];
+      MEDELEGH:      if (P.XLEN == 32) CSRMReadValM = MEDELEG_REGW[63:32];
+                     else               IllegalCSRMAccessM = 1'b1;
       MIDELEG:       CSRMReadValM = {{(P.XLEN-12){1'b0}}, MIDELEG_REGW};
       MIP:           CSRMReadValM = {{(P.XLEN-12){1'b0}}, MIP_REGW};
       MIE:           CSRMReadValM = {{(P.XLEN-12){1'b0}}, MIE_REGW};
