@@ -93,7 +93,6 @@ The current version of the toolchain has been tested on Ubuntu (versions 20.04 L
 ### Overview
 The toolchain installation script installs the following tools:
 - [RISC-V GNU Toolchain](https://github.com/riscv-collab/riscv-gnu-toolchain): GCC and accompanying compiler tools
-- [elf2hex](https://github.com/sifive/elf2hex): executable file to hexadecimal converter
 - [QEMU](https://www.qemu.org/docs/master/system/target-riscv.html): emulator
 - [Spike](https://github.com/riscv-software-src/riscv-isa-sim): functional RISC-V model
 - [Whisper](https://github.com/tenstorrent/whisper): RISC-V instruction set simulator (ISS)
