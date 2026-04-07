@@ -22,11 +22,34 @@ slt_test:
         j    Fail_Slt_1
 
     test2:
-        // Overflow case: -2147483648 < 1, slt should write 1.
-        // SrcA=0x80000000, SrcB=1 -> Sum=0x7FFFFFFF (Neg=0, Overflow=1)
+        // Overflow case: build t0 = 0x80000000 (-2147483648) via doubling.
+        // 0x400 << 21 = 0x80000000  (same trick used in crt0.S)
+        // slt t2, t0, t1 with t0=-2147483648, t1=1 must return 1.
+        // Sub: Sum = 0x7FFFFFFF, Neg=0, Overflow=1
         // Correct:  LT = Neg ^ Overflow = 0 ^ 1 = 1
         // Bug D:    LT = Neg             = 0     = 0  (wrong)
-        li   t0, 0x80000000
+        li   t0, 0x400
+        add  t0, t0, t0     // 0x800
+        add  t0, t0, t0     // 0x1000
+        add  t0, t0, t0     // 0x2000
+        add  t0, t0, t0     // 0x4000
+        add  t0, t0, t0     // 0x8000
+        add  t0, t0, t0     // 0x10000
+        add  t0, t0, t0     // 0x20000
+        add  t0, t0, t0     // 0x40000
+        add  t0, t0, t0     // 0x80000
+        add  t0, t0, t0     // 0x100000
+        add  t0, t0, t0     // 0x200000
+        add  t0, t0, t0     // 0x400000
+        add  t0, t0, t0     // 0x800000
+        add  t0, t0, t0     // 0x1000000
+        add  t0, t0, t0     // 0x2000000
+        add  t0, t0, t0     // 0x4000000
+        add  t0, t0, t0     // 0x8000000
+        add  t0, t0, t0     // 0x10000000
+        add  t0, t0, t0     // 0x20000000
+        add  t0, t0, t0     // 0x40000000
+        add  t0, t0, t0     // 0x80000000
         li   t1, 1
         slt  t2, t0, t1
         li   t3, 1
