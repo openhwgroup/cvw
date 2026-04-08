@@ -75,12 +75,6 @@ fi
 source "$WALLY"/bin/installation/riscv-gnu-toolchain-install.sh
 
 
-# elf2hex (https://github.com/sifive/elf2hex)
-# The elf2hex utility to converts executable files into hexadecimal files for Verilog simulation.
-# Note: The exe2hex utility that comes with Spike doesn’t work for our purposes because it doesn’t
-# handle programs that start at 0x80000000.
-source "$WALLY"/bin/installation/elf2hex-install.sh
-
 
 # QEMU (https://www.qemu.org/docs/master/system/target-riscv.html)
 # QEMU is an open source machine emulator and virtualizer capable of emulating RISC-V
