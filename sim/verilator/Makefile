@@ -37,8 +37,6 @@ else
     WORKDIR = $(VERILATOR_DIR)/wkdir/$(WALLYCONF)_$(TESTBENCH)
 endif
 
-# Lock file for serializing parallel compilation of the same config (see compile recipe)
-LOCKFILE = $(VERILATOR_DIR)/wkdir/.$(WALLYCONF)_$(TESTBENCH)$(if $(BUILD_HASH),_$(BUILD_HASH),).lock
 
 # The regular testbench uses a C wrapper providing the getenvval DPI function
 ifeq ($(TESTBENCH), testbench)
@@ -54,28 +52,18 @@ default: compile
 # Build the verilated binary. wsim handles running the simulation.
 compile: $(WORKDIR)/V${TESTBENCH}
 
-# Compilation recipe with flock to handle parallel invocations.
-# When regression-wally launches many wsim jobs for the same config, multiple make
-# processes may enter this recipe simultaneously. flock serializes them so only the
-# first process actually compiles; the rest wait and then see the binary is up-to-date.
-# The inner freshness check (find -newer) is needed because Make already decided to
-# run this recipe before the lock was acquired -- another process may have finished
-# the build while we were waiting.
 $(WORKDIR)/V${TESTBENCH}: $(DEPENDENCIES)
-	@mkdir -p $(VERILATOR_DIR)/wkdir
-	@flock $(LOCKFILE) sh -c '\
-		if [ "$$(find $(DEPENDENCIES) -newer $@ 2>/dev/null | head -1)" = "" ] && [ -f $@ ]; then exit 0; fi; \
-		mkdir -p $(WORKDIR) && \
-		verilator \
-		--Mdir $(WORKDIR) -o V${TESTBENCH} \
-		--binary --trace \
-		$(VERILATOR_FLAGS) \
-		--top-module ${TESTBENCH}  --relative-includes \
-		$(INCLUDE_PATH) \
-		${WRAPPER} \
-		${DEFINE_ARGS} \
-		${EXPANDED_PARAM_ARGS} \
-		$(SOURCES)'
+	mkdir -p $(WORKDIR)
+	verilator \
+	--Mdir $(WORKDIR) -o V${TESTBENCH} \
+	--binary --trace \
+	$(VERILATOR_FLAGS) \
+	--top-module ${TESTBENCH}  --relative-includes \
+	$(INCLUDE_PATH) \
+	${WRAPPER} \
+	${DEFINE_ARGS} \
+	${EXPANDED_PARAM_ARGS} \
+	$(SOURCES)
 
 clean:
 	rm -rf $(VERILATOR_DIR)/wkdir $(VERILATOR_DIR)/logs
