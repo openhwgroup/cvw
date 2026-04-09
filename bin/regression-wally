@@ -607,10 +607,11 @@ def selectTests(args, sims, coverStr):
 def makeDirs(sims):
     # Always need verilator directories for lint
     for sim in (sims + ["verilator"] if "verilator" not in sims else sims):
-        dirs = [f"{regressionDir}/{sim}/wkdir", f"{regressionDir}/{sim}/logs"]
-        for d in dirs:
-            shutil.rmtree(d, ignore_errors=True)
-            os.makedirs(d, exist_ok=True)
+        # Clean logs but preserve compiled binaries in wkdir for caching
+        log_dir = f"{regressionDir}/{sim}/logs"
+        shutil.rmtree(log_dir, ignore_errors=True)
+        os.makedirs(log_dir, exist_ok=True)
+        os.makedirs(f"{regressionDir}/{sim}/wkdir", exist_ok=True)
 
 
 def main(args):

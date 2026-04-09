@@ -12,6 +12,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 import argparse
+import hashlib
 import os
 import sys
 from pathlib import Path
@@ -178,7 +179,33 @@ def runQuesta(args, flags, prefix):
 
 def runVerilator(args):
     print(f"Running Verilator on {args.config} {args.testsuite}")
-    os.system(f'make -C {WALLY}/sim/verilator WALLYCONF={args.config} TEST={args.testsuite} TESTBENCH={args.tb} PLUS_ARGS="{args.args}" PARAM_ARGS="{args.params}" DEFINE_ARGS="{args.define}"')
+    sim_dir = WALLY / "sim" / "verilator"
+    compile_args_str = " ".join(f"{args.params} {args.define}".split())
+    build_hash = hashlib.md5(compile_args_str.encode()).hexdigest()[:8] if compile_args_str else ""
+    workdir = sim_dir / "wkdir" / f"{args.config}_{args.tb}{'_' + build_hash if build_hash else ''}"
+    binary = workdir / f"V{args.tb}"
+
+    # Phase 1: Compile (only once per config/params/defines combo)
+    compile_cmd = (
+        f'make -C {sim_dir} compile'
+        f' WALLYCONF={args.config}'
+        f' TESTBENCH={args.tb}'
+        f' PARAM_ARGS="{args.params}"'
+        f' DEFINE_ARGS="{args.define}"'
+        f' BUILD_HASH="{build_hash}"'
+    )
+    if os.system(compile_cmd):
+        return
+
+    # Phase 2: Run the simulation (parallel safe)
+    # Run from sim/verilator/ so relative paths (e.g. logs/buildroot_uart.out) resolve correctly
+    (sim_dir / "logs").mkdir(parents=True, exist_ok=True)
+    runtime_args = ""
+    if args.tb == "testbench":
+        runtime_args += f" +TEST={args.testsuite}"
+    if args.args.strip():
+        runtime_args += f" {args.args.strip()}"
+    os.system(f"cd {sim_dir} && {binary}{runtime_args}")
 
 
 def runVCS(args, flags, prefix):
