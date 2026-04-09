@@ -30,19 +30,25 @@ CC = riscv64-unknown-elf-gcc
 AS = riscv64-unknown-elf-as
 LD = riscv64-unknown-elf-ld
 OBJDUMP = riscv64-unknown-elf-objdump
-SOURCE := $(shell find . -type f -name "*.S")
+SOURCE := $(shell find ./rv64 -type f -name "*.S")
 BASENAMES := $(basename $(notdir $(SOURCE)))
 OBJ := $(SOURCE:.s=.o)
 LDSCRIPT := ./link.ld
+
+# 32 bit stuff
+OBJDUMP32 = riscv32-unknown-elf-objdump
+SOURCE32 := $(shell find ./rv32 -type f -name "*.S")
+BASENAMES32 := $(basename $(notdir $(SOURCE)))
+OBJ32 := $(SOURCE:.s=.o)
 
 # Build directories
 BUILD := build
 LOGSDIR := $(BUILD)/log
 
 # RV32
-# MARCH = -march=rv32imfdc_zicsr_zifencei
-# MABI = -mabi=ilp32
-# ASFLAGS := $(MARCH) $(MABI) -mcmodel=medany -nostartfiles -L $(RISCV)/riscv64-unknown-elf/lib -T$(LDSCRIPT)
+# MARCH32 = -march=rv32imfdc_zicsr_zifencei
+# MABI32 = -mabi=ilp32
+# ASFLAGS32 := $(MARCH32) $(MABI32) -mcmodel=medany -nostartfiles -L $(RISCV)/riscv32-unknown-elf/lib -T$(LDSCRIPT)
 
 # RV64
 MARCH = -march=rv64gc_zicsr_zifencei
@@ -54,8 +60,13 @@ TARGET := $(addsuffix .elf, $(addprefix $(BUILD)/, $(BASENAMES)))
 TARGETDUMPS := $(addsuffix .elf.objdump, $(addprefix $(BUILD)/, $(BASENAMES)))
 TVDIR := testvectors
 TVBUILDDIR := $(BUILD)/testvectors
-#TESTVECTORS := $(TVBUILDDIR)/$(BASENAMES).tv
 TESTVECTORS := $(addsuffix .tv, $(addprefix $(TVBUILDDIR)/, $(BASENAMES)))
+
+# 32 bit
+TARGET32 := $(addsuffix .elf, $(addprefix $(BUILD)/, $(BASENAMES32)))
+TARGETDUMPS32 := $(addsuffix .elf.objdump, $(addprefix $(BUILD)/, $(BASENAMES32)))
+TVBUILDDIR32 := $(BUILD)/testvectors32
+TESTVECTORS32 := $(addsuffix .tv, $(addprefix $(TVBUILDDIR32)/, $(BASENAMES32)))
 
 .PHONY: all build clean sim32 sim64 debug32 debug64 bitbang32 bitbang64 generate dirs debug memfile
 .PRECIOUS: $(BUILD)/%.elf
@@ -77,6 +88,7 @@ dirs:
 	mkdir -p $(BUILD)
 	mkdir -p $(LOGSDIR)
 	mkdir -p $(TVBUILDDIR)
+	mkdir -p $(TVBUILDDIR32)
 
 $(BUILD)/%.elf.objdump: $(BUILD)/%.elf
 	$(OBJDUMP) -D $< > $@
@@ -85,7 +97,7 @@ $(BUILD)/%.elf: rv64/%.S
 	$(CC) $(ASFLAGS) -o $@ $<
 
 $(TVBUILDDIR)/%.tv:
-	./debugtestgen.py -s $(BUILD)/$(basename $(notdir $@)).elf -t $(TVDIR)/$(basename $(notdir $@)).tcl
+	./debugtestgen.py -s $(BUILD)/$(basename $(notdir $@)).elf -t $(TVDIR)/$(basename $(notdir $@)).tcl -i 64
 	grep "41b" $(LOGSDIR)/$(basename $(notdir $@)).log | sed 's/.*41b \([^;]*\).*/\1/' > $@
 	echo 'w 40000001 @10 -> + 00000000 @00' >> $@
 

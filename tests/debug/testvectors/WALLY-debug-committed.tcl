@@ -62,7 +62,9 @@ halt
 set_reg [list dpc $dosteps]
 riscv dmi_write 0x16 0x700
 
-for {set i 0} {$i < 24} {incr i} {
+set instrnum 7
+
+for {set i 0} {$i < $instrnum * 16} {incr i} {
     # li
     step
 }
