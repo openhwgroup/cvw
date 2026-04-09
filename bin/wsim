@@ -245,7 +245,7 @@ def runVerilator(args):
 
     # Phase 1: Compile (only once per config/params/defines combo)
     compile_cmd = (
-        f'make -C {sim_dir} compile'
+        f'make -C {sim_dir}'
         f' WALLYCONF={args.config}'
         f' TESTBENCH={args.tb}'
         f' PARAM_ARGS="{args.params}"'
@@ -253,8 +253,9 @@ def runVerilator(args):
         f' BUILD_HASH="{bhash}"'
     )
     with compileLock("verilator", f"{args.config}_{args.tb}{'_' + bhash if bhash else ''}"):
-        if os.system(compile_cmd):
-            return
+        if not isDesignUpToDate(binary):
+            if os.system(compile_cmd):
+                return
 
     # Phase 2: Run the simulation (parallel safe)
     # Run from sim/verilator/ so relative paths (e.g. logs/buildroot_uart.out) resolve correctly

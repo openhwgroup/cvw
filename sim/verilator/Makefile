@@ -23,7 +23,6 @@ INCLUDE_PATH  = "-I${WALLY}/config/shared" "-I${WALLY}/config/$(WALLYCONF)" "-I$
 SOURCES       = ${WALLY}/src/cvw.sv ${WALLY}/testbench/${TESTBENCH}.sv ${WALLY}/testbench/common/*.sv \
                 ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv \
                 ${WALLY}/addins/verilog-ethernet/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*/*/*.sv
-DEPENDENCIES  = ${WALLY}/config/shared/*.vh $(SOURCES)
 
 # Convert PARAM_ARGS entries (e.g. "MAKE_VCD=1") into verilator -G flags (e.g. "-GMAKE_VCD=1")
 EXPANDED_PARAM_ARGS := $(patsubst %,-G%,$(PARAM_ARGS))
@@ -31,12 +30,12 @@ EXPANDED_PARAM_ARGS := $(patsubst %,-G%,$(PARAM_ARGS))
 # ------ Work directory ------
 # Keyed on config + testbench (+ optional hash when compile-time params differ).
 # Multiple test suites sharing the same config reuse a single compiled binary.
+# wsim handles freshness checking and flock serialization before invoking make.
 ifneq ($(BUILD_HASH),)
     WORKDIR = $(VERILATOR_DIR)/wkdir/$(WALLYCONF)_$(TESTBENCH)_$(BUILD_HASH)
 else
     WORKDIR = $(VERILATOR_DIR)/wkdir/$(WALLYCONF)_$(TESTBENCH)
 endif
-
 
 # The regular testbench uses a C wrapper providing the getenvval DPI function
 ifeq ($(TESTBENCH), testbench)
@@ -49,10 +48,7 @@ endif
 
 default: compile
 
-# Build the verilated binary. wsim handles running the simulation.
-compile: $(WORKDIR)/V${TESTBENCH}
-
-$(WORKDIR)/V${TESTBENCH}: $(DEPENDENCIES)
+compile:
 	mkdir -p $(WORKDIR)
 	verilator \
 	--Mdir $(WORKDIR) -o V${TESTBENCH} \
