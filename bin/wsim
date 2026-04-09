@@ -179,27 +179,15 @@ def compileLock(sim_dir, lockname):
     return _Lock()
 
 
-def isDesignUpToDate(target, config):
+def isDesignUpToDate(target):
     """Check if a compiled design target is newer than all source/config files.
     Returns True if the target exists and is newer than all dependencies."""
     if not target.exists():
         return False
     target_mtime = target.stat().st_mtime
-    import glob
-    dep_patterns = [
-        f"{WALLY}/config/shared/*.vh",
-        f"{WALLY}/config/{config}/*",
-        f"{WALLY}/config/deriv/{config}/*",
-        f"{WALLY}/src/cvw.sv",
-        f"{WALLY}/testbench/testbench.sv",
-        f"{WALLY}/testbench/testbench_fp.sv",
-        f"{WALLY}/testbench/common/*.sv",
-        f"{WALLY}/src/*/*.sv",
-        f"{WALLY}/src/*/*/*.sv",
-    ]
-    for pattern in dep_patterns:
-        for dep in glob.glob(pattern):
-            if os.path.getmtime(dep) > target_mtime:
+    for ext in ("*.sv", "*.v", "*.svh", "*.vh"):
+        for dep in WALLY.rglob(ext):
+            if dep.stat().st_mtime > target_mtime:
                 return False
     return True
 
@@ -233,7 +221,7 @@ def runQuesta(args, flags, prefix):
     print(f"Running Questa on {args.config} {args.testsuite}")
     wkdir_path = WALLY / "sim" / "questa" / wkdir
     with compileLock("questa", f"{args.config}_{args.tb}{'_' + bhash if bhash else ''}"):
-        if not isDesignUpToDate(wkdir_path / "testbenchopt", args.config):
+        if not isDesignUpToDate(wkdir_path / "testbenchopt"):
             compile_cmd = f'do wally-compile.do {args.config} {args.tb} {wkdir} {compile_flags}'
             compile_cmd = f'cd {sim_dir}; {prefix} vsim -c -do "{compile_cmd}"'
             if os.system(compile_cmd):
@@ -295,7 +283,7 @@ def runVCS(args, flags, prefix):
 
     # Phase 1: Compile (only once per config/flags/params/defines combo)
     with compileLock("vcs", f"{args.config}_{args.tb}{'_' + bhash if bhash else ''}"):
-        if not isDesignUpToDate(binary, args.config):
+        if not isDesignUpToDate(binary):
             compile_cmd = f'cd {sim_dir}; {prefix} ./run_vcs compile {args.config} {args.testsuite} --wkdir {wkdir} {compile_flags}'
             if os.system(compile_cmd):
                 return
