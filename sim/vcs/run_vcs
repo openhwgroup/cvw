@@ -59,7 +59,9 @@ def getCompileOptions(wkdir, args):
                                 "$IMPERAS_HOME/ImpPublic/source/host/rvvi/*.sv",
                                 "$IMPERAS_HOME/ImpProprietary/source/host/idv/*.sv"])
     if args.breker:
-        WALLY_UVM_PKG = os.environ.get('WALLY_UVM_PKG', "")
+        WALLY_UVM_PKG = os.environ.get('WALLY_UVM_PKG')
+        if not WALLY_UVM_PKG:
+            raise RuntimeError("WALLY_UVM_PKG environment variable is not set for Breker test!")
         compileOptions.extend([f"+incdir+{WALLY}/testbench/trek_files",
                                f"+incdir+{os.path.dirname(WALLY_UVM_PKG)}",
                                 " -ntb_opts uvm",
@@ -78,6 +80,8 @@ def getSimvOptions(args):
         simvOptions.append("-sv_lib $IMPERAS_HOME/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model")
     if args.breker:
         BREKER_HOME = os.environ.get("BREKER_HOME")
+        if not BREKER_HOME:
+            raise RuntimeError("BREKER_HOME environment variable is not set for Breker test!")
         simvOptions.append(f"-sv_lib {BREKER_HOME}/linux64/lib/libtrek")
     return " ".join(simvOptions)
 
