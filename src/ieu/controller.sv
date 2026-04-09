@@ -89,7 +89,10 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   output logic        CSRWriteFenceM,          // CSR write or fence instruction; needs to flush the following instructions
   output logic [4:0]  RdE, RdM,                // Pipelined destination registers
   // Forwarding controls
-  output logic [4:0]  RdW                      // Register destinations in Execute, Memory, or Writeback stage
+  output logic [4:0]  RdW,                     // Register destinations in Execute, Memory, or Writeback stage
+  // Hypervisor load/store signals
+  output logic        HLVAccessM,              // Hypervisor virtual-machine load/store instruction in Memory stage
+  output logic        HLVXAccessM              // Hypervisor HLVX (execute-permission) instruction in Memory stage
 );
 
   logic [4:0] Rs1E;                      // pipelined register sources
@@ -148,6 +151,11 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic        AFunctD, AMOFunctD;             // Detect atomic instructions
   logic        RWFunctD, MWFunctD;             // detect RW/MW instructions
   logic        PFunctD, CSRFunctD;             // detect privileged / CSR instruction
+  logic        HLVFunctD;                      // detect HLV/HSV/HLVX instruction
+  logic        HLVLoadD;                        // HLV/HLVX load (not HSV store)
+  logic        HLVXAccessD, HLVXAccessE;       // HLVX execute-permission instruction
+  logic        HLVAccessD, HLVAccessE;         // HLV/HSV/HLVX instruction
+  logic [2:0]  HLVFunct3D;                     // Synthesized Funct3 from funct7/rs2 for HLV/HSV size
   logic        FenceM;                         // Fence.I or sfence.VMA instruction in memory stage
   logic [2:0]  PreALUSelectD;                  // ALU Output selection mux control (before possible Zicond logic)
   logic [2:0]  ALUSelectD;                     // ALU Output selection mux control
@@ -216,6 +224,21 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     assign JRFunctD         = Funct3D == 3'b000;
     assign PFunctD          = Funct3D == 3'b000 & RdD == 5'b0;
     assign CSRFunctD        = Funct3D[1:0] != 2'b00;
+    // HLV/HSV/HLVX: funct3=100, funct7[6:3]=0110 (covers 0110000-0110111), gated by H_SUPPORTED
+    // Loads (HLV/HLVX): funct7[0]=0, rs2 in {00000,00001,00011}
+    // Stores (HSV): funct7[0]=1, rd=00000
+    // RV64-only: HLV.WU (funct7=0110100,rs2=00001), HLV.D (funct7=0110110,rs2=00000), HSV.D (funct7=0110111,rd=00000)
+    assign HLVFunctD        = P.H_SUPPORTED & (Funct3D == 3'b100) & (Funct7D[6:3] == 4'b0110) &
+                              (Funct7D[0] ? (RdD == 5'b00000)    // HSV stores: rd must be 0
+                                          : (Rs2D == 5'b00000 | Rs2D == 5'b00001 | Rs2D == 5'b00011)) & // HLV/HLVX: rs2 in valid set
+                              // Gate RV64-only variants on XLEN=64:
+                              // HLV.WU: funct7=0110100 ([2:0]=100), rs2=00001
+                              // HLV.D:  funct7=0110110 ([2:0]=110), rs2=00000
+                              // HSV.D:  funct7=0110111 ([2:0]=111), rd=00000 (already checked)
+                              ~(P.XLEN != 64 &
+                                ((Funct7D[2:0] == 3'b100 & Rs2D == 5'b00001) |  // HLV.WU
+                                 (Funct7D[2:0] == 3'b110 & Rs2D == 5'b00000) |  // HLV.D
+                                 (Funct7D[2:0] == 3'b111)));                     // HSV.D
     assign IWValidFunct3D   = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b101;
   end else begin:legalcheck2
     assign IFunctD = 1'b1; // Don't bother to separate out shift decoding
@@ -234,6 +257,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     assign JRFunctD = 1'b1; // don't bother to check Funct3 for jalrs
     assign PFunctD = 1'b1; // don't bother to check fields for privileged instructions
     assign CSRFunctD = 1'b1; // don't bother to check Funct3 for CSR operations
+    assign HLVFunctD = P.H_SUPPORTED & (Funct3D == 3'b100) & (Funct7D[6:3] == 4'b0110); // cheap check
     assign IWValidFunct3D = 1'b1;
   end
 
@@ -291,6 +315,10 @@ module controller import cvw::*;  #(parameter cvw_t P) (
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_1_0_0_00_0_0; // privileged; decoded further in privdec modules
                    else if (CSRFunctD)
                       ControlsD = `CTRLW'b1_000_00_00_010_0_0_0_0_0_1_0_0_0_00_0_0; // csrs
+                   else if (HLVFunctD & ~Funct7D[0])
+                      ControlsD = `CTRLW'b1_101_01_10_001_0_0_0_0_0_0_1_0_0_00_0_0; // HLV/HLVX load: RegWrite, ImmSrc=101(zero), ALUSrcB=01, MemRW=10, ResultSrc=001, Privileged
+                   else if (HLVFunctD & Funct7D[0])
+                      ControlsD = `CTRLW'b0_101_01_01_000_0_0_0_0_0_0_1_0_0_00_0_0; // HSV store: ImmSrc=101(zero), ALUSrcB=01, MemRW=01, Privileged
                   end
     endcase
   end
@@ -307,6 +335,14 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   assign CSRZeroSrcD = InstrD[14] ? (InstrD[19:15] == 0) : (Rs1D == 0); // Is a CSR instruction using zero as the source?
   assign CSRWriteD = CSRReadD & !(CSRZeroSrcD & InstrD[13]);            // Don't write if setting or clearing zeros
   assign SFenceVmaD = PrivilegedD & (InstrD[31:25] ==  7'b0001001);
+
+  // HLV/HSV/HLVX: synthesize Funct3 (size encoding) from funct7/rs2
+  // funct7[2:1] -> size: 00=byte, 01=half, 10=word, 11=double
+  // rs2[0] (InstrD[20]) -> unsigned flag for loads
+  assign HLVLoadD   = HLVFunctD & ~Funct7D[0];
+  assign HLVFunct3D = HLVLoadD ? {Rs2D[0], Funct7D[2:1]} : {1'b0, Funct7D[2:1]}; // loads get unsigned bit; stores just size
+  assign HLVAccessD  = HLVFunctD;
+  assign HLVXAccessD = HLVFunctD & ~Funct7D[0] & (Rs2D == 5'b00011); // HLVX: rs2=00011
   assign FenceD = SFenceVmaD | FenceXD; // possible sfence.vma or fence.i
 
   // ALU Decoding is lazy, only using func7[5] to distinguish add/sub and srl/sra
@@ -419,8 +455,9 @@ module controller import cvw::*;  #(parameter cvw_t P) (
 
   // Execute stage pipeline control register and logic
   flopenrc #(45) controlregE(clk, reset, FlushE, ~StallE,
-                           {ALUSelectD, RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, Funct7D, W64D, BUW64D, SubArithD, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, FenceD, CMOpD, IFUPrefetchD, LSUPrefetchD, CZeroD, InstrValidD},
+                           {ALUSelectD, RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, HLVFunctD ? HLVFunct3D : Funct3D, Funct7D, W64D, BUW64D, SubArithD, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, FenceD, CMOpD, IFUPrefetchD, LSUPrefetchD, CZeroD, InstrValidD},
                            {ALUSelectE, IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, Funct7E, W64E, UW64E, SubArithE, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, CMOpE, IFUPrefetchE, LSUPrefetchE, CZeroE, InstrValidE});
+  flopenrc #(2)  hlvaccessregE(clk, reset, FlushE, ~StallE, {HLVAccessD, HLVXAccessD}, {HLVAccessE, HLVXAccessE});
   flopenrc #(5)  Rs1EReg(clk, reset, FlushE, ~StallE, Rs1D, Rs1E);
   flopenrc #(5)  Rs2EReg(clk, reset, FlushE, ~StallE, Rs2D, Rs2E);
   flopenrc #(5)  RdEReg(clk, reset, FlushE, ~StallE, RdD, RdE);
@@ -445,6 +482,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   flopenrc #(25) controlregM(clk, reset, FlushM, ~StallM,
                          {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, FWriteIntE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE, IntDivE, CMOpE, LSUPrefetchE},
                          {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, FWriteIntM, AtomicM, InvalidateICacheM, FlushDCacheM, FenceM, InstrValidM, IntDivM, CMOpM, LSUPrefetchM});
+  flopenrc #(2)  hlvaccessregM(clk, reset, FlushM, ~StallM, {HLVAccessE, HLVXAccessE}, {HLVAccessM, HLVXAccessM});
   flopenrc #(5)  RdMReg(clk, reset, FlushM, ~StallM, RdE, RdM);
 
   // Writeback stage pipeline control register
