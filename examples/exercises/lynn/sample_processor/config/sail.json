@@ -168,7 +168,8 @@
       "supported": false
     },
     "U": {
-      "supported": false
+      "TODO_comment": "This should be false, currently true to work around sail bug",
+      "supported": true
     },
     "Zibi": {
       "supported": false
