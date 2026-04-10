@@ -157,7 +157,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   assign TVecAlignedM = {TVecM[P.XLEN-1:2], 2'b00};
 
   // Support vectored interrupts
-  if(P.VECTORED_INTERRUPTS_SUPPORTED) begin:vec
+  if (P.VECTORED_INTERRUPTS_SUPPORTED) begin : vec
     logic VectoredM;
     logic [P.XLEN-1:0] TVecPlusCauseM;
     assign VectoredM = InterruptM & (TVecM[1:0] == 2'b01);
@@ -240,7 +240,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     .MENVCFG_REGW);
 
 
-  if (P.S_SUPPORTED) begin:csrs
+  if (P.S_SUPPORTED) begin : csrs
     logic STCE;
     assign STCE = P.SSTC_SUPPORTED & (PrivilegeModeW == P.M_MODE | (MCOUNTEREN_REGW[1] & ENVCFG_STCE));
     csrs #(P) csrs(.clk, .reset,
@@ -265,7 +265,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   end
 
   // Floating Point CSRs in User Mode only needed if Floating Point is supported
-  if (P.F_SUPPORTED) begin:csru
+  if (P.F_SUPPORTED) begin : csru
     csru #(P) csru(.clk, .reset, .InstrValidNotFlushedM,
       .CSRUWriteM, .CSRAdrM, .CSRWriteValM, .STATUS_FS, .CSRUReadValM,
       .SetFflagsM, .FRM_REGW, .WriteFRMM, .SetOrWriteFFLAGSM,
@@ -278,7 +278,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign SetOrWriteFFLAGSM = 1'b0;
   end
 
-  if (P.ZICNTR_SUPPORTED) begin:counters
+  if (P.ZICNTR_SUPPORTED) begin : counters
     csrc #(P) counters(.clk, .reset, .StallE, .StallM, .FlushM,
       .InstrValidNotFlushedM, .LoadStallD, .StoreStallD, .CSRWriteM, .CSRMWriteM,
       .BPDirWrongM, .BTAWrongM, .RASPredPCWrongM, .IClassWrongM, .BPWrongM,

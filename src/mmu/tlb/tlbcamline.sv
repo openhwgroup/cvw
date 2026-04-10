@@ -81,21 +81,21 @@ module tlbcamline import cvw::*;  #(parameter cvw_t P,
   assign Query1 = VPN[2*SEGMENT_BITS-1:SEGMENT_BITS];
   assign Match1 = (Query1 == Key1) | (PageType > 3'd1); // always match for gigapage or larger
 
-  if (P.SV39_SUPPORTED) begin: segment2
+  if (P.SV39_SUPPORTED) begin : segment2
     logic [SEGMENT_BITS-1:0] Key2, Query2;
     assign Key2   = Key[3*SEGMENT_BITS-1:2*SEGMENT_BITS];
     assign Query2 = VPN[3*SEGMENT_BITS-1:2*SEGMENT_BITS];
     assign Match2 = (Query2 == Key2) | (PageType > 3'd2);  // always match for terapage or larger
   end else assign Match2 = 1'b1;
 
-  if (P.SV48_SUPPORTED) begin: segment3
+  if (P.SV48_SUPPORTED) begin : segment3
     logic [SEGMENT_BITS-1:0] Key3, Query3;
     assign Key3   = Key[4*SEGMENT_BITS-1:3*SEGMENT_BITS];
     assign Query3 = VPN[4*SEGMENT_BITS-1:3*SEGMENT_BITS];
     assign Match3 = (Query3 == Key3) | (PageType > 3'd3) | SV39Mode; // always match in SV39 mode or for petapage
   end else assign Match3 = 1'b1;
 
-  if (P.SV57_SUPPORTED) begin: segment4
+  if (P.SV57_SUPPORTED) begin : segment4
     logic [SEGMENT_BITS-1:0] Key4, Query4;
     assign Key4   = Key[5*SEGMENT_BITS-1:4*SEGMENT_BITS];
     assign Query4 = VPN[5*SEGMENT_BITS-1:4*SEGMENT_BITS];
