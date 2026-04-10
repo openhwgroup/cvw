@@ -81,7 +81,7 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
     assign hfencegvmaM  = (InstrM[31:25] ==  7'b0110001) & (InstrM[14:12] == 3'b000) & rdzeroM; // hfence.gvma
     assign hinvalvvmaM  = P.SVINVAL_SUPPORTED & (InstrM[31:25] ==  7'b0010011) & rdzeroM; // hinval.vvma
     assign hinvalgvmaM  = P.SVINVAL_SUPPORTED & (InstrM[31:25] ==  7'b0110011) & rdzeroM; // hinval.gvma
-    assign hlvhsvM      = (InstrM[14:12] == 3'b100) & (InstrM[31:27] == 5'b01100); // funct3=100, funct7[6:2]=01100
+    assign hlvhsvM      = (InstrM[14:12] == 3'b100) & (InstrM[31:28] == 4'b0110); // funct3=100, funct7[6:3]=0110
     assign hlvhsvValidM = PrivilegedM & hlvhsvM &
                           (PrivilegeModeW == P.M_MODE |
                            (PrivilegeModeW == P.S_MODE & ~VirtModeW) |        // HS-mode
