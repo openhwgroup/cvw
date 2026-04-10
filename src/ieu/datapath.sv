@@ -122,7 +122,7 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   flopenrc #(P.XLEN) IFResultWReg(clk, reset, FlushW, ~StallW, IFResultM, IFResultW);
 
   // floating point inputs: FIntResM comes from fclass, fcmp, fmv; FCvtIntResW comes from fcvt
-  if (P.F_SUPPORTED) begin:fpmux
+  if (P.F_SUPPORTED) begin : fpmux
     mux2  #(P.XLEN)  resultmuxM(IEUResultM, FIntResM, FWriteIntM, IFResultM);
     mux2  #(P.XLEN)  cvtresultmuxW(IFResultW, FCvtIntResW, FCvtIntW, IFCvtResultW);
     if (P.IDIV_ON_FPU & P.F_SUPPORTED) begin
@@ -130,7 +130,7 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
     end else begin
       assign MulDivResultW = MDUResultW;
     end
-  end else begin:fpmux
+  end else begin : fpmux
     assign IFResultM = IEUResultM;
     assign IFCvtResultW = IFResultW;
     assign MulDivResultW = MDUResultW;

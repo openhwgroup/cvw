@@ -143,7 +143,7 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
   flopenr #(P.XLEN) SENVCFGreg(clk, reset, WriteSENVCFGM, SENVCFG_WriteValM, SENVCFG_REGW);
 
   // CSR Reads
-  always_comb begin:csrr
+  always_comb begin : csrr
     CSRSReadValM = '0;
     IllegalCSRSAccessM = 1'b0;
     case (CSRAdrM)

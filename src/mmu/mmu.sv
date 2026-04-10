@@ -83,7 +83,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   assign EffectivePrivilegeModeW = IMMU ? PrivilegeModeW : (STATUS_MPRV ? STATUS_MPP : PrivilegeModeW);
 
   // only instantiate TLB if Virtual Memory is supported
-  if (P.VIRTMEM_SUPPORTED) begin:tlb
+  if (P.VIRTMEM_SUPPORTED) begin : tlb
     logic ReadAccess, WriteAccess;
     assign ReadAccess = ExecuteAccessF | ReadAccessM; // execute also acts as a TLB read.  Execute and Read are never active for the same MMU, so safe to mix pipestages
     assign WriteAccess = WriteAccessM;
@@ -96,7 +96,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
           .DisableTranslation, .PTE, .PageTypeWriteVal,
           .TLBWrite, .TLBFlush, .TLBPAdr, .TLBMiss,
           .Translate, .TLBPageFault, .UpdateDA, .PBMemoryType);
-  end else begin:tlb // just pass address through as physical
+  end else begin : tlb // just pass address through as physical
     assign Translate    = 1'b0;
     assign TLBMiss      = 1'b0;
     assign TLBPageFault = 1'b0;

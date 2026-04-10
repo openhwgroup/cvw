@@ -124,7 +124,7 @@ module cache import cvw::*; #(parameter cvw_t P,
     .FlushWay, .FlushCache, .ReadDataLineWay, .HitWay, .ValidWay, .DirtyWay, .HitDirtyWay, .TagWay, .FlushStage, .InvalidateCache);
 
   // Select victim way for associative caches
-  if(NUMWAYS > 1) begin:vict
+  if (NUMWAYS > 1) begin : vict
     cacheLRU #(NUMWAYS, SETLEN, NUMSETS) cacheLRU(
       .clk, .reset, .FlushStage, .CacheEn, .HitWay, .ValidWay, .VictimWay, .CacheSetLRU, .LRUWriteEn,
       .SetValid, .PAdr(PAdr[SETTOP-1:OFFSETLEN]), .InvalidateCache);
@@ -142,7 +142,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   or_rows #(NUMWAYS, TAGLEN) TagAOMux(.a(TagWay), .y(Tag));
 
   // Data cache needs to choose word offset from PAdr or BeatCount to writeback dirty lines
-  if(!READ_ONLY_CACHE)
+  if (!READ_ONLY_CACHE)
     mux2 #(LOGBWPL) WordAdrrMux(.d0(PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)]),
       .d1(BeatCount), .s(SelBusBeat),
       .y(WordOffsetAddr));
@@ -165,7 +165,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path
   /////////////////////////////////////////////////////////////////////////////////////////////
-  if(!READ_ONLY_CACHE) begin:WriteSelLogic
+  if (!READ_ONLY_CACHE) begin : WriteSelLogic
     logic [LINELEN/8-1:0]          DemuxedByteMask, FetchBufferByteSel;
 
     // Adjust byte mask from word to cache line
@@ -178,24 +178,22 @@ module cache import cvw::*; #(parameter cvw_t P,
     assign FetchBufferByteSel = SetDirty ? ~DemuxedByteMask : '1;  // If load miss set all muxes to 1.
 
     // Merge write data into fetched cache line for store miss
-    for(index = 0; index < LINELEN/8; index++) begin
+    for (index = 0; index < LINELEN/8; index++) begin
       mux2 #(8) WriteDataMux(.d0(WriteData[(8*index)%WORDLEN+7:(8*index)%WORDLEN]),
         .d1(FetchBuffer[8*index+7:8*index]), .s(FetchBufferByteSel[index] & ~CMOpM[3]), .y(LineWriteData[8*index+7:8*index]));
     end
     assign LineByteMask = SetDirty ? DemuxedByteMask : '1;
+  end else begin : WriteSelLogic
+    // No need for this mux if the cache does not handle writes.
+    assign LineWriteData = FetchBuffer;
+    assign LineByteMask = '1;
   end
-  else
-    begin:WriteSelLogic
-      // No need for this mux if the cache does not handle writes.
-      assign LineWriteData = FetchBuffer;
-      assign LineByteMask = '1;
-    end
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Flush logic
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  if (!READ_ONLY_CACHE) begin:flushlogic // D$ can be flushed
+  if (!READ_ONLY_CACHE) begin : flushlogic // D$ can be flushed
     logic                          ResetOrFlushCntRst;
     logic [SETLEN-1:0]             NextFlushAdr, FlushAdrP1;
 
@@ -208,11 +206,11 @@ module cache import cvw::*; #(parameter cvw_t P,
 
     // Flush way
     flopenl #(NUMWAYS) FlushWayReg(clk, FlushWayCntEn, ResetOrFlushCntRst, {{NUMWAYS-1{1'b0}}, 1'b1}, NextFlushWay, FlushWay);
-    if(NUMWAYS > 1) assign NextFlushWay = {FlushWay[NUMWAYS-2:0], FlushWay[NUMWAYS-1]};
+    if (NUMWAYS > 1) assign NextFlushWay = {FlushWay[NUMWAYS-2:0], FlushWay[NUMWAYS-1]};
     else            assign NextFlushWay = FlushWay[NUMWAYS-1];
     assign FlushWayFlag = FlushWay[NUMWAYS-1];
   end // block: flushlogic
-  else begin:flushlogic // I$ is never flushed because it is never dirty
+  else begin : flushlogic // I$ is never flushed because it is never dirty
     assign FlushWay = '0;
     assign FlushWayFlag = 1'b0;
     assign FlushAdrFlag = 1'b0;
