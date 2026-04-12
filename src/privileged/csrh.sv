@@ -136,23 +136,12 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   localparam VSTIMECMP  = 12'h24D;
   localparam VSTIMECMPH = 12'h25D;
 
-  // In some cases, using SPIKE as a reference model for testing causes mismatches due to spec implementation mismatches (supported configs, etc)
-  // Set SIM_COMPLIANCE = 1 to match SPIKE behavior
-  // Set SIM_COMPLIANCE = 0 to match intended Wally & spec behavior
-  localparam SIM_COMPLIANCE = 1;
-
-  logic [63:0] HEDELEG_MASK;
-  // RV32 + SIM_COMPLIANCE matches Spike's permissive upper-half write behavior via hedelegh.
-  // Spec-oriented path keeps unsupported upper bits read-only zero.
-  if (P.XLEN == 32 && SIM_COMPLIANCE) assign HEDELEG_MASK = 64'hFFFF_FFFF_000C_B1FF;
-  else                                assign HEDELEG_MASK = 64'h0000_0000_000C_B1FF;
+  localparam [63:0] HEDELEG_MASK = 64'h0000_0000_000C_B1FF;
   // HIDELEG: only VS-level interrupts (VSSIP/VSTIP/VSEIP) are writable.
   localparam [11:0] HIDELEG_MASK = 12'h444;
   localparam [11:0] HVIP_MASK    = 12'h444; // Only VSSIP[2], VSTIP[6], VSEIP[10] are writable (spec 7.4.4)
-  // GEILEN controls writability of guest-external interrupt CSRs.
-  // Spec path keeps GEILEN=0 until full guest external interrupt plumbing is integrated.
-  // SIM path uses maximal GEILEN (31/63) to match reference-model CSR accessibility.
-  localparam int unsigned GEILEN = SIM_COMPLIANCE ? (P.XLEN-1) : 0;
+  // No guest-external interrupt source is wired in yet, so GEILEN is architecturally zero.
+  localparam int unsigned GEILEN = 0;
   // Include all standard HIE bits in the architectural mask; SGEIE writability is GEILEN-gated in write logic.
   localparam [12:0] HIE_MASK = (GEILEN == 0) ? 13'h0444 : 13'h1444;
 
@@ -599,15 +588,12 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
           1'b0,                                   // SSE (Zicfiss) unsupported
           1'b0,                                   // LPE (Zicfilp) unsupported
           1'b0,                                   // WPRI
-          // FIOM is defined by the spec (not tied to virtmem support).
-          // Spike appears to treat FIOM as read-only zero; SIM_COMPLIANCE forces 0 for test alignment.
-          (SIM_COMPLIANCE ? 1'b0 : CSRWriteValM[0]) // FIOM
+          CSRWriteValM[0]                         // FIOM
         };
         NextHENVCFGM[63:32] = {
-          // Spike appears to treat STCE/PBMTE/ADUE as read-only zero; SIM_COMPLIANCE forces 0 for test alignment.
-          (SIM_COMPLIANCE ? 1'b0 : (CSRWriteValM[63] & P.SSTC_SUPPORTED & MENVCFG_STCE)),   // STCE
-          (SIM_COMPLIANCE ? 1'b0 : (CSRWriteValM[62] & P.SVPBMT_SUPPORTED & MENVCFG_PBMTE)), // PBMTE
-          (SIM_COMPLIANCE ? 1'b0 : (CSRWriteValM[61] & P.SVADU_SUPPORTED & MENVCFG_ADUE)),   // ADUE
+          CSRWriteValM[63] & P.SSTC_SUPPORTED & MENVCFG_STCE,      // STCE
+          CSRWriteValM[62] & P.SVPBMT_SUPPORTED & MENVCFG_PBMTE,   // PBMTE
+          CSRWriteValM[61] & P.SVADU_SUPPORTED & MENVCFG_ADUE,     // ADUE
           1'b0,                                   // WPRI
           1'b0,                                   // DTE (Ssdbltrp) unsupported
           1'b0,                                   // WPRI
@@ -631,18 +617,15 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
           1'b0,                                   // SSE (Zicfiss) unsupported
           1'b0,                                   // LPE (Zicfilp) unsupported
           1'b0,                                   // WPRI
-          // FIOM is defined by the spec (not tied to virtmem support).
-          // Spike appears to treat FIOM as read-only zero; SIM_COMPLIANCE forces 0 for test alignment.
-          (SIM_COMPLIANCE ? 1'b0 : CSRWriteValM[0]) // FIOM
+          CSRWriteValM[0]                         // FIOM
         };
       end
       if (WriteHENVCFGHM) begin
         // Mask WPRI/unsupported fields to 0 per spec.
         NextHENVCFGM[63:32] = {
-          // Spike appears to treat STCE/PBMTE/ADUE as read-only zero; SIM_COMPLIANCE forces 0 for test alignment.
-          (SIM_COMPLIANCE ? 1'b0 : (CSRWriteValM[31] & P.SSTC_SUPPORTED & MENVCFG_STCE)),   // STCE
-          (SIM_COMPLIANCE ? 1'b0 : (CSRWriteValM[30] & P.SVPBMT_SUPPORTED & MENVCFG_PBMTE)), // PBMTE
-          (SIM_COMPLIANCE ? 1'b0 : (CSRWriteValM[29] & P.SVADU_SUPPORTED & MENVCFG_ADUE)),   // ADUE
+          CSRWriteValM[31] & P.SSTC_SUPPORTED & MENVCFG_STCE,      // STCE
+          CSRWriteValM[30] & P.SVPBMT_SUPPORTED & MENVCFG_PBMTE,   // PBMTE
+          CSRWriteValM[29] & P.SVADU_SUPPORTED & MENVCFG_ADUE,     // ADUE
           1'b0,                                   // WPRI
           1'b0,                                   // DTE (Ssdbltrp) unsupported
           1'b0,                                   // WPRI

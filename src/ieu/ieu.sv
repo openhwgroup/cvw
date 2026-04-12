@@ -79,8 +79,7 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   output logic              StoreStallD,                     // load after store hazard
   output logic              CSRReadM, CSRWriteM, PrivilegedM,// CSR read, CSR write, is privileged instruction
   output logic              CSRWriteFenceM,                  // CSR write or fence instruction needs to flush subsequent instructions
-  output logic              HLVAccessM,                      // Hypervisor virtual-machine load/store in Memory stage
-  output logic              HLVXAccessM                      // Hypervisor HLVX (execute-permission) instruction in Memory stage
+  output logic              HLVHSVInstrM                     // Valid HLV/HLVX/HSV encoding in Memory stage
 );
 
   logic [2:0] ImmSrcD;                                       // Select type of immediate extension
@@ -120,7 +119,7 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
     .StallM, .FlushM, .MemRWE, .MemRWM, .CSRReadM, .CSRWriteM, .PrivilegedM, .AtomicM, .Funct3M,
     .FlushDCacheM, .InstrValidM, .InstrValidE, .InstrValidD, .FWriteIntM,
     .StallW, .FlushW, .RegWriteW, .IntDivW, .ResultSrcW, .CSRWriteFenceM, .InvalidateICacheM,
-    .RdW, .RdE, .RdM, .HLVAccessM, .HLVXAccessM);
+    .RdW, .RdE, .RdM, .HLVHSVInstrM);
 
   datapath #(P) dp(
     .clk, .reset, .ImmSrcD, .InstrD, .Rs1D, .Rs2D, .Rs2E, .StallE, .FlushE, .ForwardAE, .ForwardBE, .W64E, .UW64E, .SubArithE,

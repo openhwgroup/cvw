@@ -35,11 +35,11 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   input  logic         PrivilegedM,                         // is this a privileged instruction (from IEU controller)
   input  logic         IllegalIEUFPUInstrM,                 // Not a legal IEU instruction
   input  logic         IllegalCSRAccessM,                   // Not a legal CSR access
+  input  logic         HLVHSVInstrM,                        // Valid HLV/HLVX/HSV system-instruction encoding
   input  logic [1:0]   PrivilegeModeW,                      // current privilege level
   input  logic         VirtModeW,                           // current V
   input  logic         STATUS_TSR, STATUS_TVM, STATUS_TW,   // status bits (HS)
   input  logic         HSTATUS_VTSR, HSTATUS_VTVM, HSTATUS_VTW, // status bits (VS)
-  input  logic         HSTATUS_HU,                          // hstatus.HU bit for hypervisor U-mode access
   output logic         IllegalInstrFaultM,                  // Illegal instruction
   output logic         VirtualInstrFaultM,                  // Virtual instruction exception
   output logic         EcallFaultM, BreakpointFaultM,       // Ecall or breakpoint; must retire, so don't flush it when the trap occurs
@@ -56,12 +56,10 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   logic                sfencewinvalM, sfenceinvalirM;       // sfence.w.inval, sfence.inval.ir
   logic                hfencevvmaM, hfencegvmaM;            // hfence.vvma, hfence.gvma
   logic                hinvalvvmaM, hinvalgvmaM;            // hinval.vvma, hinval.gvma
-  logic                hlvhsvM;                             // HLV/HSV/HLVX instruction detected
-  logic                hlvhsvValidM;                        // HLV/HSV/HLVX in valid privilege mode
   logic                vmaM;                                // sfence.vma or sinval.vma
   logic                hvvmaM, hgvmaM;                      // HFENCE/HINVAL operations
   logic                fenceinvalM;                         // sfence.w.inval or sfence.inval.ir
-  logic                TSRM, TVMM, TWM;
+  logic                TSRM, TVMM;
 
   ///////////////////////////////////////////
   // Decode privileged instructions
@@ -79,20 +77,13 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   if (P.H_SUPPORTED) begin: hfence_decode_h
     assign hfencevvmaM  = (InstrM[31:25] ==  7'b0010001) & (InstrM[14:12] == 3'b000) & rdzeroM; // hfence.vvma
     assign hfencegvmaM  = (InstrM[31:25] ==  7'b0110001) & (InstrM[14:12] == 3'b000) & rdzeroM; // hfence.gvma
-    assign hinvalvvmaM  = P.SVINVAL_SUPPORTED & (InstrM[31:25] ==  7'b0010011) & rdzeroM; // hinval.vvma
-    assign hinvalgvmaM  = P.SVINVAL_SUPPORTED & (InstrM[31:25] ==  7'b0110011) & rdzeroM; // hinval.gvma
-    assign hlvhsvM      = (InstrM[14:12] == 3'b100) & (InstrM[31:28] == 4'b0110); // funct3=100, funct7[6:3]=0110
-    assign hlvhsvValidM = PrivilegedM & hlvhsvM &
-                          (PrivilegeModeW == P.M_MODE |
-                           (PrivilegeModeW == P.S_MODE & ~VirtModeW) |        // HS-mode
-                           (PrivilegeModeW == P.U_MODE & ~VirtModeW & HSTATUS_HU)); // U-mode with HU=1
+    assign hinvalvvmaM  = P.SVINVAL_SUPPORTED & (InstrM[31:25] ==  7'b0010011) & (InstrM[14:12] == 3'b000) & rdzeroM; // hinval.vvma
+    assign hinvalgvmaM  = P.SVINVAL_SUPPORTED & (InstrM[31:25] ==  7'b0110011) & (InstrM[14:12] == 3'b000) & rdzeroM; // hinval.gvma
   end else begin: hfence_decode_noh
     assign hfencevvmaM  = 1'b0;
     assign hfencegvmaM  = 1'b0;
     assign hinvalvvmaM  = 1'b0;
     assign hinvalgvmaM  = 1'b0;
-    assign hlvhsvM      = 1'b0;
-    assign hlvhsvValidM = 1'b0;
   end
   assign vmaM           =  presfencevmaM | (sinvalvmaM & P.SVINVAL_SUPPORTED);      // sfence.vma or sinval.vma
   assign fenceinvalM    = (sfencewinvalM | sfenceinvalirM) & P.SVINVAL_SUPPORTED;   // sfence.w.inval or sfence.inval.ir
@@ -103,11 +94,9 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   if (P.H_SUPPORTED) begin: status_bits_h
     assign TSRM = VirtModeW ? HSTATUS_VTSR : STATUS_TSR;
     assign TVMM = VirtModeW ? HSTATUS_VTVM : STATUS_TVM;
-    assign TWM  = VirtModeW ? HSTATUS_VTW : STATUS_TW;
   end else begin: status_bits_noh
     assign TSRM = STATUS_TSR;
     assign TVMM = STATUS_TVM;
-    assign TWM  = STATUS_TW;
   end
 
   assign sretM =      PrivilegedM & (InstrM[31:20] == 12'b000100000010) & rs1zeroM & P.S_SUPPORTED &
@@ -136,8 +125,11 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
     assign WFICountPlus1 = wfiM ? WFICount + 1 : '0; // restart counting on WFI
     flopr #(P.WFI_TIMEOUT_BIT+1) wficountreg(clk, reset, WFICountPlus1, WFICount);  // count while in WFI
   // coverage off -item e 1 -fecexprrow 1
-  // WFI Timeout trap will not occur when STATUS_TW is low while in supervisor mode, so the system gets stuck waiting for an interrupt and triggers a watchdog timeout.
-    assign WFITimeoutM = ((TWM & PrivilegeModeW != P.M_MODE) | (P.S_SUPPORTED & PrivilegeModeW == P.U_MODE)) & WFICount[P.WFI_TIMEOUT_BIT];
+  // If WFI is allowed to stall indefinitely in the current mode, the hart can wait forever
+  // for an interrupt and eventually trigger an external watchdog timeout instead.
+    assign WFITimeoutM = (((PrivilegeModeW != P.M_MODE) & STATUS_TW) |
+                          (VirtModeW & (PrivilegeModeW == P.S_MODE) & HSTATUS_VTW) |
+                          (P.S_SUPPORTED & (PrivilegeModeW == P.U_MODE))) & WFICount[P.WFI_TIMEOUT_BIT];
   // coverage on
   end else assign WFITimeoutM = 1'b0;
 
@@ -154,20 +146,28 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   // Fault on illegal instructions
   ///////////////////////////////////////////
 
-  assign IllegalPrivilegedInstrM = PrivilegedM & ~(sretM|mretM|ecallM|ebreakM|wfiM|sfencevmaM|hlvhsvValidM);
+  assign IllegalPrivilegedInstrM = PrivilegedM & ~(sretM|mretM|ecallM|ebreakM|wfiM|sfencevmaM);
 
   // Virtual Instruction Exception Detection
   if (P.H_SUPPORTED) begin: virtinstr
     // TODO: Complete full hypervisor virtual-instruction matrix (hypervisor.adoc: norm:H_cause_virtual_instruction).
-    logic is_sret;
+    logic is_sret, WFIShouldTrapVirtM;
     logic VSTSRFault, VTVMFault, HVFenceFault, VSTimecmpFault, HLVHSVFault;
+    logic VUWfiFault, VSWfiFault, VUSupFault;
     logic is_satp_access, is_stimecmp_access;
 
     assign is_sret = (InstrM[31:20] == 12'b000100000010) & rs1zeroM;
 
     assign VSTSRFault = PrivilegedM & is_sret & VirtModeW & HSTATUS_VTSR;
     assign HVFenceFault = PrivilegedM & VirtModeW & (hvvmaM | hgvmaM);
-    assign HLVHSVFault = PrivilegedM & hlvhsvM & VirtModeW; // norm:hlsv_virtinst: V=1 → virtual instruction
+    // Legal non-V execution remains TODO until the LSU/MMU path can honor
+    // SPVP, VS/VU translation, and HLVX execute-permission semantics.
+    assign HLVHSVFault = HLVHSVInstrM & VirtModeW; // norm:hlsv_virtinst: V=1 → virtual instruction
+    assign WFIShouldTrapVirtM = wfiM & WFITimeoutM & ~STATUS_TW;
+    assign VUWfiFault = WFIShouldTrapVirtM & VirtModeW & (PrivilegeModeW == P.U_MODE);
+    assign VSWfiFault = WFIShouldTrapVirtM & VirtModeW & (PrivilegeModeW == P.S_MODE) & HSTATUS_VTW;
+    assign VUSupFault = PrivilegedM & VirtModeW & (PrivilegeModeW == P.U_MODE) &
+                        (is_sret | vmaM | fenceinvalM);
 
     assign is_satp_access = (InstrM[31:20] == 12'h180);
     assign is_stimecmp_access = (InstrM[31:20] == 12'h14D) | ((P.XLEN == 32) & (InstrM[31:20] == 12'h15D)) |
@@ -177,7 +177,8 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
     // Accesses to (v)stimecmp blocked in V=1 are HS-qualified and should raise virtual-instruction.
     assign VSTimecmpFault = VirtModeW & IllegalCSRAccessM & is_stimecmp_access & P.SSTC_SUPPORTED;
 
-    assign VirtualInstrFaultM = VSTSRFault | HVFenceFault | VTVMFault | VSTimecmpFault | HLVHSVFault;
+    assign VirtualInstrFaultM = VSTSRFault | HVFenceFault | VTVMFault | VSTimecmpFault |
+                                HLVHSVFault | VUWfiFault | VSWfiFault | VUSupFault;
   end else begin: novirtinstr
     assign VirtualInstrFaultM = 1'b0;
   end
