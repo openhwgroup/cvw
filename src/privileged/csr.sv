@@ -80,6 +80,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   output logic                     STATUS_SPP, STATUS_TSR, STATUS_TVM,
   output logic                     HSTATUS_SPV,
   output logic                     HSTATUS_VTSR, HSTATUS_VTW, HSTATUS_VTVM,
+  output logic                     HSTATUS_HU,
   output logic                     VSSTATUS_SPP, VSSTATUS_SIE,
   output logic [63:0]              MEDELEG_REGW,
   output logic [63:0]              HEDELEG_REGW,
@@ -368,6 +369,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
       .NextEPCM, .NextCauseM, .NextTvalM, .NextHtvalM,
       .CSRHReadValM, .IllegalCSRHAccessM,
       .HSTATUS_SPV, .HSTATUS_VTSR, .HSTATUS_VTW, .HSTATUS_VTVM,
+      .HSTATUS_HU,
       .HSTATUS_VSBE, .VSSTATUS_SPP, .VSSTATUS_SIE, .VSSTATUS_SUM, .VSSTATUS_MXR, .VSSTATUS_UBE, .VSSTATUS_FS,
       .HEDELEG_REGW, .HIDELEG_REGW, .HIE_REGW, .HGEIE_REGW, .HCOUNTEREN_REGW, .HVIP_REGW, .HIP_MIP_REGW, .HTIMEDELTA_REGW, .HENVCFG_REGW,
       .VSTVEC_REGW, .VSEPC_REGW, .VSATP_REGW, .HGATP_REGW);
@@ -378,6 +380,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign HSTATUS_VTSR = 1'b0;
     assign HSTATUS_VTW = 1'b0;
     assign HSTATUS_VTVM = 1'b0;
+    assign HSTATUS_HU = 1'b0;
     assign HSTATUS_VSBE = 1'b0;
     assign VSSTATUS_SPP = 1'b0;
     assign VSSTATUS_SIE = 1'b0;

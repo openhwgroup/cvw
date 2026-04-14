@@ -61,6 +61,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   output logic              IllegalCSRHAccessM,
   output logic              HSTATUS_SPV,
   output logic              HSTATUS_VTSR, HSTATUS_VTW, HSTATUS_VTVM,
+  output logic              HSTATUS_HU,
   output logic              HSTATUS_VSBE,
   output logic              VSSTATUS_SPP, VSSTATUS_SIE,
   output logic              VSSTATUS_SUM, VSSTATUS_MXR, VSSTATUS_UBE,
@@ -84,7 +85,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0] MTVAL2_REGW;
   logic [P.XLEN-1:0] HSTATUS_REGW;
   logic [P.XLEN-1:0] VSSTATUS_REGW;
-  logic              HSTATUS_GVA, HSTATUS_SPVP, HSTATUS_HU;
+  logic              HSTATUS_GVA, HSTATUS_SPVP;
   logic [5:0]        HSTATUS_VGEIN;
   logic [1:0]        HSTATUS_VSXL, HSTATUS_HUPMM;
   logic              VSSTATUS_SD, VSSTATUS_SPELP, VSSTATUS_SDT;
@@ -141,6 +142,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   localparam [11:0] HVIP_MASK    = 12'h444; // Only VSSIP[2], VSTIP[6], VSEIP[10] are writable (spec 7.4.4)
   // No guest-external interrupt source is wired in yet, so GEILEN is architecturally zero.
   localparam int unsigned GEILEN = 0;
+  // Include all standard HIE bits in the architectural mask; SGEIE writability is GEILEN-gated in write logic.
   localparam [12:0] HIE_MASK = (GEILEN == 0) ? 13'h0444 : 13'h1444;
 
   // Write Enables for CSR instructions

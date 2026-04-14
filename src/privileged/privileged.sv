@@ -62,6 +62,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic              ICacheAccess,                                   // instruction cache access
   input  logic              DivBusyE,                                       // integer divide busy
   input  logic              FDivBusyE,                                      // floating point divide busy
+  input  logic              HLVHSVInstrM,                                   // Valid HLV/HLVX/HSV encoding in Memory stage
   // fault sources
   input  logic              InstrAccessFaultF,                              // instruction access fault
   input  logic              LoadAccessFaultM, StoreAmoAccessFaultM,         // load or store access fault
@@ -141,7 +142,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   // decode privileged instructions
   logic VirtualInstrFaultM;
   privdec #(P) pmd(.clk, .reset, .StallW, .FlushW, .InstrM(InstrM[31:7]),
-    .PrivilegedM, .IllegalIEUFPUInstrM, .IllegalCSRAccessM,
+    .PrivilegedM, .IllegalIEUFPUInstrM, .IllegalCSRAccessM, .HLVHSVInstrM,
     .PrivilegeModeW, .VirtModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_TW,
     .HSTATUS_VTSR, .HSTATUS_VTVM, .HSTATUS_VTW, .IllegalInstrFaultM, .VirtualInstrFaultM,
     .EcallFaultM, .BreakpointFaultM, .sretM, .mretM, .RetM, .wfiM, .wfiW, .sfencevmaM);
