@@ -344,7 +344,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
       .DebugResume, .BreakpointFaultM, .TriggerHalt);
   end else begin
     assign CSRTrigReadValM = '0;
-    assign IllegalCSRTrigAccessM = '0;
+    assign IllegalCSRTrigAccessM = 1'b1;
     assign TriggerHalt = 1'b0;
   end
 

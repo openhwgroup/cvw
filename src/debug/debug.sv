@@ -666,7 +666,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
   assign aarsize = Command[22:20];
   // assign StartCommand = DMIVALID & DMIRSPREADY & (DMIADDR == COMMAND) & ~|cmderr;
   //assign DebugRegAddr = Command[11:0];
-  assign DebugRegWrite = Command[16] & StartCommand;
+  assign DebugRegWrite = Command[16] & StartCommand & DebugMode;
 
   // Covering both 32 bit and 64 bit architectures.
   if (P.XLEN == 64) begin
@@ -680,14 +680,14 @@ module debug import cvw::*; #(parameter cvw_t P) (
       StartCommand <= 0;
       DebugRegAddr <= '0;
       CSRDebugEnable <= 0;
-      // FPRDebugEnable <= 0; is this needed as GPR not there
-      // GPRDebugEnable <= 0; is this is a bug?
+      FPRDebugEnable <= 0; //is this needed as GPR not there
+      GPRDebugEnable <= 0; //is this is a bug?
     end else begin
-      StartCommand <= DMIVALID & DMIRSPREADY & (DMIADDR == COMMAND) & ~|cmderr & DMActive;
+      StartCommand <= DMIVALID & DMIRSPREADY & (DMIADDR == COMMAND) & ~|cmderr & DMActive & DebugMode;
       DebugRegAddr <= DMIDATA[11:0];
-      GPRDebugEnable <= NextGPRDebugEnable;
-      FPRDebugEnable <= NextFPRDebugEnable;
-      CSRDebugEnable <= NextCSRDebugEnable;
+      GPRDebugEnable <= NextGPRDebugEnable & DebugMode;
+      FPRDebugEnable <= NextFPRDebugEnable & DebugMode;
+      CSRDebugEnable <= NextCSRDebugEnable & DebugMode;
     end
   end
 

@@ -200,6 +200,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
     mux2 #(5) rfwriteaddrmux (RdW, DebugRegAddr[4:0], FPRDebugEnable, Rd);
     mux2 #(P.FLEN) rfwdatamux (FResultW, DebugRegWDATA, FPRDebugEnable, Result);
     assign RegWrite = DebugMode ? DebugRegWrite & FPRDebugEnable : FRegWriteW;
+    assign DebugFRD1D = FRD1D;
   end else begin
     assign DebugFRD1D = '0;
     assign RegWrite = FRegWriteW;
@@ -214,7 +215,6 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
     .a4(Rd), .wd4(Result),
     .rd1(FRD1D), .rd2(FRD2D), .rd3(FRD3D));
 
-  assign DebugFRD1D = FRD1D;
   // D/E pipeline registers
   flopenrc #(P.FLEN) DEReg1(clk, reset, FlushE, ~StallE, FRD1D, FRD1E);
   flopenrc #(P.FLEN) DEReg2(clk, reset, FlushE, ~StallE, FRD2D, FRD2E);
