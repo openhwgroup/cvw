@@ -11,7 +11,6 @@ implemented_extensions:
   - { name: Zicntr, version: ">= 2.0" }
   - { name: Zicsr, version: ">= 2.0" }
   - { name: Zihpm, version: ">= 2.0" }
-  - { name: Zmmul, version: ">= 1.0" }
 
 params:
   # Zicntr params
@@ -53,7 +52,7 @@ params:
   MTVEC_ILLEGAL_WRITE_BEHAVIOR: retain
   # Smhpm params
   COUNTINHIBIT_EN: [
-      true,false,false,false,false,false,false,false,
+      false,false,false,false,false,false,false,false,
       false,false,false,false,false,false,false,false,
       false,false,false,false,false,false,false,false,
       false,false,false,false,false,false,false,false
