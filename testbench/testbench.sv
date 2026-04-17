@@ -88,7 +88,7 @@ module testbench;
   // Variables that can be overwritten with $value$plusargs at start of simulation
   string       TEST, ElfFile, sim_log_prefix;
   integer      INSTR_LIMIT;
-  string       UART_LOG_DIR;
+  string       UART_LOG_FILE;
   integer      UART_LOG;
 
   // DUT signals
@@ -154,8 +154,8 @@ module testbench;
     end
     if (!$value$plusargs("UART_LOG=%d", UART_LOG))
       UART_LOG = (TEST == "buildroot"); // Default to true for buildroot test, false otherwise
-    if (!$value$plusargs("UART_LOG_DIR=%s", UART_LOG_DIR))
-      UART_LOG_DIR = "logs/";
+    if (!$value$plusargs("UART_LOG_FILE=%s", UART_LOG_FILE))
+      UART_LOG_FILE = {"logs/", TEST, "_uart.out"};
     //$display("TEST = %s ElfFile = %s", TEST, ElfFile);
 
     if (ElfFile != "none") begin // If Elf File passed in, check its bit width
@@ -439,7 +439,7 @@ module testbench;
       updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, memfilename, WALLY_DIR, ProgramAddrLabelArray);
       // Open UART log file if enabled (buildroot defaults to on, override with +UART_LOG=1)
       if (UART_LOG) begin
-        uartoutfilename = {UART_LOG_DIR, TEST, "_uart.out"};
+        uartoutfilename = UART_LOG_FILE;
         uartoutfile = $fopen(uartoutfilename, "w");
       end else
         uartoutfile = 0;
