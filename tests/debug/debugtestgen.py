@@ -15,6 +15,7 @@ import time
 WALLY = os.environ.get("WALLY")
 DEBUGTESTS = f"{WALLY}/tests/debug/build"
 ISA = "rv64gc_zicsr"
+ISA32 = "rv32gcB_Zicbom_Zicsr_zicntr"
 RBBPORT = "9824"
 
 SPIKEARGS = [
@@ -45,11 +46,18 @@ def parse_args():
     parser.add_argument(
         "--tcl", "-t", help="Tcl script to run parallel to assembly test.",
         type=non_empty_string)
+    parser.add_argument(
+        "--isa", "-i", help="ISA choice, [32, 64]", type=non_empty_string
+    )
     return parser.parse_args()
 
 
-def start_spike(test):
+def start_spike(test, isa):
     spikeargs = SPIKEARGS
+
+    if (isa == "32"):
+        spikeargs[1] = f"--isa={ISA32}"
+
     spikeargs = spikeargs + \
         [f"+signature={os.path.splitext(args.test)[0]}.signature.output", test]
     print(" ".join(spikeargs))
@@ -64,7 +72,7 @@ def start_openocd(tclscript):
 
 
 def main(args):
-    start_spike(args.test)
+    start_spike(args.test, args.isa)
     time.sleep(1)
     openocd_proc = start_openocd(args.tcl)
     openocd_proc.wait()
