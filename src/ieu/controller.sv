@@ -170,85 +170,67 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   assign Rs2D    = InstrD[24:20];
   assign RdD     = InstrD[11:7];
 
-  assign HLVHSVInstrD = P.H_SUPPORTED & (OpD == 7'b1110011) & (Funct3D == 3'b100) &
-                        (Funct7D[6:3] == 4'b0110) &
-                        (Funct7D[0] ? (RdD == 5'b00000)
-                                    : ((Rs2D == 5'b00000) |
-                                       (Rs2D == 5'b00001) |
-                                       (Rs2D == 5'b00011))) &
-                        ~(P.XLEN != 64 &
-                          (((Funct7D[2:0] == 3'b100) & (Rs2D == 5'b00001)) |
-                           ((Funct7D[2:0] == 3'b110) & (Rs2D == 5'b00000)) |
-                           (Funct7D[2:0] == 3'b111)));
-
-  // Funct 7 checking
-  // Be rigorous about detecting illegal instructions if CSRs or bit manipulation or conditional ops are supported
-  // otherwise be cheap
-
-  if (P.ZICSR_SUPPORTED | P.ZBA_SUPPORTED  | P.ZBB_SUPPORTED  | P.ZBC_SUPPORTED  | P.ZBS_SUPPORTED |
-      P.ZBKB_SUPPORTED  | P.ZBKC_SUPPORTED | P.ZBKX_SUPPORTED | P.ZKNE_SUPPORTED |
-      P.ZKND_SUPPORTED  | P.ZKNH_SUPPORTED | P.ZICOND_SUPPORTED) begin:legalcheck // Exact integer decoding
-    logic Funct7ZeroD, Funct7b5D, IShiftD, INoShiftD;
-    logic Funct7ShiftZeroD, Funct7Shiftb5D;
-
-    assign Funct7ZeroD      = (Funct7D == 7'b0000000); // most R-type instructions
-    assign Funct7b5D        = (Funct7D == 7'b0100000); // srai, sub
-    assign FunctCZeroD      = (Funct3D == 3'b101 | Funct3D == 3'b111) & (Funct7D == 7'b0000111) & P.ZICOND_SUPPORTED; // czero.eqz or czero.nez
-    assign Funct7ShiftZeroD = (P.XLEN==64 & ~OpD[3]) ? (Funct7D[6:1] == 6'b000000) : Funct7ZeroD; // 64-bit logical shifts allowed on XLEN=64, non-W
-    assign Funct7Shiftb5D   = (P.XLEN==64 & ~OpD[3]) ? (Funct7D[6:1] == 6'b010000) : Funct7b5D;   // 64-bit arithmetic shifts allowed on XLEN=64, non-W
-    assign IShiftD          = (Funct3D == 3'b001 & Funct7ShiftZeroD) | (Funct3D == 3'b101 & (Funct7ShiftZeroD | Funct7Shiftb5D)); // slli, srli, srai, or w forms
-    assign INoShiftD        = ((Funct3D != 3'b001) & (Funct3D != 3'b101));
-    assign IFunctD          = IShiftD | INoShiftD;
-    assign RFunctD          = ((Funct3D == 3'b000 | Funct3D == 3'b101) & Funct7b5D) | FunctCZeroD | Funct7ZeroD;
-    assign MFunctD          = (Funct7D == 7'b0000001) & (P.M_SUPPORTED | (P.ZMMUL_SUPPORTED & ~Funct3D[2])); // muldiv
-    assign LFunctD          = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b010 | Funct3D == 3'b100 | Funct3D == 3'b101 |
-                              ((P.XLEN == 64) & (Funct3D == 3'b011 | Funct3D == 3'b110));
-    assign FLSFunctD        = (STATUS_FS != 2'b00) & ((Funct3D == 3'b010 & P.F_SUPPORTED) | (Funct3D == 3'b011 & P.D_SUPPORTED) |
-                              (Funct3D == 3'b100 & P.Q_SUPPORTED) | (Funct3D == 3'b001 & P.ZFH_SUPPORTED));
-    assign FenceFunctD      = (Funct3D == 3'b000) | (P.ZIFENCEI_SUPPORTED & Funct3D == 3'b001);
-    assign CMOFunctD        = (Funct3D == 3'b010 & RdD == 5'b0) &
-                              ((P.ZICBOZ_SUPPORTED & InstrD[31:20] == 12'd4 & ENVCFG_CBE[3]) |
-                               (P.ZICBOM_SUPPORTED & ((InstrD[31:20] == 12'd0 & (ENVCFG_CBE[1:0] != 2'b00))) |
-                                                      (InstrD[31:20] == 12'd1 | InstrD[31:20] == 12'd2) & ENVCFG_CBE[2]));
-    assign AFunctD          = (Funct3D == 3'b010) | (P.XLEN == 64 & Funct3D == 3'b011);
-    assign AMOFunctD        = (InstrD[31:27] == 5'b00001) |
-                              (InstrD[31:27] == 5'b00000) |
-                              (InstrD[31:27] == 5'b00100) |
-                              (InstrD[31:27] == 5'b01100) |
-                              (InstrD[31:27] == 5'b01000) |
-                              (InstrD[31:27] == 5'b10000) |
-                              (InstrD[31:27] == 5'b10100) |
-                              (InstrD[31:27] == 5'b11000) |
-                              (InstrD[31:27] == 5'b11100);
-    assign RWFunctD         = ((Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b101) & Funct7ZeroD |
-                              (Funct3D == 3'b000 | Funct3D == 3'b101) & Funct7b5D) & (P.XLEN == 64);
-    assign MWFunctD         = MFunctD & (P.XLEN == 64) & ~(Funct3D == 3'b001 | Funct3D == 3'b010 | Funct3D == 3'b011);
-    assign SFunctD          = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b010 |
-                              ((P.XLEN == 64) & (Funct3D == 3'b011));
-    assign BFunctD          = Funct3D[2:1] != 2'b01; // legal branches
-    assign JRFunctD         = Funct3D == 3'b000;
-    assign PFunctD          = Funct3D == 3'b000 & RdD == 5'b0;
-    assign CSRFunctD        = Funct3D[1:0] != 2'b00;
-    assign IWValidFunct3D   = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b101;
-  end else begin:legalcheck2
-    assign IFunctD = 1'b1; // Don't bother to separate out shift decoding
-    assign RFunctD = ~Funct7D[0]; // Not a multiply
-    assign MFunctD = Funct7D[0] & (P.M_SUPPORTED | (P.ZMMUL_SUPPORTED & ~Funct3D[2])); // muldiv
-    assign LFunctD = 1'b1; // don't bother to check Funct3 for loads
-    assign FLSFunctD = 1'b1; // don't bother to check Func3 for floating-point loads/stores
-    assign FenceFunctD = 1'b1; // don't bother to check fields for fences
-    assign CMOFunctD = 1'b1; // don't bother to check fields for CMO instructions
-    assign AFunctD = 1'b1; // don't bother to check fields for atomics
-    assign AMOFunctD = 1'b1; // don't bother to check Funct7 for AMO operations
-    assign RWFunctD = 1'b1; // don't bother to check fields for RW instructions
-    assign MWFunctD = 1'b1; // don't bother to check fields for MW instructions
-    assign SFunctD = 1'b1; // don't bother to check Funct3 for stores
-    assign BFunctD = 1'b1; // don't bother to check Funct3 for branches
-    assign JRFunctD = 1'b1; // don't bother to check Funct3 for jalrs
-    assign PFunctD = 1'b1; // don't bother to check fields for privileged instructions
-    assign CSRFunctD = 1'b1; // don't bother to check Funct3 for CSR operations
-    assign IWValidFunct3D = 1'b1;
+  // H-extension virtual-machine load/store strict decoding
+  logic HLVHSVValidD;
+  always_comb begin
+    case (Funct7D[2:0])
+      3'b000: HLVHSVValidD = (Rs2D == 5'b00000) | (Rs2D == 5'b00001);
+      3'b001: HLVHSVValidD = (RdD == 5'b00000);
+      3'b010: HLVHSVValidD = (Rs2D == 5'b00000) | (Rs2D == 5'b00001) | (Rs2D == 5'b00011);
+      3'b011: HLVHSVValidD = (RdD == 5'b00000);
+      3'b100: HLVHSVValidD = (Rs2D == 5'b00000) | (Rs2D == 5'b00011) | ((P.XLEN == 64) & (Rs2D == 5'b00001));
+      3'b101: HLVHSVValidD = (RdD == 5'b00000);
+      3'b110: HLVHSVValidD = (P.XLEN == 64) & (Rs2D == 5'b00000);
+      3'b111: HLVHSVValidD = (P.XLEN == 64) & (RdD == 5'b00000);
+      default: HLVHSVValidD = 1'b0;
+    endcase
   end
+  assign HLVHSVInstrD = P.H_SUPPORTED & (OpD == 7'b1110011) & (Funct3D == 3'b100) &
+                        (Funct7D[6:3] == 4'b0110) & HLVHSVValidD;
+
+  // Funct 7 checking — always rigorous per Sstrict profile
+  logic Funct7ZeroD, Funct7b5D, IShiftD, INoShiftD;
+  logic Funct7ShiftZeroD, Funct7Shiftb5D;
+
+  assign Funct7ZeroD      = (Funct7D == 7'b0000000); // most R-type instructions
+  assign Funct7b5D        = (Funct7D == 7'b0100000); // srai, sub
+  assign FunctCZeroD      = (Funct3D == 3'b101 | Funct3D == 3'b111) & (Funct7D == 7'b0000111) & P.ZICOND_SUPPORTED; // czero.eqz or czero.nez
+  assign Funct7ShiftZeroD = (P.XLEN==64 & ~OpD[3]) ? (Funct7D[6:1] == 6'b000000) : Funct7ZeroD; // 64-bit logical shifts allowed on XLEN=64, non-W
+  assign Funct7Shiftb5D   = (P.XLEN==64 & ~OpD[3]) ? (Funct7D[6:1] == 6'b010000) : Funct7b5D;   // 64-bit arithmetic shifts allowed on XLEN=64, non-W
+  assign IShiftD          = (Funct3D == 3'b001 & Funct7ShiftZeroD) | (Funct3D == 3'b101 & (Funct7ShiftZeroD | Funct7Shiftb5D)); // slli, srli, srai, or w forms
+  assign INoShiftD        = ((Funct3D != 3'b001) & (Funct3D != 3'b101));
+  assign IFunctD          = IShiftD | INoShiftD;
+  assign RFunctD          = ((Funct3D == 3'b000 | Funct3D == 3'b101) & Funct7b5D) | FunctCZeroD | Funct7ZeroD;
+  assign MFunctD          = (Funct7D == 7'b0000001) & (P.M_SUPPORTED | (P.ZMMUL_SUPPORTED & ~Funct3D[2])); // muldiv
+  assign LFunctD          = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b010 | Funct3D == 3'b100 | Funct3D == 3'b101 |
+                            ((P.XLEN == 64) & (Funct3D == 3'b011 | Funct3D == 3'b110));
+  assign FLSFunctD        = (STATUS_FS != 2'b00) & ((Funct3D == 3'b010 & P.F_SUPPORTED) | (Funct3D == 3'b011 & P.D_SUPPORTED) |
+                            (Funct3D == 3'b100 & P.Q_SUPPORTED) | (Funct3D == 3'b001 & P.ZFH_SUPPORTED));
+  assign FenceFunctD      = (Funct3D == 3'b000) | (P.ZIFENCEI_SUPPORTED & Funct3D == 3'b001);
+  assign CMOFunctD        = (Funct3D == 3'b010 & RdD == 5'b0) &
+                            ((P.ZICBOZ_SUPPORTED & InstrD[31:20] == 12'd4 & ENVCFG_CBE[3]) |
+                             (P.ZICBOM_SUPPORTED & ((InstrD[31:20] == 12'd0 & (ENVCFG_CBE[1:0] != 2'b00))) |
+                                                    (InstrD[31:20] == 12'd1 | InstrD[31:20] == 12'd2) & ENVCFG_CBE[2]));
+  assign AFunctD          = (Funct3D == 3'b010) | (P.XLEN == 64 & Funct3D == 3'b011);
+  assign AMOFunctD        = (InstrD[31:27] == 5'b00001) |
+                            (InstrD[31:27] == 5'b00000) |
+                            (InstrD[31:27] == 5'b00100) |
+                            (InstrD[31:27] == 5'b01100) |
+                            (InstrD[31:27] == 5'b01000) |
+                            (InstrD[31:27] == 5'b10000) |
+                            (InstrD[31:27] == 5'b10100) |
+                            (InstrD[31:27] == 5'b11000) |
+                            (InstrD[31:27] == 5'b11100);
+  assign RWFunctD         = ((Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b101) & Funct7ZeroD |
+                            (Funct3D == 3'b000 | Funct3D == 3'b101) & Funct7b5D) & (P.XLEN == 64);
+  assign MWFunctD         = MFunctD & (P.XLEN == 64) & ~(Funct3D == 3'b001 | Funct3D == 3'b010 | Funct3D == 3'b011);
+  assign SFunctD          = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b010 |
+                            ((P.XLEN == 64) & (Funct3D == 3'b011));
+  assign BFunctD          = Funct3D[2:1] != 2'b01; // legal branches
+  assign JRFunctD         = Funct3D == 3'b000;
+  assign PFunctD          = Funct3D == 3'b000 & RdD == 5'b0;
+  assign CSRFunctD        = Funct3D[1:0] != 2'b00;
+  assign IWValidFunct3D   = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b101;
 
   // Main Instruction Decoder
   /* verilator lint_off CASEINCOMPLETE */
@@ -432,10 +414,9 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   flopenrc #(1)  controlregD(clk, reset, FlushD, ~StallD, 1'b1, InstrValidD);
 
   // Execute stage pipeline control register and logic
-  flopenrc #(45) controlregE(clk, reset, FlushE, ~StallE,
-                           {ALUSelectD, RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, Funct7D, W64D, BUW64D, SubArithD, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, FenceD, CMOpD, IFUPrefetchD, LSUPrefetchD, CZeroD, InstrValidD},
-                           {ALUSelectE, IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, Funct7E, W64E, UW64E, SubArithE, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, CMOpE, IFUPrefetchE, LSUPrefetchE, CZeroE, InstrValidE});
-  flopenrc #(1)  hlvhsvregE(clk, reset, FlushE, ~StallE, HLVHSVInstrD, HLVHSVInstrE);
+  flopenrc #(46) controlregE(clk, reset, FlushE, ~StallE,
+                           {ALUSelectD, RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, Funct7D, W64D, BUW64D, SubArithD, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, FenceD, CMOpD, IFUPrefetchD, LSUPrefetchD, CZeroD, InstrValidD, HLVHSVInstrD},
+                           {ALUSelectE, IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, Funct7E, W64E, UW64E, SubArithE, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, CMOpE, IFUPrefetchE, LSUPrefetchE, CZeroE, InstrValidE, HLVHSVInstrE});
   flopenrc #(5)  Rs1EReg(clk, reset, FlushE, ~StallE, Rs1D, Rs1E);
   flopenrc #(5)  Rs2EReg(clk, reset, FlushE, ~StallE, Rs2D, Rs2E);
   flopenrc #(5)  RdEReg(clk, reset, FlushE, ~StallE, RdD, RdE);
@@ -457,10 +438,9 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   assign IntDivE = MDUE & Funct3E[2]; // Integer division operation
 
   // Memory stage pipeline control register
-  flopenrc #(25) controlregM(clk, reset, FlushM, ~StallM,
-                         {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, FWriteIntE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE, IntDivE, CMOpE, LSUPrefetchE},
-                         {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, FWriteIntM, AtomicM, InvalidateICacheM, FlushDCacheM, FenceM, InstrValidM, IntDivM, CMOpM, LSUPrefetchM});
-  flopenrc #(1)  hlvhsvregM(clk, reset, FlushM, ~StallM, HLVHSVInstrE, HLVHSVInstrM);
+  flopenrc #(26) controlregM(clk, reset, FlushM, ~StallM,
+                         {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, FWriteIntE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE, IntDivE, CMOpE, LSUPrefetchE, HLVHSVInstrE},
+                         {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, FWriteIntM, AtomicM, InvalidateICacheM, FlushDCacheM, FenceM, InstrValidM, IntDivM, CMOpM, LSUPrefetchM, HLVHSVInstrM});
   flopenrc #(5)  RdMReg(clk, reset, FlushM, ~StallM, RdE, RdM);
 
   // Writeback stage pipeline control register
