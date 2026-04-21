@@ -170,24 +170,6 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   assign Rs2D    = InstrD[24:20];
   assign RdD     = InstrD[11:7];
 
-  // H-extension virtual-machine load/store strict decoding
-  logic HLVHSVValidD;
-  always_comb begin
-    case (Funct7D[2:0])
-      3'b000: HLVHSVValidD = (Rs2D == 5'b00000) | (Rs2D == 5'b00001);
-      3'b001: HLVHSVValidD = (RdD == 5'b00000);
-      3'b010: HLVHSVValidD = (Rs2D == 5'b00000) | (Rs2D == 5'b00001) | (Rs2D == 5'b00011);
-      3'b011: HLVHSVValidD = (RdD == 5'b00000);
-      3'b100: HLVHSVValidD = (Rs2D == 5'b00000) | (Rs2D == 5'b00011) | ((P.XLEN == 64) & (Rs2D == 5'b00001));
-      3'b101: HLVHSVValidD = (RdD == 5'b00000);
-      3'b110: HLVHSVValidD = (P.XLEN == 64) & (Rs2D == 5'b00000);
-      3'b111: HLVHSVValidD = (P.XLEN == 64) & (RdD == 5'b00000);
-      default: HLVHSVValidD = 1'b0;
-    endcase
-  end
-  assign HLVHSVInstrD = P.H_SUPPORTED & (OpD == 7'b1110011) & (Funct3D == 3'b100) &
-                        (Funct7D[6:3] == 4'b0110) & HLVHSVValidD;
-
   // Funct 7 checking — always rigorous per Sstrict profile
   logic Funct7ZeroD, Funct7b5D, IShiftD, INoShiftD;
   logic Funct7ShiftZeroD, Funct7Shiftb5D;
@@ -231,6 +213,24 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   assign PFunctD          = Funct3D == 3'b000 & RdD == 5'b0;
   assign CSRFunctD        = Funct3D[1:0] != 2'b00;
   assign IWValidFunct3D   = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b101;
+
+  // H-extension virtual-machine load/store strict decoding
+  logic HLVHSVValidD;
+  always_comb begin
+    case (Funct7D[2:0])
+      3'b000: HLVHSVValidD = (Rs2D == 5'b00000) | (Rs2D == 5'b00001);
+      3'b001: HLVHSVValidD = (RdD == 5'b00000);
+      3'b010: HLVHSVValidD = (Rs2D == 5'b00000) | (Rs2D == 5'b00001) | (Rs2D == 5'b00011);
+      3'b011: HLVHSVValidD = (RdD == 5'b00000);
+      3'b100: HLVHSVValidD = (Rs2D == 5'b00000) | (Rs2D == 5'b00011) | ((P.XLEN == 64) & (Rs2D == 5'b00001));
+      3'b101: HLVHSVValidD = (RdD == 5'b00000);
+      3'b110: HLVHSVValidD = (P.XLEN == 64) & (Rs2D == 5'b00000);
+      3'b111: HLVHSVValidD = (P.XLEN == 64) & (RdD == 5'b00000);
+      default: HLVHSVValidD = 1'b0;
+    endcase
+  end
+  assign HLVHSVInstrD = P.H_SUPPORTED & (OpD == 7'b1110011) & (Funct3D == 3'b100) &
+                        (Funct7D[6:3] == 4'b0110) & HLVHSVValidD;
 
   // Main Instruction Decoder
   /* verilator lint_off CASEINCOMPLETE */
