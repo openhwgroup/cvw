@@ -40,6 +40,9 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   input  logic         VirtModeW,                           // current V
   input  logic         STATUS_TSR, STATUS_TVM, STATUS_TW,   // status bits (HS)
   input  logic         HSTATUS_VTSR, HSTATUS_VTVM, HSTATUS_VTW, // status bits (VS)
+  /* verilator lint_off UNUSEDSIGNAL */                     // reserved for future U-mode HLV/HLVX/HSV legality checks
+  input  logic         HSTATUS_HU,
+  /* verilator lint_on UNUSEDSIGNAL */
   output logic         IllegalInstrFaultM,                  // Illegal instruction
   output logic         VirtualInstrFaultM,                  // Virtual instruction exception
   output logic         EcallFaultM, BreakpointFaultM,       // Ecall or breakpoint; must retire, so don't flush it when the trap occurs
@@ -161,7 +164,8 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
     assign VSTSRFault = PrivilegedM & is_sret & VirtModeW & HSTATUS_VTSR;
     assign HVFenceFault = PrivilegedM & VirtModeW & (hvvmaM | hgvmaM);
     // Legal non-V execution remains TODO until the LSU/MMU path can honor
-    // SPVP, VS/VU translation, and HLVX execute-permission semantics.
+    // SPVP, VS/VU translation, HLVX execute-permission semantics, and
+    // hstatus.HU for U-mode HLV/HLVX/HSV enable.
     assign HLVHSVFault = HLVHSVInstrM & VirtModeW; // norm:hlsv_virtinst: V=1 → virtual instruction
     assign WFIShouldTrapVirtM = wfiM & WFITimeoutM & ~STATUS_TW;
     assign VUWfiFault = WFIShouldTrapVirtM & VirtModeW & (PrivilegeModeW == P.U_MODE);
