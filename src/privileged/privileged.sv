@@ -130,7 +130,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   logic                     VirtModeW;       // current V (from privmode)
   logic                     MSTATUS_MPV;     // from CSR (prev V for MRET)
   logic                     HSTATUS_SPV;     // from CSR (prev V for SRET in HS)
-  logic                     HSTATUS_VTSR, HSTATUS_VTW, HSTATUS_VTVM;
+  logic                     HSTATUS_VTSR, HSTATUS_VTW, HSTATUS_VTVM, HSTATUS_HU;
   logic                     VSSTATUS_SPP, VSSTATUS_SIE;
   logic                     TrapToM, TrapToHSM, TrapToVSM; // trap target one-hots
 
@@ -144,7 +144,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   privdec #(P) pmd(.clk, .reset, .StallW, .FlushW, .InstrM(InstrM[31:7]),
     .PrivilegedM, .IllegalIEUFPUInstrM, .IllegalCSRAccessM, .HLVHSVInstrM,
     .PrivilegeModeW, .VirtModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_TW,
-    .HSTATUS_VTSR, .HSTATUS_VTVM, .HSTATUS_VTW, .IllegalInstrFaultM, .VirtualInstrFaultM,
+    .HSTATUS_VTSR, .HSTATUS_VTVM, .HSTATUS_VTW, .HSTATUS_HU, .IllegalInstrFaultM, .VirtualInstrFaultM,
     .EcallFaultM, .BreakpointFaultM, .sretM, .mretM, .RetM, .wfiM, .wfiW, .sfencevmaM);
 
   // Control and Status Registers
@@ -159,7 +159,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .NextPrivilegeModeM, .PrivilegeModeW, .VirtModeW, .CauseM, .SelHPTW,
     .STATUS_MPP, .MSTATUS_MPV, .STATUS_SPP, .STATUS_TSR, .STATUS_TVM,
     .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TW, .STATUS_FS,
-    .HSTATUS_SPV, .HSTATUS_VTSR, .HSTATUS_VTW, .HSTATUS_VTVM, .VSSTATUS_SPP, .VSSTATUS_SIE,
+    .HSTATUS_SPV, .HSTATUS_VTSR, .HSTATUS_VTW, .HSTATUS_VTVM, .HSTATUS_HU, .VSSTATUS_SPP, .VSSTATUS_SIE,
     .MEDELEG_REGW, .HEDELEG_REGW, .HIDELEG_REGW, .HIE_REGW, .HGEIE_REGW, .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
     .SATP_REGW, .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
     .SetFflagsM, .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE,
