@@ -34,6 +34,7 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   input  logic                        clk,
   input  logic                        reset,
   input  logic                        FlushStage,     // Pipeline flush of second stage (prevent writes and bus operations)
+  input  logic                        InvalidateFlushStage,     // Pipeline flush of second stage (prevent writes and bus operations)
   input  logic                        CacheEn,        // Enable the cache memory arrays.  Disable hold read data constant
   input  logic [$clog2(NUMSETS)-1:0]  CacheSetData,       // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
   input  logic [$clog2(NUMSETS)-1:0]  CacheSetTag,       // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
@@ -115,7 +116,7 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   assign DirtyWay = SelecteDirty & HitDirtyWay;                               // exclusion-tag: icache DirtyWay
   assign HitWay = ValidWay & (ReadTag == PAdr[PA_BITS-1:OFFSETLEN+INDEXLEN]) & ~InvalidateCacheDelay; // exclusion-tag: dcache HitWay
 
-  flop #(1) InvalidateCacheReg(clk, InvalidateCache, InvalidateCacheDelay);
+  flopenrc #(1) InvalidateCacheReg(clk, 1'b0, InvalidateFlushStage, 1'b1, InvalidateCache, InvalidateCacheDelay);
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Data Array
@@ -151,8 +152,9 @@ module cacheway import cvw::*; #(parameter cvw_t P,
     if (reset) ValidBits        <= '0;
     if(CacheEn) begin
       ValidWay <= ValidBits[CacheSetTag];
-      if(InvalidateCache)                    ValidBits <= '0; // exclusion-tag: dcache invalidateway
-      else if (SetValidEN) ValidBits[CacheSetData] <= SetValidWay;
+      if(InvalidateCache & ~InvalidateFlushStage)    ValidBits <= '0; // exclusion-tag: dcache invalidateway
+      //if(InvalidateCache)    ValidBits <= '0; // exclusion-tag: dcache invalidateway
+      else if (SetValidEN)   ValidBits[CacheSetData] <= SetValidWay;
       else if (ClearValidEN) ValidBits[CacheSetData] <= '0; // exclusion-tag: icache ClearValidBits
     end
   end

@@ -34,6 +34,7 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   // hazard and privilege unit
   input  logic       Stall,             // Stall the cache, preventing new accesses. In-flight access finished but does not return to READY
   input  logic       FlushStage,        // Pipeline flush of second stage (prevent writes and bus operations)
+  input  logic       InvalidateFlushStage, // Pipeline flush of second stage (prevent writes and bus operations)
   output logic       CacheCommitted,    // Cache has started bus operation that shouldn't be interrupted
   output logic       CacheStall,        // Cache stalls pipeline during multicycle operation
   // inputs from IEU
@@ -115,7 +116,7 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   always_comb begin
     NextState = STATE_ACCESS;
     case (CurrState)                                                                                        // exclusion-tag: icache state-case
-      STATE_ACCESS:           if(InvalidateCache)                               NextState = STATE_ACCESS;     // exclusion-tag: dcache InvalidateCheck
+      STATE_ACCESS:           if(InvalidateCache & ~InvalidateFlushStage)                               NextState = STATE_ACCESS;     // exclusion-tag: dcache InvalidateCheck
                              else if(FlushCache & ~READ_ONLY_CACHE)            NextState = STATE_FLUSH;     // exclusion-tag: icache FLUSHStatement
                              else if(AnyMiss & (READ_ONLY_CACHE | ~LineDirty)) NextState = STATE_FETCH;     // exclusion-tag: icache FETCHStatement
                              else if((AnyMiss | CMOWriteback) & ~READ_ONLY_CACHE) NextState = STATE_WRITEBACK; // exclusion-tag: icache WRITEBACKStatement
