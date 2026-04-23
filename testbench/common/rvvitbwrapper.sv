@@ -43,7 +43,7 @@ module rvvitbwrapper import cvw::*; #(parameter cvw_t P,
   logic        valid;
   logic [72+(5*P.XLEN) + MAX_CSRS*(P.XLEN+16)-1:0] rvvi;
 
-  localparam TOTAL_CSRS = 36;
+  localparam TOTAL_CSRS = 65;
 
   // pipeline controls
   logic                                             StallE, StallM, StallW, FlushE, FlushM, FlushW;
@@ -114,7 +114,7 @@ module rvvitbwrapper import cvw::*; #(parameter cvw_t P,
   assign CSRArray[17] = 0; // 12'hF12
   assign CSRArray[18] = {{P.XLEN-12{1'b0}}, 12'h100}; //P.XLEN'h100; // 12'hF13
   assign CSRArray[19] = 0; // 12'hF15
-  assign CSRArray[20] = 0; // 12'h34A
+  assign CSRArray[20] = dut.core.priv.priv.csr.csrh.csrh.MTINST_REGW; // 12'h34A
   // supervisor CSRs
   assign CSRArray[21] = dut.core.priv.priv.csr.csrs.csrs.SSTATUS_REGW; // 12'h100
   assign CSRArray[22] = dut.core.priv.priv.csr.csrm.MIE_REGW & 12'h222; // 12'h104
@@ -132,6 +132,42 @@ module rvvitbwrapper import cvw::*; #(parameter cvw_t P,
   assign CSRArray[33] = dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW; // 12'h001
   assign CSRArray[34] = dut.core.priv.priv.csr.csru.csru.FRM_REGW; // 12'h002
   assign CSRArray[35] = {dut.core.priv.priv.csr.csru.csru.FRM_REGW, dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW}; // 12'h003
+
+  if (P.H_SUPPORTED) begin : hypervisor_csrs
+    assign CSRArray[36] = dut.core.priv.priv.csr.csrh.csrh.MTVAL2_REGW; // 12'h34B
+    assign CSRArray[37] = dut.core.priv.priv.csr.csrh.csrh.HSTATUS_REGW; // 12'h600
+    assign CSRArray[38] = dut.core.priv.priv.csr.csrh.csrh.VSSTATUS_REGW; // 12'h200
+    assign CSRArray[39] = dut.core.priv.priv.csr.csrh.csrh.HEDELEG_REGW; // 12'h602
+    assign CSRArray[40] = (P.XLEN == 32) ? dut.core.priv.priv.csr.csrh.csrh.HEDELEG_REGW[63:32] : '0; // 12'h612
+    assign CSRArray[41] = dut.core.priv.priv.csr.csrh.csrh.HIDELEG_REGW; // 12'h603
+    assign CSRArray[42] = dut.core.priv.priv.csr.csrh.csrh.HIE_REGW; // 12'h604
+    assign CSRArray[43] = dut.core.priv.priv.csr.csrh.csrh.VSIE_REGW; // 12'h204
+    assign CSRArray[44] = dut.core.priv.priv.csr.csrh.csrh.HTIMEDELTA_REGW[P.XLEN-1:0]; // 12'h605
+    assign CSRArray[45] = (P.XLEN == 32) ? dut.core.priv.priv.csr.csrh.csrh.HTIMEDELTA_REGW[63:32] : '0; // 12'h615
+    assign CSRArray[46] = dut.core.priv.priv.csr.csrh.csrh.HCOUNTEREN_REGW; // 12'h606
+    assign CSRArray[47] = dut.core.priv.priv.csr.csrh.csrh.HGEIE_REGW; // 12'h607
+    assign CSRArray[48] = dut.core.priv.priv.csr.csrh.csrh.HENVCFG_REGW[P.XLEN-1:0]; // 12'h60A
+    assign CSRArray[49] = (P.XLEN == 32) ? dut.core.priv.priv.csr.csrh.csrh.HENVCFG_REGW[63:32] : '0; // 12'h61A
+    assign CSRArray[50] = dut.core.priv.priv.csr.csrh.csrh.HTVAL_REGW; // 12'h643
+    assign CSRArray[51] = dut.core.priv.priv.csr.csrh.csrh.HIP_PENDING; // 12'h644
+    assign CSRArray[52] = dut.core.priv.priv.csr.csrh.csrh.HVIP_REGW; // 12'h645
+    assign CSRArray[53] = dut.core.priv.priv.csr.csrh.csrh.HTINST_REGW; // 12'h64A
+    assign CSRArray[54] = dut.core.priv.priv.csr.csrh.csrh.HGATPReadVal; // 12'h680
+    assign CSRArray[55] = dut.core.priv.priv.csr.csrh.csrh.HGEIP_REGW; // 12'hE12
+    assign CSRArray[56] = dut.core.priv.priv.csr.csrh.csrh.VSTVEC_REGW; // 12'h205
+    assign CSRArray[57] = dut.core.priv.priv.csr.csrh.csrh.VSSCRATCH_REGW; // 12'h240
+    assign CSRArray[58] = dut.core.priv.priv.csr.csrh.csrh.VSEPC_REGW; // 12'h241
+    assign CSRArray[59] = dut.core.priv.priv.csr.csrh.csrh.VSCAUSE_REGW; // 12'h242
+    assign CSRArray[60] = dut.core.priv.priv.csr.csrh.csrh.VSTVAL_REGW; // 12'h243
+    assign CSRArray[61] = dut.core.priv.priv.csr.csrh.csrh.VSIP_REGW; // 12'h244
+    assign CSRArray[62] = dut.core.priv.priv.csr.csrh.csrh.VSATP_REGW; // 12'h280
+    assign CSRArray[63] = dut.core.priv.priv.csr.csrh.csrh.VSTIMECMP_REGW[P.XLEN-1:0]; // 12'h24D
+    assign CSRArray[64] = (P.XLEN == 32) ? dut.core.priv.priv.csr.csrh.csrh.VSTIMECMP_REGW[63:32] : '0; // 12'h25D
+  end else begin : no_hypervisor_csrs
+    for (genvar csrIdx = 36; csrIdx < TOTAL_CSRS; csrIdx++) begin
+      assign CSRArray[csrIdx] = '0;
+    end
+  end
 
   rvvisynth #(P, MAX_CSRS, TOTAL_CSRS) rvvisynth(.clk, .reset, .StallE, .StallM, .StallW, .FlushE, .FlushM, .FlushW,
                                                  .PCM, .InstrValidM, .InstrRawD, .Mcycle, .Minstret, .TrapM,

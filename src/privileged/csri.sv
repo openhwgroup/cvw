@@ -35,6 +35,7 @@ module csri import cvw::*;  #(parameter cvw_t P) (
   input  logic [11:0]       CSRAdrM,
   input  logic              MExtInt, SExtInt, MTimerInt, STimerInt, MSwInt,
   input  logic [11:0]       HIP_MIP_REGW, // mip aliases for {VSEIP,VSTIP,VSSIP} from hip
+  input  logic [P.XLEN-1:0] HIE_REGW,     // mie aliases for {SGEIE,VSEIE,VSTIE,VSSIE} from hie
   input  logic [11:0]       MIDELEG_REGW,
   input  logic              ENVCFG_STCE,
   output logic [11:0]       MIP_REGW, MIE_REGW,
@@ -44,6 +45,7 @@ module csri import cvw::*;  #(parameter cvw_t P) (
   logic [11:0]              MIP_WRITE_MASK, SIP_WRITE_MASK, MIE_WRITE_MASK;
   logic                     WriteMIPM, WriteMIEM, WriteSIPM, WriteSIEM;
   logic                     STIP;
+  logic [11:0]              MIE_REGW_INT;
 
   localparam MIE = 12'h304;
   localparam MIP = 12'h344;
@@ -81,9 +83,15 @@ module csri import cvw::*;  #(parameter cvw_t P) (
     else if (WriteMIPM) MIP_REGW_writeable <= (CSRWriteValM[11:0] & MIP_WRITE_MASK);
     else if (WriteSIPM) MIP_REGW_writeable <= (CSRWriteValM[11:0] & SIP_WRITE_MASK) | (MIP_REGW_writeable & ~SIP_WRITE_MASK);
   always_ff @(posedge clk)
-    if (reset)          MIE_REGW <= 12'b0;
-    else if (WriteMIEM) MIE_REGW <= (CSRWriteValM[11:0] & MIE_WRITE_MASK); // MIE controls M and S fields
-    else if (WriteSIEM) MIE_REGW <= (CSRWriteValM[11:0] & 12'h222 & MIDELEG_REGW) | (MIE_REGW & 12'h888); // only S fields
+    if (reset)          MIE_REGW_INT <= 12'b0;
+    else if (WriteMIEM) MIE_REGW_INT <= (CSRWriteValM[11:0] & MIE_WRITE_MASK); // MIE storage controls M/S fields; H fields alias hie
+    else if (WriteSIEM) MIE_REGW_INT <= (CSRWriteValM[11:0] & 12'h222 & MIDELEG_REGW) | (MIE_REGW_INT & 12'h888); // only S fields
+
+  if (P.H_SUPPORTED) begin : mie_h
+    assign MIE_REGW = MIE_REGW_INT | HIE_REGW[11:0];
+  end else begin : mie_noh
+    assign MIE_REGW = MIE_REGW_INT;
+  end
 
   // TODO: Add SGEIP alias at bit 12 once MIP/MIE buses are widened beyond 12 bits.
   if (P.H_SUPPORTED) begin : mip_h

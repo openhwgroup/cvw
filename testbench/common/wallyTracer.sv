@@ -245,6 +245,42 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
       end
     end
 
+    if (P.H_SUPPORTED) begin
+      // Hypervisor and VS-visible CSRs used by lockstep and coverage.
+      `CONNECT_CSR(MTINST, 12'h34A, testbench.dut.core.priv.priv.csr.csrh.csrh.MTINST_REGW);
+      `CONNECT_CSR(MTVAL2, 12'h34B, testbench.dut.core.priv.priv.csr.csrh.csrh.MTVAL2_REGW);
+      `CONNECT_CSR(HSTATUS, 12'h600, testbench.dut.core.priv.priv.csr.csrh.csrh.HSTATUS_REGW);
+      `CONNECT_CSR(VSSTATUS, 12'h200, testbench.dut.core.priv.priv.csr.csrh.csrh.VSSTATUS_REGW);
+      `CONNECT_CSR(HEDELEG, 12'h602, testbench.dut.core.priv.priv.csr.csrh.csrh.HEDELEG_REGW);
+      `CONNECT_CSR(HIDELEG, 12'h603, testbench.dut.core.priv.priv.csr.csrh.csrh.HIDELEG_REGW);
+      `CONNECT_CSR(HIE, 12'h604, testbench.dut.core.priv.priv.csr.csrh.csrh.HIE_REGW);
+      `CONNECT_CSR(VSIE, 12'h204, testbench.dut.core.priv.priv.csr.csrh.csrh.VSIE_REGW);
+      `CONNECT_CSR(HTIMEDELTA, 12'h605, testbench.dut.core.priv.priv.csr.csrh.csrh.HTIMEDELTA_REGW[P.XLEN-1:0]);
+      `CONNECT_CSR(HCOUNTEREN, 12'h606, testbench.dut.core.priv.priv.csr.csrh.csrh.HCOUNTEREN_REGW);
+      `CONNECT_CSR(HGEIE, 12'h607, testbench.dut.core.priv.priv.csr.csrh.csrh.HGEIE_REGW);
+      `CONNECT_CSR(HENVCFG, 12'h60A, testbench.dut.core.priv.priv.csr.csrh.csrh.HENVCFG_REGW[P.XLEN-1:0]);
+      `CONNECT_CSR(HTVAL, 12'h643, testbench.dut.core.priv.priv.csr.csrh.csrh.HTVAL_REGW);
+      `CONNECT_CSR(HIP, 12'h644, testbench.dut.core.priv.priv.csr.csrh.csrh.HIP_PENDING);
+      `CONNECT_CSR(HVIP, 12'h645, testbench.dut.core.priv.priv.csr.csrh.csrh.HVIP_REGW);
+      `CONNECT_CSR(HTINST, 12'h64A, testbench.dut.core.priv.priv.csr.csrh.csrh.HTINST_REGW);
+      `CONNECT_CSR(HGATP, 12'h680, testbench.dut.core.priv.priv.csr.csrh.csrh.HGATPReadVal);
+      `CONNECT_CSR(HGEIP, 12'hE12, testbench.dut.core.priv.priv.csr.csrh.csrh.HGEIP_REGW);
+      `CONNECT_CSR(VSTVEC, 12'h205, testbench.dut.core.priv.priv.csr.csrh.csrh.VSTVEC_REGW);
+      `CONNECT_CSR(VSSCRATCH, 12'h240, testbench.dut.core.priv.priv.csr.csrh.csrh.VSSCRATCH_REGW);
+      `CONNECT_CSR(VSEPC, 12'h241, testbench.dut.core.priv.priv.csr.csrh.csrh.VSEPC_REGW);
+      `CONNECT_CSR(VSCAUSE, 12'h242, testbench.dut.core.priv.priv.csr.csrh.csrh.VSCAUSE_REGW);
+      `CONNECT_CSR(VSTVAL, 12'h243, testbench.dut.core.priv.priv.csr.csrh.csrh.VSTVAL_REGW);
+      `CONNECT_CSR(VSIP, 12'h244, testbench.dut.core.priv.priv.csr.csrh.csrh.VSIP_REGW);
+      `CONNECT_CSR(VSATP, 12'h280, testbench.dut.core.priv.priv.csr.csrh.csrh.VSATP_REGW);
+      `CONNECT_CSR(VSTIMECMP, 12'h24D, testbench.dut.core.priv.priv.csr.csrh.csrh.VSTIMECMP_REGW[P.XLEN-1:0]);
+      if (P.XLEN == 32) begin
+        `CONNECT_CSR(HEDELEGH, 12'h612, testbench.dut.core.priv.priv.csr.csrh.csrh.HEDELEG_REGW[63:32]);
+        `CONNECT_CSR(HTIMEDELTAH, 12'h615, testbench.dut.core.priv.priv.csr.csrh.csrh.HTIMEDELTA_REGW[63:32]);
+        `CONNECT_CSR(HENVCFGH, 12'h61A, testbench.dut.core.priv.priv.csr.csrh.csrh.HENVCFG_REGW[63:32]);
+        `CONNECT_CSR(VSTIMECMPH, 12'h25D, testbench.dut.core.priv.priv.csr.csrh.csrh.VSTIMECMP_REGW[63:32]);
+      end
+    end
+
     // Zkr CSRs
     // seed not connected (015)
 

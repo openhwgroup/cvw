@@ -237,10 +237,12 @@ module csr import cvw::*;  #(parameter cvw_t P) (
 
   // Trap Returns
   // A trap sets the PC to TrapVector
-  // A return sets the PC to MEPC or SEPC/VSEPC (HS sret uses SPV to pick VSEPC)
+  // A return sets the PC to MEPC or SEPC/VSEPC.
+  // Per the H spec 22.6.4, HS-mode SRET (V=0) always returns using SEPC even when
+  // hstatus.SPV requests entry into VS/VU; only VS-mode SRET (V=1) uses VSEPC.
   if (P.H_SUPPORTED) begin: epc_h
     logic UseVSEPCM;
-    assign UseVSEPCM = VirtModeW | (sretM & (PrivilegeModeW == P.S_MODE) & ~VirtModeW & HSTATUS_SPV);
+    assign UseVSEPCM = VirtModeW;
     mux2 #(P.XLEN) sepcselmux(SEPC_REGW, VSEPC_REGW, UseVSEPCM, SEPCSel);
     mux2 #(P.XLEN) epcmux(SEPCSel, MEPC_REGW, mretM, EPCM);
   end else begin: epc_noh
@@ -311,7 +313,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   csri #(P) csri(.clk, .reset,
     .CSRMWriteM, .CSRSWriteM, .CSRWriteValM, .CSRAdrM,
     .MExtInt, .SExtInt, .MTimerInt, .STimerInt, .MSwInt,
-    .HIP_MIP_REGW,
+    .HIP_MIP_REGW, .HIE_REGW,
     .MIDELEG_REGW, .ENVCFG_STCE, .MIP_REGW, .MIE_REGW, .MIP_REGW_writeable);
 
   csrsr #(P) csrsr(.clk, .reset, .StallW,

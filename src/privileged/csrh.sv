@@ -113,6 +113,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   localparam HEDELEGH    = 12'h612;
   localparam HIDELEG    = 12'h603;
   localparam HIE        = 12'h604;
+  localparam MIE        = 12'h304;
   localparam VSIE       = 12'h204;
   localparam HTIMEDELTA = 12'h605;
   localparam HTIMEDELTAH = 12'h615;
@@ -136,7 +137,11 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   localparam VSTIMECMP  = 12'h24D;
   localparam VSTIMECMPH = 12'h25D;
 
-  localparam [63:0] HEDELEG_MASK = 64'h0000_0000_000C_B1FF;
+  // hedeleg bit 0 is writable only when IALIGN=32. Compressed support implies IALIGN=16,
+  // so mirror the existing medeleg handling and clear bit 0 when Zca/compressed is enabled.
+  // Bits 18 and 19 are read-only zero per the H-spec delegation table.
+  localparam [63:0] HEDELEG_MASK = P.ZCA_SUPPORTED ? 64'h0000_0000_0000_B1FE
+                                                   : 64'h0000_0000_0000_B1FF;
   // HIDELEG: only VS-level interrupts (VSSIP/VSTIP/VSEIP) are writable.
   localparam [11:0] HIDELEG_MASK = 12'h444;
   localparam [11:0] HVIP_MASK    = 12'h444; // Only VSSIP[2], VSTIP[6], VSEIP[10] are writable (spec 7.4.4)
@@ -151,7 +156,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   logic WriteHSTATUSM, WriteVSSTATUSM;
   logic WriteHEDELEGM, WriteHEDELEGHM;
   logic WriteHIDELEGM;
-  logic WriteHIEM, WriteVSIEM;
+  logic WriteHIEM, WriteHIEAliasM, WriteVSIEM;
   logic WriteHTIMEDELTAM, WriteHTIMEDELTAHM;
   logic WriteHCOUNTERENM;
   logic WriteHGEIEM;
@@ -245,6 +250,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   assign WriteHEDELEGHM   = (P.XLEN == 32) & (ValidHWriteM & (CSRAdrM == HEDELEGH));
   assign WriteHIDELEGM    = ValidHWriteM & (CSRAdrM == HIDELEG);
   assign WriteHIEM        = ValidHWriteM & (CSRAdrM == HIE);
+  assign WriteHIEAliasM   = CSRMWriteM & (CSRAdrM == MIE);
   assign WriteVSIEM       = ValidVSWriteM & (CSRAdrM == VSIE);
   assign WriteHTIMEDELTAM = ValidHWriteM & (CSRAdrM == HTIMEDELTA);
   assign WriteHTIMEDELTAHM = (P.XLEN == 32) & (ValidHWriteM & (CSRAdrM == HTIMEDELTAH));
@@ -429,11 +435,11 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
 
   // Interrupt Enable / Pending
   assign HIE_WRITE_MASK = {{(P.XLEN-13){1'b0}}, HIE_MASK};
-  // VSIE writes update HIE bits only when corresponding hideleg bits are set.
+  // MIE.VS*E and MIE.SGEIE alias HIE, while VSIE remaps guest-visible S bits into HIE.
   // TODO: Revisit this logic and see if there is a more efficient way to capture spec
   always_comb begin
     NextHIE = HIE_REGW & HIE_WRITE_MASK;
-    if (WriteHIEM) begin
+    if (WriteHIEM | WriteHIEAliasM) begin
       NextHIE = CSRWriteValM & HIE_WRITE_MASK;
       // GEILEN=0: SGEIE is read-only zero.
       if (GEILEN == 0) NextHIE[12] = 1'b0;
@@ -444,7 +450,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
       if (HIDELEG_REGW[10]) NextHIE[10] = CSRWriteValM[9]; // SEIE -> VSEIE
     end
   end
-  flopenr #(P.XLEN) HIEreg(clk, reset, (WriteHIEM | WriteVSIEM), NextHIE, HIE_REGW);
+  flopenr #(P.XLEN) HIEreg(clk, reset, (WriteHIEM | WriteHIEAliasM | WriteVSIEM), NextHIE, HIE_REGW);
 
 
   // VSIP/VSIE are aliases of HIP/HIE when delegated; otherwise read-only zero.
@@ -507,16 +513,17 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   flopenr #(P.XLEN) HTINSTreg(clk, reset, (WriteHTINSTM | TrapToHSM), NextHtinstM, HTINST_REGW);
 
   // VS CSRs: Guest-visible S-mode state
-  // vstvec.MODE bit 1 is read-only zero; bit 0 selects Direct/Vectored.
-  assign VSTVECWriteValM = {CSRWriteValM[P.XLEN-1:2], 1'b0, CSRWriteValM[0]};
+  // Match stvec/mtvec legalization: vectored mode requires the tighter BASE alignment.
+  assign VSTVECWriteValM = CSRWriteValM[0] ? {CSRWriteValM[P.XLEN-1:6], 6'b000001}
+                                           : {CSRWriteValM[P.XLEN-1:2], 2'b00};
   flopenr #(P.XLEN) VSTVECreg(clk, reset, WriteVSTVECM, VSTVECWriteValM, VSTVEC_REGW);
   flopenr #(P.XLEN) VSSCRATCHreg(clk, reset, WriteVSSCRATCHM, CSRWriteValM, VSSCRATCH_REGW);
-  flopenr #(P.XLEN) VSEPCreg(clk, reset, (TrapToVSM | WriteVSEPCM), NextEPCM, VSEPC_REGW);
+  flopenr #(P.XLEN) VSEPCreg(clk, reset, (TrapToVSM | WriteVSEPCM), TrapToVSM ? NextEPCM : CSRWriteValM, VSEPC_REGW);
   // VSCAUSE is WLRL; allow CSR writes to set full VSXLEN value, but let traps override.
   assign NextVSCAUSEM = TrapToVSM ? {NextCauseM[5], {(P.XLEN-6){1'b0}}, NextCauseM[4:0]}
                                 : CSRWriteValM;
   flopenr #(P.XLEN) VSCAUSEreg(clk, reset, (TrapToVSM | WriteVSCAUSEM), NextVSCAUSEM, VSCAUSE_REGW);
-  flopenr #(P.XLEN) VSTVALreg(clk, reset, (TrapToVSM | WriteVSTVALM), NextTvalM, VSTVAL_REGW);
+  flopenr #(P.XLEN) VSTVALreg(clk, reset, (TrapToVSM | WriteVSTVALM), TrapToVSM ? NextTvalM : CSRWriteValM, VSTVAL_REGW);
   if (P.VIRTMEM_SUPPORTED)
     flopenr #(P.XLEN) VSATPreg(clk, reset, WriteVSATPM, LegalizedVSatpWriteValM, VSATP_REGW);
   else

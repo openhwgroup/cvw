@@ -29,7 +29,7 @@
 
 module rvvisynth import cvw::*; #(parameter cvw_t P,
                                   parameter integer MAX_CSRS = 5,
-                                  parameter integer TOTAL_CSRS = 36)(
+                                  parameter integer TOTAL_CSRS = 65)(
   input logic clk, reset,
   input logic                                     StallE, StallM, StallW, FlushE, FlushM, FlushW,
   // required
