@@ -114,7 +114,11 @@ module rvvitbwrapper import cvw::*; #(parameter cvw_t P,
   assign CSRArray[17] = 0; // 12'hF12
   assign CSRArray[18] = {{P.XLEN-12{1'b0}}, 12'h100}; //P.XLEN'h100; // 12'hF13
   assign CSRArray[19] = 0; // 12'hF15
-  assign CSRArray[20] = dut.core.priv.priv.csr.csrh.csrh.MTINST_REGW; // 12'h34A
+  if (P.H_SUPPORTED) begin : mtinst_csr
+    assign CSRArray[20] = dut.core.priv.priv.csr.csrh.csrh.MTINST_REGW; // 12'h34A
+  end else begin : no_mtinst_csr
+    assign CSRArray[20] = '0; // 12'h34A
+  end
   // supervisor CSRs
   assign CSRArray[21] = dut.core.priv.priv.csr.csrs.csrs.SSTATUS_REGW; // 12'h100
   assign CSRArray[22] = dut.core.priv.priv.csr.csrm.MIE_REGW & 12'h222; // 12'h104
