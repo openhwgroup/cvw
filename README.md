@@ -88,16 +88,19 @@ The current version of the toolchain has been tested on Ubuntu (versions 20.04 L
 > [!WARNING]
 > - Ubuntu 22.04LTS is incompatible with Synopsys Design Compiler.
 > - Verilator currently fails to simulate correctly on Ubuntu 20.04 LTS and Red Hat/Rocky/AlmaLinux 8.
+> - Whisper is not installed on Ubuntu 20.04 LTS or Debian 11 due to issues compiling the boost libraries.
 
 ### Overview
 The toolchain installation script installs the following tools:
 - [RISC-V GNU Toolchain](https://github.com/riscv-collab/riscv-gnu-toolchain): GCC and accompanying compiler tools
-- [elf2hex](https://github.com/sifive/elf2hex): executable file to hexadecimal converter
 - [QEMU](https://www.qemu.org/docs/master/system/target-riscv.html): emulator
 - [Spike](https://github.com/riscv-software-src/riscv-isa-sim): functional RISC-V model
+- [Whisper](https://github.com/tenstorrent/whisper): RISC-V instruction set simulator (ISS)
 - [Verilator](https://github.com/verilator/verilator): open-source Verilog simulator
 - [RISC-V Sail Model](https://github.com/riscv/sail-riscv): golden reference model for RISC-V
 - [OSU Skywater 130 cell library](https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12): standard cell library
+- [uv](https://docs.astral.sh/uv/): Python package manager and virtual environment tool
+- [mise](https://mise.jdx.dev/): development environment setup tool for managing tool versions and environment variables
 - [RISCOF](https://github.com/riscv-software-src/riscof.git): RISC-V compliance test framework
 
 Additionally, Buildroot Linux is built for Wally and linux test-vectors are generated for simulation. See the [Linux README](linux/README.md) for more details. This can be skipped using the `--no-buildroot` flag.

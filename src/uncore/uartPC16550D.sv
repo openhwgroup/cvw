@@ -348,11 +348,11 @@ module uartPC16550D #(parameter UART_PRESCALE) (
   // tail is normally higher than head, but might wrap around.  unwrapped variable adds 16 to eliminate wrapping
   assign rxfifotailunwrapped = rxfifotail < rxfifohead ? {1'b1, rxfifotail} : {1'b0, rxfifotail};
   genvar i;
-  for (i=0; i<32; i++) begin:rxfull
+  for (i=0; i<32; i++) begin : rxfull
     if (i == 0) assign rxfullbitunwrapped[i] = (rxfifohead==0) & (rxfifotail != 0);
     else        assign rxfullbitunwrapped[i] = ({1'b0,rxfifohead}==i | rxfullbitunwrapped[i-1]) & (rxfifotailunwrapped != i);
   end
-  for (i=0; i<16; i++) begin:rx
+  for (i=0; i<16; i++) begin : rx
     assign RXerrbit[i]  = |rxfifo[i][10:8]; // are any of the error conditions set?
     assign rxfullbit[i] = rxfullbitunwrapped[i] | rxfullbitunwrapped[i+16];
   /*      if (i > 0)

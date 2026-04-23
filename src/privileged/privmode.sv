@@ -39,7 +39,7 @@ module privmode import cvw::*;  #(parameter cvw_t P) (
   output logic [1:0]       PrivilegeModeW       // current privilege mode
 );
 
-  if (P.U_SUPPORTED) begin:privmode
+  if (P.U_SUPPORTED) begin : privmode
     // PrivilegeMode FSM
     always_comb begin
       if (TrapM) begin // Change privilege based on DELEG registers (see 3.1.8)

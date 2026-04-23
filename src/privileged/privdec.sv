@@ -86,7 +86,7 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   // WFI timeout Privileged Spec 3.1.6.5
   ///////////////////////////////////////////
 
-  if (P.U_SUPPORTED) begin:wfi
+  if (P.U_SUPPORTED) begin : wfi
     logic [P.WFI_TIMEOUT_BIT:0] WFICount, WFICountPlus1;
     assign WFICountPlus1 = wfiM ? WFICount + 1 : '0; // restart counting on WFI
     flopr #(P.WFI_TIMEOUT_BIT+1) wficountreg(clk, reset, WFICountPlus1, WFICount);  // count while in WFI
