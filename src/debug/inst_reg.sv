@@ -43,8 +43,9 @@ module inst_reg #(parameter ADRWIDTH=5) (
         shiftreg <= {tdi, shiftreg[ADRWIDTH-1:1]};
      end
 
-   always @(posedge tck, negedge resetn)
-     if (~resetn) instreg <= {(ADRWIDTH){1'b1}};
+   // always @(posedge tck, negedge resetn)
+  always @(posedge tck)
+     if (~resetn) instreg <= {{(ADRWIDTH - 1){1'b0}},1'b1};
      else if (UpdateIR) instreg <= shiftreg;
 
    assign tdo = shiftreg[0];

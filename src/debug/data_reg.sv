@@ -70,10 +70,10 @@ module data_reg import cvw::*; #(parameter cvw_t P) (
   internalreg #(P.ABITS + 34) dmireg(tck, tdi, resetn, dmi_next, {(P.ABITS + 34){1'b0}},
   ShiftDR, ClockDR, dmi, tdo_dmi);
 
-  // BYPASS
+  //BYPASS
   always_ff @(posedge tck, negedge resetn) begin
     if (~resetn) tdo_bypass <= 0;
-    else if (currentInst == BYPASS) tdo_bypass <= tdi;
+    else if (ClockDR & currentInst == BYPASS) tdo_bypass <= tdi & ShiftDR;
   end
 
   // Mux data register output based on current instruction
@@ -82,8 +82,8 @@ module data_reg import cvw::*; #(parameter cvw_t P) (
       IDCODE  : tdo = tdo_idcode;
       DTMCS   : tdo = tdo_dtmcs;
       DMIREG  : tdo = tdo_dmi;
-      BYPASS  : tdo = tdo_idcode; // OpenOCD bug: doesn't change to IDCODE before trying to read the IDCODE, then crashes.
-      default : tdo = tdo_idcode; // Bypass instruction 11111 and 00000
+      BYPASS  : tdo = tdo_bypass; // OpenOCD bug: doesn't change to IDCODE before trying to read the IDCODE, then crashes.
+      default : tdo = tdo_bypass; // Bypass instruction 11111 and 00000
     endcase
   end
 endmodule
