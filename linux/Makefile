@@ -1,4 +1,4 @@
-BUILDROOT_VERSION := 2025.08.x
+BUILDROOT_VERSION := 2026.02.x
 
 BUILDROOT         := buildroot
 IMAGE_DIR         := ${BUILDROOT}/output/images
