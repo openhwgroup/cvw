@@ -223,7 +223,7 @@ void copyFlash(QWORD address, QWORD * Dst, DWORD numBlocks) {
   /* print_uart_dec(SYSTEMCLOCK); */
   /* print_uart("\r\n"); */
 
-  // Intialize the SD card
+  // Initialize the SD card
   init_sd(SYSTEMCLOCK, SDCCLOCK);
 
   ret = gpt_load_partitions();

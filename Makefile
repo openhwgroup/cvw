@@ -6,10 +6,14 @@ MAKEFLAGS += --output-sync --no-print-directory
 
 SIM = ${WALLY}/sim
 
-.PHONY: all riscof testfloat combined_IF_vectors zsbl coverage cvw-arch-verif sim_bp deriv clean
+.PHONY: all act riscof testfloat combined_IF_vectors zsbl coverage sim_bp deriv clean
 
-#all: riscof	testfloat combined_IF_vectors zsbl coverage sim_bp cvw-arch-verif deriv
-all: riscof	testfloat combined_IF_vectors zsbl coverage sim_bp deriv # david_harris 10 Oct 2025 removed broken cvw-arch-verif pending switch to new framework
+all: act riscof	testfloat combined_IF_vectors zsbl coverage sim_bp deriv
+
+# act builds the riscv-arch-test suite using the testgen generator
+ACTDIR = ${WALLY}/addins/riscv-arch-test-cvw
+act:
+	$(MAKE) -C $(ACTDIR) EXTENSIONS= CONFIG_FILES="$(ACTDIR)/config/cores/cvw/cvw-rv32gc/test_config.yaml $(ACTDIR)/config/cores/cvw/cvw-rv64gc/test_config.yaml"
 
 # riscof builds the riscv-arch-test and wally-riscv-arch-test suites
 riscof:
@@ -30,9 +34,6 @@ coverage:
 deriv:
 	derivgen.pl
 
-cvw-arch-verif:
-	$(MAKE) -C ${WALLY}/addins/cvw-arch-verif
-
 sim_bp: ${WALLY}/addins/branch-predictor-simulator/src/sim_bp
 
 ${WALLY}/addins/branch-predictor-simulator/src/sim_bp:
@@ -48,4 +49,3 @@ clean:
 	$(MAKE) clean -C ${WALLY}/tests/fp
 	$(MAKE) clean -C ${WALLY}/fpga/zsbl
 	$(MAKE) clean -C ${WALLY}/tests/coverage
-	$(MAKE) clean -C ${WALLY}/addins/cvw-arch-verif

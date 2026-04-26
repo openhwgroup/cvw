@@ -89,7 +89,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0]       PCSpillF,                             // Fetch PC
   input  logic                    ITLBMissOrUpdateAF,                   // ITLB miss causes HPTW (hardware pagetable walker) walk or update access bit
   output logic [P.XLEN-1:0]       PTE,                                  // Page table entry write to ITLB
-  output logic [1:0]              PageType,                             // Type of page table entry to write to ITLB
+  output logic [2:0]              PageType,                             // Type of page table entry to write to ITLB
   output logic                    ITLBWriteF,                           // Write PTE to ITLB
   output logic                    SelHPTW,                              // During a HPTW walk the effective privilege mode becomes S_MODE
   input var logic [7:0]           PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0], // PMP configuration from privileged unit
@@ -373,7 +373,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       assign LSUHBURST = 3'b0;
       assign {DCacheStallM, DCacheCommittedM, DCacheMiss, DCacheAccess, DCacheReadDataWordM} = '0;
     end
-  end else begin: nobus // block: bus, only DTIM
+  end else begin : nobus // block: bus, only DTIM
     assign {LSUHWDATA, LSUHADDR, LSUHWRITE, LSUHSIZE, LSUHBURST, LSUHTRANS, LSUHWSTRB} = '0;
     assign DCacheReadDataWordM = '0;
     assign ReadDataWordMuxM = DTIMReadDataWordM;
@@ -386,11 +386,11 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   // Atomic operations
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  if (P.ZAAMO_SUPPORTED | P.ZALRSC_SUPPORTED) begin:atomic
+  if (P.ZAAMO_SUPPORTED | P.ZALRSC_SUPPORTED) begin : atomic
     atomic #(P) atomic(.clk, .reset, .StallW, .ReadDataM(ReadDataM[P.XLEN-1:0]), .IHWriteDataM, .PAdrM,
       .LSUFunct7M, .LSUFunct3M, .LSUAtomicM, .PreLSURWM, .LSUFlushW,
       .IMAWriteDataM, .SquashSCW, .LSURWM);
-  end else begin:lrsc
+  end else begin : lrsc
     assign SquashSCW = 1'b0;
     assign LSURWM = PreLSURWM;
     assign IMAWriteDataM = IHWriteDataM;
@@ -427,7 +427,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   //  swap the bytes when read from big-endian memory
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  if (P.BIGENDIAN_SUPPORTED) begin:endian
+  if (P.BIGENDIAN_SUPPORTED) begin : endian
     endianswap #(P.LLEN) storeswap(.BigEndianM, .a(LittleEndianWriteDataM), .y(LSUWriteDataM));
     endianswap #(P.LLEN) loadswap(.BigEndianM, .a(ReadDataWordMuxM), .y(LittleEndianReadDataWordM));
   end else begin

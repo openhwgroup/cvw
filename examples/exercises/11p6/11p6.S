@@ -30,7 +30,7 @@ supervisorstart:
     or t0, t0, t1           # satp value to enable SV32 with root page table
     csrw satp, t0           # enable virtual memory
 
-    # now we are execuiting on virtual page 0x80000, which is also physical page 0x80000
+    # now we are executing on virtual page 0x80000, which is also physical page 0x80000
     li t0, 0x90000300
     li t1, 42
     sw t1, 0(t0)

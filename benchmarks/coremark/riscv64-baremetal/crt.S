@@ -59,10 +59,13 @@ _start:
 #else
   bltz t0, 1f
 #endif
-2:
+2: # store 000...0001 to tohost to terminate with HTIF
   li a0, 1
-  sw a0, tohost, t0
-  j 2b
+  la t0, tohost
+  sw a0, 0(t0)
+  sw zero, 4(t0)
+3:
+  j 3b
 1:
 
 #ifdef __riscv_flen

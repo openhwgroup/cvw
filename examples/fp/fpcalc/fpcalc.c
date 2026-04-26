@@ -309,7 +309,7 @@ int main(int argc, char *argv[]) {
       exit(1);
     } else {
       softfloat_roundingMode = softfloat_round_near_even;
-      //printf("argv[0] = %s arvg[1] = %s argv[2] = %s argv[3] = %s\n", argv[0], argv[1], argv[2], argv[3]);
+      //printf("argv[0] = %s argv[1] = %s argv[2] = %s argv[3] = %s\n", argv[0], argv[1], argv[2], argv[3]);
       xn = parseNum(argv[1]);
       yn = parseNum(argv[3]);
       op1 = parseOp(argv[2]);

@@ -94,7 +94,7 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   assign CounterEvent[0]    = 1'b1;                                                      // MCYCLE always increments
   assign CounterEvent[1]    = 1'b0;                                                      // Counter 1 doesn't exist
   assign CounterEvent[2]    = InstrValidNotFlushedM;                                     // MINSTRET instructions retired
-  if (P.ZIHPM_SUPPORTED) begin: cevent                                                   // User-defined counters
+  if (P.ZIHPM_SUPPORTED) begin : cevent                                                   // User-defined counters
     // Ideally all events would be counted in the M stage, but the pipelining is costly. The counters may
     // count an event in a previous pipeline stage.
     assign CounterEvent[3]  = IClassM[0] & InstrValidNotFlushedM;                        // branch instruction
@@ -123,15 +123,15 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
     assign CounterEvent[24] = DivBusyE | FDivBusyE;                                      // division cycles
     // coverage on
     assign CounterEvent[P.COUNTERS-1:25] = '0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
-  end else begin: cevent
+  end else begin : cevent
     assign CounterEvent[P.COUNTERS-1:3] = '0;
   end
 
   // Counter update and write logic
-  for (i = 0; $unsigned(i) < P.COUNTERS; i = i+1) begin:cntr
+  for (i = 0; $unsigned(i) < P.COUNTERS; i = i+1) begin : cntr
       assign WriteHPMCOUNTERM[i] = CSRMWriteM & (CSRAdrM == MHPMCOUNTERBASE + i); // coverage tag: MTIME traps
       assign NextHPMCOUNTERM[i][P.XLEN-1:0] = WriteHPMCOUNTERM[i] ? CSRWriteValM : HPMCOUNTERPlusM[i][P.XLEN-1:0];
-      always_ff @(posedge clk) //, posedge reset) // ModelSim doesn't like syntax of passing array element to flop
+      always_ff @(posedge clk)
         if (reset) HPMCOUNTER_REGW[i][P.XLEN-1:0] <= '0;
         else       HPMCOUNTER_REGW[i][P.XLEN-1:0] <= NextHPMCOUNTERM[i];
 
@@ -141,7 +141,7 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
         assign HPMCOUNTERPlusM[i] = {HPMCOUNTERH_REGW[i], HPMCOUNTER_REGW[i]} + {63'b0, CounterEvent[i] & ~MCOUNTINHIBIT_REGW[i]};
         assign WriteHPMCOUNTERHM[i] = CSRMWriteM & (CSRAdrM == MHPMCOUNTERHBASE + i);
         assign NextHPMCOUNTERHM[i] = WriteHPMCOUNTERHM[i] ? CSRWriteValM : HPMCOUNTERPlusM[i][63:32];
-        always_ff @(posedge clk) //, posedge reset) // ModelSim doesn't like syntax of passing array element to flop
+        always_ff @(posedge clk)
             if (reset) HPMCOUNTERH_REGW[i][P.XLEN-1:0] <= '0;
             else       HPMCOUNTERH_REGW[i][P.XLEN-1:0] <= NextHPMCOUNTERHM[i];
       end else begin // XLEN=64; write entire register
@@ -150,12 +150,13 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
       end
   end
 
-  // Read Counters, or cause excepiton if insufficient privilege in light of COUNTEREN flags
+  // Read Counters, or cause exception if insufficient privilege in light of COUNTEREN flags
   assign CounterNumM = CSRAdrM[4:0]; // which counter to read?
-  always_comb
+  always_comb begin
+    CSRCReadValM = '0; // default value
+    IllegalCSRCAccessM = 1'b0;
     if (PrivilegeModeW == P.M_MODE |
         MCOUNTEREN_REGW[CounterNumM] & (!P.S_SUPPORTED | PrivilegeModeW == P.S_MODE | SCOUNTEREN_REGW[CounterNumM])) begin
-      IllegalCSRCAccessM = 1'b0;
       if (CSRAdrM >= MHPMEVENTBASE & CSRAdrM <= MHPMEVENTLAST) begin
         CSRCReadValM = '0; // mphmevent[3:31] tied to read-only zero
       end else begin
@@ -168,10 +169,7 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
                   CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
           else if (CSRAdrM >= HPMCOUNTERBASE  & CSRAdrM  < HPMCOUNTERBASE+P.COUNTERS & ~CSRWriteM)  // read-only
                   CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
-          else begin
-              CSRCReadValM = '0;
-              IllegalCSRCAccessM = 1'b1;  // requested CSR doesn't exist
-          end
+          else IllegalCSRCAccessM = 1'b1;  // requested CSR doesn't exist
         end else begin // 32-bit counter reads
           // Veril ator doesn't realize this only occurs for XLEN=32
           /* verilator lint_off WIDTH */
@@ -186,16 +184,11 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
                   CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
           else if (CSRAdrM >= HPMCOUNTERHBASE  & CSRAdrM < HPMCOUNTERHBASE+P.COUNTERS  & ~CSRWriteM)   // read-only
                   CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
-          else begin
-            CSRCReadValM = '0;
-            IllegalCSRCAccessM = 1'b1; // requested CSR doesn't exist
-          end
+          else    IllegalCSRCAccessM = 1'b1; // requested CSR doesn't exist
         end
       end
-    end else begin
-      CSRCReadValM = '0;
-      IllegalCSRCAccessM = 1'b1; // no privileges for this csr
-    end
+    end else IllegalCSRCAccessM = 1'b1; // no privileges for this csr
+  end
 endmodule
 
 //  mounteren should only exist if u-mode exists

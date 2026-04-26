@@ -119,6 +119,7 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
                              else if(FlushCache & ~READ_ONLY_CACHE)            NextState = STATE_FLUSH;     // exclusion-tag: icache FLUSHStatement
                              else if(AnyMiss & (READ_ONLY_CACHE | ~LineDirty)) NextState = STATE_FETCH;     // exclusion-tag: icache FETCHStatement
                              else if((AnyMiss | CMOWriteback) & ~READ_ONLY_CACHE) NextState = STATE_WRITEBACK; // exclusion-tag: icache WRITEBACKStatement
+                             else if((|CMOpM) & ~CMOWriteback)               NextState = STATE_ADDRESS_SETUP; // any CMO without dirty writeback: stall and re-read SRAM next cycle
                              else                                              NextState = STATE_ACCESS;
       STATE_FETCH:           if(CacheBusAck)                                   NextState = STATE_WRITE_LINE;
                              else                                              NextState = STATE_FETCH;
@@ -143,7 +144,7 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
 
   // com back to CPU
   assign CacheCommitted = (CurrState != STATE_ACCESS) & ~(READ_ONLY_CACHE & (CurrState == STATE_ADDRESS_SETUP));
-  assign StallConditions =  FlushCache | AnyMiss | CMOWriteback;     // exclusion-tag: icache FlushCache
+  assign StallConditions =  FlushCache | AnyMiss | (|CMOpM);                            // exclusion-tag: icache FlushCache
   assign CacheStall = (CurrState == STATE_ACCESS & StallConditions) | // exclusion-tag: icache StallStates
                       (CurrState == STATE_FETCH) |
                       (CurrState == STATE_WRITEBACK) |

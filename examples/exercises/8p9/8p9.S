@@ -8,7 +8,7 @@
 
 # register use:
 # s0: address of GPIO_OUTPUT_VAL
-# s1: adress of CLINT_MTIME_CMP
+# s1: address of CLINT_MTIME_CMP
 # s2: PERIOD
 
 rvtest_entry_point:

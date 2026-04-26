@@ -24,7 +24,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-// load code to initalize stack, handle interrupts, terminate
+// load code to initialize stack, handle interrupts, terminate
 // The PMP tests are sensitive to the exact addresses in this code, so unfortunately
 // modifying anything breaks those tests.
 
@@ -34,26 +34,26 @@
 rvtest_entry_point:
     la sp, topofstack       # Initialize stack pointer (not used)
 
-    # Set up interrupts
+#Set up interrupts
     la t0, trap_handler
     csrw mtvec, t0      # Initialize MTVEC to trap_handler
     csrw mideleg, zero  # Don't delegate interrupts
     csrw medeleg, zero  # Don't delegate exceptions
-    # The following three lines are needed to initalize the timer for Spike to run correctly,
-    # but are not necessary for Wally to run lockstep.
-    # Unfortunately, they throw off the program addresses for tests/coverage/pmp.S,
-    # causing it to fail.  Ideally, pmp.S would become more robust or be replaced by
-    # functional coverage tests, and these three lines will be restored.
-#    li t0, -1           # set mtimecmp to biggest number so it doesnt interrupt again
-#    li t1, 0x02004000   # MTIMECMP in CLINT
-#    sd t0, 0(t1)
+#The following three lines are needed to initialize the timer for Spike to run correctly,
+#but are not necessary for Wally to run lockstep.
+#Unfortunately, they throw off the program addresses for tests / coverage / pmp.S,
+#causing it to fail.Ideally, pmp.S would become more robust or be replaced by
+#functional coverage tests, and these three lines will be restored.
+#li t0, -1 #set mtimecmp to biggest number so it doesnt interrupt again
+#li t1, 0x02004000 #MTIMECMP in CLINT
+#sd t0, 0(t1)
     li t0, 0x80
-#    li t0, 0x00
+#li t0, 0x00
     csrw mie, t0        # Enable machine timer interrupt
     la t0, topoftrapstack
     csrw mscratch, t0   # MSCRATCH holds trap stack pointer
     csrsi mstatus, 0x8  # Turn on mstatus.MIE global interrupt enable
-    # set up PMP so user and supervisor mode can access full address space
+#set up PMP so user and supervisor mode can access full address space
     csrw pmpcfg0, 0xF   # configure PMP0 to TOR RWX
     li t0, 0xFFFFFFFF
     csrw pmpaddr0, t0   # configure PMP0 top of range to 0xFFFFFFFF to allow all 32-bit addresses
@@ -66,7 +66,7 @@ done:
 
 .align 4                # trap handlers must be aligned to multiple of 4
 trap_handler:
-    # Load trap handler stack pointer tp
+#Load trap handler stack pointer tp
     csrrw tp, mscratch, tp  # swap MSCRATCH and tp
     sd t0, 0(tp)        # Save t0 and t1 on the stack
     sd t1, -8(tp)
@@ -144,11 +144,11 @@ begin_signature:
     .fill 6*(XLEN/32),4,0xdeadbeef    #
 end_signature:
 
-# Initialize stack with room for 512 bytes
+#Initialize stack with room for 512 bytes
 .bss
     .space 512
 topofstack:
-# And another stack for the trap handler
+#And another stack for the trap handler
 .bss
     .space 512
 topoftrapstack:
