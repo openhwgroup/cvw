@@ -101,9 +101,9 @@ module rvvitbwrapper import cvw::*; #(parameter cvw_t P,
   assign CSRArray[4] = dut.core.priv.priv.csr.csrm.MCOUNTEREN_REGW; // 12'h306
   assign CSRArray[5] = dut.core.priv.priv.csr.csrm.MCOUNTINHIBIT_REGW; // 12'h320
   assign CSRArray[6] = dut.core.priv.priv.csr.csrm.MEDELEG_REGW; // 12'h302
-  assign CSRArray[7] = dut.core.priv.priv.csr.csrm.MIDELEG_REGW; // 12'h303
-  assign CSRArray[8] = dut.core.priv.priv.csr.csrm.MIP_REGW; // 12'h344
-  assign CSRArray[9] = dut.core.priv.priv.csr.csrm.MIE_REGW; // 12'h304
+  assign CSRArray[7] = {{(P.XLEN-16){1'b0}}, dut.core.priv.priv.csr.csrm.MIDELEG_REGW}; // 12'h303
+  assign CSRArray[8] = {{(P.XLEN-16){1'b0}}, dut.core.priv.priv.csr.csrm.MIP_REGW}; // 12'h344
+  assign CSRArray[9] = {{(P.XLEN-16){1'b0}}, dut.core.priv.priv.csr.csrm.MIE_REGW}; // 12'h304
   assign CSRArray[10] = dut.core.priv.priv.csr.csrm.MISA_REGW; // 12'h301
   assign CSRArray[11] = dut.core.priv.priv.csr.csrm.MENVCFG_REGW; // 12'h30A
   assign CSRArray[12] = dut.core.priv.priv.csr.csrm.MHARTID_REGW; // 12'hF14
@@ -121,7 +121,7 @@ module rvvitbwrapper import cvw::*; #(parameter cvw_t P,
   end
   // supervisor CSRs
   assign CSRArray[21] = dut.core.priv.priv.csr.csrs.csrs.SSTATUS_REGW; // 12'h100
-  assign CSRArray[22] = dut.core.priv.priv.csr.csrm.MIE_REGW & 12'h222; // 12'h104
+  assign CSRArray[22] = {{(P.XLEN-16){1'b0}}, dut.core.priv.priv.csr.csrm.MIE_REGW & 16'h0222 & dut.core.priv.priv.csr.csrm.MIDELEG_REGW}; // 12'h104
   assign CSRArray[23] = dut.core.priv.priv.csr.csrs.csrs.STVEC_REGW; // 12'h105
   assign CSRArray[24] = dut.core.priv.priv.csr.csrs.csrs.SEPC_REGW; // 12'h141
   assign CSRArray[25] = dut.core.priv.priv.csr.csrs.csrs.SCOUNTEREN_REGW; // 12'h106
@@ -130,7 +130,7 @@ module rvvitbwrapper import cvw::*; #(parameter cvw_t P,
   assign CSRArray[28] = dut.core.priv.priv.csr.csrs.csrs.SSCRATCH_REGW; // 12'h140
   assign CSRArray[29] = dut.core.priv.priv.csr.csrs.csrs.STVAL_REGW; // 12'h143
   assign CSRArray[30] = dut.core.priv.priv.csr.csrs.csrs.SCAUSE_REGW; // 12'h142
-  assign CSRArray[31] = dut.core.priv.priv.csr.csrm.MIP_REGW & 12'h222 & dut.core.priv.priv.csr.csrm.MIDELEG_REGW; // 12'h144
+  assign CSRArray[31] = {{(P.XLEN-16){1'b0}}, dut.core.priv.priv.csr.csrm.MIP_REGW & 16'h0222 & dut.core.priv.priv.csr.csrm.MIDELEG_REGW}; // 12'h144
   assign CSRArray[32] = dut.core.priv.priv.csr.csrs.csrs.STIMECMP_REGW; // 12'h14D
   // user CSRs
   assign CSRArray[33] = dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW; // 12'h001
@@ -143,8 +143,8 @@ module rvvitbwrapper import cvw::*; #(parameter cvw_t P,
     assign CSRArray[38] = dut.core.priv.priv.csr.csrh.csrh.VSSTATUS_REGW; // 12'h200
     assign CSRArray[39] = dut.core.priv.priv.csr.csrh.csrh.HEDELEG_REGW; // 12'h602
     assign CSRArray[40] = (P.XLEN == 32) ? dut.core.priv.priv.csr.csrh.csrh.HEDELEG_REGW[63:32] : '0; // 12'h612
-    assign CSRArray[41] = dut.core.priv.priv.csr.csrh.csrh.HIDELEG_REGW; // 12'h603
-    assign CSRArray[42] = {{(P.XLEN-12){1'b0}}, dut.core.priv.priv.csr.csrh.csrh.HIE_REGW}; // 12'h604
+    assign CSRArray[41] = {{(P.XLEN-16){1'b0}}, dut.core.priv.priv.csr.csrh.csrh.HIDELEG_REGW}; // 12'h603
+    assign CSRArray[42] = {{(P.XLEN-16){1'b0}}, dut.core.priv.priv.csr.csrh.csrh.HIE_REGW}; // 12'h604
     assign CSRArray[43] = dut.core.priv.priv.csr.csrh.csrh.VSIE_REGW; // 12'h204
     assign CSRArray[44] = dut.core.priv.priv.csr.csrh.csrh.HTIMEDELTA_REGW[P.XLEN-1:0]; // 12'h605
     assign CSRArray[45] = (P.XLEN == 32) ? dut.core.priv.priv.csr.csrh.csrh.HTIMEDELTA_REGW[63:32] : '0; // 12'h615
@@ -153,7 +153,7 @@ module rvvitbwrapper import cvw::*; #(parameter cvw_t P,
     assign CSRArray[48] = dut.core.priv.priv.csr.csrh.csrh.HENVCFG_REGW[P.XLEN-1:0]; // 12'h60A
     assign CSRArray[49] = (P.XLEN == 32) ? dut.core.priv.priv.csr.csrh.csrh.HENVCFG_REGW[63:32] : '0; // 12'h61A
     assign CSRArray[50] = dut.core.priv.priv.csr.csrh.csrh.HTVAL_REGW; // 12'h643
-    assign CSRArray[51] = dut.core.priv.priv.csr.csrh.csrh.HIP_PENDING; // 12'h644
+    assign CSRArray[51] = {{(P.XLEN-16){1'b0}}, dut.core.priv.priv.csr.csrh.csrh.HIP_PENDING}; // 12'h644
     assign CSRArray[52] = dut.core.priv.priv.csr.csrh.csrh.HVIP_REGW; // 12'h645
     assign CSRArray[53] = dut.core.priv.priv.csr.csrh.csrh.HTINST_REGW; // 12'h64A
     assign CSRArray[54] = dut.core.priv.priv.csr.csrh.csrh.HGATPReadVal; // 12'h680

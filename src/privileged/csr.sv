@@ -84,11 +84,11 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   output logic                     VSSTATUS_SPP, VSSTATUS_SIE,
   output logic [63:0]              MEDELEG_REGW,
   output logic [63:0]              HEDELEG_REGW,
-  output logic [11:0]              HIDELEG_REGW,
-  output logic [11:0]              HIE_REGW,
+  output logic [15:0]              HIDELEG_REGW,
+  output logic [15:0]              HIE_REGW,
   output logic [P.XLEN-1:0]        HGEIE_REGW,
   output logic [P.XLEN-1:0]        SATP_REGW,
-  output logic [11:0]              MIP_REGW, MIE_REGW, MIDELEG_REGW,
+  output logic [15:0]              MIP_REGW, MIE_REGW, MIDELEG_REGW,
   output logic                     STATUS_MIE, STATUS_SIE,
   output logic                     STATUS_MXR, STATUS_SUM, STATUS_MPRV, STATUS_TW,
   output logic [1:0]               STATUS_FS,
@@ -136,7 +136,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic                    InsufficientCSRPrivilegeM;
   logic                    IllegalCSRMWriteReadonlyM;
   logic [P.XLEN-1:0]       CSRReadVal2M;
-  logic [11:0]             MIP_REGW_writeable;
+  logic [15:0]             MIP_REGW_writeable;
   logic [P.XLEN-1:0]       TVecM,NextFaultTvalM;
   logic                    MTrapM, STrapM;
   logic                    SelMtvecM;
@@ -156,7 +156,8 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic [1:0]              VSSTATUS_FS;
   logic                    HSTATUS_VSBE;
   logic [31:0]             HCOUNTEREN_REGW;
-  logic [11:0]             HVIP_REGW, HIP_MIP_REGW;
+  logic [11:0]             HVIP_REGW;
+  logic [15:0]             HIP_MIP_REGW;
   logic [63:0]             HTIMEDELTA_REGW;
   logic [P.XLEN-1:0]       CSRHReadValM;
   logic                    IllegalCSRHAccessM;
@@ -260,7 +261,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     CSRSrcM = InstrM[14] ? {{(P.XLEN-5){1'b0}}, InstrM[19:15]} : SrcAM;
 
     // CSR set and clear for MIP/SIP should only touch internal state, not interrupt inputs
-    if (CSRAdrM == MIP | CSRAdrM == SIP) CSRReadVal2M = {{(P.XLEN-12){1'b0}}, MIP_REGW_writeable};
+    if (CSRAdrM == MIP | CSRAdrM == SIP) CSRReadVal2M = {{(P.XLEN-16){1'b0}}, MIP_REGW_writeable};
     else                                 CSRReadVal2M = CSRReadValM;
 
     // Compute AND/OR modification

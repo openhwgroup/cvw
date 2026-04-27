@@ -172,25 +172,25 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
     // M-mode trap CSRs
     `CONNECT_CSR(MSTATUS, 12'h300, testbench.dut.core.priv.priv.csr.csrm.MSTATUS_REGW);
     `CONNECT_CSR(MEDELEG, 12'h302, testbench.dut.core.priv.priv.csr.csrm.MEDELEG_REGW);
-    `CONNECT_CSR(MIDELEG, 12'h303, testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW);
-    `CONNECT_CSR(MIE, 12'h304, testbench.dut.core.priv.priv.csr.csrm.MIE_REGW);
+    `CONNECT_CSR(MIDELEG, 12'h303, {{(P.XLEN-16){1'b0}}, testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW});
+    `CONNECT_CSR(MIE, 12'h304, {{(P.XLEN-16){1'b0}}, testbench.dut.core.priv.priv.csr.csrm.MIE_REGW});
     `CONNECT_CSR(MTVEC, 12'h305, testbench.dut.core.priv.priv.csr.csrm.MTVEC_REGW);
     `CONNECT_CSR(MSCRATCH, 12'h340, testbench.dut.core.priv.priv.csr.csrm.MSCRATCH_REGW);
     `CONNECT_CSR(MEPC, 12'h341, testbench.dut.core.priv.priv.csr.csrm.MEPC_REGW);
     `CONNECT_CSR(MCAUSE, 12'h342, testbench.dut.core.priv.priv.csr.csrm.MCAUSE_REGW);
     `CONNECT_CSR(MTVAL, 12'h343, testbench.dut.core.priv.priv.csr.csrm.MTVAL_REGW);
-    `CONNECT_CSR(MIP, 12'h344, testbench.dut.core.priv.priv.csr.csrm.MIP_REGW);
+    `CONNECT_CSR(MIP, 12'h344, {{(P.XLEN-16){1'b0}}, testbench.dut.core.priv.priv.csr.csrm.MIP_REGW});
 
     // S-mode trap CSRs
     if (P.S_SUPPORTED) begin
       `CONNECT_CSR(SSTATUS, 12'h100, testbench.dut.core.priv.priv.csr.csrs.csrs.SSTATUS_REGW);
-      `CONNECT_CSR(SIE, 12'h104, testbench.dut.core.priv.priv.csr.csrm.MIE_REGW & 12'h222 & testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW);
+      `CONNECT_CSR(SIE, 12'h104, {{(P.XLEN-16){1'b0}}, testbench.dut.core.priv.priv.csr.csrm.MIE_REGW & 16'h0222 & testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW});
       `CONNECT_CSR(STVEC, 12'h105, testbench.dut.core.priv.priv.csr.csrs.csrs.STVEC_REGW);
       `CONNECT_CSR(SSCRATCH, 12'h140, testbench.dut.core.priv.priv.csr.csrs.csrs.SSCRATCH_REGW);
       `CONNECT_CSR(SEPC, 12'h141, testbench.dut.core.priv.priv.csr.csrs.csrs.SEPC_REGW);
       `CONNECT_CSR(SCAUSE, 12'h142, testbench.dut.core.priv.priv.csr.csrs.csrs.SCAUSE_REGW);
       `CONNECT_CSR(STVAL, 12'h143, testbench.dut.core.priv.priv.csr.csrs.csrs.STVAL_REGW);
-      `CONNECT_CSR(SIP, 12'h144, testbench.dut.core.priv.priv.csr.csrm.MIP_REGW & 12'h222 & testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW);
+      `CONNECT_CSR(SIP, 12'h144, {{(P.XLEN-16){1'b0}}, testbench.dut.core.priv.priv.csr.csrm.MIP_REGW & 16'h0222 & testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW});
     end
 
     // Virtual Memory CSRs
@@ -252,15 +252,15 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
       `CONNECT_CSR(HSTATUS, 12'h600, testbench.dut.core.priv.priv.csr.csrh.csrh.HSTATUS_REGW);
       `CONNECT_CSR(VSSTATUS, 12'h200, testbench.dut.core.priv.priv.csr.csrh.csrh.VSSTATUS_REGW);
       `CONNECT_CSR(HEDELEG, 12'h602, testbench.dut.core.priv.priv.csr.csrh.csrh.HEDELEG_REGW);
-      `CONNECT_CSR(HIDELEG, 12'h603, testbench.dut.core.priv.priv.csr.csrh.csrh.HIDELEG_REGW);
-      `CONNECT_CSR(HIE, 12'h604, {{(P.XLEN-12){1'b0}}, testbench.dut.core.priv.priv.csr.csrh.csrh.HIE_REGW});
+      `CONNECT_CSR(HIDELEG, 12'h603, {{(P.XLEN-16){1'b0}}, testbench.dut.core.priv.priv.csr.csrh.csrh.HIDELEG_REGW});
+      `CONNECT_CSR(HIE, 12'h604, {{(P.XLEN-16){1'b0}}, testbench.dut.core.priv.priv.csr.csrh.csrh.HIE_REGW});
       `CONNECT_CSR(VSIE, 12'h204, testbench.dut.core.priv.priv.csr.csrh.csrh.VSIE_REGW);
       `CONNECT_CSR(HTIMEDELTA, 12'h605, testbench.dut.core.priv.priv.csr.csrh.csrh.HTIMEDELTA_REGW[P.XLEN-1:0]);
       `CONNECT_CSR(HCOUNTEREN, 12'h606, testbench.dut.core.priv.priv.csr.csrh.csrh.HCOUNTEREN_REGW);
       `CONNECT_CSR(HGEIE, 12'h607, testbench.dut.core.priv.priv.csr.csrh.csrh.HGEIE_REGW);
       `CONNECT_CSR(HENVCFG, 12'h60A, testbench.dut.core.priv.priv.csr.csrh.csrh.HENVCFG_REGW[P.XLEN-1:0]);
       `CONNECT_CSR(HTVAL, 12'h643, testbench.dut.core.priv.priv.csr.csrh.csrh.HTVAL_REGW);
-      `CONNECT_CSR(HIP, 12'h644, testbench.dut.core.priv.priv.csr.csrh.csrh.HIP_PENDING);
+      `CONNECT_CSR(HIP, 12'h644, {{(P.XLEN-16){1'b0}}, testbench.dut.core.priv.priv.csr.csrh.csrh.HIP_PENDING});
       `CONNECT_CSR(HVIP, 12'h645, testbench.dut.core.priv.priv.csr.csrh.csrh.HVIP_REGW);
       `CONNECT_CSR(HTINST, 12'h64A, testbench.dut.core.priv.priv.csr.csrh.csrh.HTINST_REGW);
       `CONNECT_CSR(HGATP, 12'h680, testbench.dut.core.priv.priv.csr.csrh.csrh.HGATPReadVal);

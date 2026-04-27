@@ -39,12 +39,12 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0]        NextEPCM, NextTvalM, MSTATUS_REGW, MSTATUSH_REGW,
   input  logic [5:0]               NextCauseM,
   input  logic [P.XLEN-1:0]        CSRWriteValM,
-  input  logic [11:0]              MIP_REGW, MIE_REGW,
+  input  logic [15:0]              MIP_REGW, MIE_REGW,
   output logic [P.XLEN-1:0]        CSRMReadValM, MTVEC_REGW,
   output logic [P.XLEN-1:0]        MEPC_REGW,
   output logic [31:0]              MCOUNTEREN_REGW, MCOUNTINHIBIT_REGW,
   output logic [63:0]              MEDELEG_REGW,
-  output logic [11:0]              MIDELEG_REGW,
+  output logic [15:0]              MIDELEG_REGW,
   /* verilator lint_off UNDRIVEN */ // PMP registers are only used when PMP_ENTRIES > 0
   output var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW[P.PMP_ENTRIES-1:0],
   output var logic [7:0]           PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0],
@@ -63,7 +63,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   logic                            WriteMSCRATCHM, WriteMEPCM, WriteMCAUSEM, WriteMTVALM;
   logic                            WriteMCOUNTERENM, WriteMCOUNTINHIBITM;
   logic [63:0]                     NextMEDELEGM;
-  logic [11:0]                     NextMIDELEGM;
+  logic [15:0]                     NextMIDELEGM;
 
   // Machine CSRs
   localparam MVENDORID     = 12'hF11;
@@ -109,8 +109,8 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   // there cannot be instruction-address-misaligned exceptions.
   localparam [63:0] MEDELEG_MASK = (P.ZCA_SUPPORTED ? 64'h0000_0000_0000_B3FE : 64'h0000_0000_0000_B3FF) |
                                    (P.H_SUPPORTED ? 64'h0000_0000_0040_0400 : 64'h0000_0000_0000_0000);
-  localparam [11:0] MIDELEG_MASK = 12'h222; // only standard S-level interrupt delegation bits are writable
-  localparam [11:0] MIDELEG_RO1  = P.H_SUPPORTED ? 12'h444 : 12'h000; // VS-level interrupts are always delegated past M
+  localparam [15:0] MIDELEG_MASK = 16'h0222; // only standard S-level interrupt delegation bits are writable
+  localparam [15:0] MIDELEG_RO1  = P.H_SUPPORTED ? 16'h0444 : 16'h0000; // VS-level interrupts are always delegated past M
   localparam Gm1 = P.PMP_G > 0 ? P.PMP_G - 1 : 0; // max(G-1, 0)
 
  // There are PMP_ENTRIES = 0, 16, or 64 PMPADDR registers, each of which has its own flop
@@ -189,8 +189,8 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
     end
     flopenr #(64) MEDELEGreg(clk, reset, (WriteMEDELEGM | WriteMEDELEGHM), NextMEDELEGM, MEDELEG_REGW);
 
-    assign NextMIDELEGM = (CSRWriteValM[11:0] & MIDELEG_MASK) | MIDELEG_RO1;
-    flopenl #(12) MIDELEGreg(clk, reset, WriteMIDELEGM, NextMIDELEGM, MIDELEG_RO1, MIDELEG_REGW);
+    assign NextMIDELEGM = (CSRWriteValM[15:0] & MIDELEG_MASK) | MIDELEG_RO1;
+    flopenl #(16) MIDELEGreg(clk, reset, WriteMIDELEGM, NextMIDELEGM, MIDELEG_RO1, MIDELEG_REGW);
   end else begin
     assign MEDELEG_REGW = '0;
     assign MIDELEG_REGW = '0;
@@ -285,9 +285,9 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
                      else               CSRMReadValM = MEDELEG_REGW[31:0];
       MEDELEGH:      if (P.XLEN == 32) CSRMReadValM = MEDELEG_REGW[63:32];
                      else               IllegalCSRMAccessM = 1'b1;
-      MIDELEG:       CSRMReadValM = {{(P.XLEN-12){1'b0}}, MIDELEG_REGW};
-      MIP:           CSRMReadValM = {{(P.XLEN-12){1'b0}}, MIP_REGW};
-      MIE:           CSRMReadValM = {{(P.XLEN-12){1'b0}}, MIE_REGW};
+      MIDELEG:       CSRMReadValM = {{(P.XLEN-16){1'b0}}, MIDELEG_REGW};
+      MIP:           CSRMReadValM = {{(P.XLEN-16){1'b0}}, MIP_REGW};
+      MIE:           CSRMReadValM = {{(P.XLEN-16){1'b0}}, MIE_REGW};
       MSCRATCH:      CSRMReadValM = MSCRATCH_REGW;
       MEPC:          CSRMReadValM = MEPC_REGW;
       MCAUSE:        CSRMReadValM = MCAUSE_REGW;
