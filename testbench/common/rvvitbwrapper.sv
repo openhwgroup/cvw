@@ -144,7 +144,7 @@ module rvvitbwrapper import cvw::*; #(parameter cvw_t P,
     assign CSRArray[39] = dut.core.priv.priv.csr.csrh.csrh.HEDELEG_REGW; // 12'h602
     assign CSRArray[40] = (P.XLEN == 32) ? dut.core.priv.priv.csr.csrh.csrh.HEDELEG_REGW[63:32] : '0; // 12'h612
     assign CSRArray[41] = dut.core.priv.priv.csr.csrh.csrh.HIDELEG_REGW; // 12'h603
-    assign CSRArray[42] = dut.core.priv.priv.csr.csrh.csrh.HIE_REGW; // 12'h604
+    assign CSRArray[42] = {{(P.XLEN-12){1'b0}}, dut.core.priv.priv.csr.csrh.csrh.HIE_REGW}; // 12'h604
     assign CSRArray[43] = dut.core.priv.priv.csr.csrh.csrh.VSIE_REGW; // 12'h204
     assign CSRArray[44] = dut.core.priv.priv.csr.csrh.csrh.HTIMEDELTA_REGW[P.XLEN-1:0]; // 12'h605
     assign CSRArray[45] = (P.XLEN == 32) ? dut.core.priv.priv.csr.csrh.csrh.HTIMEDELTA_REGW[63:32] : '0; // 12'h615
@@ -168,7 +168,7 @@ module rvvitbwrapper import cvw::*; #(parameter cvw_t P,
     assign CSRArray[63] = dut.core.priv.priv.csr.csrh.csrh.VSTIMECMP_REGW[P.XLEN-1:0]; // 12'h24D
     assign CSRArray[64] = (P.XLEN == 32) ? dut.core.priv.priv.csr.csrh.csrh.VSTIMECMP_REGW[63:32] : '0; // 12'h25D
   end else begin : no_hypervisor_csrs
-    for (genvar csrIdx = 36; csrIdx < TOTAL_CSRS; csrIdx++) begin
+    for (genvar csrIdx = 36; csrIdx < 65; csrIdx++) begin
       assign CSRArray[csrIdx] = '0;
     end
   end

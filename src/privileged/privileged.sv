@@ -106,7 +106,8 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   logic [11:0]              MIDELEG_REGW;                                   // interrupt delegation CSR
   logic [63:0]              HEDELEG_REGW;                                   // HS->VS exception delegation CSR
   logic [11:0]              HIDELEG_REGW;                                   // HS->VS interrupt delegation CSR
-  logic [P.XLEN-1:0]        HIE_REGW, HGEIE_REGW;                           // Hypervisor Interrupt Enables
+  logic [11:0]              HIE_REGW;                                        // Hypervisor interrupt enables aliasing mie
+  logic [P.XLEN-1:0]        HGEIE_REGW;                                      // Guest external interrupt enables
   logic                     sretM, mretM;                                   // supervisor / machine return instruction
   logic                     IllegalCSRAccessM;                              // Illegal access to CSR
   logic                     IllegalIEUFPUInstrM;                            // Illegal IEU or FPU instruction, delayed to Mem stage
@@ -178,7 +179,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .LoadAccessFaultM, .StoreAmoAccessFaultM, .EcallFaultM, .InstrPageFaultM,
     .LoadPageFaultM, .StoreAmoPageFaultM, .VirtualInstrFaultM,
     .PrivilegeModeW, .VirtModeW,
-    .MIP_REGW, .MIE_REGW, .HIE_REGW, .HGEIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW, .HEDELEG_REGW, .HIDELEG_REGW, .STATUS_MIE, .STATUS_SIE, .VSSTATUS_SIE,
+    .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW, .HEDELEG_REGW, .HIDELEG_REGW, .STATUS_MIE, .STATUS_SIE, .VSSTATUS_SIE,
     .InstrValidM, .CommittedM, .CommittedF,
     .TrapM, .wfiM, .wfiW, .InterruptM, .ExceptionM, .IntPendingM, .DelegateM, .CauseM,
     .TrapToM, .TrapToHSM, .TrapToVSM);

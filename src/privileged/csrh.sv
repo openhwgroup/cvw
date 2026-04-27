@@ -56,6 +56,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0] NextTvalM,       // Value for {v,s,}tval on trap
   input  logic [P.XLEN-1:0] NextHtvalM,       // Value for htval on trap
   input  logic [31:0]       InstrOrigM,       // Original compressed or uncompressed instruction for mtinst/htinst
+  input  logic [11:0]       HIE_REGW,         // hie alias view of the H bits stored in mie
 
   output logic [P.XLEN-1:0] CSRHReadValM,
   output logic              IllegalCSRHAccessM,
@@ -71,7 +72,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   output logic [31:0]       HCOUNTEREN_REGW,
   output logic [11:0]       HVIP_REGW,
   output logic [11:0]       HIP_MIP_REGW,    // mip alias view of HIP bits [11:0]
-  output logic [P.XLEN-1:0] HIE_REGW,
+  output logic              WriteHIEM, WriteVSIEM,
   output logic [P.XLEN-1:0] HGEIE_REGW,
   output logic [63:0]       HTIMEDELTA_REGW,
   output logic [63:0]       HENVCFG_REGW,
@@ -91,8 +92,6 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   logic              VSSTATUS_SD, VSSTATUS_SPELP, VSSTATUS_SDT;
   logic              VSSTATUS_SPIE;
   logic [1:0]        VSSTATUS_XS, VSSTATUS_UXL, VSSTATUS_VS;
-  logic [P.XLEN-1:0] NextHIE;
-  logic [P.XLEN-1:0] HIE_WRITE_MASK;
   logic [11:0]       VSIE_REGW;
   logic [P.XLEN-1:0] HTVAL_REGW;
   logic [P.XLEN-1:0] VSTVAL_REGW;
@@ -113,7 +112,6 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   localparam HEDELEGH    = 12'h612;
   localparam HIDELEG    = 12'h603;
   localparam HIE        = 12'h604;
-  localparam MIE        = 12'h304;
   localparam VSIE       = 12'h204;
   localparam HTIMEDELTA = 12'h605;
   localparam HTIMEDELTAH = 12'h615;
@@ -147,16 +145,12 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   localparam [11:0] HVIP_MASK    = 12'h444; // Only VSSIP[2], VSTIP[6], VSEIP[10] are writable (spec 7.4.4)
   // No guest-external interrupt source is wired in yet, so GEILEN is architecturally zero.
   localparam int unsigned GEILEN = 0;
-  // Include all standard HIE bits in the architectural mask; SGEIE writability is GEILEN-gated in write logic.
-  localparam [12:0] HIE_MASK = (GEILEN == 0) ? 13'h0444 : 13'h1444;
-
   // Write Enables for CSR instructions
   logic WriteMTINSTM;
   logic WriteMTVAL2M;
   logic WriteHSTATUSM, WriteVSSTATUSM;
   logic WriteHEDELEGM, WriteHEDELEGHM;
   logic WriteHIDELEGM;
-  logic WriteHIEM, WriteHIEAliasM, WriteVSIEM;
   logic WriteHTIMEDELTAM, WriteHTIMEDELTAHM;
   logic WriteHCOUNTERENM;
   logic WriteHGEIEM;
@@ -250,7 +244,6 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   assign WriteHEDELEGHM   = (P.XLEN == 32) & (ValidHWriteM & (CSRAdrM == HEDELEGH));
   assign WriteHIDELEGM    = ValidHWriteM & (CSRAdrM == HIDELEG);
   assign WriteHIEM        = ValidHWriteM & (CSRAdrM == HIE);
-  assign WriteHIEAliasM   = CSRMWriteM & (CSRAdrM == MIE);
   assign WriteVSIEM       = ValidVSWriteM & (CSRAdrM == VSIE);
   assign WriteHTIMEDELTAM = ValidHWriteM & (CSRAdrM == HTIMEDELTA);
   assign WriteHTIMEDELTAHM = (P.XLEN == 32) & (ValidHWriteM & (CSRAdrM == HTIMEDELTAH));
@@ -433,26 +426,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   assign NextHIDELEGM = WriteHIDELEGM ? (CSRWriteValM[11:0] & HIDELEG_MASK) : HIDELEG_REGW;
   flopenr #(12) HIDELEGreg(clk, reset, WriteHIDELEGM, NextHIDELEGM, HIDELEG_REGW);
 
-  // Interrupt Enable / Pending
-  assign HIE_WRITE_MASK = {{(P.XLEN-13){1'b0}}, HIE_MASK};
-  // MIE.VS*E and MIE.SGEIE alias HIE, while VSIE remaps guest-visible S bits into HIE.
-  // TODO: Revisit this logic and see if there is a more efficient way to capture spec
-  always_comb begin
-    NextHIE = HIE_REGW & HIE_WRITE_MASK;
-    if (WriteHIEM | WriteHIEAliasM) begin
-      NextHIE = CSRWriteValM & HIE_WRITE_MASK;
-      // GEILEN=0: SGEIE is read-only zero.
-      if (GEILEN == 0) NextHIE[12] = 1'b0;
-    end
-    if (WriteVSIEM) begin
-      if (HIDELEG_REGW[2])  NextHIE[2]  = CSRWriteValM[1]; // SSIE -> VSSIE
-      if (HIDELEG_REGW[6])  NextHIE[6]  = CSRWriteValM[5]; // STIE -> VSTIE
-      if (HIDELEG_REGW[10]) NextHIE[10] = CSRWriteValM[9]; // SEIE -> VSEIE
-    end
-  end
-  flopenr #(P.XLEN) HIEreg(clk, reset, (WriteHIEM | WriteHIEAliasM | WriteVSIEM), NextHIE, HIE_REGW);
-
-
+  // Interrupt Pending
   // VSIP/VSIE are aliases of HIP/HIE when delegated; otherwise read-only zero.
   // VSTIP can be driven by timer compare when Sstc is implemented and STCE is enabled.
   assign TimeVirt = MTIME_CLINT + HTIMEDELTA_REGW;
@@ -483,7 +457,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
                         HIP_VSTIP_PENDING, 3'b0, HIP_VSSIP_PENDING, 2'b0};
   assign HIP_MIP_REGW = HIP_PENDING[11:0];
 
-  assign VSIE_REGW = (HIE_REGW[11:0] & HIDELEG_REGW & HIDELEG_MASK) >> 1;
+  assign VSIE_REGW = (HIE_REGW & HIDELEG_REGW & HIDELEG_MASK) >> 1;
 
   // hvip holds the writable virtual interrupt sources.
   // hip.VSSIP aliases hvip.VSSIP, and vsip.SSIP aliases hip.VSSIP only when hideleg[2] is set.
@@ -672,7 +646,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
       HEDELEG:    begin LegalAccessM = LegalHAccessM; CSRHReadValM = HEDELEG_REGW[P.XLEN-1:0]; end
       HEDELEGH:   begin LegalAccessM = LegalHAccessM & (P.XLEN == 32); CSRHReadValM = {{(P.XLEN-32){1'b0}}, HEDELEG_REGW[63:32]}; end
       HIDELEG:    begin LegalAccessM = LegalHAccessM; CSRHReadValM = {{(P.XLEN-12){1'b0}}, HIDELEG_REGW}; end
-      HIE:        begin LegalAccessM = LegalHAccessM; CSRHReadValM = HIE_REGW; end
+      HIE:        begin LegalAccessM = LegalHAccessM; CSRHReadValM = {{(P.XLEN-12){1'b0}}, HIE_REGW}; end
       HTIMEDELTA: begin LegalAccessM = LegalHAccessM; CSRHReadValM = HTIMEDELTA_REGW[P.XLEN-1:0]; end
       HTIMEDELTAH:begin LegalAccessM = LegalHAccessM & (P.XLEN == 32); CSRHReadValM = {{(P.XLEN-32){1'b0}}, HTIMEDELTA_REGW[63:32]}; end
       HCOUNTEREN: begin LegalAccessM = LegalHAccessM; CSRHReadValM = {{(P.XLEN-32){1'b0}}, HCOUNTEREN_REGW}; end

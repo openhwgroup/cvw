@@ -40,7 +40,6 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   input  logic [63:0]          MEDELEG_REGW,                                    // exception delegation SR
   input  logic [63:0]          HEDELEG_REGW,                                    // HS->VS exception delegation
   input  logic [11:0]          HIDELEG_REGW,                                    // HS->VS interrupt delegation
-  input  logic [P.XLEN-1:0]    HIE_REGW, HGEIE_REGW,                            // Hypervisor Interrupt Enables
   input  logic                 STATUS_MIE, STATUS_SIE, VSSTATUS_SIE,            // machine/HS/VS interrupt enables
   input  logic                 InstrValidM,                                     // current instruction is valid, not flushed
   input  logic                 CommittedM, CommittedF,                          // LSU/IFU has committed to a bus operation that can't be interrupted
@@ -72,11 +71,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
 
   assign CauseIdxM      = {1'b0, CauseM};
   assign MIntGlobalEnM  = (PrivilegeModeW != P.M_MODE) | STATUS_MIE; // if M ints enabled or lower priv 3.1.9
-  if (P.H_SUPPORTED) begin: pendingints_h
-    assign PendingIntsM = MIP_REGW & (MIE_REGW | HIE_REGW[11:0]);
-  end else begin: pendingints_noh
-    assign PendingIntsM = MIP_REGW & MIE_REGW;
-  end
+  assign PendingIntsM = MIP_REGW & MIE_REGW;
   assign IntPendingM   = |PendingIntsM;
   assign Committed     = CommittedM | CommittedF;
   if (P.H_SUPPORTED) begin: enabledints_h
