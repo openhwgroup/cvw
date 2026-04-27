@@ -61,7 +61,8 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   input  logic [63:0]       MTIME_CLINT,
   input  logic [63:0]       HTIMEDELTA_REGW,
   output logic [P.XLEN-1:0] CSRCReadValM,
-  output logic              IllegalCSRCAccessM
+  output logic              IllegalCSRCAccessM,
+  output logic              VirtualCSRCAccessM
 );
 
   localparam MHPMCOUNTERBASE  = 12'hB00;
@@ -191,12 +192,36 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
     end
   end
 
+  // In V modes, counter access denials caused by hcounteren/scounteren are
+  // virtual-instruction traps when mcounteren would otherwise permit access.
+  if (P.H_SUPPORTED) begin: virtualcounter_h
+    logic CounterExistsM;
+
+    if (P.XLEN == 64) begin: counterexists64
+      assign CounterExistsM = (CSRAdrM == TIME) |
+                              (CSRAdrM >= HPMCOUNTERBASE & CSRAdrM < HPMCOUNTERBASE+P.COUNTERS);
+    end else begin: counterexists32
+      assign CounterExistsM = (CSRAdrM == TIME) | (CSRAdrM == TIMEH) |
+                              (CSRAdrM >= HPMCOUNTERBASE & CSRAdrM < HPMCOUNTERBASE+P.COUNTERS) |
+                              (CSRAdrM >= HPMCOUNTERHBASE & CSRAdrM < HPMCOUNTERHBASE+P.COUNTERS);
+    end
+
+    always_comb begin
+      VirtualCSRCAccessM = 1'b0;
+      if (VirtModeW & CounterExistsM & ~CSRWriteM & CounterEnM) begin
+        if (PrivilegeModeW == P.S_MODE)
+          VirtualCSRCAccessM = ~HCounterEnM;
+        else if (PrivilegeModeW == P.U_MODE)
+          VirtualCSRCAccessM = ~HCounterEnM | ~SCounterEnM;
+      end
+    end
+  end else begin: virtualcounter_noh
+    assign VirtualCSRCAccessM = 1'b0;
+  end
+
   always_comb begin
     CSRCReadValM = '0; // default value
     IllegalCSRCAccessM = 1'b0;
-
-    // TODO: Distinguish virtual-instruction vs illegal-instruction fault class for
-    // counter access denials in V modes per hypervisor spec (hcounteren/scounteren rules).
 
     if (CounterAllowedM) begin
       if (CSRAdrM >= MHPMEVENTBASE & CSRAdrM <= MHPMEVENTLAST) begin

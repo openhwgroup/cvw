@@ -119,3 +119,25 @@ In `--lockstepverbose` output, the HS-mode test can be identified by the instruc
 ```
 
 In this test context, `Supervisor` with virtualization mode `V=0` corresponds to HS-mode.
+
+## Hypervisor Exception Tests
+
+`hypervisorExceptions.S` is a focused companion test for hypervisor exception classification and trap CSR side effects. It currently covers:
+
+- VS-mode virtual-instruction traps for H CSR access, HFENCE, HLV, CBO/envcfg, SATP under `hstatus.VTVM`, and SRET under `hstatus.VTSR`
+- `mtval` contents for those virtual-instruction traps
+- HS-mode illegal-instruction delegation for `hfence.gvma` when `mstatus.TVM=1`
+- `stval` contents for the delegated HS illegal-instruction trap
+
+Build it from the repository root with:
+
+```sh
+source ./setup.sh
+make -C tests/coverage hypervisorExceptions.elf hypervisorExceptions.elf.objdump
+```
+
+Run it with ImperasDV lockstep using the same `rv64gch` setup described above:
+
+```sh
+wsim rv64gch --elf tests/coverage/hypervisorExceptions.elf --lockstepverbose > hypervisorExceptions.log 2>&1
+```

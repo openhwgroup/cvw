@@ -35,6 +35,8 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   input  logic         PrivilegedM,                         // is this a privileged instruction (from IEU controller)
   input  logic         IllegalIEUFPUInstrM,                 // Not a legal IEU instruction
   input  logic         IllegalCSRAccessM,                   // Not a legal CSR access
+  input  logic         VirtualCSRAccessM,                   // CSR access that should trap as virtual instruction
+  input  logic         VirtualCMOInstrM,                    // CBO instruction that should trap as virtual instruction
   input  logic         HLVHSVInstrM,                        // Valid HLV/HLVX/HSV system-instruction encoding
   input  logic [1:0]   PrivilegeModeW,                      // current privilege level
   input  logic         VirtModeW,                           // current V
@@ -153,11 +155,10 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
 
   // Virtual Instruction Exception Detection
   if (P.H_SUPPORTED) begin: virtinstr
-    // TODO: Complete full hypervisor virtual-instruction matrix (hypervisor.adoc: norm:H_cause_virtual_instruction).
     logic is_sret, WFIShouldTrapVirtM;
-    logic VSTSRFault, VTVMFault, HVFenceFault, VSTimecmpFault, HLVHSVFault;
+    logic VSTSRFault, VTVMFault, HVFenceFault, HLVHSVFault, CMOFault;
     logic VUWfiFault, VSWfiFault, VUSupFault;
-    logic is_satp_access, is_stimecmp_access;
+    logic SatpCSRM;
 
     assign is_sret = (InstrM[31:20] == 12'b000100000010) & rs1zeroM;
 
@@ -166,22 +167,20 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
     // Legal non-V execution remains TODO until the LSU/MMU path can honor
     // SPVP, VS/VU translation, HLVX execute-permission semantics, and
     // hstatus.HU for U-mode HLV/HLVX/HSV enable.
-    assign HLVHSVFault = HLVHSVInstrM & VirtModeW; // norm:hlsv_virtinst: V=1 → virtual instruction
+    assign HLVHSVFault = HLVHSVInstrM & VirtModeW; // norm:hlsv_virtinst: V=1 -> virtual instruction
     assign WFIShouldTrapVirtM = wfiM & WFITimeoutM & ~STATUS_TW;
     assign VUWfiFault = WFIShouldTrapVirtM & VirtModeW & (PrivilegeModeW == P.U_MODE);
     assign VSWfiFault = WFIShouldTrapVirtM & VirtModeW & (PrivilegeModeW == P.S_MODE) & HSTATUS_VTW;
     assign VUSupFault = PrivilegedM & VirtModeW & (PrivilegeModeW == P.U_MODE) &
                         (is_sret | vmaM | fenceinvalM);
 
-    assign is_satp_access = (InstrM[31:20] == 12'h180);
-    assign is_stimecmp_access = (InstrM[31:20] == 12'h14D) | ((P.XLEN == 32) & (InstrM[31:20] == 12'h15D)) |
-                                (InstrM[31:20] == 12'h24D) | ((P.XLEN == 32) & (InstrM[31:20] == 12'h25D));
+    assign SatpCSRM = (PrivilegeModeW == P.S_MODE) & (InstrM[31:20] == 12'h180) & (|InstrM[13:12]);
     // In VS-mode, satp and SFENCE/SINVAL are virtualized when hstatus.VTVM=1.
-    assign VTVMFault = PrivilegedM & VirtModeW & HSTATUS_VTVM & (is_satp_access | vmaM);
-    // Accesses to (v)stimecmp blocked in V=1 are HS-qualified and should raise virtual-instruction.
-    assign VSTimecmpFault = VirtModeW & IllegalCSRAccessM & is_stimecmp_access & P.SSTC_SUPPORTED;
+    assign VTVMFault = VirtModeW & HSTATUS_VTVM & (SatpCSRM | (PrivilegedM & vmaM));
+    // CBO/envcfg cases are classified in csr.sv, which owns the envcfg state.
+    assign CMOFault = IllegalIEUFPUInstrM & VirtualCMOInstrM;
 
-    assign VirtualInstrFaultM = VSTSRFault | HVFenceFault | VTVMFault | VSTimecmpFault |
+    assign VirtualInstrFaultM = VSTSRFault | HVFenceFault | VTVMFault | VirtualCSRAccessM | CMOFault |
                                 HLVHSVFault | VUWfiFault | VSWfiFault | VUSupFault;
   end else begin: novirtinstr
     assign VirtualInstrFaultM = 1'b0;
