@@ -111,46 +111,6 @@ module csr import cvw::*;  #(parameter cvw_t P) (
 
   localparam MIP = 12'h344;
   localparam SIP = 12'h144;
-  localparam SSTATUS = 12'h100;
-  localparam SIE = 12'h104;
-  localparam STVEC = 12'h105;
-  localparam SCOUNTEREN = 12'h106;
-  localparam SENVCFG = 12'h10A;
-  localparam SSCRATCH = 12'h140;
-  localparam SEPC = 12'h141;
-  localparam SCAUSE = 12'h142;
-  localparam STVAL = 12'h143;
-  localparam STIMECMP = 12'h14D;
-  localparam STIMECMPH = 12'h15D;
-  localparam SATP = 12'h180;
-  localparam HSTATUS = 12'h600;
-  localparam VSSTATUS = 12'h200;
-  localparam HEDELEG = 12'h602;
-  localparam HEDELEGH = 12'h612;
-  localparam HIDELEG = 12'h603;
-  localparam HIE = 12'h604;
-  localparam VSIE = 12'h204;
-  localparam HTIMEDELTA = 12'h605;
-  localparam HTIMEDELTAH = 12'h615;
-  localparam HCOUNTEREN = 12'h606;
-  localparam HGEIE = 12'h607;
-  localparam HENVCFG = 12'h60A;
-  localparam HENVCFGH = 12'h61A;
-  localparam HTVAL = 12'h643;
-  localparam VSTVAL = 12'h243;
-  localparam HIP = 12'h644;
-  localparam VSIP = 12'h244;
-  localparam HVIP = 12'h645;
-  localparam HTINST = 12'h64A;
-  localparam HGATP = 12'h680;
-  localparam HGEIP = 12'hE12;
-  localparam VSTVEC = 12'h205;
-  localparam VSSCRATCH = 12'h240;
-  localparam VSEPC = 12'h241;
-  localparam VSCAUSE = 12'h242;
-  localparam VSATP = 12'h280;
-  localparam VSTIMECMP = 12'h24D;
-  localparam VSTIMECMPH = 12'h25D;
 
   logic [P.XLEN-1:0]       CSRMReadValM, CSRSReadValM, CSRUReadValM, CSRCReadValM;
   logic [P.XLEN-1:0]       CSRReadValM;
@@ -192,7 +152,6 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]       SENVCFG_REGW;
   logic [P.XLEN-1:0]       SATP_REGW_INT, VSATP_REGW, HGATP_REGW; // Internal SATP and Hypervisor ATPs
   logic                    ENVCFG_STCE; // supervisor timer counter enable
-  logic                    ENVCFG_FIOM; // fence implies io (presently not used)
   logic                    TrapGVAM;
   logic                    TrapWritesVAToTvalM;
   logic                    VSSTATUS_SUM, VSSTATUS_MXR, VSSTATUS_UBE;
@@ -325,79 +284,9 @@ module csr import cvw::*;  #(parameter cvw_t P) (
 
   assign CSRAdrM_In = InstrM[31:20];
   if (P.H_SUPPORTED) begin: csradr_h
-    logic HasVSCSR, HSQualifiedSCSRAccessM, HSQualifiedHCSRAccessM, HSQualifiedVSCSRAccessM;
-    logic VirtualSCSRAccessM, VirtualHCSRAccessM, VirtualVSCSRAccessM, VirtualVSTimecmpAccessM;
-    logic MapVSCSR;
-
-    // In VS-mode, only supervisor CSRs with architectural VS counterparts substitute.
-    /* verilator lint_off CASEINCOMPLETE */
-    always_comb begin
-      HasVSCSR = 1'b0;
-      case (CSRAdrM_In)
-        SSTATUS, SIE, STVEC, SSCRATCH, SEPC, SCAUSE, STVAL, SIP:
-          HasVSCSR = 1'b1;
-        SATP:
-          HasVSCSR = P.VIRTMEM_SUPPORTED;
-        STIMECMP:
-          HasVSCSR = P.SSTC_SUPPORTED;
-        STIMECMPH:
-          HasVSCSR = P.SSTC_SUPPORTED & (P.XLEN == 32);
-      endcase
-    end
-
-    always_comb begin
-      HSQualifiedSCSRAccessM = 1'b0;
-      case (CSRAdrM_In)
-        SSTATUS, SIE, STVEC, SCOUNTEREN, SENVCFG, SSCRATCH, SEPC, SCAUSE, STVAL, SIP:
-          HSQualifiedSCSRAccessM = 1'b1;
-        SATP:
-          HSQualifiedSCSRAccessM = P.VIRTMEM_SUPPORTED;
-        STIMECMP:
-          HSQualifiedSCSRAccessM = P.SSTC_SUPPORTED;
-        STIMECMPH:
-          HSQualifiedSCSRAccessM = P.SSTC_SUPPORTED & (P.XLEN == 32);
-      endcase
-    end
-
-    always_comb begin
-      HSQualifiedHCSRAccessM = 1'b0;
-      case (CSRAdrM_In)
-        HSTATUS, HEDELEG, HIDELEG, HIE, HTIMEDELTA, HCOUNTEREN, HGEIE, HENVCFG,
-        HTVAL, HIP, HVIP, HTINST, HGATP:
-          HSQualifiedHCSRAccessM = 1'b1;
-        HEDELEGH, HTIMEDELTAH, HENVCFGH:
-          HSQualifiedHCSRAccessM = (P.XLEN == 32);
-        HGEIP:
-          HSQualifiedHCSRAccessM = ~CSRWriteM;
-      endcase
-    end
-
-    always_comb begin
-      HSQualifiedVSCSRAccessM = 1'b0;
-      case (CSRAdrM_In)
-        VSSTATUS, VSIE, VSTVEC, VSSCRATCH, VSEPC, VSCAUSE, VSTVAL, VSIP, VSATP:
-          HSQualifiedVSCSRAccessM = 1'b1;
-        VSTIMECMP:
-          HSQualifiedVSCSRAccessM = P.SSTC_SUPPORTED;
-        VSTIMECMPH:
-          HSQualifiedVSCSRAccessM = P.SSTC_SUPPORTED & (P.XLEN == 32);
-      endcase
-    end
-    /* verilator lint_on CASEINCOMPLETE */
-
-    assign MapVSCSR = VirtModeW & (PrivilegeModeW == P.S_MODE) & HasVSCSR;
-    mux2 #(12) csradrmux(CSRAdrM_In, {CSRAdrM_In[11:10], 2'b10, CSRAdrM_In[7:0]}, MapVSCSR, CSRAdrM);
-    assign VirtualSCSRAccessM = VirtModeW & (PrivilegeModeW == P.U_MODE) & HSQualifiedSCSRAccessM;
-    assign VirtualHCSRAccessM = VirtModeW & HSQualifiedHCSRAccessM;
-    assign VirtualVSCSRAccessM = VirtModeW & HSQualifiedVSCSRAccessM;
-    assign VirtualVSTimecmpAccessM = VirtModeW & (PrivilegeModeW == P.S_MODE) & P.SSTC_SUPPORTED &
-                                     ((CSRAdrM_In == STIMECMP) | ((P.XLEN == 32) & (CSRAdrM_In == STIMECMPH))) &
-                                     ~(MCOUNTEREN_REGW[1] & HCOUNTEREN_REGW[1] & HENVCFG_REGW[63]);
-    assign VirtualCSRAccessM = CSRReadM & (VirtualSCSRAccessM | VirtualHCSRAccessM | VirtualVSCSRAccessM |
-                                           VirtualVSTimecmpAccessM | VirtualCSRCAccessM);
-    // GVA gets set when traps from virtualized execution write a VA to tval.
-    // TODO: Include HS-mode HLV/HLVX/HSV fault cases when those paths are integrated.
-    assign TrapGVAM = TrapM & ExceptionM & VirtModeW & TrapWritesVAToTvalM;
+    csrhvirt #(P) csrhvirt(.CSRAdrM_In, .CSRReadM, .CSRWriteM, .TrapM, .ExceptionM,
+      .VirtModeW, .PrivilegeModeW, .MCOUNTEREN_REGW, .HCOUNTEREN_REGW, .HENVCFG_REGW,
+      .VirtualCSRCAccessM, .TrapWritesVAToTvalM, .CSRAdrM, .VirtualCSRAccessM, .TrapGVAM);
   end else begin: csradr_noh
     assign CSRAdrM = CSRAdrM_In;
     assign VirtualCSRAccessM = 1'b0;
@@ -581,69 +470,8 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign VirtualCSRCAccessM = 1'b0;
   end
 
-  // Broadcast appropriate environment configuration based on privilege mode
-  // menvcfg constrains corresponding henvcfg bits when V=1.
-  assign ENVCFG_STCE =  (P.H_SUPPORTED & VirtModeW) ? (HENVCFG_REGW[63] & MENVCFG_REGW[63]) : MENVCFG_REGW[63];
-  assign ENVCFG_PBMTE = (P.H_SUPPORTED & VirtModeW) ? (HENVCFG_REGW[62] & MENVCFG_REGW[62]) : MENVCFG_REGW[62];
-  assign ENVCFG_ADUE  = (P.H_SUPPORTED & VirtModeW) ? (HENVCFG_REGW[61] & MENVCFG_REGW[61]) : MENVCFG_REGW[61];
-  if (P.H_SUPPORTED) begin: envcfg_h
-    logic [3:0] MENVCFG_CBEM, HENVCFG_CBEM, SENVCFG_CBEM;
-    logic [3:0] HSENVCFG_CBEM, VSENVCFG_CBEM, UENVCFG_CBEM, VUENVCFG_CBEM;
-    logic       CBOInvalInstrM, CBOCleanInstrM, CBOFlushInstrM, CBOZeroInstrM;
-    logic       MENVCFG_CBIEM, HENVCFG_CBIEM, SENVCFG_CBIEM;
-    logic       MENVCFG_CBCFEM, HENVCFG_CBCFEM, SENVCFG_CBCFEM;
-    logic       MENVCFG_CBZEM, HENVCFG_CBZEM, SENVCFG_CBZEM;
-    logic       VirtualVSENVFaultM, VirtualVUENVFaultM;
-
-    assign MENVCFG_CBEM  = MENVCFG_REGW[7:4];
-    assign HENVCFG_CBEM  = HENVCFG_REGW[7:4];
-    assign SENVCFG_CBEM  = SENVCFG_REGW[7:4];
-    assign HSENVCFG_CBEM = MENVCFG_CBEM;
-    assign VSENVCFG_CBEM = MENVCFG_CBEM & HENVCFG_CBEM;
-    assign UENVCFG_CBEM  = MENVCFG_CBEM & SENVCFG_CBEM;
-    assign VUENVCFG_CBEM = MENVCFG_CBEM & HENVCFG_CBEM & SENVCFG_CBEM;
-
-    assign ENVCFG_CBE = (PrivilegeModeW == P.M_MODE) ? 4'b1111 :
-                        (PrivilegeModeW == P.S_MODE | !P.S_SUPPORTED) ? (VirtModeW ? VSENVCFG_CBEM : HSENVCFG_CBEM) :
-                                                                         (VirtModeW ? VUENVCFG_CBEM : UENVCFG_CBEM);
-
-    assign CBOInvalInstrM = P.ZICBOM_SUPPORTED & (InstrM[6:0] == 7'b0001111) & (InstrM[14:12] == 3'b010) &
-                            (InstrM[11:7] == 5'b00000) & (InstrM[31:20] == 12'd0);
-    assign CBOCleanInstrM = P.ZICBOM_SUPPORTED & (InstrM[6:0] == 7'b0001111) & (InstrM[14:12] == 3'b010) &
-                            (InstrM[11:7] == 5'b00000) & (InstrM[31:20] == 12'd1);
-    assign CBOFlushInstrM = P.ZICBOM_SUPPORTED & (InstrM[6:0] == 7'b0001111) & (InstrM[14:12] == 3'b010) &
-                            (InstrM[11:7] == 5'b00000) & (InstrM[31:20] == 12'd2);
-    assign CBOZeroInstrM  = P.ZICBOZ_SUPPORTED & (InstrM[6:0] == 7'b0001111) & (InstrM[14:12] == 3'b010) &
-                            (InstrM[11:7] == 5'b00000) & (InstrM[31:20] == 12'd4);
-
-    assign MENVCFG_CBIEM  = MENVCFG_REGW[5:4] != 2'b00;
-    assign HENVCFG_CBIEM  = HENVCFG_REGW[5:4] != 2'b00;
-    assign SENVCFG_CBIEM  = SENVCFG_REGW[5:4] != 2'b00;
-    assign MENVCFG_CBCFEM = MENVCFG_REGW[6];
-    assign HENVCFG_CBCFEM = HENVCFG_REGW[6];
-    assign SENVCFG_CBCFEM = SENVCFG_REGW[6];
-    assign MENVCFG_CBZEM  = MENVCFG_REGW[7];
-    assign HENVCFG_CBZEM  = HENVCFG_REGW[7];
-    assign SENVCFG_CBZEM  = SENVCFG_REGW[7];
-
-    assign VirtualVSENVFaultM = (CBOInvalInstrM & MENVCFG_CBIEM & ~HENVCFG_CBIEM) |
-                                ((CBOCleanInstrM | CBOFlushInstrM) & MENVCFG_CBCFEM & ~HENVCFG_CBCFEM) |
-                                (CBOZeroInstrM & MENVCFG_CBZEM & ~HENVCFG_CBZEM);
-    assign VirtualVUENVFaultM = (CBOInvalInstrM & MENVCFG_CBIEM & (~HENVCFG_CBIEM | ~SENVCFG_CBIEM)) |
-                                ((CBOCleanInstrM | CBOFlushInstrM) & MENVCFG_CBCFEM & (~HENVCFG_CBCFEM | ~SENVCFG_CBCFEM)) |
-                                (CBOZeroInstrM & MENVCFG_CBZEM & (~HENVCFG_CBZEM | ~SENVCFG_CBZEM));
-    assign VirtualCMOInstrM = VirtModeW & (((PrivilegeModeW == P.S_MODE) & VirtualVSENVFaultM) |
-                                           ((PrivilegeModeW == P.U_MODE) & VirtualVUENVFaultM));
-  end else begin: envcfg_noh
-    assign ENVCFG_CBE = (PrivilegeModeW == P.M_MODE) ? 4'b1111 :
-                        (PrivilegeModeW == P.S_MODE | !P.S_SUPPORTED) ? MENVCFG_REGW[7:4] :
-                                                                         (MENVCFG_REGW[7:4] & SENVCFG_REGW[7:4]);
-    assign VirtualCMOInstrM = 1'b0;
-  end
-  // FIOM presently doesn't do anything because Wally fences don't do anything
-  assign ENVCFG_FIOM =  (PrivilegeModeW == P.M_MODE) ? 1'b1 :
-                        (PrivilegeModeW == P.S_MODE | !P.S_SUPPORTED) ? ((P.H_SUPPORTED & VirtModeW) ? HENVCFG_REGW[0] : MENVCFG_REGW[0]) :
-                                                                       (((P.H_SUPPORTED & VirtModeW) ? HENVCFG_REGW[0] : MENVCFG_REGW[0]) & SENVCFG_REGW[0]);
+  csrenv #(P) csrenv(.InstrM, .PrivilegeModeW, .VirtModeW, .MENVCFG_REGW, .HENVCFG_REGW,
+    .SENVCFG_REGW, .ENVCFG_CBE, .ENVCFG_STCE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .VirtualCMOInstrM);
 
   // merge CSR Reads
   assign CSRReadValM = CSRUReadValM | CSRSReadValM | CSRMReadValM | CSRCReadValM | CSRHReadValM;
