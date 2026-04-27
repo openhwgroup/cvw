@@ -226,7 +226,7 @@
       "supported": false
     },
     "U": {
-      "supported": true // This should be false, currently true to work around sail bug
+      "supported": false
     },
     "Zibi": {
       "supported": false
