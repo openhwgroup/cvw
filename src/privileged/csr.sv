@@ -84,10 +84,11 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   output logic                     VSSTATUS_SPP, VSSTATUS_SIE,
   output logic [63:0]              MEDELEG_REGW,
   output logic [63:0]              HEDELEG_REGW,
-  output logic [11:0]              HIDELEG_REGW,
-  output logic [P.XLEN-1:0]        HIE_REGW, HGEIE_REGW,
+  output logic [15:0]              HIDELEG_REGW,
+  output logic [15:0]              HIE_REGW,
+  output logic [P.XLEN-1:0]        HGEIE_REGW,
   output logic [P.XLEN-1:0]        SATP_REGW,
-  output logic [11:0]              MIP_REGW, MIE_REGW, MIDELEG_REGW,
+  output logic [15:0]              MIP_REGW, MIE_REGW, MIDELEG_REGW,
   output logic                     STATUS_MIE, STATUS_SIE,
   output logic                     STATUS_MXR, STATUS_SUM, STATUS_MPRV, STATUS_TW,
   output logic [1:0]               STATUS_FS,
@@ -178,7 +179,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic                    InsufficientCSRPrivilegeM;
   logic                    IllegalCSRMWriteReadonlyM;
   logic [P.XLEN-1:0]       CSRReadVal2M;
-  logic [11:0]             MIP_REGW_writeable;
+  logic [15:0]             MIP_REGW_writeable;
   logic [P.XLEN-1:0]       TVecM,NextFaultTvalM;
   logic                    MTrapM, STrapM;
   logic                    SelMtvecM;
@@ -198,10 +199,12 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic [1:0]              VSSTATUS_FS;
   logic                    HSTATUS_VSBE;
   logic [31:0]             HCOUNTEREN_REGW;
-  logic [11:0]             HVIP_REGW, HIP_MIP_REGW;
+  logic [11:0]             HVIP_REGW;
+  logic [15:0]             HIP_MIP_REGW;
   logic [63:0]             HTIMEDELTA_REGW;
   logic [P.XLEN-1:0]       CSRHReadValM;
   logic                    IllegalCSRHAccessM;
+  logic                    WriteHIEM, WriteVSIEM;
 
   // only valid unflushed instructions can access CSRs
   assign InstrValidNotFlushedM = InstrValidM & ~StallW & ~FlushW;
@@ -301,7 +304,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     CSRSrcM = InstrM[14] ? {{(P.XLEN-5){1'b0}}, InstrM[19:15]} : SrcAM;
 
     // CSR set and clear for MIP/SIP should only touch internal state, not interrupt inputs
-    if (CSRAdrM == MIP | CSRAdrM == SIP) CSRReadVal2M = {{(P.XLEN-12){1'b0}}, MIP_REGW_writeable};
+    if (CSRAdrM == MIP | CSRAdrM == SIP) CSRReadVal2M = {{(P.XLEN-16){1'b0}}, MIP_REGW_writeable};
     else                                 CSRReadVal2M = CSRReadValM;
 
     // Compute AND/OR modification
@@ -423,7 +426,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   csri #(P) csri(.clk, .reset,
     .CSRMWriteM, .CSRSWriteM, .CSRWriteValM, .CSRAdrM,
     .MExtInt, .SExtInt, .MTimerInt, .STimerInt, .MSwInt,
-    .HIP_MIP_REGW, .HIE_REGW,
+    .HIP_MIP_REGW, .WriteHIEM, .WriteVSIEM, .HIDELEG_REGW, .HIE_REGW,
     .MIDELEG_REGW, .ENVCFG_STCE, .MIP_REGW, .MIE_REGW, .MIP_REGW_writeable);
 
   csrsr #(P) csrsr(.clk, .reset, .StallW,
@@ -478,12 +481,12 @@ module csr import cvw::*;  #(parameter cvw_t P) (
       .STATUS_TVM, .MCOUNTEREN_TM(MCOUNTEREN_REGW[1]),
       .MENVCFG_STCE(MENVCFG_REGW[63]), .MENVCFG_PBMTE(MENVCFG_REGW[62]), .MENVCFG_ADUE(MENVCFG_REGW[61]),
       .TrapToM, .TrapToHSM, .TrapToVSM, .sretM, .InstrM, .InstrOrigM,
-      .NextEPCM, .NextCauseM, .NextTvalM, .NextHtvalM,
+      .NextEPCM, .NextCauseM, .NextTvalM, .NextHtvalM, .HIE_REGW,
       .CSRHReadValM, .IllegalCSRHAccessM,
       .HSTATUS_SPV, .HSTATUS_VTSR, .HSTATUS_VTW, .HSTATUS_VTVM,
       .HSTATUS_HU,
       .HSTATUS_VSBE, .VSSTATUS_SPP, .VSSTATUS_SIE, .VSSTATUS_SUM, .VSSTATUS_MXR, .VSSTATUS_UBE, .VSSTATUS_FS,
-      .HEDELEG_REGW, .HIDELEG_REGW, .HIE_REGW, .HGEIE_REGW, .HCOUNTEREN_REGW, .HVIP_REGW, .HIP_MIP_REGW, .HTIMEDELTA_REGW, .HENVCFG_REGW,
+      .HEDELEG_REGW, .HIDELEG_REGW, .WriteHIEM, .WriteVSIEM, .HGEIE_REGW, .HCOUNTEREN_REGW, .HVIP_REGW, .HIP_MIP_REGW, .HTIMEDELTA_REGW, .HENVCFG_REGW,
       .VSTVEC_REGW, .VSEPC_REGW, .VSATP_REGW, .HGATP_REGW);
   end else begin: no_csrh
     assign CSRHReadValM = '0;
@@ -502,7 +505,8 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign VSSTATUS_FS = '0;
     assign HEDELEG_REGW = '0;
     assign HIDELEG_REGW = '0;
-    assign HIE_REGW = '0;
+    assign WriteHIEM = 1'b0;
+    assign WriteVSIEM = 1'b0;
     assign HGEIE_REGW = '0;
     assign HCOUNTEREN_REGW = '0;
     assign HVIP_REGW = '0;

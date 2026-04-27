@@ -103,10 +103,11 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
 
   logic [4:0]               CauseM;                                         // trap cause
   logic [63:0]              MEDELEG_REGW;                                   // exception delegation CSR
-  logic [11:0]              MIDELEG_REGW;                                   // interrupt delegation CSR
+  logic [15:0]              MIDELEG_REGW;                                   // interrupt delegation CSR
   logic [63:0]              HEDELEG_REGW;                                   // HS->VS exception delegation CSR
-  logic [11:0]              HIDELEG_REGW;                                   // HS->VS interrupt delegation CSR
-  logic [P.XLEN-1:0]        HIE_REGW, HGEIE_REGW;                           // Hypervisor Interrupt Enables
+  logic [15:0]              HIDELEG_REGW;                                   // HS->VS interrupt delegation CSR
+  logic [15:0]              HIE_REGW;                                        // Hypervisor interrupt enables aliasing mie
+  logic [P.XLEN-1:0]        HGEIE_REGW;                                      // Guest external interrupt enables
   logic                     sretM, mretM;                                   // supervisor / machine return instruction
   logic                     IllegalCSRAccessM;                              // Illegal access to CSR
   logic                     VirtualCSRAccessM;                              // CSR access that raises virtual-instruction
@@ -117,7 +118,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   logic                     IllegalInstrFaultM;                             // Illegal instruction fault
   logic                     STATUS_SPP, STATUS_TSR, STATUS_TW, STATUS_TVM;  // Status bits needed within privileged unit
   logic                     STATUS_MIE, STATUS_SIE;                         // status bits: interrupt enables
-  logic [11:0]              MIP_REGW, MIE_REGW;                             // interrupt pending and enable bits
+  logic [15:0]              MIP_REGW, MIE_REGW;                             // interrupt pending and enable bits
   logic [1:0]               NextPrivilegeModeM;                             // next privilege mode based on trap or return
   logic                     DelegateM;                                      // trap should be delegated
   logic                     InterruptM;                                     // interrupt occurring
@@ -180,7 +181,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .LoadAccessFaultM, .StoreAmoAccessFaultM, .EcallFaultM, .InstrPageFaultM,
     .LoadPageFaultM, .StoreAmoPageFaultM, .VirtualInstrFaultM,
     .PrivilegeModeW, .VirtModeW,
-    .MIP_REGW, .MIE_REGW, .HIE_REGW, .HGEIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW, .HEDELEG_REGW, .HIDELEG_REGW, .STATUS_MIE, .STATUS_SIE, .VSSTATUS_SIE,
+    .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW, .HEDELEG_REGW, .HIDELEG_REGW, .STATUS_MIE, .STATUS_SIE, .VSSTATUS_SIE,
     .InstrValidM, .CommittedM, .CommittedF,
     .TrapM, .wfiM, .wfiW, .InterruptM, .ExceptionM, .IntPendingM, .DelegateM, .CauseM,
     .TrapToM, .TrapToHSM, .TrapToVSM);
