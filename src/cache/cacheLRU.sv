@@ -33,6 +33,7 @@ module cacheLRU
   input  logic                clk,
   input  logic                reset,
   input  logic                FlushStage,
+  input  logic                InvalidateFlushStage,
   input  logic                CacheEn,         // Enable the cache memory arrays.  Disable hold read data constant
   input  logic [NUMWAYS-1:0]  HitWay,          // Which way is valid and matches PAdr's tag
   input  logic [NUMWAYS-1:0]  ValidWay,        // Which ways for a particular set are valid, ignores tag
