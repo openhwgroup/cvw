@@ -104,6 +104,8 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   //
   output logic [P.XLEN-1:0]        CSRReadValW,               // value read from CSR
   output logic                     IllegalCSRAccessM,         // Illegal CSR access: CSR doesn't exist or is inaccessible at this privilege level
+  output logic                     VirtualCSRAccessM,         // CSR access that raises a virtual-instruction exception
+  output logic                     VirtualCMOInstrM,          // CBO instruction that raises a virtual-instruction exception
   output logic                     BigEndianM                 // memory access is big-endian based on privilege mode and STATUS register endian fields
 );
 
@@ -133,6 +135,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic [5:0]              NextCauseM;
   logic [11:0]             CSRAdrM_In, CSRAdrM;
   logic                    IllegalCSRCAccessM, IllegalCSRMAccessM, IllegalCSRSAccessM, IllegalCSRUAccessM;
+  logic                    VirtualCSRCAccessM;
   logic                    InsufficientCSRPrivilegeM;
   logic                    IllegalCSRMWriteReadonlyM;
   logic [P.XLEN-1:0]       CSRReadVal2M;
@@ -149,7 +152,6 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]       SENVCFG_REGW;
   logic [P.XLEN-1:0]       SATP_REGW_INT, VSATP_REGW, HGATP_REGW; // Internal SATP and Hypervisor ATPs
   logic                    ENVCFG_STCE; // supervisor timer counter enable
-  logic                    ENVCFG_FIOM; // fence implies io (presently not used)
   logic                    TrapGVAM;
   logic                    TrapWritesVAToTvalM;
   logic                    VSSTATUS_SUM, VSSTATUS_MXR, VSSTATUS_UBE;
@@ -282,15 +284,12 @@ module csr import cvw::*;  #(parameter cvw_t P) (
 
   assign CSRAdrM_In = InstrM[31:20];
   if (P.H_SUPPORTED) begin: csradr_h
-    logic MapVSCSR;
-    // In VS-mode, map S-level CSR addresses to the VS CSR space by rewriting [9:8] from 01 to 10.
-    assign MapVSCSR = VirtModeW & (PrivilegeModeW == P.S_MODE) & (CSRAdrM_In[9:8] == 2'b01);
-    mux2 #(12) csradrmux(CSRAdrM_In, {CSRAdrM_In[11:10], 2'b10, CSRAdrM_In[7:0]}, MapVSCSR, CSRAdrM);
-    // GVA gets set when traps from virtualized execution write a VA to tval.
-    // TODO: Include HS-mode HLV/HLVX/HSV fault cases when those paths are integrated.
-    assign TrapGVAM = TrapM & ExceptionM & VirtModeW & TrapWritesVAToTvalM;
+    csrhvirt #(P) csrhvirt(.CSRAdrM_In, .CSRReadM, .CSRWriteM, .TrapM, .ExceptionM,
+      .VirtModeW, .PrivilegeModeW, .MCOUNTEREN_REGW, .HCOUNTEREN_REGW, .HENVCFG_REGW,
+      .VirtualCSRCAccessM, .TrapWritesVAToTvalM, .CSRAdrM, .VirtualCSRAccessM, .TrapGVAM);
   end else begin: csradr_noh
     assign CSRAdrM = CSRAdrM_In;
+    assign VirtualCSRAccessM = 1'b0;
     assign TrapGVAM = 1'b0;
   end
   assign UnalignedNextEPCM = TrapM ? PCM : CSRWriteValM;
@@ -464,24 +463,15 @@ module csr import cvw::*;  #(parameter cvw_t P) (
       .InterruptM, .ExceptionM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
       .CSRAdrM, .PrivilegeModeW, .VirtModeW, .CSRWriteValM,
       .MCOUNTINHIBIT_REGW, .MCOUNTEREN_REGW, .SCOUNTEREN_REGW, .HCOUNTEREN_REGW,
-      .MTIME_CLINT, .HTIMEDELTA_REGW,  .CSRCReadValM, .IllegalCSRCAccessM);
+      .MTIME_CLINT, .HTIMEDELTA_REGW,  .CSRCReadValM, .IllegalCSRCAccessM, .VirtualCSRCAccessM);
   end else begin
     assign CSRCReadValM = '0;
     assign IllegalCSRCAccessM = 1'b1; // counters aren't enabled
+    assign VirtualCSRCAccessM = 1'b0;
   end
 
-   // Broadcast appropriate environment configuration based on privilege mode
-  // menvcfg constrains corresponding henvcfg bits when V=1.
-  assign ENVCFG_STCE =  (P.H_SUPPORTED & VirtModeW) ? (HENVCFG_REGW[63] & MENVCFG_REGW[63]) : MENVCFG_REGW[63];
-  assign ENVCFG_PBMTE = (P.H_SUPPORTED & VirtModeW) ? (HENVCFG_REGW[62] & MENVCFG_REGW[62]) : MENVCFG_REGW[62];
-  assign ENVCFG_ADUE  = (P.H_SUPPORTED & VirtModeW) ? (HENVCFG_REGW[61] & MENVCFG_REGW[61]) : MENVCFG_REGW[61];
-  assign ENVCFG_CBE =   (PrivilegeModeW == P.M_MODE) ? 4'b1111 :
-                        (PrivilegeModeW == P.S_MODE | !P.S_SUPPORTED) ? ((P.H_SUPPORTED & VirtModeW) ? HENVCFG_REGW[7:4] : MENVCFG_REGW[7:4]) :
-                                                                       (((P.H_SUPPORTED & VirtModeW) ? HENVCFG_REGW[7:4] : MENVCFG_REGW[7:4]) & SENVCFG_REGW[7:4]);
-  // FIOM presently doesn't do anything because Wally fences don't do anything
-  assign ENVCFG_FIOM =  (PrivilegeModeW == P.M_MODE) ? 1'b1 :
-                        (PrivilegeModeW == P.S_MODE | !P.S_SUPPORTED) ? ((P.H_SUPPORTED & VirtModeW) ? HENVCFG_REGW[0] : MENVCFG_REGW[0]) :
-                                                                       (((P.H_SUPPORTED & VirtModeW) ? HENVCFG_REGW[0] : MENVCFG_REGW[0]) & SENVCFG_REGW[0]);
+  csrenv #(P) csrenv(.InstrM, .PrivilegeModeW, .VirtModeW, .MENVCFG_REGW, .HENVCFG_REGW,
+    .SENVCFG_REGW, .ENVCFG_CBE, .ENVCFG_STCE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .VirtualCMOInstrM);
 
   // merge CSR Reads
   assign CSRReadValM = CSRUReadValM | CSRSReadValM | CSRMReadValM | CSRCReadValM | CSRHReadValM;

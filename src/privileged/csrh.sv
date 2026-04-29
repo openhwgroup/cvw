@@ -112,6 +112,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   localparam HEDELEGH    = 12'h612;
   localparam HIDELEG    = 12'h603;
   localparam HIE        = 12'h604;
+  localparam MIE        = 12'h304;
   localparam VSIE       = 12'h204;
   localparam HTIMEDELTA = 12'h605;
   localparam HTIMEDELTAH = 12'h615;

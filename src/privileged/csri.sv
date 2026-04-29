@@ -47,7 +47,6 @@ module csri import cvw::*;  #(parameter cvw_t P) (
   logic [15:0]              MIP_WRITE_MASK, SIP_WRITE_MASK, MIE_WRITE_MASK, SIE_WRITE_MASK, HIE_WRITE_MASK, NextMIE_REGW;
   logic                     WriteMIPM, WriteMIEM, WriteSIPM, WriteSIEM, WriteMIEMasked;
   logic                     STIP;
-
   localparam MIE = 12'h304;
   localparam MIP = 12'h344;
   localparam SIE = 12'h104;
