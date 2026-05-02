@@ -102,18 +102,35 @@ case "$FAMILY" in
         VIVADO_PACKAGES+=(libncurses*) # Vivado hangs on the third stage of installation without this
         ;;
     suse)
-        PYTHON_VERSION=python3.12
-        PYTHON_VERSION_PACKAGE=python312
+        if ((SUSE_VERSION >= 160)); then
+            PYTHON_VERSION=python3.13
+            PYTHON_VERSION_PACKAGE=python313
+        elif ((SUSE_VERSION >= 156)); then
+            PYTHON_VERSION=python3.12
+            PYTHON_VERSION_PACKAGE=python312
+        fi
         PACKAGE_MANAGER="zypper -n"
         UPDATE_COMMAND="$PACKAGE_MANAGER update"
         GENERAL_PACKAGES+=(which curl "$PYTHON_VERSION_PACKAGE" "$PYTHON_VERSION_PACKAGE"-pip pkg-config)
         GNU_PACKAGES+=(mpc-devel mpfr-devel gmp-devel zlib-devel libexpat-devel glib2-devel libslirp-devel)
         QEMU_PACKAGES+=(glib2-devel libfdt-devel libpixman-1-0-devel zlib-devel ninja)
-        SPIKE_PACKAGES+=(dtc libboost_regex1_75_0-devel libboost_system1_75_0-devel)
+        SPIKE_PACKAGES+=(dtc)
+        if ((SUSE_VERSION >= 160)); then
+            SPIKE_PACKAGES+=(libboost_regex1_86_0-devel libboost_system1_86_0-devel)
+        elif ((SUSE_VERSION >= 156)); then
+            SPIKE_PACKAGES+=(libboost_regex1_75_0-devel libboost_system1_75_0-devel)
+        fi
         SAIL_PACKAGES+=(ninja gmp-devel)
         VERILATOR_PACKAGES+=(libfl2 libfl-devel zlib-devel gperftools-devel perl-doc)
-        BUILDROOT_PACKAGES+=(ncurses-utils ncurses-devel ncurses5-devel gcc-fortran) # gcc-fortran is only needed for compiling spec benchmarks on buildroot linux
-        GENERAL_PACKAGES+=(gcc13 gcc13-c++ cpp13) # Newer version of gcc needed for many tools. Default is gcc7
+        if ((SUSE_VERSION >= 160)); then
+            VERILATOR_PACKAGES+=(mold)
+        fi
+
+        BUILDROOT_PACKAGES+=(ncurses-utils ncurses-devel gcc-fortran) # gcc-fortran is only needed for compiling spec benchmarks on buildroot linux
+        if ((SUSE_VERSION < 160)); then
+            BUILDROOT_PACKAGES+=(ncurses5-devel) # ncurses5 is no longer packaged in SUSE 16
+            GENERAL_PACKAGES+=(gcc13 gcc13-c++ cpp13 ) # Newer version of gcc needed for many tools. Default is gcc7
+        fi
         ;;
 esac
 
