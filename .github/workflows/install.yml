@@ -100,6 +100,10 @@ jobs:
             image: opensuse/leap:15.6
             imageFamily: suse
             os: ubuntu-latest
+          - name: opensuse-16.0
+            image: opensuse/leap:16.0
+            imageFamily: suse
+            os: ubuntu-latest
           # User level installation
           - name: user-install
             image: null

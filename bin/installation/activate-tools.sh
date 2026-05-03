@@ -44,7 +44,7 @@ if [ "$FAMILY" == rhel ] && (( RHEL_VERSION < 10 )); then
         echo -e "${FAIL_COLOR}GCC toolset 13 not found. Please install it with wally-package-install.sh.${ENDC}"
         return 1
     fi
-elif [ "$FAMILY" == suse ]; then
+elif [ "$FAMILY" == suse ] && ((SUSE_VERSION < 160)); then
     if [ ! -e "$RISCV"/gcc-13/bin/gcc ]; then
         mkdir -p "$RISCV"/gcc-13/bin
         for f in gcc cpp g++ gcc-ar gcc-nm gcc-ranlib gcov gcov-dump gcov-tool lto-dump; do
