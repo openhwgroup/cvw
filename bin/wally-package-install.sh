@@ -112,8 +112,7 @@ case "$FAMILY" in
 
         PACKAGE_MANAGER="zypper -n"
         UPDATE_COMMAND="$PACKAGE_MANAGER update"
-        GENERAL_PACKAGES+=(which curl "$PYTHON_VERSION_PACKAGE" "$PYTHON_VERSION_PACKAGE"-pip pkg-config)
-        GENERAL_PACKAGES+=(gcc-c++)
+        GENERAL_PACKAGES+=(which curl "$PYTHON_VERSION_PACKAGE" "$PYTHON_VERSION_PACKAGE"-pip pkg-config gcc-c++)
         GNU_PACKAGES+=(mpc-devel mpfr-devel gmp-devel zlib-devel libexpat-devel glib2-devel libslirp-devel)
         QEMU_PACKAGES+=(glib2-devel libfdt-devel libpixman-1-0-devel zlib-devel ninja)
         SPIKE_PACKAGES+=(dtc)
@@ -127,7 +126,7 @@ case "$FAMILY" in
         elif ((SUSE_VERSION >= 156)); then
             SPIKE_PACKAGES+=(libboost_regex1_75_0-devel libboost_system1_75_0-devel)
             BUILDROOT_PACKAGES+=(ncurses5-devel) # ncurses5 is no longer packaged in SUSE 16
-            GENERAL_PACKAGES+=(gcc13 gcc13-c++ cpp13 ) # Newer version of gcc needed for many tools. Default is gcc7
+            GENERAL_PACKAGES+=(gcc13 gcc13-c++ cpp13) # Newer version of gcc needed for many tools. Default is gcc7
         fi
         ;;
 esac
