@@ -569,20 +569,6 @@ module debug import cvw::*; #(parameter cvw_t P) (
   assign allhalted = NextHaltState == HALTED | CurrHaltState == HALTED;
   assign anyhalted = NextHaltState == HALTED | CurrHaltState == HALTED;
 
-  // always_ff @(posedge clk) begin
-  //   if (reset) begin
-  //     anyresumeack <= 1'b0;
-  //   end else if ((CurrHaltState == RESUMING) && (NextHaltState == RUNNING)) begin
-  //     anyresumeack <= 1'b1;
-  //   end else if ((CurrHaltState == HALTING) && (NextHaltState == HALTED)) begin
-  //     anyresumeack <= 1'b0;
-  //   end else if ((CurrHaltState == RUNNING) && (NextHaltState == HALTED)) begin // Possibly extraneous case when ebreak occurs.
-  //     anyresumeack <= 1'b0;
-  //   end else begin
-  //     anyresumeack <= anyresumeack;
-  //   end
-  // end
-
   // -----------------------------------------------------------------------------
   // ResumeAck: resumeack handshake.
   // Set when resume is accepted; clear when debugger drops ResumeReq.
@@ -748,168 +734,362 @@ module debug import cvw::*; #(parameter cvw_t P) (
   //   end
   // end
 
+  // always_comb begin
+  //   if (DMIADDR == COMMAND) begin
+  //     case(DMIDATA[15:0]) inside
+  //       [16'h1000:16'h101f]: begin // GPRs
+  //           ValidCommand = 1;
+  //           NextGPRDebugEnable = 1;
+  //           NextFPRDebugEnable = 0;
+  //           NextCSRDebugEnable = 0;
+  //       end
+
+  //       // Need to test FPRs: 0x1020–0x103F
+  //       [16'h1020:16'h103f]: begin // FPRs
+  //           ValidCommand = 1;
+  //           NextGPRDebugEnable = 0;
+  //           NextFPRDebugEnable = 1;
+  //           NextCSRDebugEnable = 0;
+  //         end
+
+  //       // Machine CSRs ----------------------------------------------
+  //       MVENDORID, MARCHID, MIMPID, MHARTID, MCONFIGPTR,
+  //         MSTATUS, MISA_ADR, MEDELEG, MIDELEG, MIE, MTVEC,
+  //         MCOUNTEREN, MCOUNTINHIBIT,
+  //         MSCRATCH, MEPC, MCAUSE, MTVAL, MIP: begin
+  //           ValidCommand = 1;
+  //           NextGPRDebugEnable = 0;
+  //           NextFPRDebugEnable = 0;
+  //           NextCSRDebugEnable = 1;
+  //         end
+
+  //       MSTATUSH: begin
+  //         if (P.XLEN != 32) begin
+  //           ValidCommand = 0;
+  //           NextGPRDebugEnable = 0;
+  //           NextFPRDebugEnable = 0;
+  //           NextCSRDebugEnable = 0;
+  //         end else begin
+  //           ValidCommand = 1;
+  //           NextGPRDebugEnable = 0;
+  //           NextFPRDebugEnable = 0;
+  //           NextCSRDebugEnable = 1;
+  //         end
+  //       end
+
+  //       MENVCFG, MENVCFGH: begin
+  //         if (P.U_SUPPORTED) begin
+  //           ValidCommand = 1;
+  //           NextGPRDebugEnable = 0;
+  //           NextFPRDebugEnable = 0;
+  //           NextCSRDebugEnable = 1;
+  //         end else begin
+  //           ValidCommand = 0;
+  //           NextGPRDebugEnable = 0;
+  //           NextFPRDebugEnable = 0;
+  //           NextCSRDebugEnable = 0;
+  //         end
+  //       end
+
+  //       [PMPADDR0:PMPADDR0 + P.PMP_ENTRIES]: begin
+  //           ValidCommand = 1;
+  //           NextGPRDebugEnable = 0;
+  //           NextFPRDebugEnable = 0;
+  //           NextCSRDebugEnable = 1;
+  //       end
+
+  //       [PMPCFG0:PMPCFG0 + P.PMP_ENTRIES/4]: begin
+  //         if ((P.XLEN == 64 & DMIDATA[0] != 0)) begin
+  //           ValidCommand = 0;
+  //           NextGPRDebugEnable = 0;
+  //           NextFPRDebugEnable = 0;
+  //           NextCSRDebugEnable = 0;
+  //         end else begin
+  //           ValidCommand = 1;
+  //           NextGPRDebugEnable = 0;
+  //           NextFPRDebugEnable = 0;
+  //           NextCSRDebugEnable = 1;
+  //         end
+  //       end // End Machine CSRs --------------------------------------
+
+  //       // Supervisor CSRs -------------------------------------------
+  //       SSTATUS, STVEC, SIP, SIE, SSCRATCH,
+  //         SEPC, SCAUSE, STVAL, SCOUNTEREN, SENVCFG,
+  //         STIMECMP, STIMECMPH: begin
+  //           ValidCommand = 1;
+  //           NextGPRDebugEnable = 0;
+  //           NextFPRDebugEnable = 0;
+  //           NextCSRDebugEnable = 1;
+  //         end
+
+  //       SATP: begin
+  //         if (P.VIRTMEM_SUPPORTED) begin
+  //           ValidCommand = 1;
+  //           NextGPRDebugEnable = 0;
+  //           NextFPRDebugEnable = 0;
+  //           NextCSRDebugEnable = 1;
+  //         end else begin
+  //           ValidCommand = 0;
+  //           NextGPRDebugEnable = 0;
+  //           NextFPRDebugEnable = 0;
+  //           NextCSRDebugEnable = 0;
+  //         end
+  //       end
+
+  //       STIMECMP: begin // Is this all that's needed?
+  //         if (P.SSTC_SUPPORTED) begin
+  //           ValidCommand = 1;
+  //           NextGPRDebugEnable = 0;
+  //           NextFPRDebugEnable = 0;
+  //           NextCSRDebugEnable = 1;
+  //         end else begin
+  //           ValidCommand = 0;
+  //           NextGPRDebugEnable = 0;
+  //           NextFPRDebugEnable = 0;
+  //           NextCSRDebugEnable = 0;
+  //         end
+  //       end
+
+  //       STIMECMPH: begin // Is this all that's needed?
+  //         if (P.SSTC_SUPPORTED & P.XLEN == 32) begin
+  //           ValidCommand = 1;
+  //           NextGPRDebugEnable = 0;
+  //           NextFPRDebugEnable = 0;
+  //           NextCSRDebugEnable = 1;
+  //         end else begin
+  //           ValidCommand = 0;
+  //           NextGPRDebugEnable = 0;
+  //           NextFPRDebugEnable = 0;
+  //           NextCSRDebugEnable = 0;
+  //         end
+  //       end
+
+  //       // User Mode CSRs
+  //       FFLAGS, FRM, FCSR: begin
+  //         ValidCommand = 1;
+  //         NextGPRDebugEnable = 0;
+  //         NextFPRDebugEnable = 0;
+  //         NextCSRDebugEnable = 1;
+  //       end
+
+  //       // Counter CSRs
+  //       TIMEH: begin
+  //         if (P.XLEN == 64) begin
+  //           ValidCommand = 0;
+  //           NextGPRDebugEnable = 0;
+  //           NextFPRDebugEnable = 0;
+  //           NextCSRDebugEnable = 0;
+  //         end else begin
+  //           ValidCommand = 1;
+  //           NextGPRDebugEnable = 0;
+  //           NextFPRDebugEnable = 0;
+  //           NextCSRDebugEnable = 1;
+  //         end
+  //       end
+
+  //       [MHPMCOUNTERBASE:MPHMCOUNTERBASE + P.COUNTERS]: begin
+  //         ValidCommand = 1;
+  //         NextGPRDebugEnable = 0;
+  //         NextFPRDebugEnable = 0;
+  //         NextCSRDebugEnable = 0;
+  //       end
+
+  //       [HPMCOUNTERBASE:HPMCOUNTERBASE + P.COUNTERS]: begin
+  //         ValidCommand = 1;
+  //         NextGPRDebugEnable = 0;
+  //         NextFPRDebugEnable = 0;
+  //         NextCSRDebugEnable = 1;
+  //       end
+
+  //       [MHPMCOUNTERHBASE:MHPMCOUNTERHBASE + P.COUNTERS]: begin
+  //         if (P.XLEN == 32) begin
+  //           ValidCommand = 1;
+  //           NextGPRDebugEnable = 0;
+  //           NextFPRDebugEnable = 0;
+  //           NextCSRDebugEnable = 1;
+  //         end else begin
+  //           ValidCommand = 0;
+  //           NextGPRDebugEnable = 0;
+  //           NextFPRDebugEnable = 0;
+  //           NextCSRDebugEnable = 0;
+  //         end
+  //       end
+
+  //       [HPMCOUNTERHBASE:HPMCOUNTERHBASE + P.COUNTERS]: begin
+  //         if (P.XLEN == 32) begin
+  //           ValidCommand = 1;
+  //           NextGPRDebugEnable = 0;
+  //           NextFPRDebugEnable = 0;
+  //           NextCSRDebugEnable = 1;
+  //         end else begin
+  //           ValidCommand = 0;
+  //           NextGPRDebugEnable = 0;
+  //           NextFPRDebugEnable = 0;
+  //           NextCSRDebugEnable = 0;
+  //         end
+  //       end
+
+  //       // Debug CSRs
+  //       DCSR, DPC, DSCRATCH0,
+  //         TSELECT, TDATA1, TDATA2, TINFO: begin
+  //           ValidCommand = 1;
+  //           NextGPRDebugEnable = 0;
+  //           NextFPRDebugEnable = 0;
+  //           NextCSRDebugEnable = 1;
+  //         end
+  //       // Supervisor CSRs
+  //       default: begin
+  //         ValidCommand = 0;
+  //         NextFPRDebugEnable = 0;
+  //         NextGPRDebugEnable = 0;
+  //         NextCSRDebugEnable = 0;
+  //       end
+  //     endcase
+  //   end else begin
+  //     ValidCommand = 0;
+  //     NextFPRDebugEnable = 0;
+  //     NextGPRDebugEnable = 0;
+  //     NextCSRDebugEnable = 0;
+  //   end
+  // end
+
   always_comb begin
+    ValidCommand         = 0;
+    NextGPRDebugEnable   = 0;
+    NextFPRDebugEnable   = 0;
+    NextCSRDebugEnable   = 0;
+
     if (DMIADDR == COMMAND) begin
-      case(DMIDATA[15:0]) inside
-        [16'h1000:16'h101f]: begin // GPRs
-            ValidCommand = 1;
-            NextGPRDebugEnable = 1;
-            NextFPRDebugEnable = 0;
-            NextCSRDebugEnable = 0;
+      case (DMIDATA[15:0]) inside
+        // GPRs
+        [16'h1000:16'h101f]: begin
+          ValidCommand       = 1;
+          NextGPRDebugEnable = 1;
         end
 
-        // Need to test FPRs: 0x1020–0x103F
-        [16'h1020:16'h103f]: begin // FPRs
-            ValidCommand = 1;
-            NextGPRDebugEnable = 0;
-            NextFPRDebugEnable = 1;
-            NextCSRDebugEnable = 0;
-          end
+        // FPRs
+        [16'h1020:16'h103f]: begin
+          ValidCommand       = 1;
+          NextFPRDebugEnable = 1;
+        end
 
-        // Machine CSRs ----------------------------------------------
+        // ------------------------------------------------------------------
+        // Machine CSRs (unconditional portion)
+        // ------------------------------------------------------------------
         MVENDORID, MARCHID, MIMPID, MHARTID, MCONFIGPTR,
           MSTATUS, MISA_ADR, MEDELEG, MIDELEG, MIE, MTVEC,
-          MCOUNTEREN, MENVCFG, MSTATUSH, MENVCFGH, MCOUNTINHIBIT,
+          MCOUNTEREN, MCOUNTINHIBIT,
           MSCRATCH, MEPC, MCAUSE, MTVAL, MIP: begin
-            ValidCommand = 1;
-            NextGPRDebugEnable = 0;
-            NextFPRDebugEnable = 0;
+            ValidCommand       = 1;
             NextCSRDebugEnable = 1;
           end
 
+        // Conditional Machine CSRs
         MSTATUSH: begin
-          if (P.XLEN != 32) begin
-            ValidCommand = 0;
-            NextGPRDebugEnable = 0;
-            NextFPRDebugEnable = 0;
-            NextCSRDebugEnable = 0;
-          end else begin
-            ValidCommand = 1;
-            NextGPRDebugEnable = 0;
-            NextFPRDebugEnable = 0;
+          if (P.XLEN == 32) begin
+            ValidCommand       = 1;
             NextCSRDebugEnable = 1;
           end
         end
 
         MENVCFG, MENVCFGH: begin
           if (P.U_SUPPORTED) begin
-            ValidCommand = 1;
-            NextGPRDebugEnable = 0;
-            NextFPRDebugEnable = 0;
+            ValidCommand       = 1;
             NextCSRDebugEnable = 1;
-          end else begin
-            ValidCommand = 0;
-            NextGPRDebugEnable = 0;
-            NextFPRDebugEnable = 0;
-            NextCSRDebugEnable = 0;
           end
         end
 
         [PMPADDR0:PMPADDR0 + P.PMP_ENTRIES]: begin
-            ValidCommand = 1;
-            NextGPRDebugEnable = 0;
-            NextFPRDebugEnable = 0;
-            NextCSRDebugEnable = 1;
+          ValidCommand       = 1;
+          NextCSRDebugEnable = 1;
         end
 
         [PMPCFG0:PMPCFG0 + P.PMP_ENTRIES/4]: begin
-          if ((P.XLEN == 64 & DMIDATA[0] != 0)) begin
-            ValidCommand = 0;
-            NextGPRDebugEnable = 0;
-            NextFPRDebugEnable = 0;
-            NextCSRDebugEnable = 0;
-          end else begin
-            ValidCommand = 1;
-            NextGPRDebugEnable = 0;
-            NextFPRDebugEnable = 0;
+          if (!(P.XLEN == 64 && DMIDATA[0] != 0)) begin
+            ValidCommand       = 1;
             NextCSRDebugEnable = 1;
           end
-        end // End Machine CSRs --------------------------------------
+        end
 
-        // Supervisor CSRs -------------------------------------------
+        // ------------------------------------------------------------------
+        // Supervisor CSRs
+        // ------------------------------------------------------------------
         SSTATUS, STVEC, SIP, SIE, SSCRATCH,
-          SEPC, SCAUSE, STVAL, SCOUNTEREN, SENVCFG,
-          STIMECMP, STIMECMPH: begin
-            ValidCommand = 1;
-            NextGPRDebugEnable = 0;
-            NextFPRDebugEnable = 0;
+          SEPC, SCAUSE, STVAL, SCOUNTEREN, SENVCFG: begin
+            ValidCommand       = 1;
             NextCSRDebugEnable = 1;
           end
 
+        // Remaining conditional Supervisor CSRs
         SATP: begin
           if (P.VIRTMEM_SUPPORTED) begin
-            ValidCommand = 1;
-            NextGPRDebugEnable = 0;
-            NextFPRDebugEnable = 0;
+            ValidCommand       = 1;
             NextCSRDebugEnable = 1;
-          end else begin
-            ValidCommand = 0;
-            NextGPRDebugEnable = 0;
-            NextFPRDebugEnable = 0;
-            NextCSRDebugEnable = 0;
           end
         end
 
-        STIMECMP: begin // Is this all that's needed?
+        STIMECMP: begin
           if (P.SSTC_SUPPORTED) begin
-            ValidCommand = 1;
-            NextGPRDebugEnable = 0;
-            NextFPRDebugEnable = 0;
+            ValidCommand       = 1;
             NextCSRDebugEnable = 1;
-          end else begin
-            ValidCommand = 0;
-            NextGPRDebugEnable = 0;
-            NextFPRDebugEnable = 0;
-            NextCSRDebugEnable = 0;
           end
         end
 
-        STIMECMPH: begin // Is this all that's needed?
-          if (P.SSTC_SUPPORTED & P.XLEN == 32) begin
-            ValidCommand = 1;
-            NextGPRDebugEnable = 0;
-            NextFPRDebugEnable = 0;
+        STIMECMPH: begin
+          if (P.SSTC_SUPPORTED && P.XLEN == 32) begin
+            ValidCommand       = 1;
             NextCSRDebugEnable = 1;
-          end else begin
-            ValidCommand = 0;
-            NextGPRDebugEnable = 0;
-            NextFPRDebugEnable = 0;
-            NextCSRDebugEnable = 0;
           end
         end
 
-        // User Mode CSRs
+        // User floating-point CSRs
         FFLAGS, FRM, FCSR: begin
-          ValidCommand = 1;
-          NextGPRDebugEnable = 0;
-          NextFPRDebugEnable = 0;
+          ValidCommand       = 1;
           NextCSRDebugEnable = 1;
         end
 
         // Counter CSRs
+        TIMEH: begin
+          if (P.XLEN != 64) begin
+            ValidCommand       = 1;
+            NextCSRDebugEnable = 1;
+          end
+        end
 
+        // Performance counter CSRs
+        [MHPMCOUNTERBASE:MHPMCOUNTERBASE + P.COUNTERS]: begin
+          ValidCommand = 1;
+          NextCSRDebugEnable = 1;
+        end
+
+        [HPMCOUNTERBASE:HPMCOUNTERBASE + P.COUNTERS]: begin
+          ValidCommand       = 1;
+          NextCSRDebugEnable = 1;
+        end
+
+        [MHPMCOUNTERHBASE:MHPMCOUNTERHBASE + P.COUNTERS]: begin
+          if (P.XLEN == 32) begin
+            ValidCommand       = 1;
+            NextCSRDebugEnable = 1;
+          end
+        end
+
+        [HPMCOUNTERHBASE:HPMCOUNTERHBASE + P.COUNTERS]: begin
+          if (P.XLEN == 32) begin
+            ValidCommand       = 1;
+            NextCSRDebugEnable = 1;
+          end
+        end
 
         // Debug CSRs
         DCSR, DPC, DSCRATCH0,
           TSELECT, TDATA1, TDATA2, TINFO: begin
-            ValidCommand = 1;
-            NextGPRDebugEnable = 0;
-            NextFPRDebugEnable = 0;
+            ValidCommand       = 1;
             NextCSRDebugEnable = 1;
           end
-        // Supervisor CSRs
-        default: begin
-          ValidCommand = 0;
-          NextFPRDebugEnable = 0;
-          NextGPRDebugEnable = 0;
-          NextCSRDebugEnable = 0;
-        end
+
+        default: ;  // all signals stay 0 (already set above)
       endcase
-    end else begin
-      ValidCommand = 0;
-      NextFPRDebugEnable = 0;
-      NextGPRDebugEnable = 0;
-      NextCSRDebugEnable = 0;
     end
   end
 
