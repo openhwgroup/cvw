@@ -111,6 +111,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic              DebugRegWrite,
   output logic              DebugResume,
   output logic [P.XLEN-1:0] DPC,
+  output logic              DebugStopTime,
   output logic              HaveReset,
   input  logic              HaveResetAck,
   input  logic              ResetHaltReq,
@@ -138,6 +139,8 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   logic                     HPTWInstrPageFaultM;                            // Hardware page table page fault while fetching instruction PTE
   logic                     BreakpointFaultM, EcallFaultM;                  // breakpoint and Ecall traps should retire
   logic                     EBreakM, EBreakS, EBreakU;
+  logic                     DebugStepIE;
+  logic                     DebugStep;
 
   logic                     wfiW;
 
@@ -172,7 +175,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .DebugRegAddr, .DebugRegWrite, .DebugResume, .DPC,
     .HaveReset, .HaveResetAck, .ResetHaltReq, .BreakpointFaultM,
     .EBreakM, .EBreakS, .EBreakU,
-    .IEUAdrM, .PCSrcE);
+    .IEUAdrM, .PCSrcE, .DebugStepIE, .DebugStep, .DebugStopTime);
 
   // pipeline early-arriving trap sources
   privpiperegs ppr(.clk, .reset, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
@@ -188,5 +191,6 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW, .STATUS_MIE, .STATUS_SIE,
     .InstrValidM, .CommittedM, .CommittedF,
     .TrapM, .wfiM, .wfiW, .InterruptM, .ExceptionM, .IntPendingM, .DelegateM, .CauseM,
-    .EBreakM, .EBreakS, .EBreakU);
+    .EBreakM, .EBreakS, .EBreakU,
+    .DebugMode, .DebugStepIE, .DebugStep);
 endmodule

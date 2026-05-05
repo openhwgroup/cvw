@@ -53,26 +53,35 @@ module trigger import cvw::*;  #(parameter cvw_t P) (
 
   always_comb begin
     if (DebugMode == 1 | PrivilegeModeW == P.M_MODE) begin
-      IllegalCSRTrigAccessM = 1'b0;
       case (CSRAdrM)
         TSELECT: begin
           CSRTrigReadValM = '0;
+          IllegalCSRTrigAccessM = 1'b0;
         end
 
         TDATA1: begin
           CSRTrigReadValM = '0;
+          IllegalCSRTrigAccessM = 1'b0;
         end
 
         TDATA2: begin
           CSRTrigReadValM = '0;
+          IllegalCSRTrigAccessM = 1'b0;
         end
 
         TINFO: begin
           CSRTrigReadValM = '0;
+          IllegalCSRTrigAccessM = 1'b0;
         end
-        default: CSRTrigReadValM = '0;
+
+        default: begin
+          CSRTrigReadValM = '0;
+          IllegalCSRTrigAccessM = 1'b1;
+        end
+
       endcase
     end else begin
+      CSRTrigReadValM = '0;
       IllegalCSRTrigAccessM = 1'b1;
     end
   end

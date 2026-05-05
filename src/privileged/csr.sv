@@ -113,7 +113,10 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic                     BreakpointFaultM,
   output logic                     EBreakM, EBreakS, EBreakU,
   input  logic [P.XLEN-1:0]        IEUAdrM,
-  input  logic                     PCSrcE
+  input  logic                     PCSrcE,
+  output logic                     DebugStepIE,
+  output logic                     DebugStep,
+  output logic                     DebugStopTime
 );
 
   localparam MIP = 12'h344;
@@ -324,7 +327,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
       .DebugMode, .NextValidPCE, .PCM, .IllegalCSRDAccessM, .DebugResume, .DPC_REGW(DPC),
       .HaveReset, .HaveResetAck, .ResetHaltReq, .BreakpointFaultM,
       .EBreakM, .EBreakS, .EBreakU,
-      .IEUAdrM, .PCSrcE, .FlushM, .StallM);
+      .IEUAdrM, .PCSrcE, .FlushM, .StallM, .DebugStepIE, .DebugStep, .DebugStopTime);
   end else begin
     assign DebugMode = 1'b0;
     assign CSRDReadValM = '0;
@@ -335,6 +338,9 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign EBreakM = 0;
     assign EBreakS = 0;
     assign EBreakU = 0;
+    assign DebugStepIE = 1'b1;
+    assign DebugStopTime = 1'b0;
+    assign DebugStep = 1'b0;
   end
 
   if (P.TRIG_SUPPORTED) begin : trig

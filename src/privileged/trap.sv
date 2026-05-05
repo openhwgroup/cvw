@@ -46,7 +46,10 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   output logic                 IntPendingM,                                     // Interrupt is pending, might occur if enabled
   output logic                 DelegateM,                                       // Delegate trap to supervisor handler
   output logic [3:0]           CauseM,                                          // trap cause
-  input  logic                 EBreakM, EBreakS, EBreakU
+  input  logic                 EBreakM, EBreakS, EBreakU,
+  input  logic                 DebugMode,
+  input  logic                 DebugStepIE,
+  input  logic                 DebugStep
 );
 
   logic                        MIntGlobalEnM, SIntGlobalEnM;                    // Global interrupt enables
@@ -69,7 +72,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   assign Committed     = CommittedM | CommittedF;
   assign EnabledIntsM  = (MIntGlobalEnM ? PendingIntsM & ~MIDELEG_REGW : '0) | (SIntGlobalEnM ? PendingIntsM & MIDELEG_REGW : '0);
   assign ValidIntsM    = Committed ? '0 : EnabledIntsM;
-  assign InterruptM    = (|ValidIntsM) & InstrValidM & (~wfiM | wfiW); // suppress interrupt if the memory system has partially processed a request. Delay interrupt until wfi is in the W stage.
+  assign InterruptM    = (|ValidIntsM) & InstrValidM & (~wfiM | wfiW) & ~DebugMode & ~(DebugStep & ~DebugStepIE); // suppress interrupt if the memory system has partially processed a request. Delay interrupt until wfi is in the W stage.
   // wfiW is to support possible but unlikely back to back wfi instructions. wfiM would be high in the M stage, while also in the W stage.
   assign DelegateM     = P.S_SUPPORTED & (InterruptM ? MIDELEG_REGW[CauseM] : MEDELEG_REGW[CauseM]) &
                      (PrivilegeModeW == P.U_MODE | PrivilegeModeW == P.S_MODE);

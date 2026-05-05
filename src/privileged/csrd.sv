@@ -56,7 +56,10 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   input logic [P.XLEN-1:0]  IEUAdrM,
   input logic               PCSrcE,
   input logic               FlushM,
-  input logic               StallM
+  input logic               StallM,
+  output logic              DebugStepIE,
+  output logic              DebugStep,
+  output logic              DebugStopTime
 );
 
   localparam                DCSR = 12'h7B0;
@@ -111,7 +114,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
 
    // debug specification 4.9.1, 0x7b0
   localparam dcsrwidth = ($bits(ebreakm) + $bits(ebreaks) + $bits(ebreaku) +
-    $bits(stepie) + $bits(cause) + $bits(step) + $bits(prv));
+    $bits(stepie) + $bits(stoptime) + $bits(cause) + $bits(step) + $bits(prv));
 
   logic [dcsrwidth-1:0]              DCSRWriteValM;
   logic [dcsrwidth-1:0]     DCSR_REGW;
@@ -144,7 +147,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   assign ebreakvs = 0;
   assign ebreakvu = 0;
   assign stopcount = 0;
-  assign stoptime = 0;
+  // assign stoptime = 0;
   assign v = 0;
   assign mprven = 1;
   assign nmip = 0;
@@ -160,9 +163,9 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   flopenrc #(1) PCSrcMReg (clk, reset, FlushM, ~StallM, PCSrcE, PCSrcM);
 
   assign DCSRWriteValM = CSRDWriteM & ~NextHalt ?
-                         {CSRWriteValM[15], CSRWriteValM[13], CSRWriteValM[12], CSRWriteValM[11],
+                         {CSRWriteValM[15], CSRWriteValM[13], CSRWriteValM[12], CSRWriteValM[11], CSRWriteValM[9],
                           CSRWriteValM[8:6], CSRWriteValM[2], CSRWriteValM[1:0]} :
-                         {ebreakm, ebreaks, ebreaku, stepie, NextCause, step, PrivilegeModeW};
+                         {ebreakm, ebreaks, ebreaku, stepie, stoptime, NextCause, step, PrivilegeModeW};
 
   assign DPCWriteValM = WriteDPC & (state == HALTED) ? CSRWriteValM : ebreak ? PCM : PCSrcM ? IEUAdrM : NextValidPCE;
 
@@ -177,9 +180,14 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   assign ebreaks = DCSR_REGW[dcsrwidth-2];
   assign ebreaku = DCSR_REGW[dcsrwidth-3];
   assign stepie = DCSR_REGW[dcsrwidth-4];
-  assign cause = DCSR_REGW[dcsrwidth-5:dcsrwidth-7];
+  assign stoptime = DCSR_REGW[dcsrwidth-5];
+  assign cause = DCSR_REGW[dcsrwidth-6:dcsrwidth-8];
   assign step = DCSR_REGW[2];
   assign prv = DCSR_REGW[1:0];
+
+  assign DebugStepIE = stepie;
+  assign DebugStopTime = DebugMode & stoptime;
+  assign DebugStep = step;
 
   // CSR Reads
   always_comb begin
