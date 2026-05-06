@@ -87,7 +87,7 @@ module csri import cvw::*;  #(parameter cvw_t P) (
   // mie owns all implemented enable state.  hie and vsie are aliases that
   // update/view the H-added bits in mie, matching the existing sie aliasing.
   if (P.H_SUPPORTED) begin : mie_h
-    assign HIE_WRITE_MASK = 16'h0444;
+    assign HIE_WRITE_MASK = 16'h0444 | ((P.GEILEN > 0) ? 16'h1000 : 16'h0000);
     assign WriteMIEMasked = WriteMIEM | WriteSIEM | WriteHIEM | WriteVSIEM;
     always_comb begin
       NextMIE_REGW = MIE_REGW;
@@ -120,8 +120,8 @@ module csri import cvw::*;  #(parameter cvw_t P) (
 
   assign HIE_REGW = MIE_REGW & HIE_WRITE_MASK;
 
-  // Bits 13:12 are present for future LCOFI/SGEI support; they remain zero
-  // until the corresponding interrupt sources are implemented.
+  // Bit 12 aliases SGEIP when guest external interrupts are implemented.
+  // Bit 13 is present for future LCOFI support and remains zero.
   if (P.H_SUPPORTED) begin : mip_h
     assign MIP_REGW = {3'b0,      HIP_MIP_REGW[12],
                        MExtInt,   HIP_MIP_REGW[10], SExtInt|MIP_REGW_writeable[9],  1'b0,

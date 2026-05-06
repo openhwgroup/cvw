@@ -40,6 +40,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   input  logic              SetOrWriteFFLAGSM,// VS CSR write to FFLAGS updates vsstatus.FS
   input  logic              TrapGVAM,         // Trap writes guest virtual address to tval
   input  logic [63:0]       MTIME_CLINT,      // time source for VSTIP (vstimecmp)
+  input  logic [P.XLEN-1:0] HGEIPIn,          // guest external interrupt sources
   input  logic              STATUS_TVM,       // mstatus.TVM gate for HGATP access in HS-mode
   input  logic              MCOUNTEREN_TM,    // mcounteren.TM gate for VS timer CSR access
   input  logic              MENVCFG_STCE,     // menvcfg.STCE constrains henvcfg.STCE
@@ -144,8 +145,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   // HIDELEG: only VS-level interrupts (VSSIP/VSTIP/VSEIP) are writable.
   localparam [15:0] HIDELEG_MASK = 16'h0444;
   localparam [11:0] HVIP_MASK    = 12'h444; // Only VSSIP[2], VSTIP[6], VSEIP[10] are writable (spec 7.4.4)
-  // No guest-external interrupt source is wired in yet, so GEILEN is architecturally zero.
-  localparam int unsigned GEILEN = 0;
+  localparam int unsigned GEILEN = (P.GEILEN > (P.XLEN-1)) ? (P.XLEN-1) : P.GEILEN;
   // Write Enables for CSR instructions
   logic WriteMTINSTM;
   logic WriteMTVAL2M;
@@ -162,7 +162,6 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   logic WriteHIPM;
   logic WriteHTINSTM;
   logic WriteHGATPM;
-  logic WriteHGEIPM;
   logic WriteVSTVECM;
   logic WriteVSSCRATCHM;
   logic WriteVSEPCM;
@@ -191,11 +190,18 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   logic              LegalVSatpModeM;
   logic [P.XLEN-1:0] LegalizedVSatpWriteValM;
   logic [P.XLEN-1:0] HGATPReadVal;
-  logic [P.XLEN-1:0] HGEIEWriteMaskM;
+  logic [P.XLEN-1:0] HGEIMaskM;
   logic [P.XLEN-1:0] NextHGEIEM;
+  logic [5:0]        HSTATUSVGEINWriteValM;
+  logic [5:0]        LegalizedHSTATUSVGEINWriteValM;
+  localparam logic [5:0] GEILEN_LIMIT = GEILEN[5:0];
 
   // CBIE has WARL encoding; 2'b10 is reserved and is legalized to 2'b00.
   assign LegalizedHENVCFG_CBIE = (CSRWriteValM[5:4] == 2'b10) ? 2'b00 : CSRWriteValM[5:4];
+  // Hypervisor spec norm:hstatus-vgein_op: VGEIN is WLRL with legal values 0..GEILEN,
+  // and VGEIN=0 selects no guest external source. Legalize unsupported values to 0.
+  assign HSTATUSVGEINWriteValM = (P.XLEN == 32) ? {1'b0, CSRWriteValM[16:12]} : CSRWriteValM[17:12];
+  assign LegalizedHSTATUSVGEINWriteValM = (HSTATUSVGEINWriteValM <= GEILEN_LIMIT) ? HSTATUSVGEINWriteValM : 6'b0;
 
   // CSR Write Validation Intermediates
   logic LegalHAccessM;
@@ -260,9 +266,6 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   assign WriteHTINSTM     = ValidHWriteM & (CSRAdrM == HTINST);
   assign WriteHGATPM      = P.VIRTMEM_SUPPORTED & ValidHWriteM & (CSRAdrM == HGATP) &
                             ((PrivilegeModeW == P.M_MODE) | ~STATUS_TVM);
-  // HGEIP is pending-interrupt state from external interrupt fabric.
-  // Until that source is integrated, keep it read-only.
-  assign WriteHGEIPM      = 1'b0;
   assign WriteVSTVECM     = ValidVSWriteM & (CSRAdrM == VSTVEC);
   assign WriteVSSCRATCHM  = ValidVSWriteM & (CSRAdrM == VSSCRATCH);
   assign WriteVSEPCM      = ValidVSWriteM & (CSRAdrM == VSEPC);
@@ -328,13 +331,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
       HSTATUS_SPV   <= CSRWriteValM[7];
       HSTATUS_SPVP  <= CSRWriteValM[8];
       HSTATUS_HU    <= P.U_SUPPORTED & CSRWriteValM[9];
-      // VGEIN is WARL and depends on GEILEN. With GEILEN=0 it is read-only zero.
-      if (GEILEN == 0)
-        HSTATUS_VGEIN <= 6'b0;
-      else if (P.XLEN == 32)
-        HSTATUS_VGEIN <= {1'b0, CSRWriteValM[16:12]};
-      else
-        HSTATUS_VGEIN <= CSRWriteValM[17:12];
+      HSTATUS_VGEIN <= LegalizedHSTATUSVGEINWriteValM;
       HSTATUS_VTVM  <= CSRWriteValM[20];
       HSTATUS_VTW   <= CSRWriteValM[21];
       HSTATUS_VTSR  <= CSRWriteValM[22];
@@ -475,8 +472,9 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   assign VSIP_REGW = (HIP_PENDING[11:0] & HIDELEG_REGW[11:0]) >> 1;
 
   // hgeie bits GEILEN:1 are writable; all others are read-only zero.
-  assign HGEIEWriteMaskM = {{(P.XLEN-GEILEN-1){1'b0}}, {GEILEN{1'b1}}, 1'b0};
-  assign NextHGEIEM = CSRWriteValM & HGEIEWriteMaskM;
+  assign HGEIMaskM = {{(P.XLEN-GEILEN-1){1'b0}}, {GEILEN{1'b1}}, 1'b0};
+  assign HGEIP_REGW = HGEIPIn & HGEIMaskM;
+  assign NextHGEIEM = CSRWriteValM & HGEIMaskM;
   flopenr #(P.XLEN) HGEIEreg(clk, reset, WriteHGEIEM, NextHGEIEM, HGEIE_REGW);
 
   // HTVAL: Written by CSR instructions and by hardware on traps
@@ -631,10 +629,6 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
     flopenr #(P.XLEN) HTIMEDELTAreg(clk, reset, WriteHTIMEDELTAM, CSRWriteValM, HTIMEDELTA_REGW[31:0]);
     flopenr #(P.XLEN) HTIMEDELTAHreg(clk, reset, WriteHTIMEDELTAHM, CSRWriteValM, HTIMEDELTA_REGW[63:32]);
   end
-  // HGEIP is sourced by platform interrupt logic; keep zero until that path is integrated.
-  flopenr #(P.XLEN) HGEIPreg(clk, reset, WriteHGEIPM, '0, HGEIP_REGW);
-
-
   // CSR Read and Illegal Access Logic
   always_comb begin : csrrh
     CSRHReadValM = '0;

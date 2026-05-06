@@ -110,7 +110,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   localparam [63:0] MEDELEG_MASK = (P.ZCA_SUPPORTED ? 64'h0000_0000_0000_B3FE : 64'h0000_0000_0000_B3FF) |
                                    (P.H_SUPPORTED ? 64'h0000_0000_0040_0400 : 64'h0000_0000_0000_0000);
   localparam [15:0] MIDELEG_MASK = 16'h0222; // only standard S-level interrupt delegation bits are writable
-  localparam [15:0] MIDELEG_RO1  = P.H_SUPPORTED ? 16'h0444 : 16'h0000; // VS-level interrupts are always delegated past M
+  localparam [15:0] MIDELEG_RO1  = P.H_SUPPORTED ? (16'h0444 | ((P.GEILEN > 0) ? 16'h1000 : 16'h0000)) : 16'h0000; // VS-level and guest external interrupts are always delegated past M
   localparam Gm1 = P.PMP_G > 0 ? P.PMP_G - 1 : 0; // max(G-1, 0)
 
  // There are PMP_ENTRIES = 0, 16, or 64 PMPADDR registers, each of which has its own flop

@@ -49,6 +49,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   // peripheral pins
   output logic                 MTimerInt, MSwInt,         // Timer and software interrupts from CLINT
   output logic                 MExtInt, SExtInt,          // External interrupts from PLIC
+  output logic [P.XLEN-1:0]    HGEIPIn,                   // Guest external interrupts
   output logic [63:0]          MTIME_CLINT,               // MTIME, from CLINT
   input  logic [31:0]          GPIOIN,                    // GPIO pin input value
   output logic [31:0]          GPIOOUT, GPIOEN,           // GPIO pin output value and enable
@@ -135,6 +136,24 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   end else begin : plic
     assign MExtInt = 1'b0;
     assign SExtInt = 1'b0;
+  end
+
+  if (P.H_SUPPORTED) begin : trickbox
+    logic [P.XLEN-1:0] HGEIPInTB[0:0], HGEIPOutTB[0:0];
+
+    assign HGEIPInTB[0] = '0;
+
+    // The TrickBox provides a local guest-external interrupt source for tests
+    // and future interrupt-controller integration.  Architectural hgeip/hgeie
+    // masking is handled in CSRs.
+    trickbox_apb #(.XLEN(P.XLEN), .NUM_HARTS(1)) trickbox(
+      .PCLK, .PRESETn, .PSEL(PSEL[1]), .PADDR(PADDR[15:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE,
+      .PRDATA(), .PREADY(), .MTIME_IN(MTIME_CLINT), .MTIP_IN(MTimerInt), .MSIP_IN(MSwInt), .SSIP_IN(1'b0),
+      .MEIP_IN(MExtInt), .SEIP_IN(SExtInt), .HGEIP_IN(HGEIPInTB), .MTIME_OUT(), .MTIP_OUT(), .MSIP_OUT(),
+      .SSIP_OUT(), .MEIP_OUT(), .SEIP_OUT(), .HGEIP_OUT(HGEIPOutTB), .TOHOST_OUT());
+    assign HGEIPIn = HGEIPOutTB[0];
+  end else begin : trickbox
+    assign HGEIPIn = '0;
   end
 
   if (P.GPIO_SUPPORTED == 1) begin : gpio

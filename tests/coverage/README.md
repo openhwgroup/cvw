@@ -10,11 +10,12 @@ This is not a full H-extension architectural compliance test. In particular, it 
 
 - Hypervisor CSR read/write and WARL behavior from M-mode:
   - `mtinst`, `mtval2`
-  - `hstatus`, `hedeleg`, `hideleg`, `hcounteren`, `hgeie`
+  - `hstatus`, `hedeleg`, `mideleg`, `hideleg`, `hcounteren`, `hgeie`
   - `htval`, `htinst`, `hgatp`
   - `vsstatus`, `vstvec`, `vsscratch`, `vsepc`, `vscause`, `vstval`, `vsatp`
 
 - Hypervisor interrupt CSR aliasing:
+  - GEILEN=1 behavior for `hstatus.VGEIN`, `hgeie`, and `mideleg`.SGEI
   - `hie` writes reflected in `mie`
   - `vsie` writes reflected through delegated `hie`/`mie` bits
   - `hip`, `hvip`, and `vsip` delegated virtual interrupt aliases
@@ -25,11 +26,12 @@ This is not a full H-extension architectural compliance test. In particular, it 
   - `htimedelta`
 
 - Read-only / illegal CSR behavior:
-  - `hgeip` write attempts trap as illegal and read back as zero
+  - `hgeip` write attempts trap as illegal; pending state is driven by the test MMIO source
 
 - HS-mode execution test:
   - enters HS using the shared `WALLY-init-lib.h` ecall privilege-change helper
   - executes `hfence.gvma x0, x0` in HS
+  - drives guest external interrupt 1 through the local TrickBox HGEIP source and checks HS-level SGEI delivery
   - returns to M-mode and verifies a marker register to confirm the HS block ran
 
 - Hypervisor privileged instruction decode:
@@ -76,7 +78,8 @@ make deriv
 Then create the local Imperas config if needed. Copy and paste the contents of `config/rv64gc/imperas.ic` into `config/deriv/rv64gch/imperas.ic`, then make these edits:
 
 1. Change the variant line from `--variant RV64GCK` to `--variant RV64GCH`.
-2. Remove the crypto override block, because this target is `GCH`, not `GCK`:
+2. Add `--override cpu/GEILEN=1`.
+3. Remove the crypto override block, because this target is `GCH`, not `GCK`:
 
 ```text
 # Crypto extensions
@@ -93,7 +96,7 @@ mkdir -p config/deriv/rv64gch
 touch config/deriv/rv64gch/imperas.ic
 ```
 
-Then paste in the contents from `config/rv64gc/imperas.ic` and make the two edits above.
+Then paste in the contents from `config/rv64gc/imperas.ic` and make the edits above.
 
 From the repository root:
 
@@ -111,6 +114,10 @@ Mismatches            : 0
 
 The test should write `tohost = 1`, then stop at the normal coverage-test self loop / testbench stop point.
 
+If a self-check fails, the test writes `tohost = 3` with a store word so the testbench terminates instead of repeatedly writing `tohost`.
+
+The guest-external interrupt check uses the CLINT-range TrickBox sidecar: `TRICKEN[6]` is written at `0x0200A010`, then HGEIP bit 1 is driven through the slot at `0x0200C000`.
+
 In `--lockstepverbose` output, the HS-mode test can be identified by the instruction trace around `hs_mode_entry`, where Imperas prints the privilege label as `Supervisor`:
 
 ```text
@@ -119,6 +126,33 @@ In `--lockstepverbose` output, the HS-mode test can be identified by the instruc
 ```
 
 In this test context, `Supervisor` with virtualization mode `V=0` corresponds to HS-mode.
+
+## Hypervisor Interrupt Tests
+
+`hypervisorInterrupts.S` is a focused companion test for implemented H-extension interrupt behavior. It currently covers:
+
+- `GEILEN=1` interrupt-visible CSR behavior for `hstatus.VGEIN`, `hgeie`, and read-only-one `mideleg`.SGEI
+- `hie` / `mie` aliasing for SGEIE and VS interrupt-enable bits
+- `vsie` delegated interrupt-enable aliasing
+- `hip`, `hvip`, and `vsip` delegated virtual interrupt-pending aliases
+- read-only `hgeip` CSR behavior
+- HS-mode delivery of software-injected VSSI, VSTI, and VSEI through `hvip`
+- HS-mode supervisor guest external interrupt delivery through the local TrickBox HGEIP source
+
+Build it from the repository root with:
+
+```sh
+source ./setup.sh
+make -C tests/coverage hypervisorInterrupts.elf hypervisorInterrupts.elf.objdump
+```
+
+Run it with ImperasDV lockstep using the same `rv64gch` setup described above:
+
+```sh
+wsim rv64gch --elf tests/coverage/hypervisorInterrupts.elf --lockstepverbose > hypervisorInterrupts.log 2>&1
+```
+
+The same local ImperasDV `GEILEN=1` override and HGEIP TrickBox addresses described for `hypervisorUnitTests.S` apply to this test.
 
 ## Hypervisor Exception Tests
 

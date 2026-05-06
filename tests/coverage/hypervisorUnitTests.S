@@ -39,18 +39,29 @@
 .equ CSR_VSTIMECMP,  0x24D
 .equ CSR_MENVCFG,    0x30A
 .equ CSR_MEDELEG,    0x302
+.equ CSR_MIDELEG,    0x303
 .equ CSR_MIE,        0x304
+.equ CSR_SSTATUS,    0x100
+.equ CSR_SEPC,       0x141
+.equ CSR_SCAUSE,     0x142
 .equ CSR_MCAUSE,     0x342
 .equ CSR_MTINST,     0x34A
 .equ CSR_MTVAL2,     0x34B
 
 .equ MIE_BASE,       0x0000000000000080
+.equ HSTATUS_BASE,   0x0000000200000000
 .equ HSTATUS_EXPECT, 0x00000002007003E0
+.equ HSTATUS_VGEIN1, 0x0000000200001000
 .equ HEDELEG_MASK,   0x000000000000B1FE
+.equ MIDELEG_RO1,    0x0000000000001444
 .equ HIDELEG_MASK,   0x0000000000000444
-.equ HIE_MASK,       0x0000000000000444
+.equ HGEIE_MASK,     0x0000000000000002
+.equ HIE_MASK,       0x0000000000001444
+.equ HIE_SGEIE_MASK, 0x0000000000001000
+.equ HIE_VS_MASK,    0x0000000000000444
 .equ VSIE_MASK,      0x0000000000000222
-.equ MIE_AFTER_HIE,  0x4C4
+.equ MIE_AFTER_HIE,  0x14C4
+.equ MIE_AFTER_VSIE, 0x4C4
 .equ HCOUNTEREN_VAL, 0x00000000A5A55A5A
 .equ HENVCFG_EXPECT, 0xE0000000000000F1
 .equ HTIMEDELTA_VAL, 0x0123456789ABCDEF
@@ -71,6 +82,11 @@
 .equ MTINST_VAL,     0xDEADBEEFCAFEBABE
 .equ MTVAL2_VAL,     0x0BADF00D12345678
 .equ CAUSE_ILLEGAL,  2
+.equ CAUSE_SGEI,     0x800000000000000C
+.equ SSTATUS_SIE,    0x2
+.equ HGEIP0_ADDR,    0x0200C000
+.equ TRICKEN_ADDR,   0x0200A010
+.equ TRICKEN_HGEIP,  0x40
 
 .macro CHECK_CSR_RW csr, write_val, expect_val
     li t0, \write_val
@@ -104,10 +120,13 @@ main:
     CHECK_CSR_RW CSR_MTINST, MTINST_VAL, MTINST_VAL
     CHECK_CSR_RW CSR_MTVAL2, MTVAL2_VAL, MTVAL2_VAL
     CHECK_CSR_RW CSR_HSTATUS, -1, HSTATUS_EXPECT
+    CHECK_CSR_RW CSR_HSTATUS, 0x1000, HSTATUS_VGEIN1
+    CHECK_CSR_RW CSR_HSTATUS, 0, HSTATUS_BASE
     CHECK_CSR_RW CSR_HEDELEG, -1, HEDELEG_MASK
+    CHECK_CSR_RW CSR_MIDELEG, 0, MIDELEG_RO1
     CHECK_CSR_RW CSR_HIDELEG, -1, HIDELEG_MASK
     CHECK_CSR_RW CSR_HCOUNTEREN, HCOUNTEREN_VAL, HCOUNTEREN_VAL
-    CHECK_CSR_RW CSR_HGEIE, -1, 0
+    CHECK_CSR_RW CSR_HGEIE, -1, HGEIE_MASK
     CHECK_CSR_RW CSR_HTVAL, HTVAL_VAL, HTVAL_VAL
     CHECK_CSR_RW CSR_HTINST, HTINST_VAL, HTINST_VAL
     CHECK_CSR_RW CSR_HGATP, HGATP_WRITE, HGATP_EXPECT
@@ -128,8 +147,8 @@ main:
     CHECK_CSR_RW CSR_HIE, 0, 0
     CHECK_CSR_READ CSR_MIE, MIE_BASE
     CHECK_CSR_RW CSR_VSIE, -1, VSIE_MASK
-    CHECK_CSR_READ CSR_HIE, HIE_MASK
-    CHECK_CSR_READ CSR_MIE, MIE_AFTER_HIE
+    CHECK_CSR_READ CSR_HIE, HIE_VS_MASK
+    CHECK_CSR_READ CSR_MIE, MIE_AFTER_VSIE
 
     # HIP/HVIP/VSIP are partially aliased through the delegated virtual interrupt bits.
     CHECK_CSR_RW CSR_HVIP, 0, 0
@@ -143,6 +162,7 @@ main:
     CHECK_CSR_RW CSR_VSIP, -1, 0x2
     CHECK_CSR_READ CSR_HIP, 0x4
     CHECK_CSR_READ CSR_HVIP, 0x4
+    CHECK_CSR_RW CSR_HVIP, 0, 0
 
     # Timer/configuration CSRs are tested late so earlier HIP reads are not
     # disturbed by virtual timer pending state.
@@ -151,7 +171,7 @@ main:
     CHECK_CSR_RW CSR_HENVCFG, -1, HENVCFG_EXPECT
     CHECK_CSR_RW CSR_HTIMEDELTA, HTIMEDELTA_VAL, HTIMEDELTA_VAL
 
-    # HGEIP is read-only until a guest-external interrupt source is integrated.
+    # HGEIP is source-driven and read-only from the CSR path.
     CHECK_ILLEGAL_CSR_WRITE CSR_HGEIP, -1, 0
 
     # Enter HS via the existing ecall privilege-change helper and exercise an
@@ -170,6 +190,48 @@ hs_mode_entry:
     csrr t0, CSR_HSTATUS
     .word 0x62000073 # hfence.gvma x0, x0
     li s0, HS_MARKER
+
+    # Drive guest external interrupt 1 through the CLINT/TrickBox HGEIP slot.
+    # With GEILEN=1, hgeie[1] and hie.SGEIE should deliver an HS-level SGEI.
+    la t0, sgei_handler
+    csrw stvec, t0
+    li t0, TRICKEN_ADDR
+    li t1, TRICKEN_HGEIP
+    sd t1, 0(t0)
+    li t0, HGEIP0_ADDR
+    sd zero, 0(t0)
+    li t0, HGEIE_MASK
+    csrw CSR_HGEIE, t0
+    li t0, HIE_SGEIE_MASK
+    csrw CSR_HIE, t0
+    csrsi CSR_SSTATUS, SSTATUS_SIE
+    li t0, HGEIP0_ADDR
+    li t1, HGEIE_MASK
+    sd t1, 0(t0)
+    j fail
+
+sgei_handler:
+    csrr t1, CSR_SCAUSE
+    li t2, CAUSE_SGEI
+    bne t1, t2, fail
+    csrr t1, CSR_HGEIP
+    li t2, HGEIE_MASK
+    bne t1, t2, fail
+    csrr t1, CSR_HIP
+    li t2, HIE_SGEIE_MASK
+    bne t1, t2, fail
+    li t0, HGEIP0_ADDR
+    sd zero, 0(t0)
+    li t0, TRICKEN_ADDR
+    sd zero, 0(t0)
+    csrw CSR_HIE, zero
+    csrw CSR_HGEIE, zero
+    csrci CSR_SSTATUS, SSTATUS_SIE
+    la t0, sgei_done
+    csrw CSR_SEPC, t0
+    sret
+
+sgei_done:
 
     li a0, 3
     ecall
@@ -204,7 +266,7 @@ back_in_m_from_hs:
 fail:
     la t1, tohost
     li t0, 3
-    sd t0, 0(t1)
+    sw t0, 0(t1)
 hs_trap_fail:
     j fail
 fail_loop:

@@ -48,6 +48,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic                     MExtInt, SExtInt,          // external interrupt (from PLIC)
   input  logic                     MSwInt,                    // software interrupt
   input  logic [63:0]              MTIME_CLINT,               // TIME value from CLINT
+  input  logic [P.XLEN-1:0]        HGEIPIn,                   // guest external interrupt sources
   input  logic                     InstrValidM,               // current instruction is valid
   input  logic                     FRegWriteM,                // writes to floating point registers change STATUS.FS
   input  logic [4:0]               SetFflagsM,                // Set floating point flag bits in FCSR
@@ -366,7 +367,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     csrh #(P) csrh(.clk, .reset,
       .CSRMWriteM, .CSRSWriteM, .CSRWriteM, .CSRAdrM, .CSRWriteValM,
       .PrivilegeModeW, .VirtModeW, .FRegWriteM, .WriteFRMM, .SetOrWriteFFLAGSM,
-      .TrapGVAM, .MTIME_CLINT,
+      .TrapGVAM, .MTIME_CLINT, .HGEIPIn,
       .STATUS_TVM, .MCOUNTEREN_TM(MCOUNTEREN_REGW[1]),
       .MENVCFG_STCE(MENVCFG_REGW[63]), .MENVCFG_PBMTE(MENVCFG_REGW[62]), .MENVCFG_ADUE(MENVCFG_REGW[61]),
       .TrapToM, .TrapToHSM, .TrapToVSM, .sretM, .InstrM, .InstrOrigM,
