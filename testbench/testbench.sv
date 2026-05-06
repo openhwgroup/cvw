@@ -114,6 +114,7 @@ module testbench;
   logic        SDCIn;
   logic [3:0]  SDCCS;
   logic        SDCCLK;
+  logic [3:0]  PWMGPIO;
 
   logic        HREADY;
   logic        HSELEXT;
@@ -665,7 +666,7 @@ module testbench;
     .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT,
     .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
     .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
-    .UARTSin, .UARTSout, .SPIIn, .SPIOut, .SPICS, .SPICLK, .SDCIn, .SDCCmd, .SDCCS, .SDCCLK);
+    .UARTSin, .UARTSout, .SPIIn, .SPIOut, .SPICS, .SPICLK, .SDCIn, .SDCCmd, .SDCCS, .SDCCLK, .PWMGPIO);
 
   // generate clock to sequence tests
   always begin
