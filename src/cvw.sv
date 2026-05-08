@@ -162,6 +162,7 @@ typedef struct packed {
   int           PLIC_UART_ID;
   int           PLIC_SPI_ID;
   int           PLIC_SDC_ID;
+  int           GEILEN;
 
   logic                BPRED_SUPPORTED;
   logic [31:0]         BPRED_TYPE;

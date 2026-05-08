@@ -59,32 +59,40 @@ module trickbox_apb import cvw::*;  #(parameter XLEN = 64, NUM_HARTS = 1) (
   logic [XLEN-1:0]            TOHOST;
   logic [XLEN-1:0]            HGEIP[NUM_HARTS-1:0];
   logic [15:0]                entry;
-  logic [9:0]                 hart;                   // which hart is being accessed
+  logic [9:0]                 hartaddr;               // which hart is being accessed
+  logic                       HartValid;
   logic                       memwrite;
   logic [63:0]                RD;
+  logic [63:0]                PWDATA64;
   genvar                      i;
+  localparam HartIndexBits = NUM_HARTS > 1 ? $clog2(NUM_HARTS) : 1;
+  logic [HartIndexBits-1:0]   hart;
 
   assign memwrite = PWRITE & PENABLE & PSEL;  // only write in access phase
   assign PREADY   = 1'b1;                     // CLINT never takes >1 cycle to respond
-  assign hart = PADDR[12:3];                  // middle bits of address allow control of up to 1024 harts
+  assign hartaddr = PADDR[12:3];              // middle bits of address allow control of up to 1024 harts
+  assign hart = hartaddr[HartIndexBits-1:0];
+  assign HartValid = hartaddr < NUM_HARTS;
+  assign PWDATA64 = {{(64-XLEN){1'b0}}, PWDATA};
 
   // read circuitry
   // 64-bit accesses, then reduce to 32-bit for RV32
   always_ff @(posedge PCLK) begin
+    RD <= '0;
     case (PADDR[15:13])
-      3'b000: RD <= {63'b0, MSIP[hart]};     // *** memory map
-      3'b001: RD <= {63'b0, SSIP[hart]};
-      3'b010: RD <= MTIMECMP[hart];
-      3'b011: RD <= {63'b0, MEIP[hart]};
-      3'b100: RD <= {63'b0, SEIP[hart]};
-      3'b101: case (hart)
-        10'b0000000000: RD <= TOHOST;
+      3'b000: if (HartValid) RD <= {63'b0, MSIP[hart]};     // *** memory map
+      3'b001: if (HartValid) RD <= {63'b0, SSIP[hart]};
+      3'b010: if (HartValid) RD <= MTIMECMP[hart];
+      3'b011: if (HartValid) RD <= {63'b0, MEIP[hart]};
+      3'b100: if (HartValid) RD <= {63'b0, SEIP[hart]};
+      3'b101: case (hartaddr)
+        10'b0000000000: RD <= {{(64-XLEN){1'b0}}, TOHOST};
         10'b0000000001: RD <= '0; // Reading COM1 has no effect; busy bit not yet implemented.  Later add busy bit
         10'b0000000010: RD <= {56'b0, TRICKEN};
         10'b1111111111: RD <= MTIME;
         default: RD <= '0;
       endcase
-      3'b110: RD <= HGEIP[hart];
+      3'b110: if (HartValid) RD <= {{(64-XLEN){1'b0}}, HGEIP[hart]};
       default: RD <= '0;
     endcase
   end
@@ -104,15 +112,17 @@ module trickbox_apb import cvw::*;  #(parameter XLEN = 64, NUM_HARTS = 1) (
       TRICKEN <= '0;
     end else if (memwrite) begin
       case (PADDR[15:13])
-        3'b000: MSIP[hart] <= PWDATA[0];
-        3'b001: SSIP[hart] <= PWDATA[0];
-        3'b011: MEIP[hart] <= PWDATA[0];
-        3'b100: SEIP[hart] <= PWDATA[0];
-        3'b101: case (hart)
+        3'b000: if (HartValid) MSIP[hart] <= PWDATA[0];
+        3'b001: if (HartValid) SSIP[hart] <= PWDATA[0];
+        3'b011: if (HartValid) MEIP[hart] <= PWDATA[0];
+        3'b100: if (HartValid) SEIP[hart] <= PWDATA[0];
+        3'b101: case (hartaddr)
           10'b0000000000: TOHOST <= PWDATA;
           10'b0000000001: $display("%c", PWDATA[7:0]); // COM1 prints to simulation console.  Eventually allow it to be redirected to a UART, and provide a busy bit.
           10'b0000000010: TRICKEN <= PWDATA[7:0];
+          default: ;
         endcase
+        default: ;
       endcase
     end
     // generate loop write circuits for MTIMECMP and HGEIP
@@ -121,12 +131,12 @@ module trickbox_apb import cvw::*;  #(parameter XLEN = 64, NUM_HARTS = 1) (
         if (~PRESETn) begin
           MTIMECMP[i] <= 64'hFFFFFFFFFFFFFFFF; // Spec says MTIMECMP is not reset, but we reset to maximum value to prevent spurious timer interrupts
           HGEIP[i] <= 0;
-        end else if (memwrite & (hart == i)) begin
+        end else if (memwrite & (hartaddr == i)) begin
           if (PADDR[15:13] == 3'b010) begin
-            if (XLEN == 64) MTIMECMP[hart] <= PWDATA; // 64-bit write
-            else            MTIMECMP[hart][PADDR[2]*32 +: 32] <= PWDATA; // 32-bit write
+            if (XLEN == 64) MTIMECMP[i] <= PWDATA64; // 64-bit write
+            else            MTIMECMP[i][PADDR[2]*32 +: 32] <= PWDATA[31:0]; // 32-bit write
           end else if (PADDR[15:13] == 3'b110) begin
-            HGEIP[hart] <= PWDATA;
+            HGEIP[i] <= PWDATA;
           end
         end
 
@@ -134,9 +144,9 @@ module trickbox_apb import cvw::*;  #(parameter XLEN = 64, NUM_HARTS = 1) (
   always_ff @(posedge PCLK)
     if (~PRESETn) begin
       MTIME <= '0;
-    end else if (memwrite & (PADDR[15:13] == 3'b101 && hart == 10'b1111111111)) begin
-      if (XLEN == 64) MTIME <= PWDATA; // 64-bit write
-      else            MTIME <= MTIME[PADDR[2]*32 +: 32]; // 32-bit write
+    end else if (memwrite & (PADDR[15:13] == 3'b101 && hartaddr == 10'b1111111111)) begin
+      if (XLEN == 64) MTIME <= PWDATA64; // 64-bit write
+      else            MTIME[PADDR[2]*32 +: 32] <= PWDATA[31:0]; // 32-bit write
     end else          MTIME <= MTIME + 1;
 
   // timer interrupt when MTIME >= MTIMECMP (unsigned)

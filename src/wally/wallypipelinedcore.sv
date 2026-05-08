@@ -32,6 +32,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
    // Privileged
    input  logic                  MTimerInt, MExtInt, SExtInt, MSwInt,
    input  logic [63:0]           MTIME_CLINT,
+   input  logic [P.XLEN-1:0]     HGEIPIn,
    // Bus Interface
    input  logic [P.AHBW-1:0]     HRDATA,
    input  logic                  HREADY, HRESP,
@@ -302,7 +303,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .InstrMisalignedFaultM, .IllegalIEUFPUInstrD,
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
       .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
-      .MTIME_CLINT, .IEUAdrxTvalM, .SetFflagsM,
+      .MTIME_CLINT, .HGEIPIn, .IEUAdrxTvalM, .SetFflagsM,
       .InstrAccessFaultF, .HPTWInstrAccessFaultF, .HPTWInstrPageFaultF, .LoadAccessFaultM, .StoreAmoAccessFaultM, .SelHPTW,
       .PrivilegeModeW, .SATP_REGW,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS,

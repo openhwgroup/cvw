@@ -57,7 +57,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   logic                        BothInstrAccessFaultM, BothInstrPageFaultM;      // instruction or HPTW ITLB fill caused an Instruction Access Fault
   logic [15:0]                 PendingIntsM, ValidIntsM, EnabledIntsM;          // interrupts are pending, valid, or enabled
   logic [15:0]                 MEnabledIntsM, HSEnabledIntsM, VSEnabledIntsM;   // interrupt sets by target mode
-  // TODO: Add cause priority for SGEI/LCOFI when those interrupt sources are implemented.
+  // TODO: Add cause priority for LCOFI when that interrupt source is implemented.
   logic                        DelegateToVSM;                                  // trap delegated from HS to VS
   logic [5:0]                  CauseIdxM;                                      // cause index for 64-bit delegation CSRs
   logic                        HidelegHitM, HedelegHitM;
@@ -165,6 +165,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
     else if (ValidIntsM[9])                                   CauseM = 5'd9;  // Supervisor External Int
     else if (ValidIntsM[1])                                   CauseM = 5'd1;  // Supervisor Sw Int
     else if (ValidIntsM[5])                                   CauseM = 5'd5;  // Supervisor Timer Int
+    else if (P.H_SUPPORTED & ValidIntsM[12])                  CauseM = 5'd12; // Supervisor Guest External Int
     else if (P.H_SUPPORTED & ValidIntsM[10])                  CauseM = 5'd10; // Virtual Supervisor External Int
     else if (P.H_SUPPORTED & ValidIntsM[2])                   CauseM = 5'd2;  // Virtual Supervisor Software Int
     else if (P.H_SUPPORTED & ValidIntsM[6])                   CauseM = 5'd6;  // Virtual Supervisor Timer Int

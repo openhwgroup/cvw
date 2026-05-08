@@ -19,6 +19,7 @@ localparam PA_BITS     = (XLEN==32 ? 32'd34 : 32'd56);
 localparam SVMODE_BITS = (XLEN==32 ? 32'd1  : 32'd4);
 localparam ASID_BASE   = (XLEN==32 ? 32'd22 : 32'd44);
 localparam ASID_BITS   = (XLEN==32 ? 32'd9  : 32'd16);
+localparam GEILEN      = H_SUPPORTED ? 32'd1 : 32'd0;
 
 // constants to check SATP_MODE against
 // defined in Table 4.3 of the privileged spec

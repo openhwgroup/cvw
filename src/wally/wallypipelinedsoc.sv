@@ -72,13 +72,14 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic                       MTimerInt, MSwInt;// timer and software interrupts from CLINT
   logic [63:0]                MTIME_CLINT;      // from CLINT to CSRs
   logic                       MExtInt,SExtInt;  // from PLIC
+  logic [P.XLEN-1:0]          HGEIPIn;          // guest external interrupts
 
   // synchronize reset to SOC clock domain
   synchronizer resetsync(.clk, .d(reset_ext), .q(reset));
 
   // instantiate processor and internal memories
   wallypipelinedcore #(P) core(.clk, .reset,
-    .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
+    .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT, .HGEIPIn,
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .ExternalStall
    );
@@ -88,11 +89,11 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
     uncore #(P) uncore(.HCLK, .HRESETn, .TIMECLK,
       .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
       .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HSELEXT,
-      .MTimerInt, .MSwInt, .MExtInt, .SExtInt, .GPIOIN, .GPIOOUT, .GPIOEN, .UARTSin,
+      .MTimerInt, .MSwInt, .MExtInt, .SExtInt, .HGEIPIn, .GPIOIN, .GPIOOUT, .GPIOEN, .UARTSin,
       .UARTSout, .MTIME_CLINT, .SPIIn, .SPIOut, .SPICS, .SPICLK, .SDCIn, .SDCCmd, .SDCCS, .SDCCLK);
   end else begin
     assign {HRDATA, HREADY, HRESP, HSELEXT, MTimerInt, MSwInt, MExtInt, SExtInt,
-            MTIME_CLINT, GPIOOUT, GPIOEN, UARTSout, SPIOut, SPICS, SPICLK, SDCCmd, SDCCS, SDCCLK} = '0;
+            MTIME_CLINT, HGEIPIn, GPIOOUT, GPIOEN, UARTSout, SPIOut, SPICS, SPICLK, SDCCmd, SDCCS, SDCCLK} = '0;
   end
 
 

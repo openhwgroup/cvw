@@ -912,6 +912,11 @@ end
     if (P.S_SUPPORTED) begin
       void'(rvviRefCsrSetVolatile(0, 32'h144));   // SIP
     end
+    if (P.H_SUPPORTED) begin
+      void'(rvviRefCsrSetVolatile(0, 32'h244));   // VSIP
+      void'(rvviRefCsrSetVolatile(0, 32'h644));   // HIP
+      void'(rvviRefCsrSetVolatile(0, 32'hE12));   // HGEIP
+    end
 
     // Privileges for PMA are set in the imperas.ic
     // volatile (IO) regions are defined here
@@ -947,6 +952,10 @@ end
       // See Fixed https://github.com/openhwgroup/cvw-arch-verif/issues/670
       //always @(dut.core.priv.priv.csr.csri.MIP_REGW[1])   void'(rvvi.net_push("SSWInterrupt",       dut.core.priv.priv.csr.csri.MIP_REGW[1]));
       always @(dut.core.priv.priv.trap.ValidIntsM[1])   void'(rvvi.net_push("SSWInterrupt",       dut.core.priv.priv.trap.ValidIntsM[1])); // dh 6/29/25 temporarily use ValidInts until Synopsys fixes level sensitive  https://github.com/openhwgroup/cvw-arch-verif/issues/670
+    end
+    if (P.H_SUPPORTED & (P.GEILEN > 0)) begin
+      always @(dut.HGEIPIn[1])
+        void'(rvvi.net_push("GuestExternalInterrupt1", dut.HGEIPIn[1]));
     end
   end
 

@@ -75,6 +75,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic              IllegalIEUFPUInstrD,                            // illegal instruction from IEU or FPU
   input  logic              MTimerInt, MExtInt, SExtInt, MSwInt,            // interrupt sources
   input  logic [63:0]       MTIME_CLINT,                                    // timer value from CLINT
+  input  logic [P.XLEN-1:0] HGEIPIn,                                        // guest external interrupt sources
   input  logic [4:0]        SetFflagsM,                                     // set FCSR flags from FPU
   input  logic              SelHPTW,                                        // HPTW in use.  Causes system to use S-mode endianness for accesses
   // CSR outputs
@@ -155,7 +156,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .InstrM, .InstrOrigM, .PCM, .PCSpillM, .SrcAM, .IEUAdrxTvalM,
     .CSRReadM, .CSRWriteM, .TrapM, .TrapToM, .TrapToHSM, .TrapToVSM, .mretM, .sretM, .InterruptM,
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
-    .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD, .StoreStallD,
+    .MTIME_CLINT, .HGEIPIn, .InstrValidM, .FRegWriteM, .LoadStallD, .StoreStallD,
     .BPDirWrongM, .BTAWrongM, .RASPredPCWrongM, .BPWrongM,
     .sfencevmaM, .ExceptionM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
     .IClassWrongM, .IClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,

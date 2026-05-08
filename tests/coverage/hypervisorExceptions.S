@@ -215,7 +215,7 @@ vs_exception_entry:
 fail:
     la t1, tohost
     li t0, 3
-    sd t0, 0(t1)
+    sw t0, 0(t1)
 fail_loop:
     j fail_loop
 
