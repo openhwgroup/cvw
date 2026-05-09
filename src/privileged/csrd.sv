@@ -59,7 +59,8 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   input logic               StallM,
   output logic              DebugStepIE,
   output logic              DebugStep,
-  output logic              DebugStopTime
+  output logic              DebugStopTime,
+  input logic               LSUStallM
 );
 
   localparam                DCSR = 12'h7B0;
@@ -224,15 +225,21 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
       state <= HALTED;
     end else if (HaltReq | ResumeReq | StepHoldEnable | ebreak) begin // Using the requests as enables
       state <= state_n;
+    end else begin
+      state <= state;
     end
   end
 
+  // LSUStallM must be allowed to go low before halting. When stepping
+  // into a Load or Store instruction, including LSUStallM in the
+  // cases below ensures that the correct instruction reaches the
+  // WriteBack stage.
   always_comb begin
     case (state)
       RUNNING: begin
         if (HaltReq) state_n = HALTED;
         else if (ebreak) state_n = HALTED;
-        else if (step & InstrValid & ~DebugResume) state_n = HALTED;
+        else if (step & InstrValid & ~DebugResume & ~LSUStallM) state_n = HALTED;
         else state_n = RUNNING;
         end
       HALTED: begin
@@ -248,7 +255,11 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
       StepHoldEnable <= 1'b0;
     end else if (step & ResumeReq) begin
       StepHoldEnable <= 1'b1;
-    end else if (InstrValid) begin
+    end else if (InstrValid & ~LSUStallM) begin
+      // LSUStallM must be low before we can reset
+      // StepHoldEnable. This waits for the LSU to finish so that the
+      // load instruction in the Memory stage proceeds to the
+      // Writeback.
       StepHoldEnable <= 1'b0;
     end
   end

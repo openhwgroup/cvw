@@ -115,7 +115,7 @@ values:
 
 # Spike memory regions ###############################################
 begin_signature:
-   .fill 16*2, 4, 0xdeadbeef
+   .fill 8*2, 4, 0xdeadbeef
 end_signature:
 
 .section .tohost, "aw", @progbits

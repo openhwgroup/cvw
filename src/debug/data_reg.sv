@@ -70,7 +70,7 @@ module data_reg import cvw::*; #(parameter cvw_t P) (
   internalreg #(P.ABITS + 34) dmireg(tck, tdi, resetn, dmi_next, {(P.ABITS + 34){1'b0}},
   ShiftDR, ClockDR, dmi, tdo_dmi);
 
-  //BYPASS
+  // BYPASS
   always_ff @(posedge tck, negedge resetn) begin
     if (~resetn) tdo_bypass <= 0;
     else if (ClockDR & currentInst == BYPASS) tdo_bypass <= tdi & ShiftDR;

@@ -38,7 +38,7 @@ module inst_reg #(parameter ADRWIDTH=5) (
 
    always @(posedge tck)
      if (CaptureIR) begin
-       shiftreg <= {{(ADRWIDTH - 1){1'b0}},1'b1}; // temporarily set to idcode
+       shiftreg <= {{(ADRWIDTH - 1){1'b0}},1'b1};
      end else if (ShiftIR) begin
         shiftreg <= {tdi, shiftreg[ADRWIDTH-1:1]};
      end

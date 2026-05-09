@@ -336,7 +336,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .DebugMode, .HaltReq, .ResumeReq, .CSRDebugEnable,
       .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite, .DebugResume, .DPC, .DebugStopTime,
       .HaveReset, .HaveResetAck, .ResetHaltReq,
-      .IEUAdrM, .PCSrcE);
+      .IEUAdrM, .PCSrcE, .LSUStallM);
 
   end else begin
     assign {CSRReadValW, PrivilegeModeW,

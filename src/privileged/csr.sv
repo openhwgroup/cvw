@@ -116,7 +116,8 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic                     PCSrcE,
   output logic                     DebugStepIE,
   output logic                     DebugStep,
-  output logic                     DebugStopTime
+  output logic                     DebugStopTime,
+  input  logic                     LSUStallM
 );
 
   localparam MIP = 12'h344;
@@ -327,7 +328,9 @@ module csr import cvw::*;  #(parameter cvw_t P) (
       .DebugMode, .NextValidPCE, .PCM, .IllegalCSRDAccessM, .DebugResume, .DPC_REGW(DPC),
       .HaveReset, .HaveResetAck, .ResetHaltReq, .BreakpointFaultM,
       .EBreakM, .EBreakS, .EBreakU,
-      .IEUAdrM, .PCSrcE, .FlushM, .StallM, .DebugStepIE, .DebugStep, .DebugStopTime);
+      .IEUAdrM, .PCSrcE, .FlushM, .StallM, .DebugStepIE, .DebugStep, .DebugStopTime,
+      .LSUStallM
+      );
   end else begin
     assign DebugMode = 1'b0;
     assign CSRDReadValM = '0;
@@ -371,8 +374,11 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   flopenrc #(P.XLEN) CSRValWReg(clk, reset, FlushW, ~StallW, CSRReadValM, CSRReadValW);
 
   // merge illegal accesses: illegal if none of the CSR addresses is legal or privilege is insufficient
-  assign InsufficientCSRPrivilegeM = (CSRAdrM[9:8] == 2'b11 & PrivilegeModeW != P.M_MODE) |
-                                     (CSRAdrM[9:8] == 2'b01 & PrivilegeModeW == P.U_MODE);
+
+  // Debug Mode must be allowed access as though we were in M mode. Otherwise, Abstract Register Command reads
+  // cause Illlegal Instruction exceptions.
+  assign InsufficientCSRPrivilegeM = ~DebugMode & ((CSRAdrM[9:8] == 2'b11 & PrivilegeModeW != P.M_MODE) |
+                                     (CSRAdrM[9:8] == 2'b01 & PrivilegeModeW == P.U_MODE));
 
   assign IllegalCSRAccessM = ((IllegalCSRCAccessM & IllegalCSRMAccessM &
     IllegalCSRSAccessM & IllegalCSRUAccessM & IllegalCSRDAccessM & IllegalCSRTrigAccessM |
