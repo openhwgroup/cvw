@@ -89,6 +89,8 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic [3:0]                    CMOpM;                           // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
   logic                          IFUPrefetchE, LSUPrefetchM;      // instruction / data prefetch hints
   logic                          HLVHSVInstrM;                    // Valid HLV/HLVX/HSV encoding in Memory stage
+  logic                          HLVHSVLegalM;                    // HLV/HLVX/HSV may issue its LSU access
+  logic                          HSTATUS_SPVP;                    // HLV/HLVX/HSV effective privilege
 
   // floating point unit signals
   logic [2:0]                    FRM_REGW;
@@ -224,7 +226,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   lsu #(P) lsu(
     .clk, .reset, .StallM, .FlushM, .StallW, .FlushW,
     // CPU interface
-    .MemRWE, .MemRWM, .Funct3M, .Funct7M(InstrM[31:25]), .AtomicM,
+    .MemRWE, .MemRWM, .Funct3M, .Funct7M(InstrM[31:25]), .AtomicM, .HLVHSVInstrM, .HLVHSVLegalM,
     .CommittedM, .DCacheMiss, .DCacheAccess, .SquashSCW,
     .FpLoadStoreM, .FWriteDataM, .IEUAdrE, .IEUAdrM, .WriteDataM,
     .ReadDataW, .FlushDCacheM, .CMOpM, .LSUPrefetchM,
@@ -241,6 +243,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .STATUS_SUM,                  // from csr
     .STATUS_MPRV,                 // from csr
     .STATUS_MPP,                  // from csr
+    .HSTATUS_SPVP,                // from csr
     .ENVCFG_PBMTE,                // from csr
     .ENVCFG_ADUE,                 // from csr
     .sfencevmaM,                  // connects to privilege
@@ -307,6 +310,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .InstrAccessFaultF, .HPTWInstrAccessFaultF, .HPTWInstrPageFaultF, .LoadAccessFaultM, .StoreAmoAccessFaultM, .SelHPTW,
       .PrivilegeModeW, .SATP_REGW,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS,
+      .HSTATUS_SPVP, .HLVHSVLegalM,
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
       .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .wfiM, .IntPendingM, .BigEndianM);
   end else begin
@@ -315,7 +319,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
             // PMPCFG_ARRAY_REGW, PMPADDR_ARRAY_REGW,
             ENVCFG_CBE, ENVCFG_PBMTE, ENVCFG_ADUE,
             EPCM, TrapVectorM, RetM, TrapM,
-            sfencevmaM, BigEndianM, wfiM, IntPendingM} = '0;
+            sfencevmaM, HSTATUS_SPVP, HLVHSVLegalM, BigEndianM, wfiM, IntPendingM} = '0;
   end
 
   // multiply/divide unit
