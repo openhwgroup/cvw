@@ -55,7 +55,6 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic [1:0]               NextPrivilegeModeM,        // STATUS bits updated based on next privilege mode
   input  logic [1:0]               PrivilegeModeW,            // current privilege mode
   input  logic                     VirtModeW,                 // current V Bit
-  input  logic                     HLVHSVLegalM,              // Legal HLV/HLVX/HSV memory access in M stage
   input  logic [4:0]               CauseM,                    // Trap cause
   input  logic                     SelHPTW,                   // hardware page table walker active, so base endianness on supervisor mode
   // inputs for performance counters
@@ -81,7 +80,6 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   output logic                     MSTATUS_MPV,
   output logic                     STATUS_SPP, STATUS_TSR, STATUS_TVM,
   output logic                     HSTATUS_SPV,
-  output logic                     HSTATUS_SPVP,
   output logic                     HSTATUS_VTSR, HSTATUS_VTW, HSTATUS_VTVM,
   output logic                     HSTATUS_HU,
   output logic                     VSSTATUS_SPP, VSSTATUS_SIE,
@@ -109,7 +107,6 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   output logic                     IllegalCSRAccessM,         // Illegal CSR access: CSR doesn't exist or is inaccessible at this privilege level
   output logic                     VirtualCSRAccessM,         // CSR access that raises a virtual-instruction exception
   output logic                     VirtualCMOInstrM,          // CBO instruction that raises a virtual-instruction exception
-  output logic                     HLVHSVBareM,               // VS-stage and G-stage translation are both Bare for HLV/HSV
   output logic                     BigEndianM                 // memory access is big-endian based on privilege mode and STATUS register endian fields
 );
 
@@ -290,7 +287,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   if (P.H_SUPPORTED) begin: csradr_h
     csrhvirt #(P) csrhvirt(.CSRAdrM_In, .CSRReadM, .CSRWriteM, .TrapM, .ExceptionM,
       .VirtModeW, .PrivilegeModeW, .MCOUNTEREN_REGW, .HCOUNTEREN_REGW, .HENVCFG_REGW,
-      .VirtualCSRCAccessM, .TrapWritesVAToTvalM, .HLVHSVLegalM, .CSRAdrM, .VirtualCSRAccessM, .TrapGVAM);
+      .VirtualCSRCAccessM, .TrapWritesVAToTvalM, .CSRAdrM, .VirtualCSRAccessM, .TrapGVAM);
   end else begin: csradr_noh
     assign CSRAdrM = CSRAdrM_In;
     assign VirtualCSRAccessM = 1'b0;
@@ -377,7 +374,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
       .NextEPCM, .NextCauseM, .NextTvalM, .NextHtvalM, .HIE_REGW,
       .CSRHReadValM, .IllegalCSRHAccessM,
       .HSTATUS_SPV, .HSTATUS_VTSR, .HSTATUS_VTW, .HSTATUS_VTVM,
-      .HSTATUS_SPVP, .HSTATUS_HU,
+      .HSTATUS_HU,
       .HSTATUS_VSBE, .VSSTATUS_SPP, .VSSTATUS_SIE, .VSSTATUS_SUM, .VSSTATUS_MXR, .VSSTATUS_UBE, .VSSTATUS_FS,
       .HEDELEG_REGW, .HIDELEG_REGW, .WriteHIEM, .WriteVSIEM, .HGEIE_REGW, .HCOUNTEREN_REGW, .HVIP_REGW, .HIP_MIP_REGW, .HTIMEDELTA_REGW, .HENVCFG_REGW,
       .VSTVEC_REGW, .VSEPC_REGW, .VSATP_REGW, .HGATP_REGW);
@@ -385,7 +382,6 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign CSRHReadValM = '0;
     assign IllegalCSRHAccessM = 1'b1;
     assign HSTATUS_SPV = 1'b0;
-    assign HSTATUS_SPVP = 1'b0;
     assign HSTATUS_VTSR = 1'b0;
     assign HSTATUS_VTW = 1'b0;
     assign HSTATUS_VTVM = 1'b0;
@@ -423,16 +419,6 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   // Until two-stage translation is integrated, htval trap writes stay zero.
   assign NextHtvalM = '0;
 
-  if (P.H_SUPPORTED & P.VIRTMEM_SUPPORTED) begin: hlsv_bare
-    if (P.XLEN == 64) begin: hlsv_bare64
-      assign HLVHSVBareM = (VSATP_REGW[63:60] == 4'h0) & (HGATP_REGW[63:60] == 4'h0);
-    end else begin: hlsv_bare32
-      assign HLVHSVBareM = ~VSATP_REGW[31] & ~HGATP_REGW[31];
-    end
-  end else begin: hlsv_novirtmem
-    assign HLVHSVBareM = 1'b1;
-  end
-
   // Effective status bits for VS-mode
   if (P.H_SUPPORTED) begin: status_vs
     assign STATUS_MXR = VirtModeW ? VSSTATUS_MXR : STATUS_MXR_INT;
@@ -446,11 +432,9 @@ module csr import cvw::*;  #(parameter cvw_t P) (
 
   if (P.BIGENDIAN_SUPPORTED) begin: endian
     if (P.H_SUPPORTED) begin: endian_h
-      logic BigEndianVirtM, BigEndianHLVHSVM, BigEndianVirtSelM;
+      logic BigEndianVirtM;
       assign BigEndianVirtM = (PrivilegeModeW == P.S_MODE) ? HSTATUS_VSBE : VSSTATUS_UBE;
-      assign BigEndianHLVHSVM = HSTATUS_SPVP ? HSTATUS_VSBE : VSSTATUS_UBE;
-      mux2 #(1) bigendianvirtmux(BigEndianM_Int, BigEndianVirtM, VirtModeW & ~SelHPTW, BigEndianVirtSelM);
-      mux2 #(1) bigendianhlsvmux(BigEndianVirtSelM, BigEndianHLVHSVM, HLVHSVLegalM, BigEndianM);
+      mux2 #(1) bigendianmux(BigEndianM_Int, BigEndianVirtM, VirtModeW & ~SelHPTW, BigEndianM);
     end else begin: endian_noh
       assign BigEndianM = BigEndianM_Int;
     end
