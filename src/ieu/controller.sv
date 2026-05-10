@@ -215,22 +215,36 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   assign IWValidFunct3D   = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b101;
 
   // H-extension virtual-machine load/store strict decoding
-  logic HLVHSVValidD;
-  always_comb begin
-    case (Funct7D[2:0])
-      3'b000: HLVHSVValidD = (Rs2D == 5'b00000) | (Rs2D == 5'b00001);
-      3'b001: HLVHSVValidD = (RdD == 5'b00000);
-      3'b010: HLVHSVValidD = (Rs2D == 5'b00000) | (Rs2D == 5'b00001) | (Rs2D == 5'b00011);
-      3'b011: HLVHSVValidD = (RdD == 5'b00000);
-      3'b100: HLVHSVValidD = (Rs2D == 5'b00000) | (Rs2D == 5'b00011) | ((P.XLEN == 64) & (Rs2D == 5'b00001));
-      3'b101: HLVHSVValidD = (RdD == 5'b00000);
-      3'b110: HLVHSVValidD = (P.XLEN == 64) & (Rs2D == 5'b00000);
-      3'b111: HLVHSVValidD = (P.XLEN == 64) & (RdD == 5'b00000);
-      default: HLVHSVValidD = 1'b0;
-    endcase
+  logic HLVHSVLoadD;
+  logic [2:0] LSUFunct3D;
+  if (P.H_SUPPORTED) begin: hlsv_decode
+    logic HLVHSVValidD;
+    logic [2:0] HLVHSVFunct3D;
+    always_comb begin
+      case (Funct7D[2:0])
+        3'b000: HLVHSVValidD = (Rs2D == 5'b00000) | (Rs2D == 5'b00001);
+        3'b001: HLVHSVValidD = (RdD == 5'b00000);
+        3'b010: HLVHSVValidD = (Rs2D == 5'b00000) | (Rs2D == 5'b00001) | (Rs2D == 5'b00011);
+        3'b011: HLVHSVValidD = (RdD == 5'b00000);
+        3'b100: HLVHSVValidD = (Rs2D == 5'b00000) | (Rs2D == 5'b00011) | ((P.XLEN == 64) & (Rs2D == 5'b00001));
+        3'b101: HLVHSVValidD = (RdD == 5'b00000);
+        3'b110: HLVHSVValidD = (P.XLEN == 64) & (Rs2D == 5'b00000);
+        3'b111: HLVHSVValidD = (P.XLEN == 64) & (RdD == 5'b00000);
+        default: HLVHSVValidD = 1'b0;
+      endcase
+    end
+    assign HLVHSVInstrD = (OpD == 7'b1110011) & (Funct3D == 3'b100) &
+                          (Funct7D[6:3] == 4'b0110) & HLVHSVValidD;
+    assign HLVHSVLoadD = ~Funct7D[0];
+    // HLV/HLVX/HSV have SYSTEM encodings but execute as zero-offset loads/stores.
+    // Convert their width/sign encoding to the ordinary LSU Funct3 format.
+    assign HLVHSVFunct3D = HLVHSVLoadD ? {Rs2D[0], Funct7D[2:1]} : {1'b0, Funct7D[2:1]};
+    assign LSUFunct3D = HLVHSVInstrD ? HLVHSVFunct3D : Funct3D;
+  end else begin: nohlsv_decode
+    assign HLVHSVInstrD = 1'b0;
+    assign HLVHSVLoadD = 1'b0;
+    assign LSUFunct3D = Funct3D;
   end
-  assign HLVHSVInstrD = P.H_SUPPORTED & (OpD == 7'b1110011) & (Funct3D == 3'b100) &
-                        (Funct7D[6:3] == 4'b0110) & HLVHSVValidD;
 
   // Main Instruction Decoder
   /* verilator lint_off CASEINCOMPLETE */
@@ -282,7 +296,11 @@ module controller import cvw::*;  #(parameter cvw_t P) (
                       ControlsD = `CTRLW'b1_000_01_00_000_0_0_1_1_0_0_0_0_0_00_0_0; // jalr
       7'b1101111:     ControlsD = `CTRLW'b1_011_11_00_000_0_0_1_1_0_0_0_0_0_00_0_0; // jal
       7'b1110011: if (P.ZICSR_SUPPORTED) begin
-                   if (PFunctD)
+                   if (HLVHSVInstrD & HLVHSVLoadD)
+                      ControlsD = `CTRLW'b1_101_01_10_001_0_0_0_0_0_0_0_0_0_00_0_0; // HLV/HLVX: zero-offset virtual-machine load
+                   else if (HLVHSVInstrD)
+                      ControlsD = `CTRLW'b0_101_01_01_000_0_0_0_0_0_0_0_0_0_00_0_0; // HSV: zero-offset virtual-machine store
+                   else if (PFunctD)
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_1_0_0_00_0_0; // privileged; decoded further in privdec modules
                    else if (CSRFunctD)
                       ControlsD = `CTRLW'b1_000_00_00_010_0_0_0_0_0_1_0_0_0_00_0_0; // csrs
@@ -415,7 +433,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
 
   // Execute stage pipeline control register and logic
   flopenrc #(46) controlregE(clk, reset, FlushE, ~StallE,
-                           {ALUSelectD, RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, Funct7D, W64D, BUW64D, SubArithD, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, FenceD, CMOpD, IFUPrefetchD, LSUPrefetchD, CZeroD, InstrValidD, HLVHSVInstrD},
+                           {ALUSelectD, RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, LSUFunct3D, Funct7D, W64D, BUW64D, SubArithD, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, FenceD, CMOpD, IFUPrefetchD, LSUPrefetchD, CZeroD, InstrValidD, HLVHSVInstrD},
                            {ALUSelectE, IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, Funct7E, W64E, UW64E, SubArithE, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, CMOpE, IFUPrefetchE, LSUPrefetchE, CZeroE, InstrValidE, HLVHSVInstrE});
   flopenrc #(5)  Rs1EReg(clk, reset, FlushE, ~StallE, Rs1D, Rs1E);
   flopenrc #(5)  Rs2EReg(clk, reset, FlushE, ~StallE, Rs2D, Rs2E);
