@@ -355,7 +355,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
   // This doesn't get updated on writes to DMStatus because it's a read only register.
   always_ff @(posedge clk) begin
     if (reset) begin
-      DMStatus <= {14'b0, 2'b11, 8'b0, 1'b1, 1'b0, 1'b0, 1'b0, 4'b11}; // ResumeAck's start high
+      DMStatus <= {14'b0, 2'b11, 8'b0, 1'b1, 1'b0, 1'b1, 1'b0, 4'b11}; // ResumeAck's start high
     end else if (WriteRequest & (DMIADDR == DMCONTROL)) begin
       // Force AllResumeACK and AnyResumeACK low if
       // we're writing to ResumeReq p. 28. There will
@@ -514,6 +514,8 @@ module debug import cvw::*; #(parameter cvw_t P) (
   assign HaveResetAck = DMControl[28];
   assign NDMReset = DMControl[1];
   assign DMActive = DMControl[0];
+  assign setresethaltreq = DMControl[3];
+  assign clrresethaltreq = DMControl[2];
 
   // DMStatus signals
   assign ndmresetpending = NDMReset;

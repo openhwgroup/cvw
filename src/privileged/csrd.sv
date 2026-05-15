@@ -113,6 +113,10 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   logic                     step;      // Need to implement this. How to track 1 instruction completing?
   logic [1:0]               prv;       // Privilege Mode at halt. Set so mode changes when resumed.
 
+  logic                     ResetHaltReqCondition;
+  logic                     ResetHaltReqEnable;
+  logic                     ResetHaltReqValid;
+
    // debug specification 4.9.1, 0x7b0
   localparam dcsrwidth = ($bits(ebreakm) + $bits(ebreaks) + $bits(ebreaku) +
     $bits(stepie) + $bits(stoptime) + $bits(cause) + $bits(step) + $bits(prv));
@@ -170,6 +174,15 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
 
   assign DPCWriteValM = WriteDPC & (state == HALTED) ? CSRWriteValM : ebreak ? PCM : PCSrcM ? IEUAdrM : NextValidPCE;
 
+  // TODO: Finish this. Going to need this solution
+  // always_comb begin
+  //   if (WriteDPC & state == HALTED) begin
+  //     DPCWriteValm
+  //   end else begin
+
+  //   end
+  // end
+
   ////////////////////////////////////////////////////////////////////
   // CSRs
   ////////////////////////////////////////////////////////////////////
@@ -221,9 +234,9 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   always_ff @(posedge clk) begin
     if (reset) begin
       state <= RUNNING;
-    end else if (HaveReset & ResetHaltReq & InstrValid) begin
-      state <= HALTED;
-    end else if (HaltReq | ResumeReq | StepHoldEnable | ebreak) begin // Using the requests as enables
+    // end else if (HaveReset & ResetHaltReq & InstrValid) begin
+      // state <= HALTED;
+    end else if (HaltReq | ResumeReq | StepHoldEnable | ebreak | ResetHaltReqEnable) begin // Using the requests as enables
       state <= state_n;
     end else begin
       state <= state;
@@ -240,6 +253,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
         if (HaltReq) state_n = HALTED;
         else if (ebreak) state_n = HALTED;
         else if (step & InstrValid & ~DebugResume & ~LSUStallM) state_n = HALTED;
+        else if (ResetHaltReqValid) state_n = HALTED;
         else state_n = RUNNING;
         end
       HALTED: begin
@@ -265,6 +279,14 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   end
 
   assign DebugMode = (state == HALTED);
+
+  // -----------------------------------------------------------------
+  // Reset Halt Request management
+  // -----------------------------------------------------------------
+
+  assign ResetHaltReqCondition = ResetHaltReq & HaveReset;
+  assign ResetHaltReqValid = ResetHaltReqCondition & InstrValidE;
+  assign ResetHaltReqEnable = ResetHaltReqCondition & NextHalt;
 
    // -----------------------------------------------------------------------------
    // DebugResume: internal pulse when leaving HALTED.
@@ -318,6 +340,8 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
       NextCause = 3'd1;
     end else if (step & InstrValid) begin
       NextCause = 3'd4;
+    end else if (ResetHaltReqEnable) begin
+      NextCause = 3'd5;
     end else begin
       NextCause = '0;
     end
