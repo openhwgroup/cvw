@@ -71,7 +71,7 @@ module data_reg import cvw::*; #(parameter cvw_t P) (
   // BYPASS DR implementation.  IEEE 1149.1 describes the DR as being
   // clocked during Capture-DR and Shift-DR; here ClockDR is implemented
   // as a clock enable on TCK rather than as a gated clock.  When ShiftDR=0
-  // the bypass register captures 0; when ShiftDR=1 it shifts TDI to TDO.  
+  // the bypass register captures 0; when ShiftDR=1 it shifts TDI to TDO.
   always_ff @(posedge tck, negedge resetn) begin
     if (~resetn) tdo_bypass <= 0;
     else if (ClockDR & currentInst == BYPASS) tdo_bypass <= tdi & ShiftDR;
