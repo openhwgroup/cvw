@@ -37,6 +37,7 @@ all config.vhs range, base
 find any other changes needed to connect module to uncore/core(ex:
 currently changed plic, uncore.cv, soc.sv, need address protector change)
 plic source number
+ZeroCompare all comparators???
 */
 module pwm_apb import cvw::*; #(parameter cvw_t P) (
   input  logic                PCLK, PRESETn,
@@ -70,54 +71,7 @@ module pwm_apb import cvw::*; #(parameter cvw_t P) (
   logic [15:0] PWMCompare2;
   logic [15:0] PWMCompare3;
 
-  // Bus interface signals
-  logic [7:0]  Entry;
-  logic        Memwrite;
-  logic [31:0] Din,  Dout;
-
-  assign Entry = {PADDR[7:2],2'b00};  //  32-bit word-aligned accesses
-  assign Memwrite = PWRITE & PENABLE & PSEL;  // Only write in access phase
-  assign PREADY = 1'b1;
-// Account for subword read/write circuitry
-
-
-  assign Din = PWDATA[31:0];
-  if (P.XLEN == 64) assign PRDATA = {Dout,  Dout};
-  else              assign PRDATA =  Dout;
-
-  // Register access
-  always_ff@(posedge PCLK)
-    if (~PRESETn) PWMConfig[8:7] <= 2'b00;
-    else if (PWMOneShotEnReset) PWMConfig[8] <= 1'b0;
-    else begin // writes
-      /* verilator lint_off CASEINCOMPLETE */
-      if (Memwrite)
-        case(Entry) // flop to sample inputs
-          PWM_CFG:   PWMConfig <= {Din[31:24], Din[19:16], Din[13:12], Din[10:8], Din[3:0]};
-          //PWM_COUNT: PWMCount <= Din[30:0];
-          //PWM_S:     PWMScaled <= Din[15:0];
-          PWM_CMP0:  PWMCompare0 <= Din[15:0];
-          PWM_CMP1:  PWMCompare1 <= Din[15:0];
-          PWM_CMP2:  PWMCompare2 <= Din[15:0];
-          PWM_CMP3:  PWMCompare3 <= Din[15:0];
-        endcase
-      /* verilator lint_on CASEINCOMPLETE */
-
-
-
-      case(Entry) // Flop to sample inputs
-        PWM_CFG:   Dout <= {PWMConfig[20:13], 4'b0, PWMConfig[12:9], 2'b0, PWMConfig[8:7], 1'b0, PWMConfig[6:4], 4'b0, PWMConfig[3:0]};
-        PWM_COUNT: Dout <= {1'b0, PWMCount};
-        PWM_S:     Dout <= {16'b0, PWMScaled[15:0]};
-        PWM_CMP0:  Dout <= {16'b0, PWMCompare0[15:0]};
-        PWM_CMP1:  Dout <= {16'b0, PWMCompare1[15:0]};
-        PWM_CMP2:  Dout <= {16'b0, PWMCompare2[15:0]};
-        PWM_CMP3:  Dout <= {16'b0, PWMCompare3[15:0]};
-        default:   Dout <= 32'b0;
-      endcase
-    end
-
-  // PWMConfig signals
+    // PWMConfig signals
   logic [3:0] PWMScale;
   logic PWMSticky, PWMZeroCompare, PWMDeglitch;
   logic PWMEnAlways, PWMEnOneShot;
@@ -147,18 +101,6 @@ module pwm_apb import cvw::*; #(parameter cvw_t P) (
   assign PWMCountEn = PWMEnAlways | PWMEnOneShot;
   assign PWMCountPrescaled = PWMCount >> PWMScale;
   assign PWMCountIncrement = PWMCount + 1;
-  // PWMCount register
-  /*
-  always_ff @(posedge PCLK)
-    if (PWMOneShotEnReset) PWMCount <= 31'b0;
-    else if (PWNCountEn) PWMCount <= PWMCount + 1;
-  */
-  flopenr #(31) pwmcountreg(PCLK, PWMOneShotEnReset, PWMCountEn,
-                            PWMCountIncrement, PWMCount);
-
-  // PWMScaled register
-  flop #(16) pwmscaledreg(PCLK,
-                          PWMCountPrescaled[15:0], PWMScaled);
 
   // Combinatorial signal logic
   logic [3:0] PWMCompareBoolean;
@@ -173,6 +115,73 @@ module pwm_apb import cvw::*; #(parameter cvw_t P) (
   logic [3:0] PWMCompareIPIn;
 
   assign PWMHoldIn = (~PWMOneShotEnReset & PWMDeglitch) | PWMSticky;
+
+  // Bus interface signals
+  logic [7:0]  Entry;
+  logic        Memwrite;
+  logic [31:0] Din,  Dout;
+
+  assign Entry = {PADDR[7:2],2'b00};  //  32-bit word-aligned accesses
+  assign Memwrite = PWRITE & PENABLE & PSEL;  // Only write in access phase
+  assign PREADY = 1'b1;
+// Account for subword read/write circuitry
+
+
+  assign Din = PWDATA[31:0];
+  if (P.XLEN == 64) assign PRDATA = {Dout,  Dout};
+  else              assign PRDATA =  Dout;
+
+  // Register access
+  always_ff@(posedge PCLK)
+    if (~PRESETn) begin
+      PWMConfig[8:7] <= 2'b00;
+      PWMCompare0 <= 16'hFFFF;
+      PWMCompare1 <= 16'hFFFF;
+      PWMCompare2 <= 16'hFFFF;
+      PWMCompare3 <= 16'hFFFF;
+    end else if (PWMOneShotEnReset) PWMConfig[8] <= 1'b0;
+    else begin // writes
+      /* verilator lint_off CASEINCOMPLETE */
+      if (Memwrite)
+        case(Entry) // flop to sample inputs
+          PWM_CFG:   PWMConfig <= {Din[31:24], Din[19:16], Din[13:12], Din[10:8], Din[3:0]};
+          //PWM_COUNT: PWMCount <= Din[30:0];
+          //PWM_S:     PWMScaled <= Din[15:0];
+          PWM_CMP0:  PWMCompare0 <= Din[15:0];
+          PWM_CMP1:  PWMCompare1 <= Din[15:0];
+          PWM_CMP2:  PWMCompare2 <= Din[15:0];
+          PWM_CMP3:  PWMCompare3 <= Din[15:0];
+        endcase
+      /* verilator lint_on CASEINCOMPLETE */
+
+
+
+      case(Entry) // Flop to sample inputs
+        PWM_CFG:   Dout <= {PWMConfig[20:13], 4'b0, PWMConfig[12:9], 2'b0, PWMConfig[8:7], 1'b0, PWMConfig[6:4], 4'b0, PWMConfig[3:0]};
+        PWM_COUNT: Dout <= {1'b0, PWMCount};
+        PWM_S:     Dout <= {16'b0, PWMScaled[15:0]};
+        PWM_CMP0:  Dout <= {16'b0, PWMCompare0[15:0]};
+        PWM_CMP1:  Dout <= {16'b0, PWMCompare1[15:0]};
+        PWM_CMP2:  Dout <= {16'b0, PWMCompare2[15:0]};
+        PWM_CMP3:  Dout <= {16'b0, PWMCompare3[15:0]};
+        default:   Dout <= 32'b0;
+      endcase
+    end
+
+
+  // PWMCount register
+  /*
+  always_ff @(posedge PCLK)
+    if (PWMOneShotEnReset) PWMCount <= 31'b0;
+    else if (PWNCountEn) PWMCount <= PWMCount + 1;
+  */
+  flopenr #(31) pwmcountreg(PCLK, PWMOneShotEnReset, PWMCountEn,
+                            PWMCountIncrement, PWMCount);
+
+  // PWMScaled register
+  flop #(16) pwmscaledreg(PCLK,
+                          PWMCountPrescaled[15:0], PWMScaled);
+
 
   flop #(1) pwmholdreg(PCLK,
                        PWMHoldIn, PWMHoldOut);

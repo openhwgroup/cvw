@@ -213,7 +213,7 @@ localparam PLIC_GPIO_ID = 32'd3;
 localparam PLIC_UART_ID = 32'd10;
 localparam PLIC_SPI_ID = 32'd6;
 localparam PLIC_SDC_ID = 32'd9;
-localparam PLIC_PWM_ID = 32'd42;
+localparam PLIC_PWM_ID = 32'd7;
 
 // Branch prediction
 localparam logic BPRED_SUPPORTED = 0;

@@ -890,6 +890,7 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
     .equ PLIC_INTPRI_GPIO, 0x0C00000C       # GPIO is interrupt 3
     .equ PLIC_INTPRI_UART, 0x0C000028       # UART is interrupt 10
     .equ PLIC_INTPRI_SPI,  0x0C000018       # SPI in interrupt 6
+    .equ PLIC_INTPRI_PWM,  0x0c0000A8       # PWM in interrupt 42
     .equ PLIC_INTPENDING0, 0x0C001000       # intPending0 register
     .equ PLIC_INTEN00,     0x0C002000       # interrupt enables for context 0 (machine mode) sources 31:1
     .equ PLIC_INTEN10,     0x0C002080       # interrupt enables for context 1 (supervisor mode) sources 31:1
@@ -903,6 +904,7 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
     .8byte PLIC_INTPRI_GPIO, 7, write32_test # Set GPIO to high priority
     .8byte PLIC_INTPRI_UART, 7, write32_test # Set UART to high priority
     .8byte PLIC_INTPRI_SPI,  7, write32_test # Set SPI to high priority
+    .8byte PLIC_INTPRI_PWM, 7, write32_test # Set PWM to high priority
     .8byte PLIC_INTEN00, 0xFFFFFFFF, write32_test # Enable all interrupt sources for machine mode
     .8byte PLIC_INTEN10, 0x00000000, write32_test # Disable all interrupt sources for supervisor mode
 .endm
@@ -1078,6 +1080,12 @@ claim_m_plic_interrupts: // clears one non-pending PLIC interrupt
     sw t3, 0(t2)
     sw t4, -4(sp)
     addi sp, sp, -4
+    li t2, 0x0C00001C // PWM priority
+    li t3, 7
+    lw t4, 0(t2)
+    sw t3, 0(t2)
+    sw t4, -4(sp)
+    addi sp, sp, -4
     li t2, 0x0C002000
     li t3, 0x0C200004
     li t4, 0xFFF
@@ -1089,13 +1097,16 @@ claim_m_plic_interrupts: // clears one non-pending PLIC interrupt
     li t2, 0x0C00000C // GPIO priority
     li t3, 0x0C000028 // UART priority
     li t6, 0x0C000018 // SPI priority
-    lw a4, 8(sp) // load stored GPIO prioroty
-    lw t4, 4(sp) // load stored UART priority
-    lw t5, 0(sp) // load stored SPI priority
-    addi sp, sp, 12 // restore stack pointer
+    li t0, 0x0C00001C // PWM priority
+    lw a4, 12(sp) // load stored GPIO prioroty
+    lw t4, 8(sp) // load stored UART priority
+    lw t5, 4(sp) // load stored SPI priority
+    lw t1, 0(sp) // load stored PWM priority
+    addi sp, sp, 16 // restore stack pointer
     sw a4, 0(t2)
     sw t4, 0(t3)
     sw t5, 0(t6)
+    sw t1, 0(t0)
     j test_loop
 
 claim_s_plic_interrupts: // clears one non-pending PLIC interrupt
@@ -1207,6 +1218,47 @@ spi_burst_send: //function for loading multiple frames at once to test delays wi
     sw t2, 0(t3)
     srli t2, t2, 8
     sw t2, 0(t3)
+    j test_loop
+
+pwm_cycle_wait8: //function for waiting 8 pwm cycles for inspection tests
+    /*plan: Input = which comparator to check
+    */
+    mv t2, t4 // place comparator num 0-3 in t2
+    addi t0, t2, 28 //generate shift amount
+    li t5, 0x10020000 //load pwm config address
+    lw t3, 0(t5) //load pwm config to t3
+    srl t3, t3, t0 //shift pwmconfig right by 28 + compX to place wanted compXip in [0]
+    li t2, 0x8
+    li t5, 0x0
+
+pwm_cycle_branch:
+    bge t3, x0, pwm_cycle_increment
+    j pwm_cycle_branch
+
+pwm_cycle_increment:
+    addi t5, t5, 0x1
+    beq t5, t2, pwm_over
+    j pwm_wait_half
+
+pwm_wait_half:
+    bge t3, x0, pwm_wait_half
+    j pwm_cycle_branch
+
+pwm_cycle_wait1: //function for waiting 1 pwm cycle
+    mv t2, t4 // place comparator num 0-3 in t2
+    addi t0, t2, 28 //generate shift amount
+    li t5, 0x10020000 //load pwm config address
+    lw t3, 0(t5) //load pwm config to t3
+    srl t3, t3, t0 //shift pwmconfig right by 28 + compX to place wanted compXip in [0]
+    li t2, 0x1
+    li t5, 0x0
+    bge t3, x0, pwm_cycle_increment
+    j pwm_over
+
+pwm_over: //resets pwm enables and clears interrupt registers
+    li t2, 0x10020000
+    li t3, 0x00000000
+    sw t3, 0(t2)
     j test_loop
 
 goto_s_mode:
