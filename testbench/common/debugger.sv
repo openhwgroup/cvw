@@ -206,6 +206,7 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
     // Primary JTAG Registers
     JTAG_DR #(32) idcode;
     JTAG_DR #(32) dtmcs;
+    JTAG_DR #(32) bypass;
     DMI dmireg;
 
     // state enum
@@ -231,10 +232,16 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
       idcode = new();
       dtmcs = new();
       dmireg = new();
+      bypass = new();
     endfunction
 
     // Confirm the DTM is working
     task initialize();
+      this.bypass.write(32'hffffffff);
+      //this.bypass.read();
+
+      //$display("Bypass result: 0x%8h", this.bypass.result);
+
       write_instr(5'b00001);
       this.idcode.read();
       assert(this.idcode.result == 32'h1002AC05)
@@ -465,7 +472,8 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
       end else if (state == DMREG_READ | state == ABSTRACT_READ) begin
         case (last_addr)
           7'h11: begin
-            if (expected[33:6] == actual[33:6]) begin
+            if (expected[33:8] == actual[33:8] & expected[6] == expected[6]) begin
+              // Ignore hasresethaltreq differences. Spike doesn't seem to implement it.
               result = 1;
             end else begin
               // case(last_abstract_reg)

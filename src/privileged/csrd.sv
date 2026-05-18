@@ -172,16 +172,26 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
                           CSRWriteValM[8:6], CSRWriteValM[2], CSRWriteValM[1:0]} :
                          {ebreakm, ebreaks, ebreaku, stepie, stoptime, NextCause, step, PrivilegeModeW};
 
-  assign DPCWriteValM = WriteDPC & (state == HALTED) ? CSRWriteValM : ebreak ? PCM : PCSrcM ? IEUAdrM : NextValidPCE;
+  //assign DPCWriteValM = WriteDPC & (state == HALTED) ? CSRWriteValM : ebreak ? PCM : PCSrcM ? IEUAdrM : NextValidPCE;
 
   // TODO: Finish this. Going to need this solution
-  // always_comb begin
-  //   if (WriteDPC & state == HALTED) begin
-  //     DPCWriteValm
-  //   end else begin
-
-  //   end
-  // end
+  always_comb begin
+    if (CSRDWriteM & DebugMode) begin
+      DPCWriteValM = CSRWriteValM;
+    end else if (HaltReq & NextHalt | ebreak) begin
+      DPCWriteValM = PCM;
+    end else if (ebreak) begin
+      DPCWriteValM = PCM;
+    end else if (step & NextHalt) begin
+      if (PCSrcM) begin
+        DPCWriteValM = IEUAdrM;
+      end else begin
+        DPCWriteValM = NextValidPCE;
+      end
+    end else begin
+      DPCWriteValM = CSRWriteValM;
+    end
+  end
 
   ////////////////////////////////////////////////////////////////////
   // CSRs
