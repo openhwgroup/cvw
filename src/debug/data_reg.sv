@@ -27,9 +27,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-// `include "debug.vh"
-
-
 module data_reg import cvw::*; #(parameter cvw_t P) (
   input logic                         tck,
   input logic                         tdi,
@@ -70,7 +67,30 @@ module data_reg import cvw::*; #(parameter cvw_t P) (
   internalreg #(P.ABITS + 34) dmireg(tck, tdi, resetn, dmi_next, {(P.ABITS + 34){1'b0}},
   ShiftDR, ClockDR, dmi, tdo_dmi);
 
-  // BYPASS
+  /* BYPASS
+    
+    The 1149.1 spec describes ClockDR as a conceptual gated clock for the DR
+    shift path, but it's a behavioral description — "the DR is clocked
+    during Capture-DR and Shift-DR." It doesn't mandate that ClockDR
+    be a physical net feeding a clock pin. As long as the bypass flop
+    captures tdi & shiftDR on the appropriate TCK edges (i.e., when
+    the TAP is in Capture-DR or Shift-DR), it doesn't matter whether
+    you implement that by gating the clock or by enabling the data
+    path. The new form passes the same TCK edges through and uses
+    clockDR to decide whether to update — observably identical from
+    outside the module.        
+    
+    The tdi & shiftDR trick handles both required behaviors with one
+    flop and an AND gate: In Capture-DR, shiftDR is 0, so tdi &
+    shiftDR = 0 — the bypass register loads a logic 0, which is
+    exactly what §10.1.1(b) requires.  In Shift-DR, shiftDR is 1, so
+    tdi & shiftDR = tdi — TDI shifts straight through to TDO.    
+    
+    The new code replaces the gated clock with TCK + clock-enable,
+    which is the correct idiom for both Vivado and ASIC synthesis,
+    makes STA and DFT happy, and is still §10.1.1-compliant.    
+        
+  */   
   always_ff @(posedge tck, negedge resetn) begin
     if (~resetn) tdo_bypass <= 0;
     else if (ClockDR & currentInst == BYPASS) tdo_bypass <= tdi & ShiftDR;
