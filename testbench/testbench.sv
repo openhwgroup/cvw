@@ -88,6 +88,8 @@ module testbench;
   // Variables that can be overwritten with $value$plusargs at start of simulation
   string       TEST, ElfFile, sim_log_prefix;
   integer      INSTR_LIMIT;
+  string       UART_LOG_FILE;
+  integer      UART_LOG;
 
   // DUT signals
   logic [P.AHBW-1:0]    HRDATAEXT;
@@ -150,6 +152,10 @@ module testbench;
     if (!$value$plusargs("sim_log_prefix=%s", sim_log_prefix)) begin
         sim_log_prefix = "";  // Assign default value if not passed
     end
+    if (!$value$plusargs("UART_LOG=%d", UART_LOG))
+      UART_LOG = (TEST == "buildroot"); // Default to true for buildroot test, false otherwise
+    if (!$value$plusargs("UART_LOG_FILE=%s", UART_LOG_FILE))
+      UART_LOG_FILE = {"logs/", TEST, "_uart.out"};
     //$display("TEST = %s ElfFile = %s", TEST, ElfFile);
 
     if (ElfFile != "none") begin // If Elf File passed in, check its bit width
@@ -409,8 +415,6 @@ module testbench;
         memfilename = {RISCV_DIR, "/linux-testvectors/ram.bin"};
         elffilename = "buildroot";
         bootmemfilename = {RISCV_DIR, "/linux-testvectors/bootmem.bin"};
-        uartoutfilename = {"logs/", TEST, "_uart.out"};
-        uartoutfile = $fopen(uartoutfilename, "w"); // delete UART output file
         ProgramAddrMapFile = {RISCV_DIR, "/buildroot/output/images/disassembly/vmlinux.objdump.addr"};
         ProgramLabelMapFile = {RISCV_DIR, "/buildroot/output/images/disassembly/vmlinux.objdump.lab"};
       end else if(TEST == "fpga") begin
@@ -433,10 +437,16 @@ module testbench;
       // the addr of each label and fill the array. To expand, add more elements to this array
       // and initialize them to zero (also initialize them to zero at the start of the next test)
       updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, memfilename, WALLY_DIR, ProgramAddrLabelArray);
+      // Open UART log file if enabled (buildroot defaults to on, override with +UART_LOG=1)
+      if (UART_LOG) begin
+        uartoutfilename = UART_LOG_FILE;
+        uartoutfile = $fopen(uartoutfilename, "w");
+      end else
+        uartoutfile = 0;
     end
     if(Validate) begin
       if (PrevPCZero) totalerrors = totalerrors + 1; //  error if PC is stuck at zero
-      if (TEST == "buildroot")
+      if (uartoutfile)
         $fclose(uartoutfile);
       if (TEST == "embench") begin
         // Writes contents of begin_signature to .sim.output file
@@ -721,10 +731,10 @@ module testbench;
             .clk(clk), .ProgramAddrMapFile(ProgramAddrMapFile), .ProgramLabelMapFile(ProgramLabelMapFile));
   end
 
-  // Append UART output to file for tests
+  // Optionally log UART output to file (always on for buildroot, enable with +UART_LOG=1)
   if (P.UART_SUPPORTED) begin: uart_logger
     always @(posedge clk) begin
-      if (TEST == "buildroot") begin
+      if (uartoutfile) begin
         if (~dut.uncoregen.uncore.uartgen.uart.MEMWb & dut.uncoregen.uncore.uartgen.uart.uartPC.A == 3'b000 & ~dut.uncoregen.uncore.uartgen.uart.uartPC.DLAB) begin
           $fwrite(uartoutfile, "%c", dut.uncoregen.uncore.uartgen.uart.uartPC.Din); // append characters one at a time so we see a consistent log appearing during the run
           $fflush(uartoutfile);
