@@ -890,7 +890,7 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
     .equ PLIC_INTPRI_GPIO, 0x0C00000C       # GPIO is interrupt 3
     .equ PLIC_INTPRI_UART, 0x0C000028       # UART is interrupt 10
     .equ PLIC_INTPRI_SPI,  0x0C000018       # SPI in interrupt 6
-    .equ PLIC_INTPRI_PWM,  0x0c0000A8       # PWM in interrupt 42
+    .equ PLIC_INTPRI_PWM,  0x0C00001C       # PWM in interrupt 42
     .equ PLIC_INTPENDING0, 0x0C001000       # intPending0 register
     .equ PLIC_INTEN00,     0x0C002000       # interrupt enables for context 0 (machine mode) sources 31:1
     .equ PLIC_INTEN10,     0x0C002080       # interrupt enables for context 1 (supervisor mode) sources 31:1
@@ -1097,16 +1097,16 @@ claim_m_plic_interrupts: // clears one non-pending PLIC interrupt
     li t2, 0x0C00000C // GPIO priority
     li t3, 0x0C000028 // UART priority
     li t6, 0x0C000018 // SPI priority
-    li t0, 0x0C00001C // PWM priority
+    li a5, 0x0C00001C // PWM priority
     lw a4, 12(sp) // load stored GPIO prioroty
-    lw t4, 8(sp) // load stored UART priority
-    lw t5, 4(sp) // load stored SPI priority
-    lw t1, 0(sp) // load stored PWM priority
-    addi sp, sp, 16 // restore stack pointer
     sw a4, 0(t2)
-    sw t4, 0(t3)
-    sw t5, 0(t6)
-    sw t1, 0(t0)
+    lw a4, 8(sp) // load stored UART priority
+    sw a4, 0(t3)
+    lw a4, 4(sp) // load stored SPI priority
+    sw a4, 0(t6)
+    lw a4, 0(sp) // load stored PWM priority
+    sw t1, 0(a5)
+    addi sp, sp, 16 // restore stack pointer
     j test_loop
 
 claim_s_plic_interrupts: // clears one non-pending PLIC interrupt
@@ -1223,11 +1223,11 @@ spi_burst_send: //function for loading multiple frames at once to test delays wi
 pwm_cycle_wait8: //function for waiting 8 pwm cycles for inspection tests
     /*plan: Input = which comparator to check
     */
-    mv t2, t4 // place comparator num 0-3 in t2
-    addi t0, t2, 28 //generate shift amount
+    mv t2, t4 // place cßomparator num 0-3 in t2
+    addi t1, t2, 28 //generate shift amount
     li t5, 0x10020000 //load pwm config address
     lw t3, 0(t5) //load pwm config to t3
-    srl t3, t3, t0 //shift pwmconfig right by 28 + compX to place wanted compXip in [0]
+    srl t3, t3, t1 //shift pwmconfig right by 28 + compX to place wanted compXip in [0]
     li t2, 0x8
     li t5, 0x0
 

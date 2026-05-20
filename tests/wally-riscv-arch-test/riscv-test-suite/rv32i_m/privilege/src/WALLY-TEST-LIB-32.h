@@ -1036,6 +1036,12 @@ claim_m_plic_interrupts: // clears one non-pending PLIC interrupt
     sw t3, 0(t2)
     sw t4, -4(sp)
     addi sp, sp, -4
+    li t2, 0x0C00001C // PWM priority
+    li t3, 7
+    lw t4, 0(t2)
+    sw t3, 0(t2)
+    sw t4, -4(sp)
+    addi sp, sp, -4
     li t2, 0x0C002000
     li t3, 0x0C200004
     li t4, 0xFFF
@@ -1047,13 +1053,16 @@ claim_m_plic_interrupts: // clears one non-pending PLIC interrupt
     li t2, 0x0C00000C // GPIO priority
     li t3, 0x0C000028 // UART priority
     li t6, 0x0C000018 // SPI priority
-    lw a4, 8(sp) // load stored GPIO prioroty
-    lw t4, 4(sp) // load stored UART priority
-    lw t5, 0(sp) // load stored SPI priority
-    addi sp, sp, 12 // restore stack pointer
+    li a5, 0x0C00001C // PWM priority
+    lw a4, 12(sp) // load stored GPIO prioroty
     sw a4, 0(t2)
-    sw t4, 0(t3)
-    sw t5, 0(t6)
+    lw a4, 8(sp) // load stored UART priority
+    sw a4, 0(t3)
+    lw a4, 4(sp) // load stored SPI priority
+    sw a4, 0(t6)
+    lw a4, 0(sp) // load stored PWM priority
+    sw t1, 0(a5)
+    addi sp, sp, 16 // restore stack pointer
     j test_loop
 
 claim_s_plic_interrupts: // clears one non-pending PLIC interrupt
