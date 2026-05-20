@@ -116,8 +116,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic              HaveResetAck,
   input  logic              ResetHaltReq,
   input  logic [P.XLEN-1:0] IEUAdrM,
-  input  logic              PCSrcE,
-  input  logic              LSUStallM
+  input  logic              PCSrcE
 );
 
   logic [3:0]               CauseM;                                         // trap cause
@@ -139,7 +138,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   logic                     HPTWInstrAccessFaultM;                          // Hardware page table access fault while fetching instruction PTE
   logic                     HPTWInstrPageFaultM;                            // Hardware page table page fault while fetching instruction PTE
   logic                     BreakpointFaultM, EcallFaultM;                  // breakpoint and Ecall traps should retire
-  logic                     EBreakM, EBreakS, EBreakU;
+  logic                     DebugEBreakM, DebugEBreakS, DebugEBreakU;
   logic                     DebugStepIE;
   logic                     DebugStep;
 
@@ -153,7 +152,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   privdec #(P) pmd(.clk, .reset, .StallW, .FlushW, .InstrM(InstrM[31:7]),
     .PrivilegedM, .IllegalIEUFPUInstrM, .IllegalCSRAccessM,
     .PrivilegeModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_TW, .IllegalInstrFaultM,
-    .EcallFaultM, .BreakpointFaultM, .sretM, .mretM, .RetM, .wfiM, .wfiW, .sfencevmaM);
+    .EcallFaultM, .BreakpointFaultM, .sretM, .mretM, .RetM, .wfiM, .wfiW, .sfencevmaM, .DebugStep);
 
   // Control and Status Registers
   csr #(P) csr(.clk, .reset, .FlushM, .FlushW, .StallE, .StallM, .StallW,
@@ -175,9 +174,8 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .DebugMode, .HaltReq, .ResumeReq, .CSRDebugEnable, .DebugRegWDATA,
     .DebugRegAddr, .DebugRegWrite, .DebugResume, .DPC,
     .HaveReset, .HaveResetAck, .ResetHaltReq, .BreakpointFaultM,
-    .EBreakM, .EBreakS, .EBreakU,
-    .IEUAdrM, .PCSrcE, .DebugStepIE, .DebugStep, .DebugStopTime,
-    .LSUStallM
+    .DebugEBreakM, .DebugEBreakS, .DebugEBreakU,
+    .IEUAdrM, .PCSrcE, .DebugStepIE, .DebugStep, .DebugStopTime
     );
 
   // pipeline early-arriving trap sources
@@ -194,6 +192,6 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW, .STATUS_MIE, .STATUS_SIE,
     .InstrValidM, .CommittedM, .CommittedF,
     .TrapM, .wfiM, .wfiW, .InterruptM, .ExceptionM, .IntPendingM, .DelegateM, .CauseM,
-    .EBreakM, .EBreakS, .EBreakU,
+    .DebugEBreakM, .DebugEBreakS, .DebugEBreakU,
     .DebugMode, .DebugStepIE, .DebugStep);
 endmodule
