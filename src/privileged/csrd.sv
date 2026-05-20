@@ -50,17 +50,17 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   input logic               HaveResetAck,
   input logic               ResetHaltReq,
   input logic               BreakpointFaultM,
-  output logic              EBreakM,
-  output logic              EBreakS,
-  output logic              EBreakU,
+  output logic              DebugEBreakM,
+  output logic              DebugEBreakS,
+  output logic              DebugEBreakU,
   input logic [P.XLEN-1:0]  IEUAdrM,
   input logic               PCSrcE,
   input logic               FlushM,
   input logic               StallM,
+  input logic               StallW,
   output logic              DebugStepIE,
   output logic              DebugStep,
-  output logic              DebugStopTime,
-  input logic               LSUStallM
+  output logic              DebugStopTime
 );
 
   localparam                DCSR = 12'h7B0;
@@ -89,9 +89,9 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   // WriteVals
   // logic [31:0]              DCSRWriteValM;
   logic [P.XLEN-1:0]        DPCWriteValM;
-  logic                     DebugBreakM;
-  logic                     DebugBreakS;
-  logic                     DebugBreakU;
+  logic                     BreakpointM;
+  logic                     BreakpointS;
+  logic                     BreakpointU;
 
   // DCSR Fields
   logic [3:0]               debugver;
@@ -129,13 +129,13 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   logic                     BreakModeS;
   logic                     BreakModeU;
 
-  assign DebugBreakM = BreakpointFaultM & ebreakm & PrivilegeModeW == P.M_MODE;
-  assign DebugBreakS = BreakpointFaultM & ebreaks & PrivilegeModeW == P.S_MODE;
-  assign DebugBreakU = BreakpointFaultM & ebreaku & PrivilegeModeW == P.U_MODE;
-  assign ebreak = DebugBreakM | DebugBreakS | DebugBreakU;
-  assign EBreakM = ebreakm;
-  assign EBreakS = ebreaks;
-  assign EBreakU = ebreaku;
+  assign BreakpointM = BreakpointFaultM & ebreakm & PrivilegeModeW == P.M_MODE;
+  assign BreakpointS = BreakpointFaultM & ebreaks & PrivilegeModeW == P.S_MODE;
+  assign BreakpointU = BreakpointFaultM & ebreaku & PrivilegeModeW == P.U_MODE;
+  assign ebreak = BreakpointM | BreakpointS | BreakpointU;
+  assign DebugEBreakM = ebreakm;
+  assign DebugEBreakS = ebreaks;
+  assign DebugEBreakU = ebreaku;
 
   // NOTE: When set to 0, mprven allows MPRV to be ignored while in
   // DebugMode. This can be added later. For now, tying it to 1
@@ -172,7 +172,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
                           CSRWriteValM[8:6], CSRWriteValM[2], CSRWriteValM[1:0]} :
                          {ebreakm, ebreaks, ebreaku, stepie, stoptime, NextCause, step, PrivilegeModeW};
 
-  //assign DPCWriteValM = WriteDPC & (state == HALTED) ? CSRWriteValM : ebreak ? PCM : PCSrcM ? IEUAdrM : NextValidPCE;
+  // assign DPCWriteValM = WriteDPC & (state == HALTED) ? CSRWriteValM : ebreak ? PCM : PCSrcM ? IEUAdrM : NextValidPCE;
 
   // TODO: Finish this. Going to need this solution
   always_comb begin
@@ -180,12 +180,15 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
       DPCWriteValM = CSRWriteValM;
     end else if (HaltReq & NextHalt | ebreak) begin
       DPCWriteValM = PCM;
-    end else if (ebreak) begin
-      DPCWriteValM = PCM;
     end else if (step & NextHalt) begin
       if (PCSrcM) begin
+        // If this is a branch, jump, or jalr, DPC will point to the
+        // actual next valid instruction.
         DPCWriteValM = IEUAdrM;
       end else begin
+        // The fallthrough address PC + 4/2 is not in the memory
+        // stage. So the CPU has to figure out what the next valid PC
+        // is.
         DPCWriteValM = NextValidPCE;
       end
     end else begin
@@ -239,30 +242,27 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   // Halt FSM
   ////////////////////////////////////////////////////////////////////
 
-  logic StepHoldEnable;
+  logic Stepping;
 
   always_ff @(posedge clk) begin
     if (reset) begin
       state <= RUNNING;
-    // end else if (HaveReset & ResetHaltReq & InstrValid) begin
-      // state <= HALTED;
-    end else if (HaltReq | ResumeReq | StepHoldEnable | ebreak | ResetHaltReqEnable) begin // Using the requests as enables
+    end else if (HaltReq | ResumeReq | Stepping | ebreak | ResetHaltReqEnable) begin // Using the requests as enables
       state <= state_n;
     end else begin
       state <= state;
     end
   end
 
-  // LSUStallM must be allowed to go low before halting. When stepping
-  // into a Load or Store instruction, including LSUStallM in the
-  // cases below ensures that the correct instruction reaches the
-  // WriteBack stage.
+  // StallW must be allowed to go low before halting. When stepping
+  // into a stalled instruction, including StallW in the cases below
+  // ensures that the correct instruction reaches the WriteBack stage.
   always_comb begin
     case (state)
       RUNNING: begin
         if (HaltReq) state_n = HALTED;
         else if (ebreak) state_n = HALTED;
-        else if (step & InstrValid & ~DebugResume & ~LSUStallM) state_n = HALTED;
+        else if (step & InstrValid & ~DebugResume & ~StallW) state_n = HALTED;
         else if (ResetHaltReqValid) state_n = HALTED;
         else state_n = RUNNING;
         end
@@ -276,15 +276,15 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
 
   always_ff @(posedge clk) begin
     if (reset) begin
-      StepHoldEnable <= 1'b0;
+      Stepping <= 1'b0;
     end else if (step & ResumeReq) begin
-      StepHoldEnable <= 1'b1;
-    end else if (InstrValid & ~LSUStallM) begin
-      // LSUStallM must be low before we can reset
-      // StepHoldEnable. This waits for the LSU to finish so that the
-      // load instruction in the Memory stage proceeds to the
+      Stepping <= 1'b1;
+    end else if (InstrValid & ~StallW) begin
+      // StallW must be low before we can reset Stepping. This
+      // waits for anything stalling the pipeline to finish so that
+      // the instruction in the Memory stage proceeds to the
       // Writeback.
-      StepHoldEnable <= 1'b0;
+      Stepping <= 1'b0;
     end
   end
 
@@ -357,9 +357,9 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
     end
   end
 
-   // -----------------------------------------------------------------------------
-   // HaveReset
-   // -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
+  // HaveReset
+  // -----------------------------------------------------------------------------
 
   always_ff @(posedge clk) begin
     if (reset) begin

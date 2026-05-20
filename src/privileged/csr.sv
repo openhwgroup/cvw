@@ -111,13 +111,12 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic                     HaveResetAck,
   input  logic                     ResetHaltReq,
   input  logic                     BreakpointFaultM,
-  output logic                     EBreakM, EBreakS, EBreakU,
+  output logic                     DebugEBreakM, DebugEBreakS, DebugEBreakU,
   input  logic [P.XLEN-1:0]        IEUAdrM,
   input  logic                     PCSrcE,
   output logic                     DebugStepIE,
   output logic                     DebugStep,
-  output logic                     DebugStopTime,
-  input  logic                     LSUStallM
+  output logic                     DebugStopTime
 );
 
   localparam MIP = 12'h344;
@@ -327,9 +326,8 @@ module csr import cvw::*;  #(parameter cvw_t P) (
       .CSRDWriteM, .CSRWriteValM, .CSRAdrM, .InstrValid(InstrValidM), .InstrValidE, .CSRDReadValM, .PrivilegeModeW,
       .DebugMode, .NextValidPCE, .PCM, .IllegalCSRDAccessM, .DebugResume, .DPC_REGW(DPC),
       .HaveReset, .HaveResetAck, .ResetHaltReq, .BreakpointFaultM,
-      .EBreakM, .EBreakS, .EBreakU,
-      .IEUAdrM, .PCSrcE, .FlushM, .StallM, .DebugStepIE, .DebugStep, .DebugStopTime,
-      .LSUStallM
+      .DebugEBreakM, .DebugEBreakS, .DebugEBreakU,
+      .IEUAdrM, .PCSrcE, .FlushM, .StallM, .StallW, .DebugStepIE, .DebugStep, .DebugStopTime
       );
   end else begin
     assign DebugMode = 1'b0;
@@ -338,9 +336,9 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign DebugResume = 1'b0;
     assign DPC = 0;
     assign HaveReset = 1'b0;
-    assign EBreakM = 0;
-    assign EBreakS = 0;
-    assign EBreakU = 0;
+    assign DebugEBreakM = 0;
+    assign DebugEBreakS = 0;
+    assign DebugEBreakU = 0;
     assign DebugStepIE = 1'b1;
     assign DebugStopTime = 1'b0;
     assign DebugStep = 1'b0;

@@ -46,7 +46,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   output logic                 IntPendingM,                                     // Interrupt is pending, might occur if enabled
   output logic                 DelegateM,                                       // Delegate trap to supervisor handler
   output logic [3:0]           CauseM,                                          // trap cause
-  input  logic                 EBreakM, EBreakS, EBreakU,
+  input  logic                 DebugEBreakM, DebugEBreakS, DebugEBreakU,
   input  logic                 DebugMode,
   input  logic                 DebugStepIE,
   input  logic                 DebugStep
@@ -85,9 +85,9 @@ module trap import cvw::*;  #(parameter cvw_t P) (
 
   assign BothInstrAccessFaultM = InstrAccessFaultM | HPTWInstrAccessFaultM;
   assign BothInstrPageFaultM = InstrPageFaultM | HPTWInstrPageFaultM;
-  assign BreakpointFaultDebugM = ((PrivilegeModeW == P.M_MODE & ~EBreakM)
-                                 | (PrivilegeModeW == P.S_MODE & ~EBreakS)
-                                 | (PrivilegeModeW == P.U_MODE & ~EBreakU)) & BreakpointFaultM;
+  assign BreakpointFaultDebugM = ((PrivilegeModeW == P.M_MODE & ~DebugEBreakM)
+                                 | (PrivilegeModeW == P.S_MODE & ~DebugEBreakS)
+                                 | (PrivilegeModeW == P.U_MODE & ~DebugEBreakU)) & BreakpointFaultM;
   // coverage off -item e 1 -fecexprrow 2
   // excludes InstrMisalignedFaultM from coverage of this line, since misaligned instructions cannot occur in rv64gc.
   assign ExceptionM = InstrMisalignedFaultM | BothInstrAccessFaultM | IllegalInstrFaultM |
