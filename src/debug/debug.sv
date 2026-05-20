@@ -383,7 +383,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
   end
 
   // Data[1] -- only need this for
-  if (P.XLEN == 64) begin
+  if (P.XLEN == 64 | P.D_SUPPORTED) begin
     always_ff @(posedge clk) begin
       if (reset) begin
         Data1 <= '0;
@@ -514,6 +514,11 @@ module debug import cvw::*; #(parameter cvw_t P) (
   assign HaveResetAck = DMControl[28];
   assign NDMReset = DMControl[1];
   assign DMActive = DMControl[0];
+
+  // Writes to these bits should be ignored if an abstract command is
+  // executing. This isn't a problem when only Abstract Register is
+  // implemented but could be a problem with Quick Access and Abstract
+  // Memory commands. 3.14.2
   assign setresethaltreq = DMControl[3];
   assign clrresethaltreq = DMControl[2];
 
@@ -524,7 +529,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
   HaltState CurrHaltState;
   HaltState NextHaltState;
 
-  //
+  // With Multi-hart, this needs to become a vector
   always_ff @(posedge clk) begin
     if (reset | clrresethaltreq) begin
       ResetHaltReq <= 1'b0;
