@@ -46,6 +46,7 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
 
   logic                rs1zeroM, rdzeroM;                   // rs1 / rd field = 0
   logic                IllegalPrivilegedInstrM;             // privileged instruction isn't a legal one or in legal mode
+  logic                wfiMPreDebug;
   logic                WFITimeoutM;                         // WFI reaches timeout threshold
   logic                ebreakM, ecallM;                     // ebreak / ecall instructions
   logic                sinvalvmaM;                          // sinval.vma
@@ -76,7 +77,8 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   assign RetM =       sretM | mretM;
   assign ecallM =     PrivilegedM & (InstrM[31:20] == 12'b000000000000) & rs1zeroM;
   assign ebreakM =    PrivilegedM & (InstrM[31:20] == 12'b000000000001) & rs1zeroM;
-  assign wfiM =       PrivilegedM & (InstrM[31:20] == 12'b000100000101) & rs1zeroM & ~DebugStep;
+  assign wfiMPreDebug = PrivilegedM & (InstrM[31:20] == 12'b000100000101) & rs1zeroM;
+  assign wfiM =       wfiMPreDebug & ~DebugStep;
 
   // all of sinval.vma, sfence.w.inval, sfence.inval.ir are treated as sfence.vma
   assign sfencevmaM = PrivilegedM & P.VIRTMEM_SUPPORTED &
@@ -110,7 +112,7 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   // Fault on illegal instructions
   ///////////////////////////////////////////
 
-  assign IllegalPrivilegedInstrM = PrivilegedM & ~(sretM|mretM|ecallM|ebreakM|wfiM|sfencevmaM);
+  assign IllegalPrivilegedInstrM = PrivilegedM & ~(sretM|mretM|ecallM|ebreakM|wfiMPreDebug|sfencevmaM);
   assign IllegalInstrFaultM = IllegalIEUFPUInstrM | IllegalPrivilegedInstrM | IllegalCSRAccessM |
                               WFITimeoutM;
 endmodule
