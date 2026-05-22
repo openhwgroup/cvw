@@ -23,9 +23,9 @@ halt1:
    j .
 
 wfitest:
-   li t0, 0xdead0000
    wfi
    li t0, 0xdead0001
+   sw t0, 0(t1)
    ebreak
 
 test_end:
