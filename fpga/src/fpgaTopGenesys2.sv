@@ -424,7 +424,7 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
      .ui_clk(BUSCLK),
      .ui_clk_sync_rst(ui_clk_sync_rst),
      .aresetn(~aresetn),
-     .sys_rst(~aresetn),    // omg. this is active low?!?!??
+     .sys_rst(~aresetn),    // sys_rst is active low.
      .mmcm_locked(mmcm_locked),
 
      .app_sr_req(1'b0),  // reserved command
