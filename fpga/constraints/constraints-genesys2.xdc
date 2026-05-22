@@ -72,7 +72,6 @@ set_output_delay -clock [get_clocks clk_out3_mmcm] -max -add_delay 0.000 [get_po
 
 ##### reset #####
 #************** reset is inverted
-set_property -dict { PACKAGE_PIN B19   IOSTANDARD LVCMOS12 } [get_ports { south_reset }]; #IO_L24N_T3_17 Sch=btnu
 set_property -dict { PACKAGE_PIN R19   IOSTANDARD LVCMOS33 } [get_ports { aresetn }]; #IO_0_14 Sch=cpu_resetn
 
 set_input_delay -clock [get_clocks clk_out3_mmcm] -min -add_delay 2.000 [get_ports aresetn]
