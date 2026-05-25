@@ -535,7 +535,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
   flopr #(1) squashRXerrIPreg(PCLK, ~PRESETn, squashRXerrIP, prevSquashRXerrIP);
   // Side effect of reading IIR is lowering THRE_IP if most significant intr
   assign setSquashTHRE_IP = ~MEMRb & (A==3'b010) & (intrID==3'h1); // there's a 1-cycle delay on set squash so that THRE_IP doesn't change during the process of reading IIR (otherwise combinational loop)
-  assign resetSquashTHRE_IP = ~THRE;
+  assign resetSquashTHRE_IP = ~MEMWb & (A==3'b000) & ~DLAB;
   assign squashTHRE_IP = prevSquashTHRE_IP & ~resetSquashTHRE_IP;
   flopr #(1) squashTHRE_IPreg(PCLK, ~PRESETn, squashTHRE_IP | setSquashTHRE_IP, prevSquashTHRE_IP);
 
