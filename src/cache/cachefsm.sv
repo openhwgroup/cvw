@@ -68,7 +68,8 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   output logic       FlushWayCntEn,     // Enable the way counter during a flush
   output logic       FlushCntRst,       // Reset both flush counters
   output logic       SelFetchBuffer,    // Bypass the SRAM for a load hit by directly using the read data from the ahbcacheinterface's FetchBuffer
-  output logic       CacheEn            // Enable the cache memory arrays.  Disable hold read data constant
+  output logic       CacheEn,           // Enable the cache memory arrays.  Disable hold read data constant
+  input  logic       TagSetStale        // Hit is stale: previous cycle's CacheSetTag differed from current PAdr's set (issue #1538)
 );
 
   logic              resetDelay;
@@ -94,9 +95,12 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
 
   statetype CurrState, NextState;
 
-  assign AnyMiss = (CacheRW[0] | CacheRW[1]) & ~Hit & ~InvalidateCache; // exclusion-tag: cache AnyMiss
-  assign AnyUpdateHit = (CacheRW[0]) & Hit;                            // exclusion-tag: icache storeAMO1
-  assign AnyHit = AnyUpdateHit | (CacheRW[1] & Hit);                  // exclusion-tag: icache AnyUpdateHit
+  // Suppress Hit/Miss when the tag SRAM read is stale (issue #1538). On a stale cycle the
+  // FSM stays in STATE_ACCESS via the TagSetStale stall condition below; the SRAM re-reads
+  // and the next cycle's Hit decision is valid.
+  assign AnyMiss = (CacheRW[0] | CacheRW[1]) & ~Hit & ~InvalidateCache & ~TagSetStale; // exclusion-tag: cache AnyMiss
+  assign AnyUpdateHit = (CacheRW[0]) & Hit & ~TagSetStale;             // exclusion-tag: icache storeAMO1
+  assign AnyHit = AnyUpdateHit | (CacheRW[1] & Hit & ~TagSetStale);   // exclusion-tag: icache AnyUpdateHit
   assign CMOZeroNoEviction = CMOpM[3] & ~LineDirty;   // (hit or miss) with no writeback store zeros now
   assign CMOWriteback = ((CMOpM[1] | CMOpM[2]) & Hit & HitLineDirty) | CMOpM[3] & LineDirty;
 
@@ -149,7 +153,7 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
 
   // com back to CPU
   assign CacheCommitted = (CurrState != STATE_ACCESS) & ~(READ_ONLY_CACHE & (CurrState == STATE_ADDRESS_SETUP));
-  assign StallConditions =  FlushCache | AnyMiss | (|CMOpM);                            // exclusion-tag: icache FlushCache
+  assign StallConditions =  FlushCache | AnyMiss | (|CMOpM) | TagSetStale;              // exclusion-tag: icache FlushCache
   assign CacheStall = (CurrState == STATE_ACCESS & StallConditions) | // exclusion-tag: icache StallStates
                       (CurrState == STATE_FETCH) |
                       (CurrState == STATE_WRITEBACK) |
@@ -207,7 +211,7 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
                          (CurrState == STATE_FLUSH_WRITEBACK & ~CacheBusAck) |
                          (CurrState == STATE_WRITEBACK & (CMOpM[1] | CMOpM[2]) & ~CacheBusAck);
 
-  assign SelAdrData = (CurrState == STATE_ACCESS & (CacheRW[0] | AnyMiss | (|CMOpM))) | // exclusion-tag: icache SelAdrCauses // changes if store delay hazard removed
+  assign SelAdrData = (CurrState == STATE_ACCESS & (CacheRW[0] | AnyMiss | (|CMOpM) | TagSetStale)) | // exclusion-tag: icache SelAdrCauses // changes if store delay hazard removed
                   (CurrState == STATE_FETCH) |
                   (CurrState == STATE_WRITEBACK) |
                   (CurrState == STATE_WRITE_LINE) |
@@ -216,7 +220,10 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   // Without this, the extended CacheEn (below) would re-latch ValidWay from NextSet's row on
   // subsequent stall cycles, corrupting hit/miss decisions (issue #1538).  Restricting to the
   // first stall cycle preserves the tag prefetch on all later stall cycles.
-  assign SelAdrTag = (CurrState == STATE_ACCESS & (AnyMiss | (|CMOpM) | StoreHitFirstStall)) | // exclusion-tag: icache SelAdrTag
+  // TagSetStale: drive CacheSetTag = PAdr so the tag SRAM re-reads at the correct set during
+  // the stale-cycle stall (issue #1538).  Without this, CacheSetTag stays on NextSet and the
+  // stall never clears.
+  assign SelAdrTag = (CurrState == STATE_ACCESS & (AnyMiss | (|CMOpM) | StoreHitFirstStall | TagSetStale)) | // exclusion-tag: icache SelAdrTag
                   (CurrState == STATE_FETCH) |
                   (CurrState == STATE_WRITEBACK) |
                   (CurrState == STATE_WRITE_LINE) |
