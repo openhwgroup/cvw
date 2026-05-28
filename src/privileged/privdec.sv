@@ -84,7 +84,9 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
                        (PrivilegeModeW == P.S_MODE & (vmaM & ~STATUS_TVM  | fenceinvalM))); // sfence.w.inval & sfence.inval.ir not affected by TVM
   // rs2 (InstrM[24:20]) = x0 means flush all ASIDs including global mappings; rs2 != x0 is ASID-specific
   // and must preserve global (G=1) entries (RISC-V Privileged spec sfence.vma semantics).
-  assign sfencevmaAllM = sfencevmaM & ~|InstrM[24:20];
+  // sfence.w.inval / sfence.inval.ir (fenceinvalM) have a fixed rs2 encoding that is not an ASID, so
+  // force the conservative full flush for them rather than interpreting rs2 as an ASID.
+  assign sfencevmaAllM = sfencevmaM & (fenceinvalM | ~|InstrM[24:20]);
 
   ///////////////////////////////////////////
   // WFI timeout Privileged Spec 3.1.6.5

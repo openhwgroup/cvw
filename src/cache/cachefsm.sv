@@ -34,7 +34,7 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   // hazard and privilege unit
   input  logic       Stall,             // Stall the cache, preventing new accesses. In-flight access finished but does not return to READY
   input  logic       FlushStage,        // Pipeline flush of second stage (prevent writes and bus operations)
-  input  logic       StoreAmoPageFaultM, // D$ only: store/AMO page-fault in M stage (prevents faulting store from committing)
+  input  logic       StoreAmoFaultM,    // D$ only: store/AMO fault (page/access/misaligned) in M stage (prevents faulting store from committing)
   output logic       CacheCommitted,    // Cache has started bus operation that shouldn't be interrupted
   output logic       CacheStall,        // Cache stalls pipeline during multicycle operation
   // inputs from IEU
@@ -161,12 +161,12 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
                       (CurrState == STATE_FLUSH) |
                       (CurrState == STATE_FLUSH_WRITEBACK);
   // write enables internal to cache
-  // Do not allocate (validate) a fetched line into a victim way when the requested line is already
-  // present in another way of the set (Hit).  A true miss has Hit=0 at STATE_WRITE_LINE; Hit=1 here
-  // means a transient false miss (e.g. the hit/miss decision used a tag-SRAM read taken the same
-  // cycle the index changed — branch misprediction, or the extended-CacheEn stall re-latching
-  // ValidWay from NextSet).  Allocating anyway would create a duplicate tag whose clean refill
-  // shadows committed dirty data in the existing way (issue #1538).
+  // A transient false miss (hit/miss decision taken the cycle the tag-SRAM index changed) could
+  // otherwise reach STATE_WRITE_LINE and allocate a victim way, creating a duplicate tag whose
+  // clean refill shadows committed dirty data in the existing way (issue #1538).  This is
+  // prevented upstream: TagSetStale suppresses AnyMiss on the stale cycle (see above), so a
+  // false miss never advances to STATE_FETCH/STATE_WRITE_LINE.  Reaching STATE_WRITE_LINE thus
+  // always implies a true miss, so SetValid validates the fetched line unconditionally here.
   assign SetValid = (CurrState == STATE_WRITE_LINE) |
                     (CurrState == STATE_ACCESS & CMOZeroNoEviction) |
                     (CurrState == STATE_WRITEBACK & CacheBusAck & CMOpM[3]);
@@ -230,10 +230,11 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
                   resetDelay;
   assign SelFetchBuffer = CurrState == STATE_WRITE_LINE | CurrState == STATE_ADDRESS_SETUP;
   // Extend CacheEn for the first cycle of a stalled store-hit so the write reaches the data SRAM
-  // (issue #1538).  Gated with ~StoreAmoPageFaultM so a faulting store (TLB-hit permission check
-  // fails combinatorially on cycle 1 of the stall) never commits to the SRAM.  Also gated with
-  // ~FlushStage for any other flush-causing event that arrives before cycle 1.
+  // (issue #1538).  Gated with ~StoreAmoFaultM so a faulting store/AMO (page, access, or
+  // misaligned fault detected combinatorially on cycle 1 of the stall, before FlushStage from
+  // the trap arrives) never commits to the SRAM.  Also gated with ~FlushStage for any other
+  // flush-causing event that arrives before cycle 1.
   assign CacheEn = (~Stall | StallConditions) | (CurrState != STATE_ACCESS) | reset | InvalidateCache |
-                   ((SetValid | SetDirty | ClearValid | ClearDirty) & StoreHitFirstStall & ~StoreAmoPageFaultM & ~FlushStage); // exclusion-tag: dcache CacheEn
+                   ((SetValid | SetDirty | ClearValid | ClearDirty) & StoreHitFirstStall & ~StoreAmoFaultM & ~FlushStage); // exclusion-tag: dcache CacheEn
 
 endmodule // cachefsm
