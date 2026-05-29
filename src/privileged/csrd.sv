@@ -60,7 +60,9 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   input logic               StallW,
   output logic              DebugStepIE,
   output logic              DebugStep,
-  output logic              DebugStopTime
+  output logic              DebugStopTime,
+  output logic [1:0]        DebugPrivilegeMode,
+  output logic              DebugSetPrivMode
 );
 
   localparam                DCSR = 12'h7B0;
@@ -212,9 +214,13 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   assign step = DCSR_REGW[2];
   assign prv = DCSR_REGW[1:0];
 
+  // Step Controls
   assign DebugStepIE = stepie;
   assign DebugStopTime = DebugMode & stoptime;
   assign DebugStep = step;
+
+  // Privilege mode controls
+  assign DebugPrivilegeMode = prv;
 
   // CSR Reads
   always_comb begin
@@ -291,6 +297,25 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   assign DebugMode = (state == HALTED);
 
   // -----------------------------------------------------------------
+  // Priv mode control
+  // -----------------------------------------------------------------
+
+  logic PrivModeSet;
+
+  always_ff @(posedge clk) begin
+    if (reset) begin
+      PrivModeSet <= 1'b0;
+    end else if (state_n != HALTED) begin
+      PrivModeSet <= 1'b0;
+    end else if ((state == HALTED) && CSRDWriteM
+                 && CSRWriteValM[1:0] != prv && (CSRAdrM == DCSR)) begin
+      PrivModeSet <= 1'b1;
+    end
+  end
+
+  assign DebugSetPrivMode = PrivModeSet & (state_n == RUNNING & state == HALTED);
+
+  // -----------------------------------------------------------------
   // Reset Halt Request management
   // -----------------------------------------------------------------
 
@@ -298,18 +323,18 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   assign ResetHaltReqValid = ResetHaltReqCondition & InstrValidE;
   assign ResetHaltReqEnable = ResetHaltReqCondition & NextHalt;
 
-   // -----------------------------------------------------------------------------
-   // DebugResume: internal pulse when leaving HALTED.
-   // Needs to be delayed so StallF can be low
-   // -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
+  // DebugResume: internal pulse when leaving HALTED.
+  // Needs to be delayed so StallF can be low
+  // -----------------------------------------------------------------------------
 
-   always_ff @(posedge clk) begin
-      if (reset) begin
-         DebugResume <= 0;
-      end else begin
-         DebugResume <= (state == HALTED) && (state_n == RUNNING) & DPCset;
-      end
-   end
+  always_ff @(posedge clk) begin
+    if (reset) begin
+      DebugResume <= 0;
+    end else begin
+      DebugResume <= (state == HALTED) && (state_n == RUNNING) & DPCset;
+    end
+  end
 
    // -----------------------------------------------------------------------------
    // DPCset: track whether DPC was explicitly written while halted (optional).

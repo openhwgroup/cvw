@@ -141,12 +141,14 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   logic                     DebugEBreakM, DebugEBreakS, DebugEBreakU;
   logic                     DebugStepIE;
   logic                     DebugStep;
+  logic [1:0]               DebugPrivilegeMode;
+  logic                     DebugSetPrivMode;
 
   logic                     wfiW;
 
   // track the current privilege level
   privmode #(P) privmode(.clk, .reset, .StallW, .TrapM, .mretM, .sretM, .DelegateM,
-    .STATUS_MPP, .STATUS_SPP, .NextPrivilegeModeM, .PrivilegeModeW);
+    .STATUS_MPP, .STATUS_SPP, .DebugPrivilegeMode, .DebugSetPrivMode, .NextPrivilegeModeM, .PrivilegeModeW);
 
   // decode privileged instructions
   privdec #(P) pmd(.clk, .reset, .StallW, .FlushW, .InstrM(InstrM[31:7]),
@@ -175,7 +177,8 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .DebugRegAddr, .DebugRegWrite, .DebugResume, .DPC,
     .HaveReset, .HaveResetAck, .ResetHaltReq, .BreakpointFaultM,
     .DebugEBreakM, .DebugEBreakS, .DebugEBreakU,
-    .IEUAdrM, .PCSrcE, .DebugStepIE, .DebugStep, .DebugStopTime
+    .IEUAdrM, .PCSrcE, .DebugStepIE, .DebugStep, .DebugStopTime,
+    .DebugPrivilegeMode, .DebugSetPrivMode
     );
 
   // pipeline early-arriving trap sources

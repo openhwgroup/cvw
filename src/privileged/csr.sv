@@ -116,7 +116,9 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic                     PCSrcE,
   output logic                     DebugStepIE,
   output logic                     DebugStep,
-  output logic                     DebugStopTime
+  output logic                     DebugStopTime,
+  output logic [1:0]               DebugPrivilegeMode,
+  output logic                     DebugSetPrivMode
 );
 
   localparam MIP = 12'h344;
@@ -327,7 +329,8 @@ module csr import cvw::*;  #(parameter cvw_t P) (
       .DebugMode, .NextValidPCE, .PCM, .IllegalCSRDAccessM, .DebugResume, .DPC_REGW(DPC),
       .HaveReset, .HaveResetAck, .ResetHaltReq, .BreakpointFaultM,
       .DebugEBreakM, .DebugEBreakS, .DebugEBreakU,
-      .IEUAdrM, .PCSrcE, .FlushM, .StallM, .StallW, .DebugStepIE, .DebugStep, .DebugStopTime
+      .IEUAdrM, .PCSrcE, .FlushM, .StallM, .StallW, .DebugStepIE, .DebugStep, .DebugStopTime,
+      .DebugPrivilegeMode, .DebugSetPrivMode
       );
   end else begin
     assign DebugMode = 1'b0;
@@ -342,6 +345,8 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign DebugStepIE = 1'b1;
     assign DebugStopTime = 1'b0;
     assign DebugStep = 1'b0;
+    assign DebugPrivilegeMode = 2'b11;
+    assign DebugSetPrivMode = 1'b0;
   end
 
   if (P.TRIG_SUPPORTED) begin : trig
