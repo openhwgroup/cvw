@@ -89,6 +89,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   logic                     StartWalk;
   logic                     TLBMissOrUpdateDA;
   logic                     ITLBMissReady;
+  logic                     MStageMemPending;
   logic                     PRegEn;
   logic [2:0]               NextPageType;
   logic [P.SVMODE_BITS-1:0] SvMode;
@@ -144,14 +145,24 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   // Extract bits from CSRs and inputs
   assign SvMode = SATP_REGW[P.XLEN-1:P.XLEN-P.SVMODE_BITS];
   assign BasePageTablePPN = SATP_REGW[P.PPN_BITS-1:0];
-  // Defer servicing an instruction-side (ITLB) miss while the data cache/bus is still busy with a
-  // committed M-stage load/store.  At IDLE, SelHPTW=0 so DCacheBusStallM reflects the LSU data op
-  // (not an HPTW access).  Starting the walk here would seize the data cache mid-access and drop the
-  // store (issue #1538).  This cannot deadlock: the data op drains through the normal LSU stall
-  // independent of the walk, and the walk starts once DCacheBusStallM clears.  Because TLBMissOrUpdateDA
-  // is low while deferred, HPTWStall is also low, so the HPTW does not freeze the pipeline.  DTLB misses
-  // are never deferred (no data cache access has begun at a TLB miss).
-  assign ITLBMissReady     = ITLBMissOrUpdateAF & ~DCacheBusStallM;
+  // Defer servicing an instruction-side (ITLB) miss while a committed M-stage data access
+  // (load/store/AMO/CMO) is still present.  At IDLE, SelHPTW=0 so DCacheBusStallM reflects the LSU
+  // data op (not an HPTW access).  Two hazards motivate the deferral:
+  //   (#1538) Starting the walk while the data op's cache/bus access is mid-flight would seize the
+  //           data cache and drop a committed store.  Covered by ~DCacheBusStallM.
+  //   (#1766) Even after the data op has *hit* in the cache (DCacheBusStallM low), the load's read
+  //           data is only valid combinationally while the access still owns the cache.  If the
+  //           pipeline is stalled for another reason (here HPTWStall itself, from the pending ITLB
+  //           miss) the load is held in M; starting the walk now re-points the cache SRAMs at the
+  //           PTE sets and the load captures stale data when it finally retires.  Covered by
+  //           ~MStageMemPending: hold the walk until the data op leaves the M stage (MemRWM/CMOpM
+  //           deassert), then start the walk against an idle cache.
+  // This cannot deadlock: the data op's retirement never depends on the (younger) instruction-fetch
+  // walk, so it drains through the normal LSU stall and the walk starts once it leaves M.  Because
+  // TLBMissOrUpdateDA is low while deferred, HPTWStall is also low for the ITLB miss, so the HPTW
+  // does not freeze the pipeline against the data op.  DTLB misses are never deferred.
+  assign MStageMemPending  = (|MemRWM) | (|CMOpM);
+  assign ITLBMissReady     = ITLBMissOrUpdateAF & ~DCacheBusStallM & ~MStageMemPending;
   assign TLBMissOrUpdateDA = DTLBMissOrUpdateDAM | ITLBMissReady;
 
   // Determine which address to translate
