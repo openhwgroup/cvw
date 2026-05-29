@@ -235,7 +235,7 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   // misaligned fault detected combinatorially on cycle 1 of the stall, before FlushStage from
   // the trap arrives) never commits to the SRAM.  Also gated with ~FlushStage for any other
   // flush-causing event that arrives before cycle 1.
-  assign CacheEn = (~Stall | StallConditions) | (CurrState != STATE_ACCESS) | reset | InvalidateCache |
-                   ((SetValid | SetDirty | ClearValid | ClearDirty) & StoreHitFirstStall & ~StoreAmoFaultM & ~FlushStage); // exclusion-tag: dcache CacheEn
+  assign CacheEn = (~Stall | StallConditions) | (CurrState != STATE_ACCESS) | reset | InvalidateCache | // exclusion-tag: cache CacheEn
+                   ((SetValid | SetDirty | ClearValid | ClearDirty) & StoreHitFirstStall & ~StoreAmoFaultM & ~FlushStage);
 
 endmodule // cachefsm

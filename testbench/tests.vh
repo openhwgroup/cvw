@@ -470,8 +470,8 @@ string arch64vm_sv48_mxr_isolate[] = '{
 
 string arch64vm_sv57[] = '{
   `RISCVARCHTEST,
-  //"rv64i_m/vm_sv57/src/sv57_A_and_D_S_mode.S",        // Disable until fixed; Might be due to Issue#1538 ***TODO: Zain
-  //"rv64i_m/vm_sv57/src/sv57_A_and_D_U_mode.S",        // Disable until fixed; Might be due to Issue#1538 ***TODO: Zain
+  "rv64i_m/vm_sv57/src/sv57_A_and_D_S_mode.S",         // Re-enabled: passes lockstep after Issue#1538 fix
+  "rv64i_m/vm_sv57/src/sv57_A_and_D_U_mode.S",         // Re-enabled: passes lockstep after Issue#1538 fix
   "rv64i_m/vm_sv57/src/sv57_VA_all_ones_S_mode.S",
   "rv64i_m/vm_sv57/src/sv57_VA_all_zeros_S_mode.S",
   "rv64i_m/vm_sv57/src/sv57_canonical_S_mode.S",
