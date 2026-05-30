@@ -171,6 +171,17 @@ coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefs
 # states, and with HREADY always 1 the bus never stalls (no DATA_PHASE->ADR_PHASE re-arbitration).
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -fstate CurrState CACHE_WRITEBACK ATOMIC_READ_DATA_PHASE ATOMIC_PHASE
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -ftrans CurrState ADR_PHASE->CACHE_WRITEBACK CACHE_FETCH->CACHE_WRITEBACK CACHE_WRITEBACK->ADR_PHASE CACHE_WRITEBACK->CACHE_FETCH DATA_PHASE->ADR_PHASE ATOMIC_READ_DATA_PHASE->ATOMIC_PHASE ATOMIC_READ_DATA_PHASE->ADR_PHASE ATOMIC_PHASE->MEM3 ATOMIC_PHASE->ADR_PHASE
+# I$ AHBBuscachefsm dead branch/condition/expression rows (read-only cache, HREADY always 1):
+#   HREADY1 (L91): ADR_PHASE->CACHE_WRITEBACK on BusWrite -- read-only cache never writes back.
+#   FetchWait (L104): CACHE_FETCH->CACHE_FETCH on a back-to-back cache read -- I$ never pipelines a
+#     second line fetch; its condition rows 1,2 (HREADY_0/1) and 4,6 (FinalBeatCount_1/CacheBusRW[1]_1)
+#     all require HREADY=0 or that absent back-to-back request.
+#   SelBusBeat (L161): the BusRW[0]/BusWrite/DATA_PHASE/ATOMIC_*/CACHE_WRITEBACK select terms are all
+#     write/atomic/writeback paths a read-only cache never drives (only the CACHE_FETCH term is live).
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY1"] -item b 1
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm FetchWait"] -item b 1
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm FetchWait"] -item c 1 -feccondrow 1,2,4,6
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign SelBusBeat"] -item e 1 -fecexprrow 1,2,4,6,7,8,9,10,11,12,14
 
 ## D$ Exclusions.
 # InvalidateCache is I$ only:
@@ -178,6 +189,10 @@ coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [Get
 coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: dcache InvalidateCheck"] -item s 1
 coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: cache CacheEn"] -item e 1 -fecexprrow 12
 coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: cache AnyMiss"] -item e 1 -fecexprrow 4
+# LoadMiss (cachefsm.sv:208) also references ~InvalidateCache; D$ InvalidateCache is tied 1'b0
+# (lsu.sv), so the InvalidateCache term is dead.  Anchor on "assign LoadMiss" because the "cache
+# AnyMiss" tag above resolves to the first match (AnyMiss, ~line 102), not LoadMiss.
+coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "assign LoadMiss"] -item e 1 -fecexprrow 4
 set numcacheways 4
 for {set i 0} {$i < $numcacheways} {incr i} {
     coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/CacheWays[$i] -linerange [GetLineNum ${SRC}/cache/cacheway.sv "exclusion-tag: dcache invalidateway"] -item bes 1 -fecexprrow 4
@@ -362,6 +377,20 @@ coverage exclude -scope /dut/core/lsu/lsu/hptw/hptw -linerange $line-$line -item
 # Never possible to get Access = 0 on a nonleaf PTE with no OtherPageFault (because InvalidRead/Write will be 1 on the nonleaf)
 set line [GetLineNum ${SRC}/mmu/hptw.sv "assign HPTWUpdateDA"]
 coverage exclude -scope /dut/core/lsu/lsu/hptw/hptw -linerange $line-$line -item e 1 -fecexprrow 3
+
+# UPDATE_PTE never self-loops on a cache-bus stall: the PTE being A/D-updated was just read during
+# the same uninterrupted walk (the LSU is stalled, so the line cannot be evicted), so it is resident
+# and writable in the D$ and the UPDATE_PTE store hits.  DCacheBusStallM therefore cannot assert in
+# UPDATE_PTE, making the UPDATE_PTE -> UPDATE_PTE branch/statement (hptw.sv line 350) unreachable.
+set line [GetLineNum ${SRC}/mmu/hptw.sv "DCacheBusStallM.*UPDATE_PTE"]
+coverage exclude -scope /dut/core/lsu/lsu/hptw/hptw -linerange $line-$line
+
+# (SvMode==SV57)_0 on the PPN-source mux is unreachable: the L4_ADR/L4_RD walker states named in the
+# non-masking condition only exist when SvMode==SV57 (InitialWalkerState=L4_ADR is gated on SV57), so
+# SvMode can never differ from SV57 while in an L4 state.  The remaining SvMode/WalkerState terms of
+# this mux are redundantly covered by the NextWalkerState FSM case.
+set line [GetLineNum ${SRC}/mmu/hptw.sv "P.SV57_SUPPORTED & SvMode == P.SV57 & "]
+coverage exclude -scope /dut/core/lsu/lsu/hptw/hptw -linerange $line-$line -item c 1 -feccondrow 1
 
 ###############
 # Other exclusions
