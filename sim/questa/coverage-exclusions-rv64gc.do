@@ -138,6 +138,15 @@ for {set i 0} {$i < $numcacheways} {incr i} {
     # No dirty ways in read-only I$
     coverage exclude -scope /dut/core/ifu/bus/icache/icache/CacheWays[$i] -linerange [GetLineNum ${SRC}/cache/cacheway.sv "// exclusion-tag: icache DirtyWay"] -item e 1
 }
+
+# D$ InvalidateCache is tied to 1'b0 in lsu.sv (the data cache has no invalidate-all), so the
+# InvalidateCache & ~InvalidateFlushStage invalidate paths can never be exercised in the D$.
+coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/vict/cacheLRU -linerange [GetLineNum ${SRC}/cache/cacheLRU.sv "InvalidateCache & ~InvalidateFlushStage"] -item c 1
+coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: dcache InvalidateCheck"] -item c 1
+# CacheWay invalidate path; -scope does not accept wildcards, so loop over the ways.
+for {set i 0} {$i < $numcacheways} {incr i} {
+    coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/CacheWays[$i] -linerange [GetLineNum ${SRC}/cache/cacheway.sv "exclusion-tag: dcache invalidateway"] -item c 1
+}
 # I$ buscachefsm does not perform atomics or write/writeback; HREADY is always 1
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm AtomicReadData"]
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm AtomicElse"] -item s 1
@@ -237,6 +246,10 @@ coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/sdcdec
 coverage exclude -scope /dut/core/ifu/bus/icache/UnCachedDataMux -linerange [GetLineNum ${SRC}/generic/mux.sv "exclusion-tag: mux3"] -item b 1
 coverage exclude -scope /dut/core/lsu/bus/dcache/UnCachedDataMux -linerange [GetLineNum ${SRC}/generic/mux.sv "exclusion-tag: mux3"] -item b 1
 
+# TagSetStale (issue #1538 D$ stale-tag re-read) is data-cache-only: the I$ ties SelHPTW = 0, so
+# SelHPTWPrev is always 0 and this expression can never evaluate true in the instruction cache.
+coverage exclude -scope /dut/core/ifu/bus/icache/icache -linerange [GetLineNum ${SRC}/cache/cache.sv "assign TagSetStale ="] -item e 1
+
 ####################
 # Unused access types due to sharing IFU and LSU logic
 ####################
@@ -256,6 +269,10 @@ set line [GetLineNum ${SRC}/mmu/mmu.sv "PMAInstrAccessFaultF    \\|"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu -linerange $line-$line -item e 1 -fecexprrow 2,4,5,6
 set line [GetLineNum ${SRC}/mmu/pmpchecker.sv "EnforcePMP & ExecuteAccessF"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmp/pmpchecker -linerange $line-$line -item e 1 -fecexprrow 1,2,4,5,6
+## A single data access is never simultaneously read and write, so WriteAccessM=1 can never occur
+## while the ReadAccessM-qualified load-access-fault term is evaluated (PMPLoadAccessFaultM, row 2).
+set line [GetLineNum ${SRC}/mmu/pmpchecker.sv "EnforcePMP & ReadAccessM"]
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmp/pmpchecker -linerange $line-$line -item e 1 -fecexprrow 2
 set line [GetLineNum ${SRC}/mmu/pmpchecker.sv "EnforcePMP & ExecuteAccessF"]
 coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange $line-$line -item e 1 -fecexprrow 3
 

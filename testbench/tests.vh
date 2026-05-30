@@ -74,7 +74,11 @@ string coverage64gc[] = '{
   "pmppriority",
   "pmpcbo",
   "pmpadrdecs",
-  "btbthrash"
+  "btbthrash",
+  "fpuReservedRM",
+  "decompReserved",
+  "pmpTOR7",
+  "cacheInval"
 };
 
 string buildroot[] = '{
