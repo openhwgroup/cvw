@@ -167,6 +167,10 @@ coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefs
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign CacheAccess"] -item e 1 -fecexprrow 4
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign BusStall"] -item e 1 -fecexprrow 10,12,18
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign CacheBusAck"] -item e 1 -fecexprrow 3
+# I$ AHBBuscachefsm dead FSM states/transitions: read-only cache never enters the writeback/atomic
+# states, and with HREADY always 1 the bus never stalls (no DATA_PHASE->ADR_PHASE re-arbitration).
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -fstate CurrState CACHE_WRITEBACK ATOMIC_READ_DATA_PHASE ATOMIC_PHASE
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -ftrans CurrState ADR_PHASE->CACHE_WRITEBACK CACHE_FETCH->CACHE_WRITEBACK CACHE_WRITEBACK->ADR_PHASE CACHE_WRITEBACK->CACHE_FETCH DATA_PHASE->ADR_PHASE ATOMIC_READ_DATA_PHASE->ATOMIC_PHASE ATOMIC_READ_DATA_PHASE->ADR_PHASE ATOMIC_PHASE->MEM3 ATOMIC_PHASE->ADR_PHASE
 
 ## D$ Exclusions.
 # InvalidateCache is I$ only:
@@ -440,7 +444,7 @@ coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefs
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm AtomicWait"] -item s 1
 
 # these transitions will not happen
-coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -ftrans CurrState DATA_PHASE->ADR_PHASE ATOMIC_READ_DATA_PHASE->ADR_PHASE ATOMIC_PHASE->ADR_PHASE
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -ftrans CurrState DATA_PHASE->ADR_PHASE ATOMIC_READ_DATA_PHASE->ADR_PHASE ATOMIC_PHASE->ADR_PHASE CACHE_FETCH->CACHE_WRITEBACK
 
 # TLB not recently used never has all RU bits = 1 because it will then clear all to 0
 # This is a blunt instrument; perhaps there is a more graceful exclusion
@@ -482,3 +486,24 @@ coverage exclude -scope /dut/core/priv/priv/csr/csrs/csrs -linerange [GetLineNum
 
 # Exclude EBU Beat Counter flop because it is only idle when bus has multicycle latency, but rv64gc has single cycle latency
 coverage exclude -scope /dut/core/ebu/ebu/ebufsmarb/BeatCounter/cntrflop
+
+####################
+# IFU
+####################
+# InstrUpdateAF (instruction-fetch Svadu hardware A-bit update on a TLB hit) is unreachable: the HPTW
+# performs walk-time A/D updates -- when ADUE=1 and a leaf has A=0, hptw.sv HPTWUpdateDA forces
+# ITLBWriteF=0, the walker goes LEAF->UPDATE_PTE (writes A=1 to memory) and then fills the TLB with
+# A=1.  So the ITLB never holds an A=0 entry, and tlbcontrol's UpdateDA = ...& TLBHit & ~PTE_A (the
+# source of InstrUpdateAF) can never fire.  Line 210 lives in the "immu" generate block; row 4 =
+# InstrUpdateAF_1.
+set line [GetLineNum ${SRC}/ifu/ifu.sv "SVADU_SUPPORTED & InstrUpdateAF"]
+coverage exclude -scope /dut/core/ifu/immu -linerange $line-$line -item e 1 -fecexprrow 4
+
+# I$ fetchbuffer CaptureBeat: CaptureEn_0 is unreachable for beats 1..7.  In the read-only I$ with
+# HREADY always 1, CaptureEn is high on every beat of a CACHE_FETCH, so it is never 0 at a matching
+# delayed beat (the D$ reaches CaptureEn=0 via writeback beats, which the I$ never does).  beat 0 is
+# covered (idle/reset).  Row 1 = CaptureEn_0.
+set fbline [GetLineNum ${SRC}/ebu/ahbcacheinterface.sv "index == BeatCountDelayed"]
+for {set i 1} {$i < 8} {incr i} {
+    coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/fetchbuffer[$i] -linerange $fbline-$fbline -item e 1 -fecexprrow 1
+}
