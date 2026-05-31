@@ -185,6 +185,14 @@ coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefs
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm FetchWait"] -item c 1 -feccondrow 1,2,4,6
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm AtomicElse"] -item b 1
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign SelBusBeat"] -item e 1 -fecexprrow 1,2,4,6,7,8,9,10,11,12,14
+# I$ CACHE_FETCH fetch-done (HREADY & FinalBeatCount & ~|CacheBusRW -> ADR_PHASE) _0 rows: dead, same
+# as the D$ -- once the IFU is granted and bursting from ram_ahb (no wait states) HREADY=1, and a
+# pending request at/after the final beat is the dead back-to-back Fetch/Writeback paths.  And the
+# HTRANS (CacheAccess & |BeatCount) CacheAccess_0: BeatCount is reset outside cache states, so
+# CacheAccess=0 & |BeatCount can never co-occur.  (L90 HREADY_0 with |BusRW is the genuine ADR_PHASE
+# IFU/LSU-contention row and is left uncovered; L147/L127 are reachable-rare flush corners.)
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "FinalBeatCount & ~\|CacheBusRW\\)  NextState = ADR_PHASE"] -item c 1 -feccondrow 1
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "CacheAccess & \\|BeatCount\\) ?"] -item c 1 -feccondrow 1
 
 # bpred BPWrongE InstrValidD_0 (bpred.sv:177): unreachable single-issue invariant.  Per the RTL
 # comment (lines 174-175), when a branch mispredicts in E the next instruction in D is always valid,
@@ -454,17 +462,17 @@ set line [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm Atomi
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item bc 1
 
 # The WritebackWriteback and FetchWriteback support back to back pipelined cache writebacks and fetch then
-# writebacks.  The cache never issues these type of requests.  Exclude branch+condition+statement (bcs):
-# the whole line is dead, so its statement and all condition rows are unreachable.
+# writebacks.  The cache never issues these type of requests.  The whole line is dead, so exclude every
+# item on it (both branch directions, all condition rows, and the statement) with a bare -linerange.
 set line [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm WritebackWriteback"]
-coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item bcs 1
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line
 
 set line [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm FetchWriteback"]
-coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item bcs 1
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line
 
 # FetchWait never occurs because HREADY is never 0.
 set line [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm FetchWait"]
-coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item bcs 1
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line
 
 # all of these HREADY exclusions occur because HREADY is always 1.  The ram_ahb module never stalls.
 set line [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY0"]
@@ -498,6 +506,19 @@ coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefs
 # not the identical CACHE_WRITEBACK line which is the HREADY6 tag handled above.)
 set line [GetLineNum ${SRC}/ebu/buscachefsm.sv "FinalBeatCount & ~\|CacheBusRW\\)  NextState = ADR_PHASE"]
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 1
+
+# More unreachable D$ buscachefsm rows:
+#  - BeatCountReg/BeatCountDelayedReg reset (~HRESETn | BeatCntReset) HRESETn_0: a reset coincident with
+#    ~BeatCntReset (an in-flight beat) never happens for the D$ -- no D$ bus transaction is active at
+#    power-on reset (init code runs first).  The I$ covers this row (the IFU fetches out of reset).
+#  - BeatCntEn (NextState==ADR_PHASE)_0: a pending cached request with HREADY forces NextState to a
+#    cache state (the earlier WB/FETCH OR term), so this term's _0 polarity is priority-masked.
+#  - HTRANS pipelined-request term CacheAccess_0: FinalBeatCount only asserts at the end of a cache
+#    burst (CacheAccess=1), so CacheAccess=0 & FinalBeatCount can never co-occur.
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "BeatCountReg\\("] -item e 1 -fecexprrow 1
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "BeatCountDelayedReg\\("] -item e 1 -fecexprrow 1
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign BeatCntEn"] -item e 1 -fecexprrow 9
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign HTRANS"] -item c 1 -feccondrow 8
 
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign CacheBusAck"] -item e 1 -fecexprrow 5
 
