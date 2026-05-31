@@ -178,9 +178,12 @@ coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefs
 #     all require HREADY=0 or that absent back-to-back request.
 #   SelBusBeat (L161): the BusRW[0]/BusWrite/DATA_PHASE/ATOMIC_*/CACHE_WRITEBACK select terms are all
 #     write/atomic/writeback paths a read-only cache never drives (only the CACHE_FETCH term is live).
-coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY1"] -item b 1
-coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm FetchWait"] -item b 1
+#   AtomicElse (L98): the ATOMIC_READ_DATA_PHASE->itself else; the state is dead (no atomics in a
+#     read-only cache, already -fstate excluded), so its else branch is unreachable too.
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY1"] -item bs 1
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm FetchWait"] -item bs 1
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm FetchWait"] -item c 1 -feccondrow 1,2,4,6
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm AtomicElse"] -item b 1
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign SelBusBeat"] -item e 1 -fecexprrow 1,2,4,6,7,8,9,10,11,12,14
 
 ## D$ Exclusions.
