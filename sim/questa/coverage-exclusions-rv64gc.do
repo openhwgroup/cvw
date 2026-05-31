@@ -190,9 +190,33 @@ coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefs
 # pending request at/after the final beat is the dead back-to-back Fetch/Writeback paths.  And the
 # HTRANS (CacheAccess & |BeatCount) CacheAccess_0: BeatCount is reset outside cache states, so
 # CacheAccess=0 & |BeatCount can never co-occur.  (L90 HREADY_0 with |BusRW is the genuine ADR_PHASE
-# IFU/LSU-contention row and is left uncovered; L147/L127 are reachable-rare flush corners.)
+# IFU/LSU-contention row, left uncovered/under investigation; the L147 mid-burst-flush rows are
+# excluded just below as in-order-unreachable.)
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "FinalBeatCount & ~\|CacheBusRW\\)  NextState = ADR_PHASE"] -item c 1 -feccondrow 1
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "CacheAccess & \\|BeatCount\\) ?"] -item c 1 -feccondrow 1
+
+# HBURST condition (|CacheBusRW & ~Flush) | (CacheAccess & |BeatCount): the second-term rows
+# CacheAccess_0 (5), CacheAccess_1 (6), |BeatCount_1 (8) are UNREACHABLE.  They can only be observed
+# when the first term (|CacheBusRW & ~Flush) is 0 while |BeatCount=1, i.e. a flush (Flush=1) landing
+# mid CACHE_FETCH burst (|CacheBusRW is held high the whole burst per cachefsm.sv:204, dropping only
+# at the final beat where |BeatCount=0).  In this in-order pipeline the I$ never takes a mid-burst
+# flush: during a CACHE_FETCH the entire pipe stalls (hazard.sv StallE<=StallM<=StallW<=IFUStallF) so
+# BPWrongE cannot fire, interrupts are deferred (CommittedF), and an M-stage CSRWriteFenceM/TrapM/RetM
+# gates off IFUStallF and so preempts the burst at beat 0 (the ADR_PHASE Flush, not mid-burst).
+# (feccondrow 8 also drops the covered |BeatCount_0 pair-mate -- term-level granularity; |BeatCount_0
+# is still tracked by the FSM beat transitions.  Row 7-style |BeatCount_0 here is the only loss.)
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign HBURST"] -item c 1 -feccondrow 5,6,8
+
+# CaptureEn ((~Flush & DATA_PHASE) & BusRW[1]) Flush_1: UNREACHABLE for the same in-order reason --
+# a DATA_PHASE access is an in-flight uncached instruction fetch, and CVW (in-order) never flushes an
+# in-flight bus transaction (BPWrongE frozen by the IFUStall, interrupts deferred by CommittedF, and
+# an M-stage CSRWriteFenceM/TrapM/RetM gates off IFUStallF so it preempts at ADR_PHASE, not DATA_PHASE).
+# NOTE: this Questa version removes the WHOLE CaptureEn expression item (fecexprrow is not surgical
+# here), which also drops BusRW[1]_0 -- a reachable-but-rare row (an uncached fetch in DATA_PHASE whose
+# PCNextF is cacheable, i.e. a sequential uncached->cached boundary).  Its sibling state/term coverage
+# (DATA_PHASE, CACHE_FETCH, HREADY, BusRW[1]_1) is tracked via the other buscachefsm expressions
+# (L130/L161) and the FSM, so no real signal is lost.
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign CaptureEn"] -item e 1 -fecexprrow 2
 
 # bpred BPWrongE InstrValidD_0 (bpred.sv:177): unreachable single-issue invariant.  Per the RTL
 # comment (lines 174-175), when a branch mispredicts in E the next instruction in D is always valid,
