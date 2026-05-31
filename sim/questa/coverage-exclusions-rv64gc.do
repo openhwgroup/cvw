@@ -186,6 +186,12 @@ coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefs
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm AtomicElse"] -item b 1
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign SelBusBeat"] -item e 1 -fecexprrow 1,2,4,6,7,8,9,10,11,12,14
 
+# bpred BPWrongE InstrValidD_0 (bpred.sv:177): unreachable single-issue invariant.  Per the RTL
+# comment (lines 174-175), when a branch mispredicts in E the next instruction in D is always valid,
+# because no flush could invalidate D without also flushing the branch in E.  So InstrValidD is
+# always 1 when (PCCorrectE != PCD) & InstrValidE, making InstrValidD_0 (FEC row 5) unreachable.
+coverage exclude -scope /dut/core/ifu/bpred/bpred -linerange [GetLineNum ${SRC}/ifu/bpred/bpred.sv "assign BPWrongE"] -item e 1 -fecexprrow 5
+
 ## D$ Exclusions.
 # InvalidateCache is I$ only:
 coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: dcache InvalidateCheck"] -item b 2
@@ -196,6 +202,19 @@ coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [Get
 # (lsu.sv), so the InvalidateCache term is dead.  Anchor on "assign LoadMiss" because the "cache
 # AnyMiss" tag above resolves to the first match (AnyMiss, ~line 102), not LoadMiss.
 coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "assign LoadMiss"] -item e 1 -fecexprrow 4
+# CMO-on-dirty rows that are structurally unreachable (a directed cbo.clean/flush of a dirty line
+# does NOT cover them -- verified by waveform: CMOWriteback asserts but these FEC rows never count):
+#   cachefsm.sv:132 (|CMOpM & ~CMOWriteback) Row 4 CMOWriteback_1: this else-if is reached only when
+#   the higher-priority L131 ((AnyMiss | CMOWriteback) & ~READ_ONLY_CACHE) is false.  For the D$
+#   READ_ONLY_CACHE=0, so L131 is true whenever CMOWriteback=1 and takes the branch to STATE_WRITEBACK
+#   first; L132's condition is therefore only ever evaluated with CMOWriteback=0.  Exclude the
+#   CMOWriteback input term (feccondrow 2).
+coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "any CMO without dirty writeback"] -item c 1 -feccondrow 2
+#   cachefsm.sv:213 assign CacheBusRW[0] term (CurrState==STATE_WRITEBACK & (CMOpM[1]|CMOpM[2]) &
+#   ~CacheBusAck): logically redundant -- fully subsumed by the earlier OR term L211
+#   (CurrState==STATE_WRITEBACK & ~CacheBusAck), so CMOpM[1]/[2] can never independently drive the
+#   output.  Exclude the four CacheCMOpM[1]/[2] FEC rows (13-16).
+coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: icache CacheBusW"] -item e 1 -fecexprrow 13,14,15,16
 set numcacheways 4
 for {set i 0} {$i < $numcacheways} {incr i} {
     coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/CacheWays[$i] -linerange [GetLineNum ${SRC}/cache/cacheway.sv "exclusion-tag: dcache invalidateway"] -item bes 1 -fecexprrow 4
