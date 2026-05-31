@@ -454,16 +454,17 @@ set line [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm Atomi
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item bc 1
 
 # The WritebackWriteback and FetchWriteback support back to back pipelined cache writebacks and fetch then
-# writebacks.  The cache never issues these type of requests.
+# writebacks.  The cache never issues these type of requests.  Exclude branch+condition+statement (bcs):
+# the whole line is dead, so its statement and all condition rows are unreachable.
 set line [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm WritebackWriteback"]
-coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item bc 2
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item bcs 1
 
 set line [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm FetchWriteback"]
-coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item bc 2
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item bcs 1
 
 # FetchWait never occurs because HREADY is never 0.
 set line [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm FetchWait"]
-coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item bc 1
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item bcs 1
 
 # all of these HREADY exclusions occur because HREADY is always 1.  The ram_ahb module never stalls.
 set line [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY0"]
@@ -488,6 +489,15 @@ coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefs
 set line [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY6"]
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 1
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 5
+
+# CACHE_FETCH fetch-done branch (CurrState==CACHE_FETCH, HREADY & FinalBeatCount & ~|CacheBusRW ->
+# ADR_PHASE).  Its three _0 condition rows are all unreachable: HREADY is always 1 (ram_ahb never
+# stalls), and a pending request (|CacheBusRW) at or after the final beat would be the back-to-back
+# FetchWriteback/FetchWait paths excluded above, which the cache never issues -- so ~|CacheBusRW_0 and
+# the FinalBeatCount_0 pairing never occur.  (GetLineNum returns the first match, the CACHE_FETCH copy,
+# not the identical CACHE_WRITEBACK line which is the HREADY6 tag handled above.)
+set line [GetLineNum ${SRC}/ebu/buscachefsm.sv "FinalBeatCount & ~\|CacheBusRW\\)  NextState = ADR_PHASE"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 1
 
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign CacheBusAck"] -item e 1 -fecexprrow 5
 
