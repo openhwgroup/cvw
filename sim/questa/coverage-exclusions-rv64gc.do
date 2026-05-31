@@ -218,6 +218,18 @@ coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefs
 # (L130/L161) and the FSM, so no real signal is lost.
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign CaptureEn"] -item e 1 -fecexprrow 2
 
+# ADR_PHASE (HREADY & |BusRW) HREADY_0: UNREACHABLE in this in-order pipe.  This is the IFU sitting in
+# ADR_PHASE with a pending *uncached* instruction fetch (|BusRW) while IFUHREADY=0 (the arbiter has
+# disabled the IFU because the LSU holds the bus).  An uncached fetch's bus request is a single ADR
+# cycle; in-order, whenever the LSU holds the bus the front-end is stalled and is NOT initiating a new
+# fetch, so that 1-cycle uncached request never coincides with an LSU grant.  (Verified: a directed
+# uncached-code + always-missing-load sliding test never produced an ADR_PHASE->ADR_PHASE self-loop,
+# i.e. the IFU was never stalled while requesting.  Contrast the arbiter `both` reached by
+# ebuIcacheDTLBMiss.S, which uses a multi-cycle *cached* line-fill request that spans the HPTW walk --
+# an uncached fetch has no such window.)  feccondrow 1 also drops the covered HREADY_1 pair-mate
+# (term-level granularity); HREADY is exercised in the other ADR_PHASE branches.
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY0"] -item c 1 -feccondrow 1
+
 # bpred BPWrongE InstrValidD_0 (bpred.sv:177): unreachable single-issue invariant.  Per the RTL
 # comment (lines 174-175), when a branch mispredicts in E the next instruction in D is always valid,
 # because no flush could invalidate D without also flushing the branch in E.  So InstrValidD is
