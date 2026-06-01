@@ -2,10 +2,9 @@
 // csrhvirt.sv
 //
 // Written: nchulani@hmc.edu 27 April 2026
-// Purpose: Hypervisor CSR address substitution and virtual-instruction classification
+// Purpose: Combinational H-extension CSR virtualization: VS address substitution,
+//          virtual-instruction classification, and trap GVA generation
 //          See RISC-V Privileged Mode Specification (Hypervisor Extension)
-//
-// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

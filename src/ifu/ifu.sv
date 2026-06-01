@@ -186,6 +186,8 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     flopr #(1) StallMReg(.clk, .reset, .d(StallM), .q(StallMQ));
     assign TLBFlush = sfencevmaM & ~StallMQ;
 
+    // HLV/HLVX/HSV explicit accesses are data-side only; tie off their controls for the IMMU.
+    // TODO: Full VS/VU instruction fetch needs separate two-stage VSATP/HGATP translation plumbing.
     mmu #(.P(P), .TLB_ENTRIES(P.ITLB_ENTRIES), .IMMU(1))
     immu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
          .HSTATUS_SPVP(1'b0), .HLVHSVLegalM(1'b0), .ENVCFG_PBMTE, .ENVCFG_ADUE,

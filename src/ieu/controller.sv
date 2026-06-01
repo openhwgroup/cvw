@@ -296,11 +296,12 @@ module controller import cvw::*;  #(parameter cvw_t P) (
                       ControlsD = `CTRLW'b1_000_01_00_000_0_0_1_1_0_0_0_0_0_00_0_0; // jalr
       7'b1101111:     ControlsD = `CTRLW'b1_011_11_00_000_0_0_1_1_0_0_0_0_0_00_0_0; // jal
       7'b1110011: if (P.ZICSR_SUPPORTED) begin
-                   if (HLVHSVInstrD & HLVHSVLoadD)
-                      ControlsD = `CTRLW'b1_101_01_10_001_0_0_0_0_0_0_0_0_0_00_0_0; // HLV/HLVX: zero-offset virtual-machine load
-                   else if (HLVHSVInstrD)
-                      ControlsD = `CTRLW'b0_101_01_01_000_0_0_0_0_0_0_0_0_0_00_0_0; // HSV: zero-offset virtual-machine store
-                   else if (PFunctD)
+                   if (HLVHSVInstrD) begin
+                     if (HLVHSVLoadD)
+                       ControlsD = `CTRLW'b1_101_01_10_001_0_0_0_0_0_0_0_0_0_00_0_0; // HLV/HLVX: zero-offset virtual-machine load
+                     else
+                       ControlsD = `CTRLW'b0_101_01_01_000_0_0_0_0_0_0_0_0_0_00_0_0; // HSV: zero-offset virtual-machine store
+                   end else if (PFunctD)
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_1_0_0_00_0_0; // privileged; decoded further in privdec modules
                    else if (CSRFunctD)
                       ControlsD = `CTRLW'b1_000_00_00_010_0_0_0_0_0_1_0_0_0_00_0_0; // csrs
