@@ -2,10 +2,9 @@
 // csrhvirt.sv
 //
 // Written: nchulani@hmc.edu 27 April 2026
-// Purpose: Hypervisor CSR address substitution and virtual-instruction classification
+// Purpose: Combinational H-extension CSR virtualization: VS address substitution,
+//          virtual-instruction classification, and trap GVA generation
 //          See RISC-V Privileged Mode Specification (Hypervisor Extension)
-//
-// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -36,6 +35,7 @@ module csrhvirt import cvw::*;  #(parameter cvw_t P) (
   input  logic [63:0]       HENVCFG_REGW,
   input  logic              VirtualCSRCAccessM,
   input  logic              TrapWritesVAToTvalM,
+  input  logic              HLVHSVLegalM,
   output logic [11:0]       CSRAdrM,
   output logic              VirtualCSRAccessM,
   output logic              TrapGVAM
@@ -164,6 +164,7 @@ module csrhvirt import cvw::*;  #(parameter cvw_t P) (
                                          VirtualVSTimecmpAccessM | VirtualCSRCAccessM);
 
   // GVA gets set when traps from virtualized execution write a VA to tval.
-  // TODO: Include HS-mode HLV/HLVX/HSV fault cases when those paths are integrated.
-  assign TrapGVAM = TrapM & ExceptionM & VirtModeW & TrapWritesVAToTvalM;
+  // H spec hstatus.GVA note: HLV/HLVX/HSV address faults write guest virtual
+  // addresses even though V=0 for the executing hypervisor instruction.
+  assign TrapGVAM = TrapM & ExceptionM & (VirtModeW | HLVHSVLegalM) & TrapWritesVAToTvalM;
 endmodule

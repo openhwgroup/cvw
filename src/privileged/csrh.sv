@@ -62,6 +62,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   output logic [P.XLEN-1:0] CSRHReadValM,
   output logic              IllegalCSRHAccessM,
   output logic              HSTATUS_SPV,
+  output logic              HSTATUS_SPVP,
   output logic              HSTATUS_VTSR, HSTATUS_VTW, HSTATUS_VTVM,
   output logic              HSTATUS_HU,
   output logic              HSTATUS_VSBE,
@@ -87,7 +88,7 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0] MTVAL2_REGW;
   logic [P.XLEN-1:0] HSTATUS_REGW;
   logic [P.XLEN-1:0] VSSTATUS_REGW;
-  logic              HSTATUS_GVA, HSTATUS_SPVP;
+  logic              HSTATUS_GVA;
   logic [5:0]        HSTATUS_VGEIN;
   logic [1:0]        HSTATUS_VSXL, HSTATUS_HUPMM;
   logic              VSSTATUS_SD, VSSTATUS_SPELP, VSSTATUS_SDT;
