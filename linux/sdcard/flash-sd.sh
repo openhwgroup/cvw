@@ -84,6 +84,7 @@ LINUX_KERNEL=$IMAGES/Image
 #DEVICE_TREE=$IMAGES/$DEVICE_TREE
 
 SDCARD=${ARGS[0]}
+DEVNAME="$(basename "$SDCARD")"
 
 # User Error Checks ===================================================
 
@@ -92,7 +93,7 @@ if [ "$#" -eq "0" ] ; then
 fi
 
 # Check to make sure sd card device exists
-if [ ! -e "$SDCARD" ] ; then
+if [ ! -e "$SDCARD" ] && [ "$(cat /sys/block/$DEVNAME/size 2>/dev/null || echo 0)" -gt 0 ] ; then
     echo -e "$NAME $ERRORTEXT SD card device does not exist."
     exit 1
 fi
@@ -124,6 +125,35 @@ if [ ! -e $DEVICE_TREE ] ; then
     echo -e "$NAME $ERRORTEXT Missing device tree files"
     echo -e "$NAME generating all device tree files into buildroot"
     make -C ../ generate BUILDROOT=$BUILDROOT
+fi
+
+# Checks the block device
+if [ -b "$SDCARD" ] ; then
+    # Check the size of the card. If size is 0, then no card is inserted.
+    if [ ! "$(cat /sys/block/$DEVNAME/size 2>/dev/null || echo 0)" -gt 0 ] ; then
+        echo -e "$NAME $ERRORTEXT no SD card is inserted in '$SDCARD'."
+        exit 1
+    fi
+
+    # Checks to see if any partitions of the SDCARD are not device files
+    failed=0
+    for part in "${SDCARD}"*; do
+        if [ -e "$part" ] && [ ! -b "$part" ]; then
+            echo -e "$NAME $ERRORTEXT '$part' is not a block device."
+            echo "       It must be a real device node (e.g. /dev/sdb, /dev/mmcblk0, /dev/loop0, etc.)"
+            echo "       and cannot be a regular file, directory, or anything else inside /dev."
+            echo "       Run 'ls -l $SDCARD'* to see what type of file it actually is."
+            failed=1
+        fi
+    done
+
+    if [ "$failed" -eq 1 ]; then
+        exit 1
+    fi
+else
+    echo -e "$NAME $ERRORTEXT '$SDCARD' is not a block device."
+    echo "       Check what type of file it is with 'ls -l $SDCARD'"
+    exit 1
 fi
 
 # Calculate partition information =====================================
@@ -208,5 +238,9 @@ if [[ $REPLY =~ ^[Yy]$ ]] ; then
 fi
 
 echo
-echo "GPT Information for $SDCARD ==================================="
-sudo sgdisk -p $SDCARD
+
+# Only print this part if there actually are partitions on the card
+if [ -e "$SDCARD""1" ]; then
+    echo "GPT Information for $SDCARD ==================================="
+    sudo sgdisk -p $SDCARD
+fi
