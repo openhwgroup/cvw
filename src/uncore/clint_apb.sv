@@ -39,8 +39,7 @@ module clint_apb import cvw::*;  #(parameter cvw_t P) (
   output logic [P.XLEN-1:0]   PRDATA,
   output logic                PREADY,
   output logic [63:0] MTIME,
-  output logic                MTimerInt, MSwInt,
-  input  logic                DebugStopTime
+  output logic                MTimerInt, MSwInt
 );
 
   // register map
@@ -145,7 +144,7 @@ module clint_apb import cvw::*;  #(parameter cvw_t P) (
         for(i=0;i<P.XLEN/8;i++)
           if(PSTRB[i])
             MTIME[32 + i*8 +: 8]<= PWDATA[i*8 +: 8];
-      end else if (~DebugStopTime) MTIME <= MTIME + 1;
+      end else MTIME <= MTIME + 1;
   end
 
   // Software interrupt when MSIP is set

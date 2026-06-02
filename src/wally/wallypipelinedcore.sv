@@ -57,8 +57,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
    input  logic                  DebugRegWrite,
    output logic                  HaveReset,
    input  logic                  HaveResetAck,
-   input  logic                  ResetHaltReq,
-   output logic                  DebugStopTime
+   input  logic                  ResetHaltReq
 );
 
   logic                          StallF, StallD, StallE, StallM, StallW;
@@ -334,7 +333,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
       .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .wfiM, .IntPendingM, .BigEndianM,
       .DebugMode, .HaltReq, .ResumeReq, .CSRDebugEnable,
-      .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite, .DebugResume, .DPC, .DebugStopTime,
+      .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite, .DebugResume, .DPC,
       .HaveReset, .HaveResetAck, .ResetHaltReq,
       .IEUAdrM, .PCSrcE);
 
@@ -345,7 +344,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
             ENVCFG_CBE, ENVCFG_PBMTE, ENVCFG_ADUE,
             EPCM, TrapVectorM, RetM, TrapM,
             sfencevmaM, BigEndianM, wfiM, IntPendingM, DebugMode,
-            DebugResume, DPC, DebugStopTime, HaveReset} = '0;
+            DebugResume, DPC, HaveReset} = '0;
   end
 
   // multiply/divide unit

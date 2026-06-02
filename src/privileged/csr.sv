@@ -116,7 +116,6 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic                     PCSrcE,
   output logic                     DebugStepIE,
   output logic                     DebugStep,
-  output logic                     DebugStopTime,
   output logic [1:0]               DebugPrivilegeMode,
   output logic                     DebugSetPrivMode
 );
@@ -329,7 +328,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
       .DebugMode, .NextValidPCE, .PCM, .IllegalCSRDAccessM, .DebugResume, .DPC_REGW(DPC),
       .HaveReset, .HaveResetAck, .ResetHaltReq, .BreakpointFaultM,
       .DebugEBreakM, .DebugEBreakS, .DebugEBreakU,
-      .IEUAdrM, .PCSrcE, .FlushM, .StallM, .StallW, .DebugStepIE, .DebugStep, .DebugStopTime,
+      .IEUAdrM, .PCSrcE, .FlushM, .StallM, .StallW, .DebugStepIE, .DebugStep,
       .DebugPrivilegeMode, .DebugSetPrivMode
       );
   end else begin
@@ -343,7 +342,6 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign DebugEBreakS = 0;
     assign DebugEBreakU = 0;
     assign DebugStepIE = 1'b1;
-    assign DebugStopTime = 1'b0;
     assign DebugStep = 1'b0;
     assign DebugPrivilegeMode = 2'b11;
     assign DebugSetPrivMode = 1'b0;

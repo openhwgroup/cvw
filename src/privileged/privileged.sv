@@ -111,7 +111,6 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic              DebugRegWrite,
   output logic              DebugResume,
   output logic [P.XLEN-1:0] DPC,
-  output logic              DebugStopTime,
   output logic              HaveReset,
   input  logic              HaveResetAck,
   input  logic              ResetHaltReq,
@@ -177,7 +176,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .DebugRegAddr, .DebugRegWrite, .DebugResume, .DPC,
     .HaveReset, .HaveResetAck, .ResetHaltReq, .BreakpointFaultM,
     .DebugEBreakM, .DebugEBreakS, .DebugEBreakU,
-    .IEUAdrM, .PCSrcE, .DebugStepIE, .DebugStep, .DebugStopTime,
+    .IEUAdrM, .PCSrcE, .DebugStepIE, .DebugStep,
     .DebugPrivilegeMode, .DebugSetPrivMode
     );
 

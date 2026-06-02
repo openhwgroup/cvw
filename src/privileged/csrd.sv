@@ -60,7 +60,6 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   input logic               StallW,
   output logic              DebugStepIE,
   output logic              DebugStep,
-  output logic              DebugStopTime,
   output logic [1:0]        DebugPrivilegeMode,
   output logic              DebugSetPrivMode
 );
@@ -216,7 +215,6 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
 
   // Step Controls
   assign DebugStepIE = stepie;
-  assign DebugStopTime = DebugMode & stoptime;
   assign DebugStep = step;
 
   // Privilege mode controls

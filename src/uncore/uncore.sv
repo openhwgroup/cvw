@@ -61,8 +61,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   input  logic                 SDCIn,
   output logic                 SDCCmd,
   output logic [3:0]           SDCCS,
-  output logic                 SDCCLK,
-  input  logic                 DebugStopTime
+  output logic                 SDCCLK
 );
 
   logic [P.XLEN-1:0]           HREADRam, HREADSDC;
@@ -124,7 +123,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   // memory-mapped I/O peripherals
   if (P.CLINT_SUPPORTED == 1) begin : clint
     clint_apb #(P) clint(.PCLK, .PRESETn, .PSEL(PSEL[1]), .PADDR(PADDR[15:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE,
-      .PRDATA(PRDATA[1]), .PREADY(PREADY[1]), .MTIME(MTIME_CLINT), .MTimerInt, .MSwInt, .DebugStopTime);
+      .PRDATA(PRDATA[1]), .PREADY(PREADY[1]), .MTIME(MTIME_CLINT), .MTimerInt, .MSwInt);
   end else begin : clint
     assign MTIME_CLINT = '0;
     assign MTimerInt = 1'b0; assign MSwInt = 1'b0;

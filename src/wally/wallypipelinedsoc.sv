@@ -101,7 +101,6 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic                       HaveReset;
   logic                       HaveResetAck;
   logic                       ResetHaltReq;
-  logic                       DebugStopTime;
 
 
   // synchronize reset to SOC clock domain
@@ -114,7 +113,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .ExternalStall,
     .DebugMode, .HaltReq, .ResumeReq, .GPRDebugEnable, .CSRDebugEnable, .FPRDebugEnable,
     .DebugRegRDATA, .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite,
-    .HaveReset, .HaveResetAck, .ResetHaltReq, .DebugStopTime
+    .HaveReset, .HaveResetAck, .ResetHaltReq
    );
 
   // instantiate uncore if a bus interface exists
@@ -123,7 +122,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
       .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
       .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HSELEXT,
       .MTimerInt, .MSwInt, .MExtInt, .SExtInt, .GPIOIN, .GPIOOUT, .GPIOEN, .UARTSin,
-      .UARTSout, .MTIME_CLINT, .SPIIn, .SPIOut, .SPICS, .SPICLK, .SDCIn, .SDCCmd, .SDCCS, .SDCCLK, .DebugStopTime);
+      .UARTSout, .MTIME_CLINT, .SPIIn, .SPIOut, .SPICS, .SPICLK, .SDCIn, .SDCCmd, .SDCCS, .SDCCLK);
   end else begin
     assign {HRDATA, HREADY, HRESP, HSELEXT, MTimerInt, MSwInt, MExtInt, SExtInt,
             MTIME_CLINT, GPIOOUT, GPIOEN, UARTSout, SPIOut, SPICS, SPICLK, SDCCmd, SDCCS, SDCCLK} = '0;
