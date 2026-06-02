@@ -93,7 +93,7 @@ if [ "$#" -eq "0" ] ; then
 fi
 
 # Check to make sure sd card device exists
-if [ ! -e "$SDCARD" ] && [ "$(cat /sys/block/$DEVNAME/size 2>/dev/null || echo 0)" -gt 0 ] ; then
+if [ ! -e "$SDCARD" ] ; then
     echo -e "$NAME $ERRORTEXT SD card device does not exist."
     exit 1
 fi
