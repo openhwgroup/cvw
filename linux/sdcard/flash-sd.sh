@@ -84,6 +84,15 @@ LINUX_KERNEL=$IMAGES/Image
 #DEVICE_TREE=$IMAGES/$DEVICE_TREE
 
 SDCARD=${ARGS[0]}
+
+# Resolve symlinks to the real device node (e.g. /dev/disk/by-id/... → /dev/mmcblk0)
+SDCARD_REAL="$(readlink -f -- "$SDCARD" 2>/dev/null || echo "$SDCARD")"
+
+if [ "$SDCARD_REAL" != "$SDCARD" ]; then
+    echo -e "$NAME Resolved symlink: $SDCARD → $SDCARD_REAL"
+fi
+
+SDCARD="$SDCARD_REAL"
 DEVNAME="$(basename "$SDCARD")"
 
 # User Error Checks ===================================================
@@ -92,9 +101,17 @@ if [ "$#" -eq "0" ] ; then
     usage
 fi
 
-# Check to make sure sd card device exists
-if [ ! -e "$SDCARD" ] ; then
-    echo -e "$NAME $ERRORTEXT SD card device does not exist."
+# Must be a real block device
+if [ ! -b "$SDCARD" ] ; then
+    echo -e "$NAME $ERRORTEXT '$SDCARD' is not a block device."
+    echo "       Check what type of file it is with 'ls -l $SDCARD'"
+    exit 1
+fi
+
+# Must be a whole disk, not a partition
+if [ "$(lsblk -dno TYPE "$SDCARD" 2>/dev/null)" != "disk" ]; then
+    echo -e "$NAME $ERRORTEXT '$SDCARD' must be a whole-disk block device"
+    echo "       (e.g. /dev/mmcblk0 or /dev/sdb), not a partition."
     exit 1
 fi
 
@@ -127,32 +144,28 @@ if [ ! -e $DEVICE_TREE ] ; then
     make -C ../ generate BUILDROOT=$BUILDROOT
 fi
 
-# Checks the block device
-if [ -b "$SDCARD" ] ; then
-    # Check the size of the card. If size is 0, then no card is inserted.
-    if [ ! "$(cat /sys/block/$DEVNAME/size 2>/dev/null || echo 0)" -gt 0 ] ; then
-        echo -e "$NAME $ERRORTEXT no SD card is inserted in '$SDCARD'."
-        exit 1
-    fi
+# Check the size of the card. If size is 0, then no card is inserted.
+if [ ! "$(cat /sys/block/$DEVNAME/size 2>/dev/null || echo 0)" -gt 0 ] ; then
+    echo -e "$NAME $ERRORTEXT no SD card is inserted in '$SDCARD'."
+    exit 1
+fi
 
-    # Checks to see if any partitions of the SDCARD are not device files
-    failed=0
-    for part in "${SDCARD}"*; do
-        if [ -e "$part" ] && [ ! -b "$part" ]; then
-            echo -e "$NAME $ERRORTEXT '$part' is not a block device."
-            echo "       It must be a real device node (e.g. /dev/sdb, /dev/mmcblk0, /dev/loop0, etc.)"
-            echo "       and cannot be a regular file, directory, or anything else inside /dev."
-            echo "       Run 'ls -l $SDCARD'* to see what type of file it actually is."
-            failed=1
-        fi
-    done
-
-    if [ "$failed" -eq 1 ]; then
-        exit 1
+# Checks to see if any partitions of the SDCARD are not device
+# files. Shouldn't happen now that the checks are more robust, but dd
+# has created regular files in place of partitions before. This alerts
+# the user to that scenario.
+failed=0
+for part in "${SDCARD}"*; do
+    if [ -e "$part" ] && [ ! -b "$part" ]; then
+        echo -e "$NAME $ERRORTEXT '$part' is not a block device."
+        echo "       It must be a real device node (e.g. /dev/sdb, /dev/mmcblk0, /dev/loop0, etc.)"
+        echo "       and cannot be a regular file, directory, or anything else inside /dev."
+        echo "       Run 'ls -l $SDCARD'* to see what type of file it actually is."
+        failed=1
     fi
-else
-    echo -e "$NAME $ERRORTEXT '$SDCARD' is not a block device."
-    echo "       Check what type of file it is with 'ls -l $SDCARD'"
+done
+
+if [ "$failed" -eq 1 ]; then
     exit 1
 fi
 
