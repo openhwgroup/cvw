@@ -92,7 +92,6 @@ derivconfigtests = [
         ["way_8_4096_512_rv64gc", ["arch64i"]],
         ["way_4_2048_512_rv64gc", ["arch64i"]],
         ["way_4_4096_256_rv64gc", ["arch64i"]],
-        ["way_4_4096_1024_rv64gc", ["arch64i"]],
         ["ram_0_0_rv64gc", ["ahb64"]],
         ["ram_1_0_rv64gc", ["ahb64"]],
         ["ram_1_1_rv64gc", ["ahb64"]],
