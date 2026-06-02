@@ -446,10 +446,32 @@ string arch64vm_sv48[] = '{
   "rv64i_m/vm_pmp/src/sv48/sv48_pmp_on_pte_U_mode.S"
 };
 
+string arch64vm_sv48_a[] = '{
+  `RISCVARCHTEST,
+  "rv64i_m/vm_sv48/src/sv48_res_global_pte_U_mode.S",
+  "rv64i_m/vm_sv48/src/sv48_pte_reserved_field_S_mode.S"
+};
+
+string arch64vm_sv48_b[] = '{
+  `RISCVARCHTEST,
+  "rv64i_m/vm_sv48/src/sv48_pte_reserved_field_S_mode.S",
+  "rv64i_m/vm_sv48/src/sv48_res_global_pte_U_mode.S"
+};
+
+string arch64vm_sv39_isolate[] = '{
+  `RISCVARCHTEST,
+  "rv64i_m/vm_sv39/src/vm_VA_all_zeros_S_mode.S"
+};
+
+string arch64vm_sv48_mxr_isolate[] = '{
+  `RISCVARCHTEST,
+  "rv64i_m/vm_sv48/src/sv48_mxr_S_mode.S"
+};
+
 string arch64vm_sv57[] = '{
   `RISCVARCHTEST,
-  //"rv64i_m/vm_sv57/src/sv57_A_and_D_S_mode.S",        // Disable until fixed; Might be due to Issue#1538 ***TODO: Zain
-  //"rv64i_m/vm_sv57/src/sv57_A_and_D_U_mode.S",        // Disable until fixed; Might be due to Issue#1538 ***TODO: Zain
+  "rv64i_m/vm_sv57/src/sv57_A_and_D_S_mode.S",         // Re-enabled: passes lockstep after Issue#1538 fix
+  "rv64i_m/vm_sv57/src/sv57_A_and_D_U_mode.S",         // Re-enabled: passes lockstep after Issue#1538 fix
   "rv64i_m/vm_sv57/src/sv57_VA_all_ones_S_mode.S",
   "rv64i_m/vm_sv57/src/sv57_VA_all_zeros_S_mode.S",
   "rv64i_m/vm_sv57/src/sv57_canonical_S_mode.S",

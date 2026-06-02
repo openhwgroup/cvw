@@ -34,6 +34,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   input  logic                   reset,
   input  logic                   Stall,             // Stall the cache, preventing new accesses. In-flight access finished but does not return to READY
   input  logic                   FlushStage,        // Pipeline flush of second stage (prevent writes and bus operations)
+  input  logic                   StoreAmoFaultM,    // D$ only: store/AMO fault (page/access/misaligned) in M stage (tie 0 for I$)
   input  logic                   InvalidateFlushStage, // Pipeline flush of second stage (prevent writes and bus operations)
   // cpu side
   input  logic [1:0]             CacheRW,           // [1] Read, [0] Write
@@ -75,6 +76,8 @@ module cache import cvw::*; #(parameter cvw_t P,
   logic [1:0]                    AdrSelMuxSelTag, AdrSelMuxSelLRU;
   logic [SETLEN-1:0]             CacheSetData;
   logic [SETLEN-1:0]             CacheSetTag, CacheSetLRU;
+  logic [SETLEN-1:0]             CacheSetTagPrev;
+  logic                          TagSetStale;
   logic [LINELEN-1:0]            LineWriteData;
   logic                          ClearDirty, SetDirty, SetValid, ClearValid;
   logic [LINELEN-1:0]            ReadDataLineWay [NUMWAYS-1:0];
@@ -117,6 +120,19 @@ module cache import cvw::*; #(parameter cvw_t P,
   assign AdrSelMuxSelLRU = {FlushCache, ((SelAdrTag | SelHPTW | Stall) & ~((READ_ONLY_CACHE == 1) & FlushStage))};
   mux3 #(SETLEN) AdrSelMuxLRU(NextSet[SETTOP-1:OFFSETLEN], PAdr[SETTOP-1:OFFSETLEN], FlushAdr,
     AdrSelMuxSelLRU, CacheSetLRU);
+
+  // Track previous-cycle CacheSetTag and SelHPTW (issue #1538). The Tag/Data SRAMs and the
+  // ValidWay/ReadTag flops capture from CacheSetTag at posedge clk, so in any given cycle Hit
+  // reflects the SRAM read for the *previous* cycle's CacheSetTag. When the HPTW finishes a
+  // walk, the previous cycle's CacheSetTag was the HPTW's PAdr set; if the next LSU access is
+  // to a different set, Hit and ReadDataLine are stale and a false miss would fire.  Narrow
+  // the stale-detect to "HPTW just dropped and the LSU's new set differs" to avoid spuriously
+  // firing during normal pipeline stalls where E-stage NextSet and M-stage PAdr legitimately
+  // refer to different sets (e.g., MDU stalls during arch64m).
+  logic SelHPTWPrev;
+  flopen #(SETLEN) cacheSetTagPrevReg(.clk, .en(CacheEn), .d(CacheSetTag), .q(CacheSetTagPrev));
+  flopen #(1)      selHPTWPrevReg    (.clk, .en(CacheEn), .d(SelHPTW),     .q(SelHPTWPrev));
+  assign TagSetStale = SelHPTWPrev & ~SelHPTW & (CacheSetTagPrev != PAdr[SETTOP-1:OFFSETLEN]);
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(P, PA_BITS, NUMSETS, LINELEN, TAGLEN, OFFSETLEN, SETLEN, READ_ONLY_CACHE) CacheWays[NUMWAYS-1:0](
@@ -223,11 +239,11 @@ module cache import cvw::*; #(parameter cvw_t P,
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   cachefsm #(READ_ONLY_CACHE) cachefsm(.clk, .reset, .CacheBusRW, .CacheBusAck,
-    .FlushStage, .InvalidateFlushStage, .CacheRW, .Stall,
+    .FlushStage, .StoreAmoFaultM, .InvalidateFlushStage, .CacheRW, .Stall,
     .Hit, .LineDirty, .HitLineDirty, .CacheStall, .CacheCommitted,
     .CacheMiss, .CacheAccess, .SelAdrData, .SelAdrTag, .SelVictim,
     .ClearDirty, .SetDirty, .SetValid, .ClearValid, .SelWriteback,
     .FlushAdrCntEn, .FlushWayCntEn, .FlushCntRst,
     .FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelFetchBuffer,
-    .InvalidateCache, .CMOpM, .CacheEn, .LRUWriteEn);
+    .InvalidateCache, .CMOpM, .CacheEn, .LRUWriteEn, .TagSetStale);
 endmodule

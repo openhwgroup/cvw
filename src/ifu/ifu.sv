@@ -91,6 +91,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   input  logic                 ENVCFG_PBMTE,                             // Page-based memory types enabled
   input  logic                 ENVCFG_ADUE,                              // HPTW A/D Update enable
   input  logic                 sfencevmaM,                               // Virtual memory address fence, invalidate TLB entries
+  input  logic                 sfencevmaAllM,                            // sfence.vma with rs2=x0: flush all TLB entries including global
   output logic                 ITLBMissOrUpdateAF,                       // ITLB miss causes HPTW (hardware pagetable walker) walk or update access bit
   input  var logic [7:0]       PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0],     // PMP configuration from privileged unit
   input  var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW[P.PMP_ENTRIES-1:0],// PMP address from privileged unit
@@ -182,9 +183,10 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     // But we're still in the stalled sfence instruction, so if itlbflushf == sfencevmaM, tlbflush would never drop and
     // the tlbwrite would never take place after the pagetable walk. by adding in ~StallMQ, we are able to drop itlbflush
     // after a cycle AND pulse it for another cycle on any further back-to-back sfences.
-    logic StallMQ, TLBFlush;
+    logic StallMQ, TLBFlush, TLBFlushAll;
     flopr #(1) StallMReg(.clk, .reset, .d(StallM), .q(StallMQ));
     assign TLBFlush = sfencevmaM & ~StallMQ;
+    assign TLBFlushAll = sfencevmaAllM & ~StallMQ;
 
     mmu #(.P(P), .TLB_ENTRIES(P.ITLB_ENTRIES), .IMMU(1))
     immu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_ADUE,
@@ -194,7 +196,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
          .PTE(PTE),
          .PageTypeWriteVal(PageType),
          .TLBWrite(ITLBWriteF),
-         .TLBFlush,
+         .TLBFlush, .TLBFlushAll,
          .PhysicalAddress(PCPF),
          .TLBMiss(ITLBMissF),
          .Cacheable(CacheableF), .Idempotent(), .SelTIM(SelIROM),
@@ -250,7 +252,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
       cache #(.P(P), .PA_BITS(P.PA_BITS), .LINELEN(P.ICACHE_LINELENINBITS),
               .NUMSETS(P.ICACHE_WAYSIZEINBYTES*8/P.ICACHE_LINELENINBITS),
               .NUMWAYS(P.ICACHE_NUMWAYS), .LOGBWPL(AHBWLOGBWPL), .WORDLEN(32), .MUXINTERVAL(16), .READ_ONLY_CACHE(1))
-      icache(.clk, .reset, .FlushStage(FlushD), .Stall(GatedStallD),
+      icache(.clk, .reset, .FlushStage(FlushD), .StoreAmoFaultM(1'b0), .Stall(GatedStallD),
              .FetchBuffer, .CacheBusAck(ICacheBusAck),
              .CacheBusAdr(ICacheBusAdr), .CacheStall(ICacheStallF),
              .CacheBusRW,
