@@ -34,7 +34,6 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   // hazard and privilege unit
   input  logic       Stall,             // Stall the cache, preventing new accesses. In-flight access finished but does not return to READY
   input  logic       FlushStage,        // Pipeline flush of second stage (prevent writes and bus operations)
-  input  logic       StoreAmoFaultM,    // D$ only: store/AMO fault (page/access/misaligned) in M stage (prevents faulting store from committing)
   input  logic       InvalidateFlushStage, // Pipeline flush of second stage (prevent writes and bus operations)
   output logic       CacheCommitted,    // Cache has started bus operation that shouldn't be interrupted
   output logic       CacheStall,        // Cache stalls pipeline during multicycle operation
@@ -69,8 +68,7 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   output logic       FlushWayCntEn,     // Enable the way counter during a flush
   output logic       FlushCntRst,       // Reset both flush counters
   output logic       SelFetchBuffer,    // Bypass the SRAM for a load hit by directly using the read data from the ahbcacheinterface's FetchBuffer
-  output logic       CacheEn,           // Enable the cache memory arrays.  Disable hold read data constant
-  input  logic       TagSetStale        // Hit is stale: previous cycle's CacheSetTag differed from current PAdr's set (issue #1538)
+  output logic       CacheEn            // Enable the cache memory arrays.  Disable hold read data constant
 );
 
   logic              resetDelay;
@@ -80,8 +78,6 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   logic              CMOWriteback;
   logic              CMOZeroNoEviction;
   logic              StallConditions;
-  logic              WasStalling;       // Stall was asserted last cycle
-  logic              StoreHitFirstStall; // First stall cycle of a store-hit (used by CacheEn extension and SelAdrTag)
 
   typedef enum logic [3:0]{STATE_ACCESS, // hit states
                            // miss states
@@ -96,12 +92,9 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
 
   statetype CurrState, NextState;
 
-  // Suppress Hit/Miss when the tag SRAM read is stale (issue #1538). On a stale cycle the
-  // FSM stays in STATE_ACCESS via the TagSetStale stall condition below; the SRAM re-reads
-  // and the next cycle's Hit decision is valid.
-  assign AnyMiss = (CacheRW[0] | CacheRW[1]) & ~Hit & ~InvalidateCache & ~TagSetStale; // exclusion-tag: cache AnyMiss
-  assign AnyUpdateHit = (CacheRW[0]) & Hit & ~TagSetStale;             // exclusion-tag: icache storeAMO1
-  assign AnyHit = AnyUpdateHit | (CacheRW[1] & Hit & ~TagSetStale);   // exclusion-tag: icache AnyUpdateHit
+  assign AnyMiss = (CacheRW[0] | CacheRW[1]) & ~Hit & ~InvalidateCache; // exclusion-tag: cache AnyMiss
+  assign AnyUpdateHit = (CacheRW[0]) & Hit;                            // exclusion-tag: icache storeAMO1
+  assign AnyHit = AnyUpdateHit | (CacheRW[1] & Hit);                  // exclusion-tag: icache AnyUpdateHit
   assign CMOZeroNoEviction = CMOpM[3] & ~LineDirty;   // (hit or miss) with no writeback store zeros now
   assign CMOWriteback = ((CMOpM[1] | CMOpM[2]) & Hit & HitLineDirty) | CMOpM[3] & LineDirty;
 
@@ -115,8 +108,6 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   // PCNextF will no longer be pointing to the correct address.
   // But PCF will be the reset vector.
   flop #(1) resetDelayReg(.clk, .d(reset), .q(resetDelay));
-  flop #(1) wasStallReg(.clk, .d(Stall), .q(WasStalling));
-  assign StoreHitFirstStall = CacheRW[0] & Stall & ~WasStalling & ~StallConditions; // exclusion-tag: icache StoreHitFirstStall
 
   always_ff @(posedge clk)
     if (reset | FlushStage)    CurrState <= STATE_ACCESS;
@@ -154,7 +145,7 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
 
   // com back to CPU
   assign CacheCommitted = (CurrState != STATE_ACCESS) & ~(READ_ONLY_CACHE & (CurrState == STATE_ADDRESS_SETUP));
-  assign StallConditions =  FlushCache | AnyMiss | (|CMOpM) | TagSetStale;              // exclusion-tag: icache FlushCache
+  assign StallConditions =  FlushCache | AnyMiss | (|CMOpM);                            // exclusion-tag: icache FlushCache
   assign CacheStall = (CurrState == STATE_ACCESS & StallConditions) | // exclusion-tag: icache StallStates
                       (CurrState == STATE_FETCH) |
                       (CurrState == STATE_WRITEBACK) |
@@ -162,13 +153,7 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
                       (CurrState == STATE_FLUSH) |
                       (CurrState == STATE_FLUSH_WRITEBACK);
   // write enables internal to cache
-  // A transient false miss (hit/miss decision taken the cycle the tag-SRAM index changed) could
-  // otherwise reach STATE_WRITE_LINE and allocate a victim way, creating a duplicate tag whose
-  // clean refill shadows committed dirty data in the existing way (issue #1538).  This is
-  // prevented upstream: TagSetStale suppresses AnyMiss on the stale cycle (see above), so a
-  // false miss never advances to STATE_FETCH/STATE_WRITE_LINE.  Reaching STATE_WRITE_LINE thus
-  // always implies a true miss, so SetValid validates the fetched line unconditionally here.
-  assign SetValid = (CurrState == STATE_WRITE_LINE) |
+  assign SetValid = CurrState == STATE_WRITE_LINE |
                     (CurrState == STATE_ACCESS & CMOZeroNoEviction) |
                     (CurrState == STATE_WRITEBACK & CacheBusAck & CMOpM[3]);
   assign ClearValid = (CurrState == STATE_ACCESS & (CMOpM[0] | (CMOpM[2] & ~HitLineDirty))) |
@@ -212,30 +197,17 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
                          (CurrState == STATE_FLUSH_WRITEBACK & ~CacheBusAck) |
                          (CurrState == STATE_WRITEBACK & (CMOpM[1] | CMOpM[2]) & ~CacheBusAck);
 
-  assign SelAdrData = (CurrState == STATE_ACCESS & (CacheRW[0] | AnyMiss | (|CMOpM) | TagSetStale)) | // exclusion-tag: icache SelAdrCauses // changes if store delay hazard removed
+  assign SelAdrData = (CurrState == STATE_ACCESS & (CacheRW[0] | AnyMiss | (|CMOpM))) | // exclusion-tag: icache SelAdrCauses // changes if store delay hazard removed
                   (CurrState == STATE_FETCH) |
                   (CurrState == STATE_WRITEBACK) |
                   (CurrState == STATE_WRITE_LINE) |
                   resetDelay;
-  // StoreHitFirstStall: hold the tag-index at PAdr only on the first stall cycle of a store-hit.
-  // Without this, the extended CacheEn (below) would re-latch ValidWay from NextSet's row on
-  // subsequent stall cycles, corrupting hit/miss decisions (issue #1538).  Restricting to the
-  // first stall cycle preserves the tag prefetch on all later stall cycles.
-  // TagSetStale: drive CacheSetTag = PAdr so the tag SRAM re-reads at the correct set during
-  // the stale-cycle stall (issue #1538).  Without this, CacheSetTag stays on NextSet and the
-  // stall never clears.
-  assign SelAdrTag = (CurrState == STATE_ACCESS & (AnyMiss | (|CMOpM) | StoreHitFirstStall | TagSetStale)) | // exclusion-tag: icache SelAdrTag
+  assign SelAdrTag = (CurrState == STATE_ACCESS & (AnyMiss | (|CMOpM))) | // exclusion-tag: icache SelAdrTag // changes if store delay hazard removed
                   (CurrState == STATE_FETCH) |
                   (CurrState == STATE_WRITEBACK) |
                   (CurrState == STATE_WRITE_LINE) |
                   resetDelay;
   assign SelFetchBuffer = CurrState == STATE_WRITE_LINE | CurrState == STATE_ADDRESS_SETUP;
-  // Extend CacheEn for the first cycle of a stalled store-hit so the write reaches the data SRAM
-  // (issue #1538).  Gated with ~StoreAmoFaultM so a faulting store/AMO (page, access, or
-  // misaligned fault detected combinatorially on cycle 1 of the stall, before FlushStage from
-  // the trap arrives) never commits to the SRAM.  Also gated with ~FlushStage for any other
-  // flush-causing event that arrives before cycle 1.
-  assign CacheEn = (~Stall | StallConditions) | (CurrState != STATE_ACCESS) | reset | InvalidateCache | // exclusion-tag: cache CacheEn
-                   ((SetValid | SetDirty | ClearValid | ClearDirty) & StoreHitFirstStall & ~StoreAmoFaultM & ~FlushStage);
+  assign CacheEn = (~Stall | StallConditions) | (CurrState != STATE_ACCESS) | reset | InvalidateCache; // exclusion-tag: dcache CacheEn
 
 endmodule // cachefsm

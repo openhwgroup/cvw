@@ -226,10 +226,6 @@ module testbench;
         "arch64pmp":     if (P.PMP_ENTRIES > 0)   tests = arch64pmp;
         "arch64vm_sv39": if (P.SV39_SUPPORTED)    tests = arch64vm_sv39;
         "arch64vm_sv48": if (P.SV48_SUPPORTED)    tests = arch64vm_sv48;
-        "arch64vm_sv48_a": if (P.SV48_SUPPORTED)    tests = arch64vm_sv48_a;
-        "arch64vm_sv48_b": if (P.SV48_SUPPORTED)    tests = arch64vm_sv48_b;
-        "arch64vm_sv39_isolate":     if (P.SV39_SUPPORTED) tests = arch64vm_sv39_isolate;
-        "arch64vm_sv48_mxr_isolate": if (P.SV48_SUPPORTED) tests = arch64vm_sv48_mxr_isolate;
         "arch64vm_sv57": if (P.SV57_SUPPORTED)    tests = arch64vm_sv57;
       endcase
     end else begin // RV32
