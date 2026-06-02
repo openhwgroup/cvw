@@ -505,7 +505,6 @@ def selectTests(args, sims, coverStr):
         addTests(tests_buildrootbootlockstep, lockstepsim, coverStr, configs) # lockstep with Questa and ImperasDV runs overnight
     # only run RV64GC tests on in code coverage mode
     if args.ccov:
-        addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/pmp", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
         addTestsByDir(f"{WALLY}/tests/riscof/work/wally-riscv-arch-test/rv64i_m/privilege", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
         addTestsByDir(f"{archVerifDir}/work/cvw-rv64gc/elfs", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
         addTestsByDir(f"{WALLY}/tests/coverage/", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
@@ -514,15 +513,7 @@ def selectTests(args, sims, coverStr):
         # rv32gc just for testing ACTs, not used by coverage
         #addTestsByDir(f"{archVerifDir}/work/cvw-rv32gc/elfs", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1)
         addTestsByDir(f"{archVerifDir}/work/cvw-rv64gc/elfs", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
-        # Extra tests from riscv-arch-test that should be run as part of the functional coverage suite
-        # addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m/vm_sv32", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1)
-        # addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/vm_sv39", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
-        # addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/vm_sv48", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
-        # addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m/vm_pmp", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1)
-        # addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/vm_pmp", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
-        # addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m/pmp32", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1) TODO: Add when working in lockstep
-        # addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/pmp", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1) TODO: Add when working in lockstep
-    # run branch predictor tests
+     # run branch predictor tests
     if args.branch:
         addTests(bpredtests, defaultsim, coverStr, configs)
     # run Breker tests (requires a license for the breker tool)
