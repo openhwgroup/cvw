@@ -154,38 +154,48 @@ coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefs
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign CacheAccess"] -item e 1 -fecexprrow 4
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign BusStall"] -item e 1 -fecexprrow 10,12,18
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign CacheBusAck"] -item e 1 -fecexprrow 3
+
 # I$ AHBBuscachefsm dead FSM states/transitions: the read-only cache never enters the writeback/atomic
 # states, and with HREADY always 1 the bus never stalls (no DATA_PHASE->ADR_PHASE re-arbitration).
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -fstate CurrState CACHE_WRITEBACK ATOMIC_READ_DATA_PHASE ATOMIC_PHASE
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -ftrans CurrState ADR_PHASE->CACHE_WRITEBACK CACHE_FETCH->CACHE_WRITEBACK CACHE_WRITEBACK->ADR_PHASE CACHE_WRITEBACK->CACHE_FETCH DATA_PHASE->ADR_PHASE ATOMIC_READ_DATA_PHASE->ATOMIC_PHASE ATOMIC_READ_DATA_PHASE->ADR_PHASE ATOMIC_PHASE->MEM3 ATOMIC_PHASE->ADR_PHASE
-# I$ AHBBuscachefsm dead branch/condition/expression rows (read-only cache, HREADY always 1):
-#   HREADY1: ADR_PHASE->CACHE_WRITEBACK on BusWrite -- read-only cache never writes back.
-#   FetchWait: CACHE_FETCH->CACHE_FETCH back-to-back read -- I$ never pipelines a second line fetch.
-#   AtomicElse: the ATOMIC_READ_DATA_PHASE->itself else; the state is dead (no atomics in a read-only cache).
-#   SelBusBeat: the BusRW[0]/BusWrite/DATA_PHASE/ATOMIC_*/CACHE_WRITEBACK select terms are write/atomic/
-#     writeback paths a read-only cache never drives (only the CACHE_FETCH term is live).
+
+# I$ AHBBuscachefsm HREADY1: ADR_PHASE->CACHE_WRITEBACK on BusWrite -- read-only cache never writes back.
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY1"] -item bs 1
+
+# I$ AHBBuscachefsm FetchWait: CACHE_FETCH->CACHE_FETCH back-to-back read -- the I$ never pipelines a second line fetch.
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm FetchWait"] -item bs 1
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm FetchWait"] -item c 1 -feccondrow 1,2,4,6
+
+# I$ AHBBuscachefsm AtomicElse: the ATOMIC_READ_DATA_PHASE->itself else; the state is dead (no atomics in a read-only cache).
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm AtomicElse"] -item b 1
+
+# I$ AHBBuscachefsm SelBusBeat: the BusRW[0]/BusWrite/DATA_PHASE/ATOMIC_*/CACHE_WRITEBACK select terms are
+# write/atomic/writeback paths a read-only cache never drives (only the CACHE_FETCH term is live).
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign SelBusBeat"] -item e 1 -fecexprrow 1,2,4,6,7,8,9,10,11,12,14
-# I$ CACHE_FETCH fetch-done (HREADY & FinalBeatCount & ~|CacheBusRW -> ADR_PHASE) _0 rows are dead: HREADY
-# is always 1, and a pending request at/after the final beat is the dead back-to-back Fetch path.  The
-# HTRANS (CacheAccess & |BeatCount) CacheAccess_0 row is dead: BeatCount is reset outside cache states.
+
+# I$ AHBBuscachefsm CACHE_FETCH fetch-done (HREADY & FinalBeatCount & ~|CacheBusRW -> ADR_PHASE) _0 rows are
+# dead: HREADY is always 1, and a pending request at/after the final beat is the dead back-to-back Fetch path.
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "FinalBeatCount & ~\|CacheBusRW\\)  NextState = ADR_PHASE"] -item c 1 -feccondrow 1
+
+# I$ AHBBuscachefsm HTRANS (CacheAccess & |BeatCount) CacheAccess_0: dead -- BeatCount is reset outside cache states.
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "CacheAccess & \\|BeatCount\\) ?"] -item c 1 -feccondrow 1
-# HBURST (|CacheBusRW & ~Flush) | (CacheAccess & |BeatCount): the second-term rows CacheAccess_0 (5),
-# CacheAccess_1 (6), |BeatCount_1 (8) are unreachable -- they need a flush landing mid CACHE_FETCH burst,
-# but in this in-order pipe the I$ never takes a mid-burst flush (the pipe is stalled during the fetch).
+
+# I$ AHBBuscachefsm HBURST (|CacheBusRW & ~Flush) | (CacheAccess & |BeatCount): the second-term rows
+# CacheAccess_0 (5), CacheAccess_1 (6), |BeatCount_1 (8) are unreachable -- they need a flush landing mid
+# CACHE_FETCH burst, but in this in-order pipe the I$ never takes a mid-burst flush (the pipe is stalled).
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign HBURST"] -item c 1 -feccondrow 5,6,8
-# CaptureEn ((~Flush & DATA_PHASE) & BusRW[1]) Flush_1: unreachable -- CVW (in-order) never flushes an
-# in-flight uncached fetch bus transaction.  (Questa removes the whole expression item here, not just the
-# row; sibling terms are tracked by the other buscachefsm expressions and the FSM, so no signal is lost.)
+
+# I$ AHBBuscachefsm CaptureEn ((~Flush & DATA_PHASE) & BusRW[1]) Flush_1: unreachable -- CVW (in-order) never
+# flushes an in-flight uncached fetch bus transaction.  (Questa removes the whole expression item here, not
+# just the row; sibling terms are tracked by the other buscachefsm expressions and the FSM, so nothing lost.)
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign CaptureEn"] -item e 1 -fecexprrow 2
-# ADR_PHASE (HREADY & |BusRW) HREADY_0: unreachable in this in-order pipe -- an uncached fetch's bus
-# request is a single ADR cycle; whenever the LSU holds the bus the front-end is stalled and not
+
+# I$ AHBBuscachefsm ADR_PHASE (HREADY & |BusRW) HREADY_0: unreachable in this in-order pipe -- an uncached
+# fetch's bus request is a single ADR cycle; whenever the LSU holds the bus the front-end is stalled and not
 # initiating a new fetch, so that 1-cycle uncached request never coincides with an LSU grant.
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY0"] -item c 1 -feccondrow 1
+
 # bpred BPWrongE InstrValidD_0: unreachable single-issue invariant.  When a branch mispredicts in E the
 # next instruction in D is always valid, because no flush could invalidate D without also flushing the
 # branch in E.  So InstrValidD is always 1 when (PCCorrectE != PCD) & InstrValidE (FEC row 5 unreachable).
@@ -197,6 +207,7 @@ coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [Get
 coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: dcache InvalidateCheck"] -item s 1
 coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: dcache CacheEn"] -item e 1 -fecexprrow 12
 coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: cache AnyMiss"] -item e 1 -fecexprrow 4
+
 # D$ InvalidateCache is tied to 1'b0 in lsu.sv (the data cache has no invalidate-all), so the
 # InvalidateCache & ~InvalidateFlushStage invalidate paths can never be exercised in the D$.
 coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: dcache InvalidateCheck"] -item c 1
@@ -383,12 +394,14 @@ coverage exclude -scope /dut/core/lsu/lsu/hptw/hptw -linerange $line-$line -item
 # NOTE: the hptw instance is at /dut/core/lsu/hptw/hptw (single lsu).  The four exclusions above use a
 # stale /dut/core/lsu/lsu/hptw/hptw path that no longer resolves (silent no-ops) -- left untouched here;
 # the two exclusions below use the correct path.
+
 # UPDATE_PTE never self-loops on a cache-bus stall: the PTE being A/D-updated was just read during the
 # same uninterrupted walk (LSU stalled, line cannot be evicted), so it is resident/writable in the D$ and
 # the UPDATE_PTE store hits.  DCacheBusStallM therefore cannot assert in UPDATE_PTE, so the
 # UPDATE_PTE -> UPDATE_PTE branch/statement is unreachable.
 set line [GetLineNum ${SRC}/mmu/hptw.sv "DCacheBusStallM.*UPDATE_PTE"]
 coverage exclude -scope /dut/core/lsu/hptw/hptw -linerange $line-$line
+
 # (SvMode==SV57)_0 on the PPN-source mux is unreachable: the L4_ADR/L4_RD walker states in the non-masking
 # condition only exist when SvMode==SV57 (InitialWalkerState=L4_ADR is gated on SV57), so SvMode can never
 # differ from SV57 while in an L4 state.  Remaining mux terms are covered by the NextWalkerState FSM case.
@@ -471,26 +484,29 @@ set line [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREAD
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 1
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 5
 
-# CACHE_FETCH fetch-done branch (HREADY & FinalBeatCount & ~|CacheBusRW -> ADR_PHASE) _0 condition row:
-# HREADY is always 1 (ram_ahb never stalls), and a pending request at/after the final beat is the dead
-# back-to-back FetchWriteback/FetchWait paths excluded above, so ~|CacheBusRW_0 never co-occurs.
+# D$ AHBBuscachefsm CACHE_FETCH fetch-done branch (HREADY & FinalBeatCount & ~|CacheBusRW -> ADR_PHASE) _0
+# condition row: HREADY is always 1 (ram_ahb never stalls), and a pending request at/after the final beat
+# is the dead back-to-back FetchWriteback/FetchWait paths excluded above, so ~|CacheBusRW_0 never co-occurs.
 set line [GetLineNum ${SRC}/ebu/buscachefsm.sv "FinalBeatCount & ~\|CacheBusRW\\)  NextState = ADR_PHASE"]
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 1
-# More unreachable D$ buscachefsm rows:
-#  - BeatCountReg/BeatCountDelayedReg reset (~HRESETn | BeatCntReset) HRESETn_0: a reset coincident with an
-#    in-flight beat never happens for the D$ (no D$ bus transaction is active at power-on reset).
-#  - BeatCntEn (NextState==ADR_PHASE)_0: a pending cached request with HREADY forces NextState to a cache
-#    state (priority-masked).
-#  - HTRANS pipelined-request term CacheAccess_0: FinalBeatCount only asserts at end of a cache burst
-#    (CacheAccess=1), so CacheAccess=0 & FinalBeatCount never co-occur.
+
+# D$ AHBBuscachefsm BeatCountReg/BeatCountDelayedReg reset (~HRESETn | BeatCntReset) HRESETn_0: a reset
+# coincident with an in-flight beat never happens for the D$ (no D$ bus transaction is active at power-on reset).
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "BeatCountReg\\("] -item e 1 -fecexprrow 1
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "BeatCountDelayedReg\\("] -item e 1 -fecexprrow 1
+
+# D$ AHBBuscachefsm BeatCntEn (NextState==ADR_PHASE)_0: a pending cached request with HREADY forces
+# NextState to a cache state (priority-masked).
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign BeatCntEn"] -item e 1 -fecexprrow 9
+
+# D$ AHBBuscachefsm HTRANS pipelined-request term CacheAccess_0: FinalBeatCount only asserts at the end of a
+# cache burst (CacheAccess=1), so CacheAccess=0 & FinalBeatCount never co-occur.
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign HTRANS"] -item c 1 -feccondrow 8
-# CaptureEn ((~Flush & DATA_PHASE) & BusRW[1]) Flush_1: unreachable for the D$ -- a DATA_PHASE access with
-# BusRW[1] is a committed, non-speculative uncached load read; the D$ Flush input (LSUFlushW) has no
-# branch-mispredict component, so Flush is always 0 here.  (Questa removes the whole CaptureEn expression
-# item; sibling rows are tracked by the other buscachefsm expressions and the FSM.)
+
+# D$ AHBBuscachefsm CaptureEn ((~Flush & DATA_PHASE) & BusRW[1]) Flush_1: unreachable for the D$ -- a
+# DATA_PHASE access with BusRW[1] is a committed, non-speculative uncached load read; the D$ Flush input
+# (LSUFlushW) has no branch-mispredict component, so Flush is always 0 here.  (Questa removes the whole
+# CaptureEn expression item; sibling rows are tracked by the other buscachefsm expressions and the FSM.)
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign CaptureEn"] -item e 1 -fecexprrow 2
 
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign CacheBusAck"] -item e 1 -fecexprrow 5
@@ -545,6 +561,7 @@ coverage exclude -scope /dut/core/ebu/ebu/ebufsmarb/BeatCounter/cntrflop
 ####################
 # IFU
 ####################
+
 # InstrUpdateAF (instruction-fetch Svadu hardware A-bit update on a TLB hit) is unreachable: the HPTW
 # performs walk-time A/D updates -- when ADUE=1 and a leaf has A=0, hptw forces ITLBWriteF=0, the walker
 # writes A=1 to memory and then fills the TLB with A=1.  So the ITLB never holds an A=0 entry, and
