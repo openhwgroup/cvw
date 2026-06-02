@@ -55,6 +55,8 @@ string coverage64gc[] = '{
   "tlbNAPOT",
   "tlbASID",
   "tlbGLB",
+  "tlbGLBASID",
+  "tlbGLBHIT",
   "tlbMP",
   "tlbGP",
   "tlbTP",
@@ -73,7 +75,11 @@ string coverage64gc[] = '{
   "pmppriority",
   "pmpcbo",
   "pmpadrdecs",
-  "btbthrash"
+  "btbthrash",
+  "fpuReservedRM",
+  "decompReserved",
+  "pmpTOR7",
+  "cacheInval"
 };
 
 string buildroot[] = '{
@@ -444,6 +450,28 @@ string arch64vm_sv48[] = '{
   "rv64i_m/vm_pmp/src/sv48/sv48_pmp_on_pa_U_mode.S",
   "rv64i_m/vm_pmp/src/sv48/sv48_pmp_on_pte_S_mode.S",
   "rv64i_m/vm_pmp/src/sv48/sv48_pmp_on_pte_U_mode.S"
+};
+
+string arch64vm_sv48_a[] = '{
+  `RISCVARCHTEST,
+  "rv64i_m/vm_sv48/src/sv48_res_global_pte_U_mode.S",
+  "rv64i_m/vm_sv48/src/sv48_pte_reserved_field_S_mode.S"
+};
+
+string arch64vm_sv48_b[] = '{
+  `RISCVARCHTEST,
+  "rv64i_m/vm_sv48/src/sv48_pte_reserved_field_S_mode.S",
+  "rv64i_m/vm_sv48/src/sv48_res_global_pte_U_mode.S"
+};
+
+string arch64vm_sv39_isolate[] = '{
+  `RISCVARCHTEST,
+  "rv64i_m/vm_sv39/src/vm_VA_all_zeros_S_mode.S"
+};
+
+string arch64vm_sv48_mxr_isolate[] = '{
+  `RISCVARCHTEST,
+  "rv64i_m/vm_sv48/src/sv48_mxr_S_mode.S"
 };
 
 string arch64vm_sv57[] = '{
