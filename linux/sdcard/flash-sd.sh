@@ -240,7 +240,7 @@ fi
 echo
 
 # Only print this part if there actually are partitions on the card
-if [ -e "$SDCARD""1" ]; then
+if [ -b "${SDCARD}${PART_PREFIX}1" ]; then
     echo "GPT Information for $SDCARD ==================================="
     sudo sgdisk -p $SDCARD
 fi
