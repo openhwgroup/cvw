@@ -41,8 +41,7 @@ module tlbcamline import cvw::*;  #(parameter cvw_t P,
   input  logic                  PTE_G,
   input  logic                  PTE_NAPOT,  // entry is in NAPOT mode (N bit set and PPN[3:0] = 1000)
   input  logic [2:0]            PageTypeWriteVal,
-  input  logic                  TLBFlush,     // Flush this line (set valid to 0)
-  input  logic                  TLBFlushAll,  // Flush global (G=1) entries too; when 0, G=1 entries are preserved
+  input  logic                  TLBFlush,   // Flush this line (set valid to 0)
   output logic [2:0]            PageTypeRead,
   output logic                  Match
 );
@@ -110,10 +109,7 @@ module tlbcamline import cvw::*;  #(parameter cvw_t P,
   assign PageTypeRead = PageType & {3{Match}};
 
   // On a write, set the valid bit high and update the stored key.
-  // On a flush, zero the valid bit and leave the key unchanged, unless the entry is global (G=1)
-  // and the flush is ASID-specific (TLBFlushAll=0): global mappings survive an ASID-scoped sfence.vma.
-  logic ShouldFlush;
-  assign ShouldFlush = TLBFlush & (~PTE_G | TLBFlushAll);
-  flopenr #(1) validbitflop(clk, reset, WriteEnable | ShouldFlush, ~ShouldFlush, Valid);
+  // On a flush, zero the valid bit and leave the key unchanged.
+  flopenr #(1) validbitflop(clk, reset, WriteEnable | TLBFlush, ~TLBFlush, Valid);
   flopenr #(KEY_BITS) keyflop(clk, reset, WriteEnable, {SATP_ASID, VPN}, Key);
 endmodule
