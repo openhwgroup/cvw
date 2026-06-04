@@ -115,6 +115,11 @@ coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [Get
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: icache SelAdrCauses"] -item e 1 -fecexprrow 4 10
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: icache SelAdrTag"] -item e 1 -fecexprrow 8
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: icache CacheBusRCauses"] -item e 1 -fecexprrow 1-2 12
+# I$ CacheEn L211 reset_1 (FEC row 8): reset=1 while CurrState==STATE_ACCESS, Stall=1, StallConditions=0.
+# Reset is asserted once by the testbench before any instruction runs, and the I$ is not stalled during
+# that reset, so no RISC-V program can drive this term.  (The D$ instance of this same row IS covered
+# because the D$ is stalled out of reset; the I$ Stall is 0 at reset.)
+coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: dcache CacheEn"] -item e 1 -fecexprrow 8
 
 # cache.sv AdrSelMuxData and AdrSelMuxTag and CacheBusAdrMux, excluding unhit Flush branch
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/AdrSelMuxData -linerange [GetLineNum ${SRC}/generic/mux.sv "exclusion-tag: mux3"] -item b 1
@@ -207,6 +212,22 @@ coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [Get
 coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: dcache InvalidateCheck"] -item s 1
 coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: dcache CacheEn"] -item e 1 -fecexprrow 12
 coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: cache AnyMiss"] -item e 1 -fecexprrow 4
+
+# D$ cachefsm L123 (|CMOpM & ~CMOWriteback) condition, CMOWriteback term (feccondrow 2): priority-masked.
+# The higher-priority L122 else-if ((AnyMiss | CMOWriteback) & ~READ_ONLY_CACHE) fires first whenever
+# CMOWriteback=1 (D$ READ_ONLY_CACHE=0), so L123 is only ever evaluated with CMOWriteback=0 and
+# CMOWriteback_1 is unreachable.
+coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "any CMO without dirty writeback"] -item c 1 -feccondrow 2
+
+# D$ cachefsm L193 LoadMiss = (Hit ~| InvalidateCache) & CacheRWM[1], InvalidateCache_1 (FEC row 4):
+# D$ InvalidateCache is tied 1'b0 in lsu.sv, so InvalidateCache can never be 1.  (The "cache AnyMiss"
+# exclusion above resolves via GetLineNum to L95/AnyMiss; this anchor catches the L193 LoadMiss copy.)
+coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "assign LoadMiss"] -item e 1 -fecexprrow 4
+
+# D$ cachefsm L195 CacheBusRW[0] CacheCMOpM[1]/[2] terms (FEC rows 13-16): the writeback-CMO term
+# (STATE_WRITEBACK & (CMOpM[1]|CMOpM[2]) & ~CacheBusAck) is logically subsumed by the earlier OR term
+# (STATE_WRITEBACK & ~CacheBusAck), so CacheCMOpM[1]/[2] never independently drive CacheBusRW[0].
+coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "icache CacheBusW"] -item e 1 -fecexprrow 13,14,15,16
 
 # D$ InvalidateCache is tied to 1'b0 in lsu.sv (the data cache has no invalidate-all), so the
 # InvalidateCache & ~InvalidateFlushStage invalidate paths can never be exercised in the D$.
