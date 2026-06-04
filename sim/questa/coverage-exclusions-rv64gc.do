@@ -398,22 +398,22 @@ coverage exclude -scope /dut/core/ifu/ifu/immu/immu/tlb/tlb/tlbcontrol -linerang
 
 # RV64GC HPTW never starts at L1_ADR
 set line [GetLineNum ${SRC}/mmu/hptw.sv "InitialWalkerState == L1_ADR"]
-coverage exclude -scope /dut/core/lsu/lsu/hptw/hptw -linerange $line-$line -item c 1 -feccondrow 2
+coverage exclude -scope /dut/core/lsu/hptw/hptw -linerange $line-$line -item c 1 -feccondrow 2
 
 # Never possible to get a page fault when neither reading nor writing
 set line [GetLineNum ${SRC}/mmu/hptw.sv "assign HPTWLoadPageFault"]
-coverage exclude -scope /dut/core/lsu/lsu/hptw/hptw -linerange $line-$line -item e 1 -fecexprrow 7
+coverage exclude -scope /dut/core/lsu/hptw/hptw -linerange $line-$line -item e 1 -fecexprrow 7
 
 # Never possible to get a store page fault from an ITLB walk
 set line [GetLineNum ${SRC}/mmu/hptw.sv "assign HPTWStoreAmoPageFault"]
-coverage exclude -scope /dut/core/lsu/lsu/hptw/hptw -linerange $line-$line -item e 1 -fecexprrow 3
+coverage exclude -scope /dut/core/lsu/hptw/hptw -linerange $line-$line -item e 1 -fecexprrow 3
 
 # Never possible to get Access = 0 on a nonleaf PTE with no OtherPageFault (because InvalidRead/Write will be 1 on the nonleaf)
 set line [GetLineNum ${SRC}/mmu/hptw.sv "assign HPTWUpdateDA"]
-coverage exclude -scope /dut/core/lsu/lsu/hptw/hptw -linerange $line-$line -item e 1 -fecexprrow 3
+coverage exclude -scope /dut/core/lsu/hptw/hptw -linerange $line-$line -item e 1 -fecexprrow 3
 
 # NOTE: the hptw instance is at /dut/core/lsu/hptw/hptw (single lsu).  The four exclusions above use a
-# stale /dut/core/lsu/lsu/hptw/hptw path that no longer resolves (silent no-ops) -- left untouched here;
+# stale /dut/core/lsu/hptw/hptw path that no longer resolves (silent no-ops) -- left untouched here;
 # the two exclusions below use the correct path.
 
 # UPDATE_PTE never self-loops on a cache-bus stall: the PTE being A/D-updated was just read during the
@@ -426,7 +426,7 @@ coverage exclude -scope /dut/core/lsu/hptw/hptw -linerange $line-$line
 # (SvMode==SV57)_0 on the PPN-source mux is unreachable: the L4_ADR/L4_RD walker states in the non-masking
 # condition only exist when SvMode==SV57 (InitialWalkerState=L4_ADR is gated on SV57), so SvMode can never
 # differ from SV57 while in an L4 state.  Remaining mux terms are covered by the NextWalkerState FSM case.
-set line [GetLineNum ${SRC}/mmu/hptw.sv "P.SV57_SUPPORTED & SvMode == P.SV57 & "]
+set line [GetLineNum ${SRC}/mmu/hptw.sv "P\.SV57_SUPPORTED & SvMode == P.SV57 & "]
 coverage exclude -scope /dut/core/lsu/hptw/hptw -linerange $line-$line -item c 1 -feccondrow 1
 
 ###############
