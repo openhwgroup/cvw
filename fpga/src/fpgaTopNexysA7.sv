@@ -47,6 +47,7 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
    output logic        SDCCmd,
    output logic        SDCCS,
    input logic         SDCCD,
+   output logic        SD_RESET,
    //input logic         SDCWP, // No WP pin
 
 `ifdef RVVI_SYNTH_SUPPORTED
@@ -214,12 +215,13 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
 (* mark_debug = "true" *)  logic              RVVIStall;
 
   logic SDCWP; // No WP pin
-  assign SDCWP  = 1'b0; 
+  assign SDCWP  = 1'b0;
   assign GPIOIN = {25'b0, SDCCD, SDCWP, 1'b0, GPI};
   assign GPO = GPIOOUT[4:0];
 
   logic [3:0] SDCCSin;
   assign SDCCS = SDCCSin[0];
+  assign SD_RESET = 1'b0;
 
   // active high reset
   logic reset = ~resetn;
