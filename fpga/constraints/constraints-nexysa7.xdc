@@ -372,3 +372,7 @@ set_max_delay -to [get_pins -hier -include_replicated_objects -filter {NAME =~ *
 set_max_delay -from [get_cells -hier *rstdiv0_sync_r1_reg*] -to [get_pins -filter {NAME =~ */RESET} -of [get_cells -hier -filter {REF_NAME == PHY_CONTROL}]] -datapath_only 5
 #set_false_path -through [get_pins -hier -filter {NAME =~ */u_iodelay_ctrl/sys_rst}]
 set_false_path -through [get_nets -hier -filter {NAME =~ */u_iodelay_ctrl/sys_rst_i}]
+
+
+# DDR2 calibration finished signal CDC
+set_false_path -to [get_pins {ddr_ready_cpu_sync_reg[0]/D}]
