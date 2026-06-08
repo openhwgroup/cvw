@@ -1,3 +1,5 @@
+create_generated_clock -name SPISDCClock -source [get_pins mmcm/clk_out3] -multiply_by 1 -divide_by 1 [get_pins wallypipelinedsoc/uncoregen.uncore/SDCCLK]
+
 ##### clock #####
 # Nexys A7-100T CLK100MHZ
 set_property PACKAGE_PIN E3 [get_ports default_100mhz_clk]

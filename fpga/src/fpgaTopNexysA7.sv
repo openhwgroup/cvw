@@ -223,15 +223,18 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
   assign SDCCS = SDCCSin[0];
   assign SD_RESET = 1'b0;
 
-  // active high reset
-  logic reset = ~resetn;
-  logic south_reset = ~resetn;
+  logic south_reset;
+  assign south_reset = ~resetn;
 
   // mmcm
    mmcm mmcm(.clk_out1(clk200),
                      .clk_out2(clk200_b),
                      .clk_out3(cpuclk_raw),
+`ifdef RVVI_SYNTH_SUPPORTED
                      .clk_out4(phy_ref_clk),
+`else
+                     .clk_out4(),
+`endif
                      .reset(1'b0),
                      .locked(mmcm1_locked),
                      .clk_in1(default_100mhz_clk));
@@ -619,7 +622,8 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
     assign RVVIStall = '0;
   end
 
-  //assign phy_reset_n = ~bus_struct_reset;
+`ifdef RVVI_SYNTH_SUPPORTED
    assign phy_reset_n = ~1'b0;
+`endif
 
 endmodule
