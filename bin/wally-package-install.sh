@@ -58,6 +58,7 @@ case "$FAMILY" in
         GNU_PACKAGES+=(libmpc-devel mpfr-devel gmp-devel zlib-devel expat-devel glib2-devel libslirp-devel)
         QEMU_PACKAGES+=(glib2-devel libfdt-devel pixman-devel zlib-devel ninja-build)
         SPIKE_PACKAGES+=(dtc) # compiling Spike with boost fails on RHEL
+        WHISPER_PACKAGES+=(libstdc++-static) # Whisper links with -static-libstdc++
         SAIL_PACKAGES+=(ninja-build gmp-devel)
         VERILATOR_PACKAGES+=(zlib-devel gperftools-devel mold)
         BUILDROOT_PACKAGES+=(ncurses ncurses-base ncurses-libs ncurses-devel gcc-gfortran) # gcc-gfortran is only needed for compiling spec benchmarks on buildroot linux
@@ -101,18 +102,32 @@ case "$FAMILY" in
         VIVADO_PACKAGES+=(libncurses*) # Vivado hangs on the third stage of installation without this
         ;;
     suse)
-        PYTHON_VERSION=python3.12
-        PYTHON_VERSION_PACKAGE=python312
+        if ((SUSE_VERSION >= 160)); then
+            PYTHON_VERSION=python3.13
+            PYTHON_VERSION_PACKAGE=python313
+        elif ((SUSE_VERSION >= 156)); then
+            PYTHON_VERSION=python3.12
+            PYTHON_VERSION_PACKAGE=python312
+        fi
+
         PACKAGE_MANAGER="zypper -n"
         UPDATE_COMMAND="$PACKAGE_MANAGER update"
-        GENERAL_PACKAGES+=(which curl "$PYTHON_VERSION_PACKAGE" "$PYTHON_VERSION_PACKAGE"-pip pkg-config)
+        GENERAL_PACKAGES+=(which curl "$PYTHON_VERSION_PACKAGE" "$PYTHON_VERSION_PACKAGE"-pip pkg-config gcc-c++)
         GNU_PACKAGES+=(mpc-devel mpfr-devel gmp-devel zlib-devel libexpat-devel glib2-devel libslirp-devel)
         QEMU_PACKAGES+=(glib2-devel libfdt-devel libpixman-1-0-devel zlib-devel ninja)
-        SPIKE_PACKAGES+=(dtc libboost_regex1_75_0-devel libboost_system1_75_0-devel)
+        SPIKE_PACKAGES+=(dtc)
         SAIL_PACKAGES+=(ninja gmp-devel)
         VERILATOR_PACKAGES+=(libfl2 libfl-devel zlib-devel gperftools-devel perl-doc)
-        BUILDROOT_PACKAGES+=(ncurses-utils ncurses-devel ncurses5-devel gcc-fortran) # gcc-fortran is only needed for compiling spec benchmarks on buildroot linux
-        GENERAL_PACKAGES+=(gcc13 gcc13-c++ cpp13) # Newer version of gcc needed for many tools. Default is gcc7
+        BUILDROOT_PACKAGES+=(ncurses-utils ncurses-devel gcc-fortran) # gcc-fortran is only needed for compiling spec benchmarks on buildroot linux
+
+        if ((SUSE_VERSION >= 160)); then
+            SPIKE_PACKAGES+=(libboost_regex1_86_0-devel libboost_system1_86_0-devel)
+            VERILATOR_PACKAGES+=(mold)
+        elif ((SUSE_VERSION >= 156)); then
+            SPIKE_PACKAGES+=(libboost_regex1_75_0-devel libboost_system1_75_0-devel)
+            BUILDROOT_PACKAGES+=(ncurses5-devel) # ncurses5 is no longer packaged in SUSE 16
+            GENERAL_PACKAGES+=(gcc13 gcc13-c++ cpp13) # Newer version of gcc needed for many tools. Default is gcc7
+        fi
         ;;
 esac
 
@@ -121,11 +136,11 @@ esac
 if [ "${1}" == "--check" ]; then
     section_header "Checking Dependencies from Package Manager"
     if [[ "$FAMILY" == rhel || "$FAMILY" == suse ]]; then
-        for pack in "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${SAIL_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}"; do
+        for pack in "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${WHISPER_PACKAGES[@]}" "${SAIL_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}"; do
             rpm -q "$pack" > /dev/null || (echo -e "${FAIL_COLOR}Missing packages detected (${WARNING_COLOR}$pack${FAIL_COLOR}). Run as root to auto-install or run wally-package-install.sh first.${ENDC}" && exit 1)
         done
     elif [[ "$FAMILY" == ubuntu || "$FAMILY" == debian ]]; then
-        for pack in "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${SAIL_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}"; do
+        for pack in "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${WHISPER_PACKAGES[@]}" "${SAIL_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}"; do
             dpkg -l "$pack" | grep "ii" > /dev/null || (echo -e "${FAIL_COLOR}Missing packages detected (${WARNING_COLOR}$pack${FAIL_COLOR}). Run as root to auto-install or run wally-package-install.sh first." && exit 1)
         done
     fi
@@ -155,7 +170,7 @@ else
     # Update and Upgrade tools
     eval "$UPDATE_COMMAND"
     # Install packages listed above using appropriate package manager
-    eval $PACKAGE_MANAGER install "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${SAIL_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}" "${VIVADO_PACKAGES[@]}"
+    eval $PACKAGE_MANAGER install "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${WHISPER_PACKAGES[@]}" "${SAIL_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}" "${VIVADO_PACKAGES[@]}"
 
     # Post install steps
     # Vivado looks for ncurses5 libraries, but Ubuntu 24.04 only has ncurses6

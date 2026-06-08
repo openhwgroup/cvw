@@ -1,2 +1,5 @@
 # coremark_waves.do
-add wave sim:/coremark_tb/dut/*
+add wave sim:/testbench/dut/*
+
+run -all
+view wave

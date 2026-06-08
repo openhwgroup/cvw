@@ -57,22 +57,24 @@ rvtest_entry_point:
     li   t6, 0        /* x31 */
 
     /* ---- call C entry ---- */
-    #call partial_load_test
-    #call partial_load_store_test
     call main
 
     /* ---- fallthrough to end ---- */
-    j end
+    li  t0, 1
+    bne a0, t0, fail
+    j   pass
 
 finish:
-    /* write gp to tohost and hang */
+    /* write gp (exit code) to tohost and end simulation */
     la   t0, tohost
     sw   gp, 0(t0)
+    sw   x0, 4(t0)
 1:  j    1b
 
 fail:
     /* encode a non-1 fail code (gp already holds something else if you want) */
-    li   gp, 2
+    add  gp, gp, gp # failure code needs to be shifted left by 1 # exit needs 1 in bottom most bit
+    addi gp, gp, 1
     j    finish
 
 pass:
@@ -80,15 +82,10 @@ pass:
     li   gp, 1
     j    finish
 
-end:
-    li   gp, 3
-    j finish              /* infinite loop */
-    .size end, .-end
-
-
+/* to host data section */
     .section .tohost,"aw",@progbits
     .balign 4
     .globl tohost
 
 tohost:
-    .word 0
+    .dword 0

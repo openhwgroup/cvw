@@ -100,7 +100,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   output logic              wfiM, IntPendingM                               // Stall in Memory stage for WFI until interrupt pending or timeout
 );
 
-  logic [3:0]               CauseM;                                         // trap cause
+  logic [4:0]               CauseM;                                         // trap cause
   logic [15:0]              MEDELEG_REGW;                                   // exception delegation CSR
   logic [11:0]              MIDELEG_REGW;                                   // interrupt delegation CSR
   logic                     sretM, mretM;                                   // supervisor / machine return instruction

@@ -1,8 +1,13 @@
+// James Kaden Cassidy
+// kacassidy@hmc.edu
+// 1/22/26
+
 `timescale 1ns/1ps
+
+`include "parameters.svh"
 
 // If DUT_MODULE isn't defined on the vlog command line,
 // fall back to a default name.
-
 `define INSTR_BITS 32
 
 `define ELF_BASE_ADR (`XLEN'h8000_0000)
@@ -11,10 +16,8 @@
 
 `define MaxInstrSizeWords 1048576
 // 16384
-`define MaxDataSizeWords 1048576
+`define MaxDataSizeWords 2097152
 
-`define THR_POINTER (`XLEN'h1000_0000)
-`define LSR_POINTER (`THR_POINTER + `XLEN'h5)
 `define MTIME_POINTER (`XLEN'h0200bff8)
 
 `define STDOUT (`XLEN'h8000_0001)
@@ -24,7 +27,6 @@ module testbench;
 
   logic clk;
   logic reset;
-  logic [`XLEN-1:0] cycle_count;
 
   // 100 MHz clock: 10 ns period (change as needed)
   initial clk = 0;
@@ -37,8 +39,6 @@ module testbench;
     reset = 0;   // release reset
   end
 
-  logic [`XLEN-1:0]               prev_write_adr, prev_write_data;
-
   // Instruction side interface (byte addresses)
   logic [`XLEN-1:0]               PC;
   logic [`INSTR_BITS-1:0]         Instr;
@@ -46,47 +46,43 @@ module testbench;
   // Data side interface (byte addresses)
   logic [`XLEN-1:0]               DataAdr;
   logic [`XLEN-1:0]               ReadData, MemReadData, TestbenchRequestReadData;
-  logic [`XLEN-1:0]               WriteData;
+  logic [`XLEN-1:0]               WriteData, IMEM_WriteData;
   logic                           WriteEn;
   logic                           MemEn;
   logic [`XLEN/8-1:0]             WriteByteEn;   // byte enables, one per 8 bits
 
-  logic                           TestbenchRequest;
+/* ------- DEBUG PRINTS ------- */
 
-  assign TestbenchRequest = DataAdr >= `THR_POINTER & DataAdr < `THR_POINTER + `XLEN'hF | DataAdr == `MTIME_POINTER;
+  always @(negedge clk) begin
+    int i;
+    #1;
 
-  always_ff @ ( posedge clk ) begin
-    if (reset) cycle_count <= 0;
-    else       cycle_count <= cycle_count + 1;
-  end
+    if (~reset) begin
 
-  always_ff @ ( negedge clk ) begin
-    byte ch;
-    int unsigned i;
-    TestbenchRequestReadData = 'x;
+      //$display("PC: %h \t Instr: %h", PC, Instr);
 
-    if (TestbenchRequest) begin
-      if (MemEn) begin
-        for (int i = 0; i < `XLEN/8; i++) begin
-          if (DataAdr + i == `LSR_POINTER) begin
-            TestbenchRequestReadData[(i+1)*8-1 -: 8] = 8'b0010_0000;
-          end else if (DataAdr + i == `THR_POINTER) begin
-            if (WriteEn & WriteByteEn[i]) begin
-              ch = WriteData[(i+1)*8-1 -: 8];
-              $write("%c", ch);
-              if (ch == "\n") $fflush(`STDOUT);
-            end
-          end
-        end
-        if (DataAdr == `MTIME_POINTER) begin
-          TestbenchRequestReadData = cycle_count;
-        end
-      end
-      // if (TestbenchRequestReadData !== 'x) $display("Request Return Data: %h", TestbenchRequestReadData);
+      // $display("MemEn: %b",
+      //         MemEn
+      //         );
+
+      // $display("DataAdr: %h, t0: %h",
+      //         DataAdr,
+      //         dut.ieu.dp.rf.rf[5]
+      //         );
+
+      // terminate program as it exited program space
+      if (Instr === 'x) begin
+        $display("Instruction data x (PC: %h)", PC);
+        $finish(-1);
     end
+
+    end
+
   end
 
-  vectorStorage #(
+  /* ------- PROCESSOR Instantiation ------- */
+
+  ram1p1rwb #(
     .MEMORY_NAME              ("Instruction Memory"),
     .ADDRESS_BITS             (`XLEN),
     .DATA_BITS                (32),
@@ -94,9 +90,9 @@ module testbench;
     .MEMORY_FILE_BASE_ADDRESS (`ELF_BASE_ADR),
     .MEMORY_ADR_OFFSET        (`IMEM_BASE_ADR),
     .MEMFILE_PLUS_ARG         ("MEMFILE")
-  ) InstructionMemory (.clk, .reset, .En(1'b1), .WriteEn(1'b0), .WriteByteEn(4'b0), .MemoryAddress(PC), .WriteData(), .ReadData(Instr));
+  ) InstructionMemory (.clk, .reset, .En(1'b1), .WriteEn(1'b0), .WriteByteEn(4'b0), .MemoryAddress(PC), .WriteData(IMEM_WriteData), .ReadData(Instr));
 
-  vectorStorage #(
+  ram1p1rwb #(
     .MEMORY_NAME              ("Data Memory"),
     .ADDRESS_BITS             (`XLEN),
     .DATA_BITS                (`XLEN),
@@ -108,54 +104,11 @@ module testbench;
 
   assign ReadData = TestbenchRequest ? TestbenchRequestReadData : MemReadData;
 
-  // DEBUG
-  always @(negedge clk) begin
-    int i;
-    #1;
-    //$display("PC: %h, Instruction %h", PC, Instr);
-    // $display("T0: %h, s4: %h, PCSrcPostConditional_C: %s PredictionCorrect_C: %b,
-    // Rs1ForwardSrc_C: %s, Rs2ForwardSrc_C: %s, AluHazzardSafeOperandA_C: %h, AluHazzardSafeOperandB_C: %h
-    // Result_W: %h, MemReadData_M: %h, MemReadData_W: %h, ResultSrc_W: %s, FlushRC: %b H:%b B:%b
-    // ",
-    // dut.ComputeCore.RStage.RegisterFile.register_values[5],
-    // dut.ComputeCore.RStage.RegisterFile.register_values[20],
-    // dut.ComputeCore.PCSrcPostConditional_C.name(),
-    // dut.ComputeCore.PredictionCorrect_C,
-    // dut.ComputeCore.Rs1ForwardSrc_C,
-    // dut.ComputeCore.Rs2ForwardSrc_C,
-    // dut.ComputeCore.CStage.AluHazzardSafeOperandA_C,
-    // dut.ComputeCore.CStage.AluHazzardSafeOperandB_C,
-    // dut.ComputeCore.Result_W,
-    // dut.ComputeCore.MemReadData_M,
-    // dut.ComputeCore.MemReadData_W,
-    // dut.ComputeCore.ResultSrc_W.name(),
-    // dut.ComputeCore.FlushRC,
-    // dut.ComputeCore.FlushRC_Hazzard,
-    // dut.ComputeCore.FlushRC_Branch
-
-
-    // );
-    if (Instr === 'x & ~reset) begin
-      $display("Instruction data x (PC: %h)", PC);
-      $finish(-1);
-    end
-    for (i =0; i < 32; i++) begin
-      // if (~reset & dut.ComputeCore.RegisterFile.register_values[i] === 'x) begin
-      //   $display("Register %d = 'x", i);
-      //   $finish(-1);
-      // end
-      // if (~reset & dut.ComputeCore.RegisterFile.register_values[i] === 'z) begin
-      //   $display("Register %d = 'z", i);
-      //   $finish(-1);
-      // end
-    end
-  end
-
   // ------------------------------------------------------------
   // DUT instantiation
   // ------------------------------------------------------------
 
-  `DUT_MODULE dut (
+  `PROCESSOR_TOP dut (
     .clk            (clk),
     .reset          (reset),
 
@@ -172,7 +125,60 @@ module testbench;
     .WriteByteEn    (WriteByteEn)
   );
 
+/* ------- TOHOST Handling ------- */
+
+/*
+  Host Target Interface (HTIF) semihosting based on 8 byte value at TOHOST label
+  0x00000000_00000001: terminate successfully
+  0x00000000_xxxxxxx0: terminate with failure code xxxxxxx
+  0x01010000_000000ch: writes the byte ch to the console as ASCII
+*/
+
 logic [`XLEN-1:0] TO_HOST_ADR;
+logic [31:0] tohost_lo, tohost_hi, payload;
+
+always @(negedge clk) begin
+  byte ch;
+
+  #1;
+  `ifdef XLEN32
+  tohost_lo = DataMemory.Memory[(TO_HOST_ADR-`DMEM_BASE_ADR)>>2];
+  tohost_hi = DataMemory.Memory[((TO_HOST_ADR-`DMEM_BASE_ADR)>>2) + 1];
+  `endif
+  `ifdef XLEN64
+  {tohost_hi, tohost_lo} = DataMemory.Memory[(TO_HOST_ADR-`DMEM_BASE_ADR)>>2];
+  `endif
+
+  //$display("TOHOST DATA: %h%h, Addr %h, base %h", tohost_hi, tohost_lo, TO_HOST_ADR, `DMEM_BASE_ADR);
+
+  if (MemEn && WriteEn && DataAdr == TO_HOST_ADR`ifdef XLEN32 + 4`endif) begin
+    payload = tohost_lo;
+    if (tohost_hi == 32'h0 & payload[0]) begin
+
+      if (~(|(payload >> 1))) begin
+        $display("INFO: Test Completed!");
+      end else begin
+        $display("ERROR: Test Failed (code=%d)", (payload >> 1));
+      end
+
+      $display("[%0t] INFO: Program Finished! Ending simulation.", $time);
+      $finish;
+
+    // Check top bits for "print char" command
+    end else if (tohost_hi == 32'h01010000) begin
+      ch = tohost_lo[7:0];
+      $write("%c", ch);
+      if (ch == "\n") $fflush(`STDOUT);
+    end
+
+    // clear tohost to be 0
+    DataMemory.Memory[(TO_HOST_ADR-`DMEM_BASE_ADR)>>2] = '0;
+    `ifdef XLEN32
+    DataMemory.Memory[((TO_HOST_ADR-`DMEM_BASE_ADR)>>2) + 1] = '0;
+    `endif
+  end
+end
+
 initial begin
 
     TO_HOST_ADR = '0; // default
@@ -185,34 +191,8 @@ initial begin
 
 end
 
-bit        act3_en;
-longint    sig_base_addr, sig_end_addr;
-string     testname;
+/* ------- Safety jump-to-self exit ------- */
 
-initial begin
-  // defaults
-  act3_en = 0;
-  sig_base_addr = 0;
-  sig_end_addr  = 0;
-
-  void'($value$plusargs("TESTNAME=%s", testname));
-  $display("[TB] TESTNAME = %s", testname);
-  void'($value$plusargs("ACT3=%d", act3_en));
-  $display("[TB] ACT3 = %b", act3_en);
-
-  if (act3_en) begin
-    if (!$value$plusargs("SIG_BASE_ADDR=%h", sig_base_addr) ||
-        !$value$plusargs("SIG_END_ADDR=%h",  sig_end_addr)) begin
-      $fatal(1, "[ACT3] ACT3=1 but SIG_BASE_ADDR / SIG_END_ADDR not provided");
-    end
-    if (sig_end_addr <= sig_base_addr) begin
-      $fatal(1, "[ACT3] Bad signature range: base=%h end=%h", sig_base_addr, sig_end_addr);
-    end
-    $display("[ACT3] Enabled. Signature range: [%h, %h)", sig_base_addr, sig_end_addr);
-  end
-end
-
-logic[`XLEN-1:0] to_host_result;
 logic[3:0]       jump_to_self_count;
 
 always_ff @(posedge clk) begin
@@ -220,60 +200,32 @@ always_ff @(posedge clk) begin
   else if (Instr == `XLEN'h06f) jump_to_self_count <= jump_to_self_count + 1;
 end
 
-integer sig_fd;
-integer sig_idx;
-logic [31:0] sig_word;
-
 always @(negedge clk) begin
-  // Jump to self
-  to_host_result = DataMemory.Memory[(TO_HOST_ADR-`DMEM_BASE_ADR)>>2];
-
-  if (!reset && ((&jump_to_self_count) | (|to_host_result))) begin
-      //$display("To Host local Adr: %h, To Host: %h", (TO_HOST_ADR-`XLEN'h8001_0000)>>2, to_host_result);
-
-      if (to_host_result == 1) begin
-        $display("INFO: Test Passed!");
-      end else if (to_host_result != 3) begin
-        $display("ERROR: Test Failed");
-        if (to_host_result != 2) $display("TO_HOST_DATA: %h", to_host_result);
-      end
-
-      // -------------------------------
-      // ACT3 signature extraction TODO ONLY WORKS FOR XLEN=32 TODO
-      // -------------------------------
-      if (act3_en) begin
-        string sig_path;
-        int unsigned base_idx;
-        int unsigned end_idx;
-
-        sig_path = $sformatf("runs/%s.signature", testname);
-
-        base_idx = (sig_base_addr - `DMEM_BASE_ADR) >> 2;
-        end_idx  = (sig_end_addr  - `DMEM_BASE_ADR) >> 2;
-
-        sig_fd = $fopen(sig_path, "w");
-        if (sig_fd == 0) begin
-          $fatal(1, "[ACT3] Could not open signature file %s", sig_path);
-        end
-
-        $display("[ACT3] Dumping signature [%h, %h) to %s",
-                sig_base_addr, sig_end_addr, sig_path);
-
-        for (sig_idx = base_idx; sig_idx < end_idx; sig_idx++) begin
-          sig_word = DataMemory.Memory[sig_idx];
-          $fdisplay(sig_fd, "%08x", sig_word);
-        end
-
-        $fclose(sig_fd);
-        $display("[ACT3] Signature dump complete.");
-      end
-      // -------------------------------
-
-      // if(to_host_result != 0) begin
-      $display("[%0t] INFO: Program Finished! Ending simulation.", $time);
-      $finish;
-      // end
+  if (!reset && ((&jump_to_self_count))) begin
+      $display("ERROR: Program stuck in infinite loop at address %h", PC);
+      $finish(-1);
   end
 end
+
+/* ------- MTIME DATA REQUEST ------- */
+
+assign TestbenchRequest = (DataAdr == `MTIME_POINTER) | (DataAdr == `MTIME_POINTER + 4);
+
+logic [63:0] cycle_count;
+
+always_ff @(posedge clk) begin
+  if (reset) cycle_count <= 0;
+  else       cycle_count <= cycle_count + 1;
+end
+
+// Only respond to mtime reads
+always_ff @(negedge clk) begin
+  TestbenchRequestReadData = 'x;
+  if (TestbenchRequest && MemEn && !WriteEn) begin
+    if (DataAdr == `MTIME_POINTER)      TestbenchRequestReadData = cycle_count[31:0];
+    if (DataAdr == `MTIME_POINTER + 4)  TestbenchRequestReadData = cycle_count[63:32];
+  end
+end
+
 
 endmodule
