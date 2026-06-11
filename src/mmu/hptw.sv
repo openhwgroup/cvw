@@ -353,13 +353,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
       default:                                                        NextWalkerState = IDLE; // Should never be reached
     endcase // case (WalkerState)
 
-  // Flush the LSU's M-stage data access at the start of a DTLB walk so it replays after the TLB fill.
-  // Never flush for an ITLB miss: the M-stage access belongs to an older, committed instruction, and
-  // because ITLB walks are deferred until DCacheBusStallM clears (see ITLBMissReady above) it has
-  // already committed its cache access by the time the walk starts.  Flushing it would drop a
-  // committed store (issue #1538).
-  assign HPTWFlushW = (WalkerState == IDLE & DTLBMissOrUpdateDAM) |
-                      (WalkerState != IDLE & HPTWFaultM);
+  assign HPTWFlushW = (WalkerState == IDLE & TLBMissOrUpdateDA) | (WalkerState != IDLE & HPTWFaultM);
 
   assign SelHPTW = WalkerState != IDLE;
   assign HPTWStall = (WalkerState != IDLE & WalkerState != FAULT) | (WalkerState == IDLE & TLBMissOrUpdateDA);

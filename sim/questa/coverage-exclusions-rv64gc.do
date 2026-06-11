@@ -90,7 +90,7 @@ coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -ftrans CurrSta
 # exclude unused transitions from case statement. Unfortunately the whole branch needs to be excluded I think. Expression coverage should still work.
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: icache state-case"] -item b 1
 # I$ does not flush
-coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: icache FlushCache"] -item e 1 -fecexprrow 2 6
+coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: icache FlushCache"] -item e 1 -fecexprrow 2
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/AdrSelMuxLRU -item b 1
 # exclude branch/condition coverage: LineDirty if statement
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: icache FETCHStatement"] -item bc 1
@@ -101,11 +101,9 @@ set end [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag-end: icache case"]
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange $start-$end
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: icache WRITEBACKStatement"]
 # exclude Atomic Operation logic
-coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: cache AnyMiss"] -item e 1 -fecexprrow 6 8
-coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: icache storeAMO1"] -item e 1 -fecexprrow 1 2 4 5 6
-coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: icache AnyUpdateHit"] -item e 1 -fecexprrow 2 4
-# StoreHitFirstStall requires a store hit (CacheRW[0]); I$ never stores, so only the CacheRW[0]_0 row (5) is reachable
-coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: icache StoreHitFirstStall"] -item e 1 -fecexprrow 1-4 6 7 8
+coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: cache AnyMiss"] -item e 1 -fecexprrow 6
+coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: icache storeAMO1"] -item e 1 -fecexprrow 2-4
+coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: icache AnyUpdateHit"] -item e 1 -fecexprrow 2
 # cache write logic
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: icache CacheW"] -item e 1 -fecexprrow 4
 # output signal logic
@@ -114,11 +112,14 @@ set start [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag-start: icache flus
 set end [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag-end: icache flushdirtycontrols"]
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange $start-$end
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: icache CacheBusW"]
-coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: icache SelAdrCauses"] -item e 1 -fecexprrow 4 8 12
-coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: icache SelAdrTag"] -item e 1 -fecexprrow 6 8 12
+coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: icache SelAdrCauses"] -item e 1 -fecexprrow 4 10
+coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: icache SelAdrTag"] -item e 1 -fecexprrow 8
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: icache CacheBusRCauses"] -item e 1 -fecexprrow 1-2 12
-# CacheEn store-hit-first-stall extension (issue #1538) requires a store hit; I$ never stores, so the entire extended term is unreachable
-coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: cache CacheEn"] -item e 1 -fecexprrow 11-20
+# I$ CacheEn L211 reset_1 (FEC row 8): reset=1 while CurrState==STATE_ACCESS, Stall=1, StallConditions=0.
+# Reset is asserted once by the testbench before any instruction runs, and the I$ is not stalled during
+# that reset, so no RISC-V program can drive this term.  (The D$ instance of this same row IS covered
+# because the D$ is stalled out of reset; the I$ Stall is 0 at reset.)
+coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: dcache CacheEn"] -item e 1 -fecexprrow 8
 
 # cache.sv AdrSelMuxData and AdrSelMuxTag and CacheBusAdrMux, excluding unhit Flush branch
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/AdrSelMuxData -linerange [GetLineNum ${SRC}/generic/mux.sv "exclusion-tag: mux3"] -item b 1
@@ -137,15 +138,6 @@ for {set i 0} {$i < $numcacheways} {incr i} {
     coverage exclude -scope /dut/core/ifu/bus/icache/icache/CacheWays[$i] -linerange [GetLineNum ${SRC}/cache/cacheway.sv "// exclusion-tag: icache ClearValidWay"] -item e 1
     # No dirty ways in read-only I$
     coverage exclude -scope /dut/core/ifu/bus/icache/icache/CacheWays[$i] -linerange [GetLineNum ${SRC}/cache/cacheway.sv "// exclusion-tag: icache DirtyWay"] -item e 1
-}
-
-# D$ InvalidateCache is tied to 1'b0 in lsu.sv (the data cache has no invalidate-all), so the
-# InvalidateCache & ~InvalidateFlushStage invalidate paths can never be exercised in the D$.
-coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/vict/cacheLRU -linerange [GetLineNum ${SRC}/cache/cacheLRU.sv "InvalidateCache & ~InvalidateFlushStage"] -item c 1
-coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: dcache InvalidateCheck"] -item c 1
-# CacheWay invalidate path; -scope does not accept wildcards, so loop over the ways.
-for {set i 0} {$i < $numcacheways} {incr i} {
-    coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/CacheWays[$i] -linerange [GetLineNum ${SRC}/cache/cacheway.sv "exclusion-tag: dcache invalidateway"] -item c 1
 }
 # I$ buscachefsm does not perform atomics or write/writeback; HREADY is always 1
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm AtomicReadData"]
@@ -167,101 +159,85 @@ coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefs
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign CacheAccess"] -item e 1 -fecexprrow 4
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign BusStall"] -item e 1 -fecexprrow 10,12,18
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign CacheBusAck"] -item e 1 -fecexprrow 3
-# I$ AHBBuscachefsm dead FSM states/transitions: read-only cache never enters the writeback/atomic
+
+# I$ AHBBuscachefsm dead FSM states/transitions: the read-only cache never enters the writeback/atomic
 # states, and with HREADY always 1 the bus never stalls (no DATA_PHASE->ADR_PHASE re-arbitration).
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -fstate CurrState CACHE_WRITEBACK ATOMIC_READ_DATA_PHASE ATOMIC_PHASE
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -ftrans CurrState ADR_PHASE->CACHE_WRITEBACK CACHE_FETCH->CACHE_WRITEBACK CACHE_WRITEBACK->ADR_PHASE CACHE_WRITEBACK->CACHE_FETCH DATA_PHASE->ADR_PHASE ATOMIC_READ_DATA_PHASE->ATOMIC_PHASE ATOMIC_READ_DATA_PHASE->ADR_PHASE ATOMIC_PHASE->MEM3 ATOMIC_PHASE->ADR_PHASE
-# I$ AHBBuscachefsm dead branch/condition/expression rows (read-only cache, HREADY always 1):
-#   HREADY1 (L91): ADR_PHASE->CACHE_WRITEBACK on BusWrite -- read-only cache never writes back.
-#   FetchWait (L104): CACHE_FETCH->CACHE_FETCH on a back-to-back cache read -- I$ never pipelines a
-#     second line fetch; its condition rows 1,2 (HREADY_0/1) and 4,6 (FinalBeatCount_1/CacheBusRW[1]_1)
-#     all require HREADY=0 or that absent back-to-back request.
-#   SelBusBeat (L161): the BusRW[0]/BusWrite/DATA_PHASE/ATOMIC_*/CACHE_WRITEBACK select terms are all
-#     write/atomic/writeback paths a read-only cache never drives (only the CACHE_FETCH term is live).
-#   AtomicElse (L98): the ATOMIC_READ_DATA_PHASE->itself else; the state is dead (no atomics in a
-#     read-only cache, already -fstate excluded), so its else branch is unreachable too.
+
+# I$ AHBBuscachefsm HREADY1: ADR_PHASE->CACHE_WRITEBACK on BusWrite -- read-only cache never writes back.
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY1"] -item bs 1
+
+# I$ AHBBuscachefsm FetchWait: CACHE_FETCH->CACHE_FETCH back-to-back read -- the I$ never pipelines a second line fetch.
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm FetchWait"] -item bs 1
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm FetchWait"] -item c 1 -feccondrow 1,2,4,6
+
+# I$ AHBBuscachefsm AtomicElse: the ATOMIC_READ_DATA_PHASE->itself else; the state is dead (no atomics in a read-only cache).
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm AtomicElse"] -item b 1
+
+# I$ AHBBuscachefsm SelBusBeat: the BusRW[0]/BusWrite/DATA_PHASE/ATOMIC_*/CACHE_WRITEBACK select terms are
+# write/atomic/writeback paths a read-only cache never drives (only the CACHE_FETCH term is live).
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign SelBusBeat"] -item e 1 -fecexprrow 1,2,4,6,7,8,9,10,11,12,14
-# I$ CACHE_FETCH fetch-done (HREADY & FinalBeatCount & ~|CacheBusRW -> ADR_PHASE) _0 rows: dead, same
-# as the D$ -- once the IFU is granted and bursting from ram_ahb (no wait states) HREADY=1, and a
-# pending request at/after the final beat is the dead back-to-back Fetch/Writeback paths.  And the
-# HTRANS (CacheAccess & |BeatCount) CacheAccess_0: BeatCount is reset outside cache states, so
-# CacheAccess=0 & |BeatCount can never co-occur.  (L90 HREADY_0 with |BusRW is the genuine ADR_PHASE
-# IFU/LSU-contention row, left uncovered/under investigation; the L147 mid-burst-flush rows are
-# excluded just below as in-order-unreachable.)
+
+# I$ AHBBuscachefsm CACHE_FETCH fetch-done (HREADY & FinalBeatCount & ~|CacheBusRW -> ADR_PHASE) _0 rows are
+# dead: HREADY is always 1, and a pending request at/after the final beat is the dead back-to-back Fetch path.
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "FinalBeatCount & ~\|CacheBusRW\\)  NextState = ADR_PHASE"] -item c 1 -feccondrow 1
+
+# I$ AHBBuscachefsm HTRANS (CacheAccess & |BeatCount) CacheAccess_0: dead -- BeatCount is reset outside cache states.
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "CacheAccess & \\|BeatCount\\) ?"] -item c 1 -feccondrow 1
 
-# HBURST condition (|CacheBusRW & ~Flush) | (CacheAccess & |BeatCount): the second-term rows
-# CacheAccess_0 (5), CacheAccess_1 (6), |BeatCount_1 (8) are UNREACHABLE.  They can only be observed
-# when the first term (|CacheBusRW & ~Flush) is 0 while |BeatCount=1, i.e. a flush (Flush=1) landing
-# mid CACHE_FETCH burst (|CacheBusRW is held high the whole burst per cachefsm.sv:204, dropping only
-# at the final beat where |BeatCount=0).  In this in-order pipeline the I$ never takes a mid-burst
-# flush: during a CACHE_FETCH the entire pipe stalls (hazard.sv StallE<=StallM<=StallW<=IFUStallF) so
-# BPWrongE cannot fire, interrupts are deferred (CommittedF), and an M-stage CSRWriteFenceM/TrapM/RetM
-# gates off IFUStallF and so preempts the burst at beat 0 (the ADR_PHASE Flush, not mid-burst).
-# (feccondrow 8 also drops the covered |BeatCount_0 pair-mate -- term-level granularity; |BeatCount_0
-# is still tracked by the FSM beat transitions.  Row 7-style |BeatCount_0 here is the only loss.)
+# I$ AHBBuscachefsm HBURST (|CacheBusRW & ~Flush) | (CacheAccess & |BeatCount): the second-term rows
+# CacheAccess_0 (5), CacheAccess_1 (6), |BeatCount_1 (8) are unreachable -- they need a flush landing mid
+# CACHE_FETCH burst, but in this in-order pipe the I$ never takes a mid-burst flush (the pipe is stalled).
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign HBURST"] -item c 1 -feccondrow 5,6,8
 
-# CaptureEn ((~Flush & DATA_PHASE) & BusRW[1]) Flush_1: UNREACHABLE for the same in-order reason --
-# a DATA_PHASE access is an in-flight uncached instruction fetch, and CVW (in-order) never flushes an
-# in-flight bus transaction (BPWrongE frozen by the IFUStall, interrupts deferred by CommittedF, and
-# an M-stage CSRWriteFenceM/TrapM/RetM gates off IFUStallF so it preempts at ADR_PHASE, not DATA_PHASE).
-# NOTE: this Questa version removes the WHOLE CaptureEn expression item (fecexprrow is not surgical
-# here), which also drops BusRW[1]_0 -- a reachable-but-rare row (an uncached fetch in DATA_PHASE whose
-# PCNextF is cacheable, i.e. a sequential uncached->cached boundary).  Its sibling state/term coverage
-# (DATA_PHASE, CACHE_FETCH, HREADY, BusRW[1]_1) is tracked via the other buscachefsm expressions
-# (L130/L161) and the FSM, so no real signal is lost.
+# I$ AHBBuscachefsm CaptureEn ((~Flush & DATA_PHASE) & BusRW[1]) Flush_1: unreachable -- CVW (in-order) never
+# flushes an in-flight uncached fetch bus transaction.  (Questa removes the whole expression item here, not
+# just the row; sibling terms are tracked by the other buscachefsm expressions and the FSM, so nothing lost.)
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign CaptureEn"] -item e 1 -fecexprrow 2
 
-# ADR_PHASE (HREADY & |BusRW) HREADY_0: UNREACHABLE in this in-order pipe.  This is the IFU sitting in
-# ADR_PHASE with a pending *uncached* instruction fetch (|BusRW) while IFUHREADY=0 (the arbiter has
-# disabled the IFU because the LSU holds the bus).  An uncached fetch's bus request is a single ADR
-# cycle; in-order, whenever the LSU holds the bus the front-end is stalled and is NOT initiating a new
-# fetch, so that 1-cycle uncached request never coincides with an LSU grant.  (Verified: a directed
-# uncached-code + always-missing-load sliding test never produced an ADR_PHASE->ADR_PHASE self-loop,
-# i.e. the IFU was never stalled while requesting.  Contrast the arbiter `both` reached by
-# ebuIcacheDTLBMiss.S, which uses a multi-cycle *cached* line-fill request that spans the HPTW walk --
-# an uncached fetch has no such window.)  feccondrow 1 also drops the covered HREADY_1 pair-mate
-# (term-level granularity); HREADY is exercised in the other ADR_PHASE branches.
+# I$ AHBBuscachefsm ADR_PHASE (HREADY & |BusRW) HREADY_0: unreachable in this in-order pipe -- an uncached
+# fetch's bus request is a single ADR cycle; whenever the LSU holds the bus the front-end is stalled and not
+# initiating a new fetch, so that 1-cycle uncached request never coincides with an LSU grant.
 coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY0"] -item c 1 -feccondrow 1
 
-# bpred BPWrongE InstrValidD_0 (bpred.sv:177): unreachable single-issue invariant.  Per the RTL
-# comment (lines 174-175), when a branch mispredicts in E the next instruction in D is always valid,
-# because no flush could invalidate D without also flushing the branch in E.  So InstrValidD is
-# always 1 when (PCCorrectE != PCD) & InstrValidE, making InstrValidD_0 (FEC row 5) unreachable.
+# bpred BPWrongE InstrValidD_0: unreachable single-issue invariant.  When a branch mispredicts in E the
+# next instruction in D is always valid, because no flush could invalidate D without also flushing the
+# branch in E.  So InstrValidD is always 1 when (PCCorrectE != PCD) & InstrValidE (FEC row 5 unreachable).
 coverage exclude -scope /dut/core/ifu/bpred/bpred -linerange [GetLineNum ${SRC}/ifu/bpred/bpred.sv "assign BPWrongE"] -item e 1 -fecexprrow 5
 
 ## D$ Exclusions.
 # InvalidateCache is I$ only:
 coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: dcache InvalidateCheck"] -item b 2
 coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: dcache InvalidateCheck"] -item s 1
-coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: cache CacheEn"] -item e 1 -fecexprrow 12
+coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: dcache CacheEn"] -item e 1 -fecexprrow 12
 coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: cache AnyMiss"] -item e 1 -fecexprrow 4
-# LoadMiss (cachefsm.sv:208) also references ~InvalidateCache; D$ InvalidateCache is tied 1'b0
-# (lsu.sv), so the InvalidateCache term is dead.  Anchor on "assign LoadMiss" because the "cache
-# AnyMiss" tag above resolves to the first match (AnyMiss, ~line 102), not LoadMiss.
-coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "assign LoadMiss"] -item e 1 -fecexprrow 4
-# CMO-on-dirty rows that are structurally unreachable (a directed cbo.clean/flush of a dirty line
-# does NOT cover them -- verified by waveform: CMOWriteback asserts but these FEC rows never count):
-#   cachefsm.sv:132 (|CMOpM & ~CMOWriteback) Row 4 CMOWriteback_1: this else-if is reached only when
-#   the higher-priority L131 ((AnyMiss | CMOWriteback) & ~READ_ONLY_CACHE) is false.  For the D$
-#   READ_ONLY_CACHE=0, so L131 is true whenever CMOWriteback=1 and takes the branch to STATE_WRITEBACK
-#   first; L132's condition is therefore only ever evaluated with CMOWriteback=0.  Exclude the
-#   CMOWriteback input term (feccondrow 2).
+
+# D$ cachefsm L123 (|CMOpM & ~CMOWriteback) condition, CMOWriteback term (feccondrow 2): priority-masked.
+# The higher-priority L122 else-if ((AnyMiss | CMOWriteback) & ~READ_ONLY_CACHE) fires first whenever
+# CMOWriteback=1 (D$ READ_ONLY_CACHE=0), so L123 is only ever evaluated with CMOWriteback=0 and
+# CMOWriteback_1 is unreachable.
 coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "any CMO without dirty writeback"] -item c 1 -feccondrow 2
-#   cachefsm.sv:213 assign CacheBusRW[0] term (CurrState==STATE_WRITEBACK & (CMOpM[1]|CMOpM[2]) &
-#   ~CacheBusAck): logically redundant -- fully subsumed by the earlier OR term L211
-#   (CurrState==STATE_WRITEBACK & ~CacheBusAck), so CMOpM[1]/[2] can never independently drive the
-#   output.  Exclude the four CacheCMOpM[1]/[2] FEC rows (13-16).
-coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: icache CacheBusW"] -item e 1 -fecexprrow 13,14,15,16
+
+# D$ cachefsm L193 LoadMiss = (Hit ~| InvalidateCache) & CacheRWM[1], InvalidateCache_1 (FEC row 4):
+# D$ InvalidateCache is tied 1'b0 in lsu.sv, so InvalidateCache can never be 1.  (The "cache AnyMiss"
+# exclusion above resolves via GetLineNum to L95/AnyMiss; this anchor catches the L193 LoadMiss copy.)
+coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "assign LoadMiss"] -item e 1 -fecexprrow 4
+
+# D$ cachefsm L195 CacheBusRW[0] CacheCMOpM[1]/[2] terms (FEC rows 13-16): the writeback-CMO term
+# (STATE_WRITEBACK & (CMOpM[1]|CMOpM[2]) & ~CacheBusAck) is logically subsumed by the earlier OR term
+# (STATE_WRITEBACK & ~CacheBusAck), so CacheCMOpM[1]/[2] never independently drive CacheBusRW[0].
+coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "icache CacheBusW"] -item e 1 -fecexprrow 13,14,15,16
+
+# D$ InvalidateCache is tied to 1'b0 in lsu.sv (the data cache has no invalidate-all), so the
+# InvalidateCache & ~InvalidateFlushStage invalidate paths can never be exercised in the D$.
+coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: dcache InvalidateCheck"] -item c 1
+coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/vict/cacheLRU -linerange [GetLineNum ${SRC}/cache/cacheLRU.sv "InvalidateCache & ~InvalidateFlushStage"] -item c 1
 set numcacheways 4
 for {set i 0} {$i < $numcacheways} {incr i} {
     coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/CacheWays[$i] -linerange [GetLineNum ${SRC}/cache/cacheway.sv "exclusion-tag: dcache invalidateway"] -item bes 1 -fecexprrow 4
+    # D$ InvalidateCache tied 1'b0 (lsu.sv): the invalidate condition on this way can never be true.
+    coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/CacheWays[$i] -linerange [GetLineNum ${SRC}/cache/cacheway.sv "exclusion-tag: dcache invalidateway"] -item c 1
     # InvalidateCacheDelay is always 0 for D$ because it is flushed, not invalidated
     coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/CacheWays[$i] -linerange [GetLineNum ${SRC}/cache/cacheway.sv "exclusion-tag: dcache HitWay"] -item 3 1 -fecexprrow 2
 
@@ -331,10 +307,6 @@ coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/sdcdec
 coverage exclude -scope /dut/core/ifu/bus/icache/UnCachedDataMux -linerange [GetLineNum ${SRC}/generic/mux.sv "exclusion-tag: mux3"] -item b 1
 coverage exclude -scope /dut/core/lsu/bus/dcache/UnCachedDataMux -linerange [GetLineNum ${SRC}/generic/mux.sv "exclusion-tag: mux3"] -item b 1
 
-# TagSetStale (issue #1538 D$ stale-tag re-read) is data-cache-only: the I$ ties SelHPTW = 0, so
-# SelHPTWPrev is always 0 and this expression can never evaluate true in the instruction cache.
-coverage exclude -scope /dut/core/ifu/bus/icache/icache -linerange [GetLineNum ${SRC}/cache/cache.sv "assign TagSetStale ="] -item e 1
-
 ####################
 # Unused access types due to sharing IFU and LSU logic
 ####################
@@ -354,12 +326,11 @@ set line [GetLineNum ${SRC}/mmu/mmu.sv "PMAInstrAccessFaultF    \\|"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu -linerange $line-$line -item e 1 -fecexprrow 2,4,5,6
 set line [GetLineNum ${SRC}/mmu/pmpchecker.sv "EnforcePMP & ExecuteAccessF"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmp/pmpchecker -linerange $line-$line -item e 1 -fecexprrow 1,2,4,5,6
+set line [GetLineNum ${SRC}/mmu/pmpchecker.sv "EnforcePMP & ExecuteAccessF"]
+coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange $line-$line -item e 1 -fecexprrow 3
 ## A single data access is never simultaneously read and write, so WriteAccessM=1 can never occur
 ## while the ReadAccessM-qualified load-access-fault term is evaluated (PMPLoadAccessFaultM, row 2).
 set line [GetLineNum ${SRC}/mmu/pmpchecker.sv "EnforcePMP & ReadAccessM"]
-coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmp/pmpchecker -linerange $line-$line -item e 1 -fecexprrow 2
-set line [GetLineNum ${SRC}/mmu/pmpchecker.sv "EnforcePMP & ExecuteAccessF"]
-coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange $line-$line -item e 1 -fecexprrow 3
 
 
 ## The IFU has ReadAccess = WriteAccess = 0 and ExecuteAccess = 1 hardwired, so exclude alternatives
@@ -430,33 +401,32 @@ coverage exclude -scope /dut/core/ifu/ifu/immu/immu/tlb/tlb/tlbcontrol -linerang
 
 # RV64GC HPTW never starts at L1_ADR
 set line [GetLineNum ${SRC}/mmu/hptw.sv "InitialWalkerState == L1_ADR"]
-coverage exclude -scope /dut/core/lsu/lsu/hptw/hptw -linerange $line-$line -item c 1 -feccondrow 2
+coverage exclude -scope /dut/core/lsu/hptw/hptw -linerange $line-$line -item c 1 -feccondrow 2
 
 # Never possible to get a page fault when neither reading nor writing
 set line [GetLineNum ${SRC}/mmu/hptw.sv "assign HPTWLoadPageFault"]
-coverage exclude -scope /dut/core/lsu/lsu/hptw/hptw -linerange $line-$line -item e 1 -fecexprrow 7
+coverage exclude -scope /dut/core/lsu/hptw/hptw -linerange $line-$line -item e 1 -fecexprrow 7
 
 # Never possible to get a store page fault from an ITLB walk
 set line [GetLineNum ${SRC}/mmu/hptw.sv "assign HPTWStoreAmoPageFault"]
-coverage exclude -scope /dut/core/lsu/lsu/hptw/hptw -linerange $line-$line -item e 1 -fecexprrow 3
+coverage exclude -scope /dut/core/lsu/hptw/hptw -linerange $line-$line -item e 1 -fecexprrow 3
 
 # Never possible to get Access = 0 on a nonleaf PTE with no OtherPageFault (because InvalidRead/Write will be 1 on the nonleaf)
 set line [GetLineNum ${SRC}/mmu/hptw.sv "assign HPTWUpdateDA"]
-coverage exclude -scope /dut/core/lsu/lsu/hptw/hptw -linerange $line-$line -item e 1 -fecexprrow 3
+coverage exclude -scope /dut/core/lsu/hptw/hptw -linerange $line-$line -item e 1 -fecexprrow 3
 
-# UPDATE_PTE never self-loops on a cache-bus stall: the PTE being A/D-updated was just read during
-# the same uninterrupted walk (the LSU is stalled, so the line cannot be evicted), so it is resident
-# and writable in the D$ and the UPDATE_PTE store hits.  DCacheBusStallM therefore cannot assert in
-# UPDATE_PTE, making the UPDATE_PTE -> UPDATE_PTE branch/statement (hptw.sv line 350) unreachable.
+# UPDATE_PTE never self-loops on a cache-bus stall: the PTE being A/D-updated was just read during the
+# same uninterrupted walk (LSU stalled, line cannot be evicted), so it is resident/writable in the D$ and
+# the UPDATE_PTE store hits.  DCacheBusStallM therefore cannot assert in UPDATE_PTE, so the
+# UPDATE_PTE -> UPDATE_PTE branch/statement is unreachable.
 set line [GetLineNum ${SRC}/mmu/hptw.sv "DCacheBusStallM.*UPDATE_PTE"]
-coverage exclude -scope /dut/core/lsu/lsu/hptw/hptw -linerange $line-$line
+coverage exclude -scope /dut/core/lsu/hptw/hptw -linerange $line-$line
 
-# (SvMode==SV57)_0 on the PPN-source mux is unreachable: the L4_ADR/L4_RD walker states named in the
-# non-masking condition only exist when SvMode==SV57 (InitialWalkerState=L4_ADR is gated on SV57), so
-# SvMode can never differ from SV57 while in an L4 state.  The remaining SvMode/WalkerState terms of
-# this mux are redundantly covered by the NextWalkerState FSM case.
-set line [GetLineNum ${SRC}/mmu/hptw.sv "P.SV57_SUPPORTED & SvMode == P.SV57 & "]
-coverage exclude -scope /dut/core/lsu/lsu/hptw/hptw -linerange $line-$line -item c 1 -feccondrow 1
+# (SvMode==SV57)_0 on the PPN-source mux is unreachable: the L4_ADR/L4_RD walker states in the non-masking
+# condition only exist when SvMode==SV57 (InitialWalkerState=L4_ADR is gated on SV57), so SvMode can never
+# differ from SV57 while in an L4 state.  Remaining mux terms are covered by the NextWalkerState FSM case.
+set line [GetLineNum ${SRC}/mmu/hptw.sv "P\.SV57_SUPPORTED & SvMode == P.SV57 & "]
+coverage exclude -scope /dut/core/lsu/hptw/hptw -linerange $line-$line -item c 1 -feccondrow 1
 
 ###############
 # Other exclusions
@@ -534,43 +504,29 @@ set line [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREAD
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 1
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 5
 
-# CACHE_FETCH fetch-done branch (CurrState==CACHE_FETCH, HREADY & FinalBeatCount & ~|CacheBusRW ->
-# ADR_PHASE).  Its three _0 condition rows are all unreachable: HREADY is always 1 (ram_ahb never
-# stalls), and a pending request (|CacheBusRW) at or after the final beat would be the back-to-back
-# FetchWriteback/FetchWait paths excluded above, which the cache never issues -- so ~|CacheBusRW_0 and
-# the FinalBeatCount_0 pairing never occur.  (GetLineNum returns the first match, the CACHE_FETCH copy,
-# not the identical CACHE_WRITEBACK line which is the HREADY6 tag handled above.)
+# D$ AHBBuscachefsm CACHE_FETCH fetch-done branch (HREADY & FinalBeatCount & ~|CacheBusRW -> ADR_PHASE) _0
+# condition row: HREADY is always 1 (ram_ahb never stalls), and a pending request at/after the final beat
+# is the dead back-to-back FetchWriteback/FetchWait paths excluded above, so ~|CacheBusRW_0 never co-occurs.
 set line [GetLineNum ${SRC}/ebu/buscachefsm.sv "FinalBeatCount & ~\|CacheBusRW\\)  NextState = ADR_PHASE"]
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 1
 
-# More unreachable D$ buscachefsm rows:
-#  - BeatCountReg/BeatCountDelayedReg reset (~HRESETn | BeatCntReset) HRESETn_0: a reset coincident with
-#    ~BeatCntReset (an in-flight beat) never happens for the D$ -- no D$ bus transaction is active at
-#    power-on reset (init code runs first).  The I$ covers this row (the IFU fetches out of reset).
-#  - BeatCntEn (NextState==ADR_PHASE)_0: a pending cached request with HREADY forces NextState to a
-#    cache state (the earlier WB/FETCH OR term), so this term's _0 polarity is priority-masked.
-#  - HTRANS pipelined-request term CacheAccess_0: FinalBeatCount only asserts at the end of a cache
-#    burst (CacheAccess=1), so CacheAccess=0 & FinalBeatCount can never co-occur.
+# D$ AHBBuscachefsm BeatCountReg/BeatCountDelayedReg reset (~HRESETn | BeatCntReset) HRESETn_0: a reset
+# coincident with an in-flight beat never happens for the D$ (no D$ bus transaction is active at power-on reset).
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "BeatCountReg\\("] -item e 1 -fecexprrow 1
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "BeatCountDelayedReg\\("] -item e 1 -fecexprrow 1
+
+# D$ AHBBuscachefsm BeatCntEn (NextState==ADR_PHASE)_0: a pending cached request with HREADY forces
+# NextState to a cache state (priority-masked).
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign BeatCntEn"] -item e 1 -fecexprrow 9
+
+# D$ AHBBuscachefsm HTRANS pipelined-request term CacheAccess_0: FinalBeatCount only asserts at the end of a
+# cache burst (CacheAccess=1), so CacheAccess=0 & FinalBeatCount never co-occur.
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign HTRANS"] -item c 1 -feccondrow 8
 
-# NOTE: this Questa version removes the WHOLE CaptureEn expression item, not just row 2 (fecexprrow is
-# not surgical for this expression).  That is acceptable: the unreachable row is Flush_1, and the sibling
-# rows it also drops (DATA_PHASE/CACHE_FETCH/HREADY/Flush_0) are all still exercised and tracked via the
-# other buscachefsm expressions on lines 128/130/161, so no real coverage signal is lost.
-# CaptureEn ((~Flush & DATA_PHASE) & BusRW[1]) Flush_1 (fecexprrow 2): UNREACHABLE for the D$.  A
-# DATA_PHASE access with BusRW[1] is an uncached *load read* that is committed and non-speculative
-# (loads execute in M after all older branches have resolved, so nothing younger can flush it), and
-# the D$ Flush input is LSUFlushW = HPTWFlushW | FlushW -- which has NO branch-mispredict component
-# (unlike the I$'s FlushD).  During the load's bus data phase CommittedM=1 (BusCommittedM), so TrapM
-# is masked (trap.sv: ValidIntsM gated by Committed; ExceptionM gated by ~CommittedF and the in-flight
-# load already passed PMA/PMP); FlushW's LatestUnstalledW=~StallW&StallM is 0 while StallW (BusStall)
-# is high; and HPTWFlushW only fires on a *new* DTLB-miss/UpdateDA at the walker (hptw.sv:361), never
-# during an already-translated load's data phase.  So Flush is always 0 here.  (The I$ copy of this
-# row IS reachable -- a younger speculative uncached fetch can be squashed by an older branch's
-# BPWrongE via FlushD -- so only the D$ instance is excluded.)
+# D$ AHBBuscachefsm CaptureEn ((~Flush & DATA_PHASE) & BusRW[1]) Flush_1: unreachable for the D$ -- a
+# DATA_PHASE access with BusRW[1] is a committed, non-speculative uncached load read; the D$ Flush input
+# (LSUFlushW) has no branch-mispredict component, so Flush is always 0 here.  (Questa removes the whole
+# CaptureEn expression item; sibling rows are tracked by the other buscachefsm expressions and the FSM.)
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign CaptureEn"] -item e 1 -fecexprrow 2
 
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign CacheBusAck"] -item e 1 -fecexprrow 5
@@ -625,19 +581,17 @@ coverage exclude -scope /dut/core/ebu/ebu/ebufsmarb/BeatCounter/cntrflop
 ####################
 # IFU
 ####################
+
 # InstrUpdateAF (instruction-fetch Svadu hardware A-bit update on a TLB hit) is unreachable: the HPTW
-# performs walk-time A/D updates -- when ADUE=1 and a leaf has A=0, hptw.sv HPTWUpdateDA forces
-# ITLBWriteF=0, the walker goes LEAF->UPDATE_PTE (writes A=1 to memory) and then fills the TLB with
-# A=1.  So the ITLB never holds an A=0 entry, and tlbcontrol's UpdateDA = ...& TLBHit & ~PTE_A (the
-# source of InstrUpdateAF) can never fire.  Line 210 lives in the "immu" generate block; row 4 =
-# InstrUpdateAF_1.
+# performs walk-time A/D updates -- when ADUE=1 and a leaf has A=0, hptw forces ITLBWriteF=0, the walker
+# writes A=1 to memory and then fills the TLB with A=1.  So the ITLB never holds an A=0 entry, and
+# tlbcontrol's UpdateDA (the source of InstrUpdateAF) can never fire.  Row 4 = InstrUpdateAF_1.
 set line [GetLineNum ${SRC}/ifu/ifu.sv "SVADU_SUPPORTED & InstrUpdateAF"]
 coverage exclude -scope /dut/core/ifu/immu -linerange $line-$line -item e 1 -fecexprrow 4
 
-# I$ fetchbuffer CaptureBeat: CaptureEn_0 is unreachable for beats 1..7.  In the read-only I$ with
-# HREADY always 1, CaptureEn is high on every beat of a CACHE_FETCH, so it is never 0 at a matching
-# delayed beat (the D$ reaches CaptureEn=0 via writeback beats, which the I$ never does).  beat 0 is
-# covered (idle/reset).  Row 1 = CaptureEn_0.
+# I$ fetchbuffer CaptureBeat: CaptureEn_0 is unreachable for beats 1..7.  In the read-only I$ with HREADY
+# always 1, CaptureEn is high on every beat of a CACHE_FETCH, so it is never 0 at a matching delayed beat
+# (the D$ reaches CaptureEn=0 via writeback beats, which the I$ never does).  Beat 0 is covered (idle/reset).
 set fbline [GetLineNum ${SRC}/ebu/ahbcacheinterface.sv "index == BeatCountDelayed"]
 for {set i 1} {$i < 8} {incr i} {
     coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/fetchbuffer[$i] -linerange $fbline-$fbline -item e 1 -fecexprrow 1
