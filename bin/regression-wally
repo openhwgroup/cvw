@@ -19,6 +19,7 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 from collections import namedtuple
 from multiprocessing import Pool
 from multiprocessing import TimeoutError as MPTimeoutError
@@ -604,6 +605,7 @@ def makeDirs(sims):
 
 
 def main(args):
+    startTime = time.time()
     sims, coverStr, TIMEOUT_DUR = process_args(args)
     makeDirs(sims)
     configs = selectTests(args, sims, coverStr)
@@ -635,6 +637,9 @@ def main(args):
         print(f"{bcolors.FAIL}Regression failed with {num_fail} failed configurations{bcolors.ENDC}")
     else:
         print(f"{bcolors.OKGREEN}SUCCESS! All tests ran without failures{bcolors.ENDC}")
+    # Always report the total runtime
+    elapsed = time.time() - startTime
+    print(f"Total runtime: {int(elapsed // 3600)}h {int(elapsed % 3600 // 60)}m {elapsed % 60:.1f}s ({elapsed:.1f} seconds)")
     return num_fail
 
 if __name__ == '__main__':
