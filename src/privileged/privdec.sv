@@ -37,6 +37,7 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   input  logic         IllegalCSRAccessM,                   // Not a legal CSR access
   input  logic [1:0]   PrivilegeModeW,                      // current privilege level
   input  logic         STATUS_TSR, STATUS_TVM, STATUS_TW,   // status bits
+  input  logic         TrapM,                               // Trap is occurring
   output logic         IllegalInstrFaultM,                  // Illegal instruction
   output logic         EcallFaultM, BreakpointFaultM,       // Ecall or breakpoint; must retire, so don't flush it when the trap occurs
   output logic         sretM, mretM, RetM,                  // return instructions
@@ -88,11 +89,16 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
 
   if (P.U_SUPPORTED) begin : wfi
     logic [P.WFI_TIMEOUT_BIT:0] WFICount, WFICountPlus1;
-    assign WFICountPlus1 = wfiM ? WFICount + 1 : '0; // restart counting on WFI
-    flopr #(P.WFI_TIMEOUT_BIT+1) wficountreg(clk, reset, WFICountPlus1, WFICount);  // count while in WFI
+    logic                       WFICountEn, WFICountRst;
+    // Clear counter when reset or when trap is taken
+    assign WFICountRst = reset | TrapM;
+    // Stop incrementing the counter once reach the timeout limit
+    assign WFICountEn = ~WFITimeoutM;
+    assign WFICountPlus1 = wfiM ? WFICount + 1 : '0; // Count while WFI
+    flopenr #(P.WFI_TIMEOUT_BIT+1) wficountreg(clk, WFICountRst, WFICountEn, WFICountPlus1, WFICount);
   // coverage off -item e 1 -fecexprrow 1
   // WFI Timeout trap will not occur when STATUS_TW is low while in supervisor mode, so the system gets stuck waiting for an interrupt and triggers a watchdog timeout.
-    assign WFITimeoutM = wfiM & (((STATUS_TW & PrivilegeModeW != P.M_MODE) | (P.S_SUPPORTED & PrivilegeModeW == P.U_MODE)) & WFICount[P.WFI_TIMEOUT_BIT]);
+    assign WFITimeoutM = ((STATUS_TW & PrivilegeModeW != P.M_MODE) | (P.S_SUPPORTED & PrivilegeModeW == P.U_MODE)) & WFICount[P.WFI_TIMEOUT_BIT];
   // coverage on
   end else assign WFITimeoutM = 1'b0;
 
