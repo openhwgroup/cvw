@@ -386,6 +386,7 @@ def search_log_for_text(text, grepfile):
     with open(grepfile, errors="ignore") as file:
         content = file.readlines()
         passed = False
+        reported = False # whether any line identifying this test was printed
         success = any(text in line for line in content) # check if the success string is present in the log file
         # Even if the string is found, report warnings, errors, and failure, or PASSED
         for line in content:
@@ -393,6 +394,7 @@ def search_log_for_text(text, grepfile):
                 if "FAILED" in line:
                     print(f"{bcolors.FAIL}{grepfile}: {rvcp_summary} FAILED{bcolors.ENDC}")
                     success = False
+                    reported = True
                 elif "PASSED" in line:
                     print(f"{bcolors.OKGREEN}{grepfile}: {rvcp_summary} PASSED{bcolors.ENDC}")
                     passed = True
@@ -401,15 +403,22 @@ def search_log_for_text(text, grepfile):
             if "warning:" in line.lower():
                 print(f"{bcolors.WARNING}{grepfile}: {line.strip()}{bcolors.ENDC}")
                 success = False
+                reported = True
             if "error:" in line.lower():
                 print(f"{bcolors.FAIL}{grepfile}: {line.strip()}{bcolors.ENDC}")
                 success = False
+                reported = True
         nonrvcp_suites = ["buildroot", "all_lints"]
         if success and not passed:
             if not any(s in grepfile for s in nonrvcp_suites):
                 print(f"{bcolors.WARNING}{grepfile}: WARNING '{text}' found but no {rvcp_summary} PASSED{bcolors.ENDC}")
         if not success and passed:
             print(f"{bcolors.WARNING}{grepfile}: WARNING No success string '{text}' found in log file{bcolors.ENDC}")
+            reported = True
+        if not success and not reported:
+            # Otherwise-silent failure (e.g. lockstep mismatch: ImperasDV prints "Error (IDV)"
+            # without a colon, so the error: check above misses it); name the failing log
+            print(f"{bcolors.FAIL}{grepfile}: FAIL: success string '{text}' not found{bcolors.ENDC}")
         return 0 if success else 1
 
 
