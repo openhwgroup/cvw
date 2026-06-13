@@ -280,6 +280,7 @@ testfloatdivconfigs = [
 lockstepwaivers = [
     "WALLY-q-01.S_ref.elf",     # Q extension is not supported by ImperasDV
     "WALLY-cbom-01.S_ref.elf", #,  # cbom extension is not supported by ImperasDV because there is no cache model in ImperasDV
+    "Zicbom-cbo.inval-00.elf", # ImperasDV lacks cache model to match CVW on invalidation
 ]
 
 # tests for cache simulations on a rv64gc derived config - cache_rv64gc
@@ -370,7 +371,11 @@ def addTestsByDir(testDir, config, sim, coverStr, configs, lockstepMode=0, breke
                 fullfile = os.path.join(dirpath, file)
                 fields = fullfile.rsplit('/', 3)
                 shortelf = f"{fields[1]}_{fields[3]}" if fields[2] == "ref" else f"{fields[2]}_{fields[3]}"
-                if shortelf in lockstepwaivers: # skip tests that itch bugs in ImperasDV
+                # Waiver entries may be written either as the bare ELF filename (e.g.
+                # "Zicbom-cbo.inval-00.elf") or as the directory-prefixed shortelf used for the log
+                # name (e.g. "WALLY-cbom-01.S_ref.elf", where the file itself is just "ref.elf").
+                # Accept either form so tests in the list are honored regardless of naming.
+                if shortelf in lockstepwaivers or file in lockstepwaivers: # skip tests that itch bugs in ImperasDV
                     print(f"{bcolors.WARNING}Skipping waived test {shortelf}{bcolors.ENDC}")
                     continue
                 sim_log = f"{sim_logdir}{config}_{shortelf}.log"
