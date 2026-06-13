@@ -280,6 +280,7 @@ testfloatdivconfigs = [
 lockstepwaivers = [
     "WALLY-q-01.S_ref.elf",     # Q extension is not supported by ImperasDV
     "WALLY-cbom-01.S_ref.elf", #,  # cbom extension is not supported by ImperasDV because there is no cache model in ImperasDV
+    "Zicbom-cbo.inval-00.elf", # ImperasDV lacks cache model to match CVW on invalidation
 ]
 
 # tests for cache simulations on a rv64gc derived config - cache_rv64gc
@@ -370,7 +371,11 @@ def addTestsByDir(testDir, config, sim, coverStr, configs, lockstepMode=0, breke
                 fullfile = os.path.join(dirpath, file)
                 fields = fullfile.rsplit('/', 3)
                 shortelf = f"{fields[1]}_{fields[3]}" if fields[2] == "ref" else f"{fields[2]}_{fields[3]}"
-                if shortelf in lockstepwaivers: # skip tests that itch bugs in ImperasDV
+                # Waiver entries may be written either as the bare ELF filename (e.g.
+                # "Zicbom-cbo.inval-00.elf") or as the directory-prefixed shortelf used for the log
+                # name (e.g. "WALLY-cbom-01.S_ref.elf", where the file itself is just "ref.elf").
+                # Accept either form so tests in the list are honored regardless of naming.
+                if shortelf in lockstepwaivers or file in lockstepwaivers: # skip tests that itch bugs in ImperasDV
                     print(f"{bcolors.WARNING}Skipping waived test {shortelf}{bcolors.ENDC}")
                     continue
                 sim_log = f"{sim_logdir}{config}_{shortelf}.log"
@@ -386,6 +391,7 @@ def search_log_for_text(text, grepfile):
     with open(grepfile, errors="ignore") as file:
         content = file.readlines()
         passed = False
+        reported = False # whether any line identifying this test was printed
         success = any(text in line for line in content) # check if the success string is present in the log file
         # Even if the string is found, report warnings, errors, and failure, or PASSED
         for line in content:
@@ -393,6 +399,7 @@ def search_log_for_text(text, grepfile):
                 if "FAILED" in line:
                     print(f"{bcolors.FAIL}{grepfile}: {rvcp_summary} FAILED{bcolors.ENDC}")
                     success = False
+                    reported = True
                 elif "PASSED" in line:
                     print(f"{bcolors.OKGREEN}{grepfile}: {rvcp_summary} PASSED{bcolors.ENDC}")
                     passed = True
@@ -401,15 +408,22 @@ def search_log_for_text(text, grepfile):
             if "warning:" in line.lower():
                 print(f"{bcolors.WARNING}{grepfile}: {line.strip()}{bcolors.ENDC}")
                 success = False
+                reported = True
             if "error:" in line.lower():
                 print(f"{bcolors.FAIL}{grepfile}: {line.strip()}{bcolors.ENDC}")
                 success = False
+                reported = True
         nonrvcp_suites = ["buildroot", "all_lints"]
         if success and not passed:
             if not any(s in grepfile for s in nonrvcp_suites):
                 print(f"{bcolors.WARNING}{grepfile}: WARNING '{text}' found but no {rvcp_summary} PASSED{bcolors.ENDC}")
         if not success and passed:
             print(f"{bcolors.WARNING}{grepfile}: WARNING No success string '{text}' found in log file{bcolors.ENDC}")
+            reported = True
+        if not success and not reported:
+            # Otherwise-silent failure (e.g. lockstep mismatch: ImperasDV prints "Error (IDV)"
+            # without a colon, so the error: check above misses it); name the failing log
+            print(f"{bcolors.FAIL}{grepfile}: FAIL: success string '{text}' not found{bcolors.ENDC}")
         return 0 if success else 1
 
 

@@ -450,10 +450,6 @@ coverage exclude -scope /dut/core/lsu -linerange $line-$line -item c 1 -feccondr
 set line [GetLineNum ${SRC}/lsu/lsu.sv "assign CacheRWM"]
 coverage exclude -scope /dut/core/lsu -linerange $line-$line -item c 1 -feccondrow 4
 
-# Excluding reset and clear for impossible case in the wficountreg in privdec
-#set line [GetLineNum ${SRC}/generic/flop/floprc.sv "reset \\| clear"]
-#coverage exclude -scope /dut/core/priv/priv/pmd/wfi/wficountreg -linerange $line-$line -item c 1 -feccondrow 2
-
 # Exclude system reset case in ebu
 set line [GetLineNum ${SRC}/ebu/ebufsmarb.sv "BeatCounter\\("]
 coverage exclude -scope /dut/core/ebu/ebu/ebufsmarb -linerange $line-$line -item e 1 -fecexprrow 1
