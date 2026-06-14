@@ -328,10 +328,6 @@ set line [GetLineNum ${SRC}/mmu/pmpchecker.sv "EnforcePMP & ExecuteAccessF"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmp/pmpchecker -linerange $line-$line -item e 1 -fecexprrow 1,2,4,5,6
 set line [GetLineNum ${SRC}/mmu/pmpchecker.sv "EnforcePMP & ExecuteAccessF"]
 coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange $line-$line -item e 1 -fecexprrow 3
-## A single data access is never simultaneously read and write, so WriteAccessM=1 can never occur
-## while the ReadAccessM-qualified load-access-fault term is evaluated (PMPLoadAccessFaultM, row 2).
-set line [GetLineNum ${SRC}/mmu/pmpchecker.sv "EnforcePMP & ReadAccessM"]
-
 
 ## The IFU has ReadAccess = WriteAccess = 0 and ExecuteAccess = 1 hardwired, so exclude alternatives
 set line [GetLineNum ${SRC}/mmu/pmachecker.sv "ReadAccessM \\| WriteAccessM"]
