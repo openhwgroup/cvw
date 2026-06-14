@@ -593,3 +593,10 @@ set fbline [GetLineNum ${SRC}/ebu/ahbcacheinterface.sv "index == BeatCountDelaye
 for {set i 1} {$i < 8} {incr i} {
     coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/fetchbuffer[$i] -linerange $fbline-$fbline -item e 1 -fecexprrow 1
 }
+
+# FlushDCache = FlushDCacheM & ~SelHPTW : the SelHPTW=1 input-term (Row 4) is unreachable.  fence.i is the
+# only asserter of FlushDCacheM, and while fence.i is in M it pins the front end to an already-translated
+# page (NextValidPCE=PCE), so no ITLB walk can begin while FlushDCacheM=1; a walk that starts earlier stalls
+# fence.i out of M.  See https://github.com/openhwgroup/cvw/issues/1788.
+set line [GetLineNum ${SRC}/lsu/lsu.sv "exclusion-tag: lsu FlushDCacheSelHPTW"]
+coverage exclude -scope /dut/core/lsu/bus/dcache -linerange $line-$line -item e 1 -fecexprrow 4
