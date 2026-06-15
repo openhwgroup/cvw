@@ -44,7 +44,18 @@ STATUS="buildroot"
 export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}:$RISCV/riscv64-unknown-elf/lib:$RISCV/lib/x86_64-linux-gnu
 cd "$WALLY"/linux
 if [ ! -e "$RISCV"/buildroot ]; then
-    FORCE_UNSAFE_CONFIGURE=1 make 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ] # FORCE_UNSAFE_CONFIGURE is needed to allow buildroot to compile when run as root
+    if [ "$FAMILY" == ubuntu ] && ((UBUNTU_VERSION == 26)); then
+        # Buildroot currently does not work with the default version of install: https://github.com/uutils/coreutils/issues/12166
+        # The update-alternatives fix will not work here because it makes a permanent change
+        TMP_BIN=/tmp/riscv-bin
+        mkdir -p TMP_BIN
+        ln -sf "$(which gnuinstall)" $TMP_BIN/install
+        # FORCE_UNSAFE_CONFIGURE is needed to allow buildroot to compile when run as root
+        env PATH="$TMP_BIN:$PATH" FORCE_UNSAFE_CONFIGURE=1 make 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
+        rm -r TMP_BIN
+    else
+        FORCE_UNSAFE_CONFIGURE=1 make 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ] # FORCE_UNSAFE_CONFIGURE is needed to allow buildroot to compile when run as root
+    fi
     echo -e "${SUCCESS_COLOR}Buildroot successfully installed and Linux testvectors created!${ENDC}"
 elif [ ! -e "$RISCV"/linux-testvectors ]; then
     echo -e "${OK_COLOR}Buildroot already exists, but Linux testvectors are missing. Generating them now.${ENDC}"
