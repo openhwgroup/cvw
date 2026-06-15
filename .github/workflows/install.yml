@@ -50,6 +50,10 @@ jobs:
             image: ubuntu:24.04
             imageFamily: debian
             os: ubuntu-latest
+          - name: ubuntu-26.04
+            image: ubuntu:26.04
+            imageFamily: debian
+            os: ubuntu-latest
           # Ubuntu ARM64 Installation
           - name: ubuntu-24.04-arm
             image: ubuntu:24.04

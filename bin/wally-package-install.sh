@@ -72,7 +72,9 @@ case "$FAMILY" in
         fi
         ;;
     ubuntu | debian)
-        if (( UBUNTU_VERSION >= 24 )); then
+        if (( UBUNTU_VERSION >= 26 )); then
+            PYTHON_VERSION=python3.14
+        elif (( UBUNTU_VERSION >= 24 )); then
             PYTHON_VERSION=python3.12
         elif (( UBUNTU_VERSION >= 22 )); then
             PYTHON_VERSION=python3.11
