@@ -32,7 +32,7 @@
 
 module csrd import cvw::*;  #(parameter cvw_t P) (
   input logic               clk, reset,
-  input logic               HaltReq, ResumeReq,
+  input logic               DebugHaltReq, DebugResumeReq,
   input logic               CSRDWriteM,
   input logic [P.XLEN-1:0]  CSRWriteValM,
   input logic [11:0]        CSRAdrM,
@@ -46,9 +46,9 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   output logic              IllegalCSRDAccessM,
   output logic              DebugResume,
   output [P.XLEN-1:0]       DPC_REGW,
-  output logic              HaveReset,
-  input logic               HaveResetAck,
-  input logic               ResetHaltReq,
+  output logic              DebugHaveReset,
+  input logic               DebugHaveResetAck,
+  input logic               DebugResetHaltReq,
   input logic               BreakpointFaultM,
   output logic              DebugEBreakM,
   output logic              DebugEBreakS,
@@ -61,7 +61,8 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   output logic              DebugStepIE,
   output logic              DebugStep,
   output logic [1:0]        DebugPrivilegeMode,
-  output logic              DebugSetPrivMode
+  output logic              DebugSetPrivMode,
+  output logic              DebugStopCounters
 );
 
   localparam                DCSR = 12'h7B0;
@@ -120,7 +121,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
 
    // debug specification 4.9.1, 0x7b0
   localparam dcsrwidth = ($bits(ebreakm) + $bits(ebreaks) + $bits(ebreaku) +
-    $bits(stepie) + $bits(stoptime) + $bits(cause) + $bits(step) + $bits(prv));
+    $bits(stepie) + $bits(stopcount) + $bits(cause) + $bits(step) + $bits(prv));
 
   logic [dcsrwidth-1:0]              DCSRWriteValM;
   logic [dcsrwidth-1:0]     DCSR_REGW;
@@ -152,8 +153,8 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   assign pelp = 0;
   assign ebreakvs = 0;
   assign ebreakvu = 0;
-  assign stopcount = 0;
-  // assign stoptime = 0;
+  // assign stopcount = 0;
+  assign stoptime = 0;
   assign v = 0;
   assign mprven = 1;
   assign nmip = 0;
@@ -169,9 +170,9 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   flopenrc #(1) PCSrcMReg (clk, reset, FlushM, ~StallM, PCSrcE, PCSrcM);
 
   assign DCSRWriteValM = CSRDWriteM & ~NextHalt ?
-                         {CSRWriteValM[15], CSRWriteValM[13], CSRWriteValM[12], CSRWriteValM[11], CSRWriteValM[9],
+                         {CSRWriteValM[15], CSRWriteValM[13], CSRWriteValM[12], CSRWriteValM[11], CSRWriteValM[10],
                           CSRWriteValM[8:6], CSRWriteValM[2], CSRWriteValM[1:0]} :
-                         {ebreakm, ebreaks, ebreaku, stepie, stoptime, NextCause, step, PrivilegeModeW};
+                         {ebreakm, ebreaks, ebreaku, stepie, stopcount, NextCause, step, PrivilegeModeW};
 
   // assign DPCWriteValM = WriteDPC & (state == HALTED) ? CSRWriteValM : ebreak ? PCM : PCSrcM ? IEUAdrM : NextValidPCE;
 
@@ -179,7 +180,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   always_comb begin
     if (CSRDWriteM & DebugMode) begin
       DPCWriteValM = CSRWriteValM;
-    end else if (HaltReq & NextHalt | ebreak) begin
+    end else if (DebugHaltReq & NextHalt | ebreak) begin
       DPCWriteValM = PCM;
     end else if (step & NextHalt) begin
       if (PCSrcM) begin
@@ -208,7 +209,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   assign ebreaks = DCSR_REGW[dcsrwidth-2];
   assign ebreaku = DCSR_REGW[dcsrwidth-3];
   assign stepie = DCSR_REGW[dcsrwidth-4];
-  assign stoptime = DCSR_REGW[dcsrwidth-5];
+  assign stopcount = DCSR_REGW[dcsrwidth-5];
   assign cause = DCSR_REGW[dcsrwidth-6:dcsrwidth-8];
   assign step = DCSR_REGW[2];
   assign prv = DCSR_REGW[1:0];
@@ -216,6 +217,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   // Step Controls
   assign DebugStepIE = stepie;
   assign DebugStep = step;
+  assign DebugStopCounters = stopcount & DebugMode;
 
   // Privilege mode controls
   assign DebugPrivilegeMode = prv;
@@ -251,7 +253,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   always_ff @(posedge clk) begin
     if (reset) begin
       state <= RUNNING;
-    end else if (HaltReq | ResumeReq | Stepping | ebreak | ResetHaltReqEnable) begin // Using the requests as enables
+    end else if (DebugHaltReq | DebugResumeReq | Stepping | ebreak | ResetHaltReqEnable) begin // Using the requests as enables
       state <= state_n;
     end else begin
       state <= state;
@@ -264,14 +266,14 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   always_comb begin
     case (state)
       RUNNING: begin
-        if (HaltReq) state_n = HALTED;
+        if (DebugHaltReq) state_n = HALTED;
         else if (ebreak) state_n = HALTED;
         else if (step & InstrValid & ~DebugResume & ~StallW) state_n = HALTED;
         else if (ResetHaltReqValid) state_n = HALTED;
         else state_n = RUNNING;
         end
       HALTED: begin
-        if (ResumeReq) state_n = RUNNING;
+        if (DebugResumeReq) state_n = RUNNING;
         else state_n = HALTED;
         end
       default: state_n = RUNNING;
@@ -281,7 +283,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   always_ff @(posedge clk) begin
     if (reset) begin
       Stepping <= 1'b0;
-    end else if (step & ResumeReq) begin
+    end else if (step & DebugResumeReq) begin
       Stepping <= 1'b1;
     end else if (InstrValid & ~StallW) begin
       // StallW must be low before we can reset Stepping. This
@@ -317,7 +319,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   // Reset Halt Request management
   // -----------------------------------------------------------------
 
-  assign ResetHaltReqCondition = ResetHaltReq & HaveReset;
+  assign ResetHaltReqCondition = DebugResetHaltReq & DebugHaveReset;
   assign ResetHaltReqValid = ResetHaltReqCondition & InstrValidE;
   assign ResetHaltReqEnable = ResetHaltReqCondition & NextHalt;
 
@@ -367,7 +369,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
 
    always_comb begin
       NextCause = '0;
-    if (HaltReq) begin
+    if (DebugHaltReq) begin
       NextCause = 3'd3;
     end else if (ebreak) begin
       NextCause = 3'd1;
@@ -381,14 +383,14 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   end
 
   // -----------------------------------------------------------------------------
-  // HaveReset
+  // DebugHaveReset
   // -----------------------------------------------------------------------------
 
   always_ff @(posedge clk) begin
     if (reset) begin
-      HaveReset <= 1'b1;
-    end else if (HaveResetAck) begin
-      HaveReset <= 1'b0;
+      DebugHaveReset <= 1'b1;
+    end else if (DebugHaveResetAck) begin
+      DebugHaveReset <= 1'b0;
     end
   end
 

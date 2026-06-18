@@ -95,6 +95,8 @@ As a result, users may observe assertion failures or unexpected debugger behavio
 
 This limitation is temporary. Future Wally debug revisions will include program buffer support, improving compatibility with Spike, OpenOCD, and standard RISC-V debug workflows.
 
+Spike also does not implement the DCSR fields `stopcount` and `stoptime`. It's possible to implement these bits in Wally, but using the testvector generation system in `tests/debug` causes these bits to be set to zero upon resume since they are hardcoded to zero in Spike. Spike's issue [1621](https://github.com/riscv-software-src/riscv-isa-sim/issues/1621) has the details.
+
 ---
 
 ## OpenOCD udev Rules Installation (Linux)

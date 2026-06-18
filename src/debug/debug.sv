@@ -32,13 +32,13 @@ module debug import cvw::*; #(parameter cvw_t P) (
   input  logic              reset,
 
   // CPU Signals
-  output logic              NDMReset,
-  output logic              HaltReq,
-  output logic              ResumeReq,
+  output logic              DebugNDMReset,
+  output logic              DebugHaltReq,
+  output logic              DebugResumeReq,
   input  logic              DebugMode,
-  output logic              GPRDebugEnable,
-  output logic              CSRDebugEnable,
-  output logic              FPRDebugEnable,
+  output logic              DebugGPREnable,
+  output logic              DebugCSREnable,
+  output logic              DebugFPREnable,
 
   // DMI REQUEST
   input  logic [6:0]         DMIADDR,
@@ -60,9 +60,9 @@ module debug import cvw::*; #(parameter cvw_t P) (
   output logic              DebugRegWrite,
 
   // Run State
-  input  logic              HaveReset,
-  output logic              HaveResetAck,
-  output logic              ResetHaltReq
+  input  logic              DebugHaveReset,
+  output logic              DebugHaveResetAck,
+  output logic              DebugResetHaltReq
 );
 
   // Available CSRs
@@ -194,39 +194,36 @@ module debug import cvw::*; #(parameter cvw_t P) (
   logic [31:0] NextAbstractAuto;
 
   // DMControl fields
-  logic        hartreset;
-  logic        setresethaltreq;
-  logic        clrresethaltreq;
-  // logic        resethaltreq;
-  logic        ResumeReqD;
-  logic        HaltReqD;
+  logic        HartReset;
+  logic        SetResetHaltReq;
+  logic        ClrResetHaltReq;
 
   // DMStatus fields
-  logic        ndmresetpending;
+  logic        NDMResetPending;
 
   // AbstractCS fields
-  logic [4:0] progbufsize;
-  logic        busy;
-  logic        relaxedpriv;
-  logic [2:0]  cmderr;
-  logic [3:0]  datacount;
+  logic [4:0] ProgBufSize;
+  logic        Busy;
+  logic        RelaxedPriv;
+  logic [2:0]  CMDErr;
+  logic [3:0]  DataCount;
 
   // Resume Ack States and Signals
   typedef enum logic [1:0] {RESACKLOW, RESACKCLEAR, RESACKHIGH} resack_state_e;
   resack_state_e resack_state, next_resack_state;
-  logic allresumeack;
-  logic anyresumeack;
+  logic AllResumeAck;
+  logic AnyResumeAck;
 
-  logic allrunning;
-  logic anyrunning;
-  logic allhalted;
-  logic anyhalted;
+  logic AllRunning;
+  logic AnyRunning;
+  logic AllHalted;
+  logic AnyHalted;
 
   // Abstract Register signals
-  logic [7:0]  cmdtype;
-  logic [2:0]  aarsize;
-  logic [2:0]  nextaarsize;
-  logic        aarpostincrement;
+  logic [7:0]  CMDType;
+  logic [2:0]  AARSize;
+  logic [2:0]  NextAARSize;
+  logic        AARPostIncrement;
 
   logic        ReadRequest;
   logic        WriteRequest;
@@ -308,12 +305,12 @@ module debug import cvw::*; #(parameter cvw_t P) (
 
         DMSTATUS: begin
           // Might need a separate always_comb for every register.
-          DMIRSPDATA <= {ndmresetpending,
+          DMIRSPDATA <= {NDMResetPending,
                          DMStatus[30:20],
-                         HaveReset, HaveReset,
-                         anyresumeack, anyresumeack,
+                         DebugHaveReset, DebugHaveReset,
+                         AnyResumeAck, AnyResumeAck,
                          DMStatus[15:12],
-                         allrunning, anyrunning, allhalted, anyhalted,
+                         AllRunning, AnyRunning, AllHalted, AnyHalted,
                          DMStatus[7:0]};
         end
 
@@ -343,7 +340,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
       DMControl <= '0;
     end else if (WriteRequest & (DMIADDR == DMCONTROL)) begin
       DMControl <= DMControl;
-      if (HaltReq) begin
+      if (DebugHaltReq) begin
         DMControl <= {DMIDATA[31], 1'b0, DMIDATA[29:28], 24'b0, DMIDATA[3:0]};
       end else begin
         DMControl <= {DMIDATA[31:28], 24'b0, DMIDATA[3:0]};
@@ -357,7 +354,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
     if (reset) begin
       DMStatus <= {14'b0, 2'b11, 8'b0, 1'b1, 1'b0, 1'b1, 1'b0, 4'b11}; // ResumeAck's start high
     end else if (WriteRequest & (DMIADDR == DMCONTROL)) begin
-      // Force AllResumeACK and AnyResumeACK low if
+      // Force AllResumeAck and AnyResumeAck low if
       // we're writing to ResumeReq p. 28. There will
       // always be at least 1 cycle of latency after
       // receving the ResumeReq
@@ -413,15 +410,15 @@ module debug import cvw::*; #(parameter cvw_t P) (
       AbstractCS <= P.XLEN == 32 ? 32'h0000_0001 : 32'h000_0002;
     end else if (WriteRequest & (DMIADDR == ABSTRACTCS)) begin
       AbstractCS <= {AbstractCS[31:12],
-                     DMIDATA[11], // Relaxedpriv
-                     DMIDATA[8] == 1'b1 ? 3'b0 : AbstractCS[10:8], // cmderr -> R/W1C
-                     AbstractCS[7:0]}; // Only relaxedpriv and cmderr are writeable
+                     DMIDATA[11], // RelaxedPriv
+                     DMIDATA[8] == 1'b1 ? 3'b0 : AbstractCS[10:8], // CMDErr -> R/W1C
+                     AbstractCS[7:0]}; // Only RelaxedPriv and CMDErr are writeable
     end else if (WriteRequest & (DMIADDR == COMMAND)) begin
-      // ISSUE: cmderr is now based on incoming request data. If it
-      // changes to something else, cmderr changes and doesn't get
+      // ISSUE: CMDErr is now based on incoming request data. If it
+      // changes to something else, CMDErr changes and doesn't get
       // clocked into AbstractCS. AbstractCS must change on when
       // Commands are incoming, not only on reads.
-      AbstractCS <= {AbstractCS[31:11], AbstractCS[10:8] == 3'b0 ? cmderr : AbstractCS[10:8], AbstractCS[7:0]};
+      AbstractCS <= {AbstractCS[31:11], AbstractCS[10:8] == 3'b0 ? CMDErr : AbstractCS[10:8], AbstractCS[7:0]};
     end
   end
 
@@ -439,7 +436,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
   // --------------------------------------------------------------------------
 
   // assign HaltReq = DMControl[31] & DMActive;
-  // assign ResumeReq = DMControl[30] & ~anyresumeack;
+  // assign ResumeReq = DMControl[30] & ~AnyResumeAck;
 
   typedef enum logic [1:0] {RESUMEREQIDLE, RESUMEREQUEST, RESUMEWAITCLEAR} ResumeReqState;
   ResumeReqState CurrResumeReq;
@@ -507,23 +504,23 @@ module debug import cvw::*; #(parameter cvw_t P) (
     endcase
   end
 
-  assign ResumeReq = (CurrResumeReq == RESUMEREQUEST);
-  assign HaltReq = (CurrHaltReq == HALTREQUEST) & DMActive;
+  assign DebugResumeReq = (CurrResumeReq == RESUMEREQUEST);
+  assign DebugHaltReq = (CurrHaltReq == HALTREQUEST) & DMActive;
 
-  assign hartreset = 1'b0;
-  assign HaveResetAck = DMControl[28];
-  assign NDMReset = DMControl[1];
+  assign HartReset = 1'b0;
+  assign DebugHaveResetAck = DMControl[28];
+  assign DebugNDMReset = DMControl[1];
   assign DMActive = DMControl[0];
 
   // Writes to these bits should be ignored if an abstract command is
   // executing. This isn't a problem when only Abstract Register is
   // implemented but could be a problem with Quick Access and Abstract
   // Memory commands. 3.14.2
-  assign setresethaltreq = DMControl[3];
-  assign clrresethaltreq = DMControl[2];
+  assign SetResetHaltReq = DMControl[3];
+  assign ClrResetHaltReq = DMControl[2];
 
   // DMStatus signals
-  assign ndmresetpending = NDMReset;
+  assign NDMResetPending = DebugNDMReset;
 
   typedef enum logic [1:0] {RUNNING, HALTING, HALTED, RESUMING} HaltState;
   HaltState CurrHaltState;
@@ -531,17 +528,17 @@ module debug import cvw::*; #(parameter cvw_t P) (
 
   // With Multi-hart, this needs to become a vector
   always_ff @(posedge clk) begin
-    if (reset | clrresethaltreq) begin
-      ResetHaltReq <= 1'b0;
-    end else if (setresethaltreq) begin
-      ResetHaltReq <= 1'b1;
+    if (reset | ClrResetHaltReq) begin
+      DebugResetHaltReq <= 1'b0;
+    end else if (SetResetHaltReq) begin
+      DebugResetHaltReq <= 1'b1;
     end
   end
 
   // see Figure 2 Debug Specification (2/21/25)
   always_ff @(posedge clk) begin
     if (reset) begin
-      if (ResetHaltReq) CurrHaltState <= HALTED;
+      if (DebugResetHaltReq) CurrHaltState <= HALTED;
       else CurrHaltState <= RUNNING;
     end else begin
       CurrHaltState <= NextHaltState;
@@ -551,7 +548,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
   always_comb begin
     case(CurrHaltState)
       RUNNING: begin
-        if (HaltReq) NextHaltState = HALTING;
+        if (DebugHaltReq) NextHaltState = HALTING;
         else if (DebugMode) NextHaltState = HALTED;
         else NextHaltState = RUNNING;
       end
@@ -560,7 +557,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
         else NextHaltState = HALTING;
       end
       HALTED: begin
-        if (ResumeReq) NextHaltState = RESUMING;
+        if (DebugResumeReq) NextHaltState = RESUMING;
         else NextHaltState = HALTED;
       end
       RESUMING: begin
@@ -571,10 +568,10 @@ module debug import cvw::*; #(parameter cvw_t P) (
     endcase
   end
 
-  assign allrunning = NextHaltState == RUNNING | CurrHaltState == RUNNING;
-  assign anyrunning = NextHaltState == RUNNING | CurrHaltState == RUNNING;
-  assign allhalted = NextHaltState == HALTED | CurrHaltState == HALTED;
-  assign anyhalted = NextHaltState == HALTED | CurrHaltState == HALTED;
+  assign AllRunning = NextHaltState == RUNNING | CurrHaltState == RUNNING;
+  assign AnyRunning = NextHaltState == RUNNING | CurrHaltState == RUNNING;
+  assign AllHalted = NextHaltState == HALTED | CurrHaltState == HALTED;
+  assign AnyHalted = NextHaltState == HALTED | CurrHaltState == HALTED;
 
   // -----------------------------------------------------------------------------
   // ResumeAck: resumeack handshake.
@@ -593,7 +590,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
   always_comb begin
     case(resack_state)
       RESACKLOW: begin
-        if (ResumeReq) next_resack_state = RESACKCLEAR;
+        if (DebugResumeReq) next_resack_state = RESACKCLEAR;
         else next_resack_state = RESACKLOW;
       end
 
@@ -603,7 +600,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
       end
 
       RESACKHIGH: begin
-        if (ResumeReq) next_resack_state = RESACKCLEAR;
+        if (DebugResumeReq) next_resack_state = RESACKCLEAR;
         else next_resack_state = RESACKHIGH;
       end
 
@@ -613,7 +610,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
 
 
   // This allows a momentary clear right after receiving a ResumeRequest
-  assign anyresumeack = (resack_state == RESACKHIGH);
+  assign AnyResumeAck = (resack_state == RESACKHIGH);
 
   // --------------------------------------------------------------------------
   // Abstract Command FSM
@@ -652,18 +649,18 @@ module debug import cvw::*; #(parameter cvw_t P) (
   end
 
   logic ValidCommand;
-  logic NextCSRDebugEnable;
-  logic NextGPRDebugEnable;
-  logic NextFPRDebugEnable;
+  logic NextDebugCSREnable;
+  logic NextDebugGPREnable;
+  logic NextDebugFPREnable;
 
-  assign aarsize = Command[22:20];
-  // assign StartCommand = DMIVALID & DMIRSPREADY & (DMIADDR == COMMAND) & ~|cmderr;
+  assign AARSize = Command[22:20];
+  // assign StartCommand = DMIVALID & DMIRSPREADY & (DMIADDR == COMMAND) & ~|CMDErr;
   //assign DebugRegAddr = Command[11:0];
   assign DebugRegWrite = Command[16] & StartCommand & DebugMode;
 
   // Covering both 32 bit and 64 bit architectures.
   if (P.XLEN == 64) begin
-    assign DebugRegWDATA = aarsize == 3'd2 ? {32'h0, Data0} : {Data1, Data0};
+    assign DebugRegWDATA = AARSize == 3'd2 ? {32'h0, Data0} : {Data1, Data0};
   end else begin
     assign DebugRegWDATA = Data0;
   end
@@ -672,15 +669,15 @@ module debug import cvw::*; #(parameter cvw_t P) (
     if (reset) begin
       StartCommand <= 0;
       DebugRegAddr <= '0;
-      CSRDebugEnable <= 0;
-      FPRDebugEnable <= 0; //is this needed as GPR not there
-      GPRDebugEnable <= 0; //is this is a bug?
+      DebugCSREnable <= 0;
+      DebugFPREnable <= 0; //is this needed as GPR not there
+      DebugGPREnable <= 0; //is this is a bug?
     end else begin
-      StartCommand <= DMIVALID & DMIRSPREADY & (DMIADDR == COMMAND) & ~|cmderr & DMActive & DebugMode;
+      StartCommand <= DMIVALID & DMIRSPREADY & (DMIADDR == COMMAND) & ~|CMDErr & DMActive & DebugMode;
       DebugRegAddr <= DMIDATA[11:0];
-      GPRDebugEnable <= NextGPRDebugEnable & DebugMode;
-      FPRDebugEnable <= NextFPRDebugEnable & DebugMode;
-      CSRDebugEnable <= NextCSRDebugEnable & DebugMode;
+      DebugGPREnable <= NextDebugGPREnable & DebugMode;
+      DebugFPREnable <= NextDebugFPREnable & DebugMode;
+      DebugCSREnable <= NextDebugCSREnable & DebugMode;
     end
   end
 
@@ -692,22 +689,22 @@ module debug import cvw::*; #(parameter cvw_t P) (
   // ------------------------------------------------------------------
   always_comb begin
     ValidCommand         = 0;
-    NextGPRDebugEnable   = 0;
-    NextFPRDebugEnable   = 0;
-    NextCSRDebugEnable   = 0;
+    NextDebugGPREnable   = 0;
+    NextDebugFPREnable   = 0;
+    NextDebugCSREnable   = 0;
 
     if (DMIADDR == COMMAND) begin
       case (DMIDATA[15:0]) inside
         // GPRs
         [16'h1000:16'h101f]: begin
           ValidCommand       = 1;
-          NextGPRDebugEnable = 1;
+          NextDebugGPREnable = 1;
         end
 
         // FPRs
         [16'h1020:16'h103f]: begin
           ValidCommand       = 1;
-          NextFPRDebugEnable = 1;
+          NextDebugFPREnable = 1;
         end
 
         // ------------------------------------------------------------------
@@ -718,33 +715,33 @@ module debug import cvw::*; #(parameter cvw_t P) (
           MCOUNTEREN, MCOUNTINHIBIT,
           MSCRATCH, MEPC, MCAUSE, MTVAL, MIP: begin
             ValidCommand       = 1;
-            NextCSRDebugEnable = 1;
+            NextDebugCSREnable = 1;
           end
 
         // Conditional Machine CSRs
         MSTATUSH: begin
           if (P.XLEN == 32) begin
             ValidCommand       = 1;
-            NextCSRDebugEnable = 1;
+            NextDebugCSREnable = 1;
           end
         end
 
         MENVCFG, MENVCFGH: begin
           if (P.U_SUPPORTED) begin
             ValidCommand       = 1;
-            NextCSRDebugEnable = 1;
+            NextDebugCSREnable = 1;
           end
         end
 
         [PMPADDR0:PMPADDR0 + P.PMP_ENTRIES]: begin
           ValidCommand       = 1;
-          NextCSRDebugEnable = 1;
+          NextDebugCSREnable = 1;
         end
 
         [PMPCFG0:PMPCFG0 + P.PMP_ENTRIES/4]: begin
           if (!(P.XLEN == 64 && DMIDATA[0] != 0)) begin
             ValidCommand       = 1;
-            NextCSRDebugEnable = 1;
+            NextDebugCSREnable = 1;
           end
         end
 
@@ -754,67 +751,67 @@ module debug import cvw::*; #(parameter cvw_t P) (
         SSTATUS, STVEC, SIP, SIE, SSCRATCH,
           SEPC, SCAUSE, STVAL, SCOUNTEREN, SENVCFG: begin
             ValidCommand       = 1;
-            NextCSRDebugEnable = 1;
+            NextDebugCSREnable = 1;
           end
 
         // Remaining conditional Supervisor CSRs
         SATP: begin
           if (P.VIRTMEM_SUPPORTED) begin
             ValidCommand       = 1;
-            NextCSRDebugEnable = 1;
+            NextDebugCSREnable = 1;
           end
         end
 
         STIMECMP: begin
           if (P.SSTC_SUPPORTED) begin
             ValidCommand       = 1;
-            NextCSRDebugEnable = 1;
+            NextDebugCSREnable = 1;
           end
         end
 
         STIMECMPH: begin
           if (P.SSTC_SUPPORTED && P.XLEN == 32) begin
             ValidCommand       = 1;
-            NextCSRDebugEnable = 1;
+            NextDebugCSREnable = 1;
           end
         end
 
         // User floating-point CSRs
         FFLAGS, FRM, FCSR: begin
           ValidCommand       = 1;
-          NextCSRDebugEnable = 1;
+          NextDebugCSREnable = 1;
         end
 
         // Counter CSRs
         TIMEH: begin
           if (P.XLEN != 64) begin
             ValidCommand       = 1;
-            NextCSRDebugEnable = 1;
+            NextDebugCSREnable = 1;
           end
         end
 
         // Performance counter CSRs
         [MHPMCOUNTERBASE:MHPMCOUNTERBASE + P.COUNTERS]: begin
           ValidCommand = 1;
-          NextCSRDebugEnable = 1;
+          NextDebugCSREnable = 1;
         end
 
         [HPMCOUNTERBASE:HPMCOUNTERBASE + P.COUNTERS]: begin
           ValidCommand       = 1;
-          NextCSRDebugEnable = 1;
+          NextDebugCSREnable = 1;
         end
 
         [MHPMCOUNTERHBASE:MHPMCOUNTERHBASE + P.COUNTERS]: begin
           if (P.XLEN == 32) begin
             ValidCommand       = 1;
-            NextCSRDebugEnable = 1;
+            NextDebugCSREnable = 1;
           end
         end
 
         [HPMCOUNTERHBASE:HPMCOUNTERHBASE + P.COUNTERS]: begin
           if (P.XLEN == 32) begin
             ValidCommand       = 1;
-            NextCSRDebugEnable = 1;
+            NextDebugCSREnable = 1;
           end
         end
 
@@ -822,7 +819,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
         DCSR, DPC, DSCRATCH0,
           TSELECT, TDATA1, TDATA2, TINFO: begin
             ValidCommand       = 1;
-            NextCSRDebugEnable = 1;
+            NextDebugCSREnable = 1;
           end
 
         default: ;  // all signals stay 0 (already set above)
@@ -830,18 +827,18 @@ module debug import cvw::*; #(parameter cvw_t P) (
     end
   end
 
-  assign nextaarsize = DMIDATA[22:20];
+  assign NextAARSize = DMIDATA[22:20];
 
   if (P.XLEN == 32) begin
-    assign ValidSize = nextaarsize == 3'd2 | nextaarsize == 3'd0;
+    assign ValidSize = NextAARSize == 3'd2 | NextAARSize == 3'd0;
   end else begin
-    assign ValidSize = nextaarsize == 3'd2 | nextaarsize == 3'd3 | nextaarsize == 3'd0;
+    assign ValidSize = NextAARSize == 3'd2 | NextAARSize == 3'd3 | NextAARSize == 3'd0;
   end
 
   always_comb begin
-    if (~DebugMode) cmderr = 3'd4;
-    else if (ValidCommand & ~ValidSize) cmderr = 3'd2;
-    else if (~ValidCommand & ValidSize) cmderr = 3'd3;
-    else cmderr = 3'd0;
+    if (~DebugMode) CMDErr = 3'd4;
+    else if (ValidCommand & ~ValidSize) CMDErr = 3'd2;
+    else if (~ValidCommand & ValidSize) CMDErr = 3'd3;
+    else CMDErr = 3'd0;
   end
 endmodule

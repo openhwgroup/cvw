@@ -99,17 +99,17 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   output logic                     BigEndianM,                // memory access is big-endian based on privilege mode and STATUS register endian fields
   // Debug Signals
   output logic                     DebugMode,
-  input  logic                     HaltReq, ResumeReq,
-  input  logic                     CSRDebugEnable,
+  input  logic                     DebugHaltReq, DebugResumeReq,
+  input  logic                     DebugCSREnable,
   // output logic [P.XLEN-1:0]     DebugCSRRDATA,
   input  logic [P.XLEN-1:0]        DebugRegWDATA,
   input  logic [11:0]              DebugRegAddr,
   input  logic                     DebugRegWrite,
   output logic                     DebugResume,
   output logic [P.XLEN-1:0]        DPC,
-  output logic                     HaveReset,
-  input  logic                     HaveResetAck,
-  input  logic                     ResetHaltReq,
+  output logic                     DebugHaveReset,
+  input  logic                     DebugHaveResetAck,
+  input  logic                     DebugResetHaltReq,
   input  logic                     BreakpointFaultM,
   output logic                     DebugEBreakM, DebugEBreakS, DebugEBreakU,
   input  logic [P.XLEN-1:0]        IEUAdrM,
@@ -154,6 +154,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]       SENVCFG_REGW;
   logic                    ENVCFG_STCE; // supervisor timer counter enable
   logic                    ENVCFG_FIOM; // fence implies io (presently not used)
+  logic                    DebugStopCounters;
 
   // Trigger Module signals
   logic                    TriggerHalt;
@@ -226,17 +227,17 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   // CSR Write values
   ///////////////////////////////////////////
 
-  assign CSRAdrM = CSRDebugEnable ? DebugRegAddr[11:0] : InstrM[31:20];
+  assign CSRAdrM = DebugCSREnable ? DebugRegAddr[11:0] : InstrM[31:20];
   // assign CSRAdrM = InstrM[31:20];
   assign UnalignedNextEPCM = TrapM ? PCM : CSRWriteValM;
   assign NextEPCM = P.ZCA_SUPPORTED ? {UnalignedNextEPCM[P.XLEN-1:1], 1'b0} : {UnalignedNextEPCM[P.XLEN-1:2], 2'b00}; // 3.1.15 alignment
   assign NextCauseM = TrapM ? {InterruptM, CauseM}: {CSRWriteValM[P.XLEN-1], CSRWriteValM[3:0]};
   assign NextMtvalM = TrapM ? NextFaultMtvalM : CSRWriteValM;
   assign UngatedCSRMWriteM = CSRWriteM & (PrivilegeModeW == P.M_MODE);
-  assign CSRMWriteM = DebugMode ? DebugRegWrite & CSRDebugEnable : UngatedCSRMWriteM & InstrValidNotFlushedM;
-  assign CSRSWriteM = DebugMode ? DebugRegWrite & CSRDebugEnable : CSRWriteM & (|PrivilegeModeW) & InstrValidNotFlushedM;
-  assign CSRUWriteM = DebugMode ? DebugRegWrite & CSRDebugEnable : CSRWriteM  & InstrValidNotFlushedM;
-  assign CSRDWriteM = DebugMode ? DebugRegWrite & CSRDebugEnable : CSRWriteM & InstrValidNotFlushedM;
+  assign CSRMWriteM = DebugMode ? DebugRegWrite & DebugCSREnable : UngatedCSRMWriteM & InstrValidNotFlushedM;
+  assign CSRSWriteM = DebugMode ? DebugRegWrite & DebugCSREnable : CSRWriteM & (|PrivilegeModeW) & InstrValidNotFlushedM;
+  assign CSRUWriteM = DebugMode ? DebugRegWrite & DebugCSREnable : CSRWriteM  & InstrValidNotFlushedM;
+  assign CSRDWriteM = DebugMode ? DebugRegWrite & DebugCSREnable : CSRWriteM & InstrValidNotFlushedM;
   assign CSRTrigWriteM = DebugMode ? DebugRegWrite : CSRWriteM & InstrValidNotFlushedM;
   assign MTrapM = TrapM & (NextPrivilegeModeM == P.M_MODE);
   assign STrapM = TrapM & (NextPrivilegeModeM == P.S_MODE) & P.S_SUPPORTED;
@@ -316,20 +317,20 @@ module csr import cvw::*;  #(parameter cvw_t P) (
       .InterruptM, .ExceptionM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
       .CSRAdrM, .PrivilegeModeW, .CSRWriteValM,
       .MCOUNTINHIBIT_REGW, .MCOUNTEREN_REGW, .SCOUNTEREN_REGW,
-      .MTIME_CLINT,  .CSRCReadValM, .IllegalCSRCAccessM);
+      .MTIME_CLINT,  .CSRCReadValM, .IllegalCSRCAccessM, .DebugStopCounters);
   end else begin
     assign CSRCReadValM = '0;
     assign IllegalCSRCAccessM = 1'b1; // counters aren't enabled
   end
 
   if (P.DEBUG_SUPPORTED) begin : debug
-    csrd #(P) csrd(.clk, .reset, .HaltReq, .ResumeReq,
+    csrd #(P) csrd(.clk, .reset, .DebugHaltReq, .DebugResumeReq,
       .CSRDWriteM, .CSRWriteValM, .CSRAdrM, .InstrValid(InstrValidM), .InstrValidE, .CSRDReadValM, .PrivilegeModeW,
       .DebugMode, .NextValidPCE, .PCM, .IllegalCSRDAccessM, .DebugResume, .DPC_REGW(DPC),
-      .HaveReset, .HaveResetAck, .ResetHaltReq, .BreakpointFaultM,
+      .DebugHaveReset, .DebugHaveResetAck, .DebugResetHaltReq, .BreakpointFaultM,
       .DebugEBreakM, .DebugEBreakS, .DebugEBreakU,
       .IEUAdrM, .PCSrcE, .FlushM, .StallM, .StallW, .DebugStepIE, .DebugStep,
-      .DebugPrivilegeMode, .DebugSetPrivMode
+      .DebugPrivilegeMode, .DebugSetPrivMode, .DebugStopCounters
       );
   end else begin
     assign DebugMode = 1'b0;
@@ -337,7 +338,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign IllegalCSRDAccessM = 1'b1;
     assign DebugResume = 1'b0;
     assign DPC = 0;
-    assign HaveReset = 1'b0;
+    assign DebugHaveReset = 1'b0;
     assign DebugEBreakM = 0;
     assign DebugEBreakS = 0;
     assign DebugEBreakU = 0;
@@ -345,6 +346,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign DebugStep = 1'b0;
     assign DebugPrivilegeMode = 2'b11;
     assign DebugSetPrivMode = 1'b0;
+    assign DebugStopCounters = 1'b0;
   end
 
   if (P.TRIG_SUPPORTED) begin : trig

@@ -75,7 +75,7 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   input  logic [4:0]        RdW,                     // Destination register
   // Debug abstract register r/w signals
   input  logic              DebugMode,
-  input  logic              GPRDebugEnable,
+  input  logic              DebugGPREnable,
   output logic [P.XLEN-1:0] DebugR1D,
   input  logic [P.XLEN-1:0] DebugRegWDATA,
   input  logic [11:0]       DebugRegAddr,
@@ -108,10 +108,10 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
 
   // Debug Spec muxing of regfile inputs
   if (P.DEBUG_SUPPORTED) begin
-    mux2 #(5) rfreadaddrmux (Rs1D, DebugRegAddr[4:0], GPRDebugEnable, Rs1);
-    mux2 #(5) rfwriteaddrmux (RdW, DebugRegAddr[4:0], GPRDebugEnable, Rd);
-    mux2 #(P.XLEN) rfwdatamux (ResultW, DebugRegWDATA, GPRDebugEnable, Result);
-    assign RegWrite = DebugMode ? DebugRegWrite & GPRDebugEnable : RegWriteW;
+    mux2 #(5) rfreadaddrmux (Rs1D, DebugRegAddr[4:0], DebugGPREnable, Rs1);
+    mux2 #(5) rfwriteaddrmux (RdW, DebugRegAddr[4:0], DebugGPREnable, Rd);
+    mux2 #(P.XLEN) rfwdatamux (ResultW, DebugRegWDATA, DebugGPREnable, Result);
+    assign RegWrite = DebugMode ? DebugRegWrite & DebugGPREnable : RegWriteW;
     // Return regfile read to Debug Module
     assign DebugR1D = R1D;
   end else begin

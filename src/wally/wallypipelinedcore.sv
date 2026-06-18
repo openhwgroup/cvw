@@ -47,17 +47,17 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
    output logic                  HMASTLOCK,
    input  logic                  ExternalStall,
    output logic                  DebugMode,
-   input  logic                  HaltReq, ResumeReq,
-   input  logic                  GPRDebugEnable,
-   input  logic                  CSRDebugEnable,
-   input  logic                  FPRDebugEnable,
+   input  logic                  DebugHaltReq, DebugResumeReq,
+   input  logic                  DebugGPREnable,
+   input  logic                  DebugCSREnable,
+   input  logic                  DebugFPREnable,
    output logic [P.XLEN-1:0]     DebugRegRDATA,
    input  logic [P.XLEN-1:0]     DebugRegWDATA,
    input  logic [11:0]           DebugRegAddr,
    input  logic                  DebugRegWrite,
-   output logic                  HaveReset,
-   input  logic                  HaveResetAck,
-   input  logic                  ResetHaltReq
+   output logic                  DebugHaveReset,
+   input  logic                  DebugHaveResetAck,
+   input  logic                  DebugResetHaltReq
 );
 
   logic                          StallF, StallD, StallE, StallM, StallW;
@@ -239,7 +239,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
      .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
      .StructuralStallD, .LoadStallD, .StoreStallD, .PCSrcE,
      .CSRReadM, .CSRWriteM, .PrivilegedM, .CSRWriteFenceM, .InvalidateICacheM,
-     .DebugMode, .GPRDebugEnable,
+     .DebugMode, .DebugGPREnable,
      .DebugR1D, .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite
   );
 
@@ -332,9 +332,9 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS,
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
       .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .wfiM, .IntPendingM, .BigEndianM,
-      .DebugMode, .HaltReq, .ResumeReq, .CSRDebugEnable,
+      .DebugMode, .DebugHaltReq, .DebugResumeReq, .DebugCSREnable,
       .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite, .DebugResume, .DPC,
-      .HaveReset, .HaveResetAck, .ResetHaltReq,
+      .DebugHaveReset, .DebugHaveResetAck, .DebugResetHaltReq,
       .IEUAdrM, .PCSrcE);
 
   end else begin
@@ -344,7 +344,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
             ENVCFG_CBE, ENVCFG_PBMTE, ENVCFG_ADUE,
             EPCM, TrapVectorM, RetM, TrapM,
             sfencevmaM, BigEndianM, wfiM, IntPendingM, DebugMode,
-            DebugResume, DPC, HaveReset} = '0;
+            DebugResume, DPC, DebugHaveReset} = '0;
   end
 
   // multiply/divide unit
@@ -385,7 +385,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .SetFflagsM,                         // FPU flags (to privileged unit)
       .FIntDivResultW,
       .DebugMode,
-      .FPRDebugEnable,
+      .DebugFPREnable,
       .DebugFRD1D,
       .DebugRegWDATA,
       .DebugRegAddr,
@@ -399,9 +399,9 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
 
   if (P.DEBUG_SUPPORTED) begin
     if (P.F_SUPPORTED) begin
-      mux3 #(P.XLEN) debugregmux(DebugR1D, CSRReadValM, DebugFRD1D, {FPRDebugEnable, CSRDebugEnable}, DebugRegRDATA);
+      mux3 #(P.XLEN) debugregmux(DebugR1D, CSRReadValM, DebugFRD1D, {DebugFPREnable, DebugCSREnable}, DebugRegRDATA);
     end else begin
-      mux2 #(P.XLEN) debugregmux(DebugR1D, CSRReadValM, CSRDebugEnable, DebugRegRDATA);
+      mux2 #(P.XLEN) debugregmux(DebugR1D, CSRReadValM, DebugCSREnable, DebugRegRDATA);
     end
   end else begin
     assign DebugRegRDATA = '0;

@@ -87,33 +87,33 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic                       DMIRSPREADY;
   logic                       DMIRSPVALID;
 
-  logic                       NDMReset;
-  logic                       HaltReq;
-  logic                       ResumeReq;
+  logic                       DebugNDMReset;
+  logic                       DebugHaltReq;
+  logic                       DebugResumeReq;
   logic                       DebugMode;
-  logic                       GPRDebugEnable;
-  logic                       CSRDebugEnable;
-  logic                       FPRDebugEnable;
+  logic                       DebugGPREnable;
+  logic                       DebugCSREnable;
+  logic                       DebugFPREnable;
   logic [P.XLEN-1:0]          DebugRegRDATA;
   logic [P.XLEN-1:0]          DebugRegWDATA;
   logic [11:0]                DebugRegAddr;
   logic                       DebugRegWrite;
-  logic                       HaveReset;
-  logic                       HaveResetAck;
-  logic                       ResetHaltReq;
+  logic                       DebugHaveReset;
+  logic                       DebugHaveResetAck;
+  logic                       DebugResetHaltReq;
 
 
   // synchronize reset to SOC clock domain
   synchronizer resetsync(.clk, .d(reset_ext), .q(reset));
 
   // instantiate processor and internal memories
-  wallypipelinedcore #(P) core(.clk, .reset(reset | NDMReset),
+  wallypipelinedcore #(P) core(.clk, .reset(reset | DebugNDMReset),
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .ExternalStall,
-    .DebugMode, .HaltReq, .ResumeReq, .GPRDebugEnable, .CSRDebugEnable, .FPRDebugEnable,
+    .DebugMode, .DebugHaltReq, .DebugResumeReq, .DebugGPREnable, .DebugCSREnable, .DebugFPREnable,
     .DebugRegRDATA, .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite,
-    .HaveReset, .HaveResetAck, .ResetHaltReq
+    .DebugHaveReset, .DebugHaveResetAck, .DebugResetHaltReq
    );
 
   // instantiate uncore if a bus interface exists
@@ -133,25 +133,25 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
       .DMIADDR, .DMIDATA, .DMIOP, .DMIREADY, .DMIVALID,
       .DMIRSPDATA, .DMIRSPOP, .DMIRSPREADY, .DMIRSPVALID);
 
-    debug #(P) debug(.clk, .reset, .NDMReset, .HaltReq, .ResumeReq, .DebugMode,
-      .GPRDebugEnable, .CSRDebugEnable, .FPRDebugEnable,
+    debug #(P) debug(.clk, .reset, .DebugNDMReset, .DebugHaltReq, .DebugResumeReq, .DebugMode,
+      .DebugGPREnable, .DebugCSREnable, .DebugFPREnable,
       .DMIADDR, .DMIDATA, .DMIOP, .DMIREADY, .DMIVALID,
       .DMIRSPDATA, .DMIRSPOP, .DMIRSPREADY, .DMIRSPVALID,
       .DebugRegRDATA, .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite,
-      .HaveReset, .HaveResetAck, .ResetHaltReq);
+      .DebugHaveReset, .DebugHaveResetAck, .DebugResetHaltReq);
   end else begin
     assign tdo = 1'bz;
-    assign GPRDebugEnable = 0;
-    assign CSRDebugEnable = 0;
-    assign FPRDebugEnable = 0;
+    assign DebugGPREnable = 0;
+    assign DebugCSREnable = 0;
+    assign DebugFPREnable = 0;
     assign DebugRegWDATA = '0;
     assign DebugRegAddr = '0;
     assign DebugRegWrite = 0;
-    assign HaltReq = 0;
-    assign ResumeReq = 0;
-    assign NDMReset = 0;
-    assign HaveResetAck = 0;
-    assign ResetHaltReq = 0;
+    assign DebugHaltReq = 0;
+    assign DebugResumeReq = 0;
+    assign DebugNDMReset = 0;
+    assign DebugHaveResetAck = 0;
+    assign DebugResetHaltReq = 0;
   end
 
 endmodule

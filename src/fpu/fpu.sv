@@ -63,12 +63,12 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   output logic                 FCvtIntW,                           // select FCvtIntRes (to IEU)
   output logic [P.XLEN-1:0]    FIntDivResultW,                     // Result from integer division (to IEU)
   // Debug signals
-  input  logic              DebugMode,
-  input  logic              FPRDebugEnable,
-  output logic [P.XLEN-1:0] DebugFRD1D,
-  input  logic [P.XLEN-1:0] DebugRegWDATA,
-  input  logic [11:0]       DebugRegAddr,
-  input  logic              DebugRegWrite
+  input  logic                 DebugMode,
+  input  logic                 DebugFPREnable,
+  output logic [P.XLEN-1:0]    DebugFRD1D,
+  input  logic [P.XLEN-1:0]    DebugRegWDATA,
+  input  logic [11:0]          DebugRegAddr,
+  input  logic                 DebugRegWrite
 );
 
   // RISC-V FPU specifics:
@@ -196,10 +196,10 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
               .Adr1D, .Adr2D, .Adr3D, .Adr1E, .Adr2E, .Adr3E);
 
   if (P.DEBUG_SUPPORTED) begin
-    mux2 #(5) rfreadaddrmux (InstrD[19:15], DebugRegAddr[4:0], FPRDebugEnable, a1);
-    mux2 #(5) rfwriteaddrmux (RdW, DebugRegAddr[4:0], FPRDebugEnable, Rd);
-    mux2 #(P.FLEN) rfwdatamux (FResultW, DebugRegWDATA, FPRDebugEnable, Result);
-    assign RegWrite = DebugMode ? DebugRegWrite & FPRDebugEnable : FRegWriteW;
+    mux2 #(5) rfreadaddrmux (InstrD[19:15], DebugRegAddr[4:0], DebugFPREnable, a1);
+    mux2 #(5) rfwriteaddrmux (RdW, DebugRegAddr[4:0], DebugFPREnable, Rd);
+    mux2 #(P.FLEN) rfwdatamux (FResultW, DebugRegWDATA, DebugFPREnable, Result);
+    assign RegWrite = DebugMode ? DebugRegWrite & DebugFPREnable : FRegWriteW;
     assign DebugFRD1D = FRD1D;
   end else begin
     assign DebugFRD1D = '0;

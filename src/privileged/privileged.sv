@@ -103,17 +103,16 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   output logic              wfiM, IntPendingM,                              // Stall in Memory stage for WFI until interrupt pending or timeout
   // Debug Mode
   output logic              DebugMode,
-  input  logic              HaltReq, ResumeReq,
-  input  logic              CSRDebugEnable,
-  // output logic [P.XLEN-1:0] DebugCSRRDATA,
+  input  logic              DebugHaltReq, DebugResumeReq,
+  input  logic              DebugCSREnable,
   input  logic [P.XLEN-1:0] DebugRegWDATA,
   input  logic [11:0]       DebugRegAddr,
   input  logic              DebugRegWrite,
   output logic              DebugResume,
   output logic [P.XLEN-1:0] DPC,
-  output logic              HaveReset,
-  input  logic              HaveResetAck,
-  input  logic              ResetHaltReq,
+  output logic              DebugHaveReset,
+  input  logic              DebugHaveResetAck,
+  input  logic              DebugResetHaltReq,
   input  logic [P.XLEN-1:0] IEUAdrM,
   input  logic              PCSrcE
 );
@@ -172,9 +171,9 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .SetFflagsM, .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE,
     .EPCM, .TrapVectorM,
     .CSRReadValM, .CSRReadValW, .IllegalCSRAccessM, .BigEndianM,
-    .DebugMode, .HaltReq, .ResumeReq, .CSRDebugEnable, .DebugRegWDATA,
+    .DebugMode, .DebugHaltReq, .DebugResumeReq, .DebugCSREnable, .DebugRegWDATA,
     .DebugRegAddr, .DebugRegWrite, .DebugResume, .DPC,
-    .HaveReset, .HaveResetAck, .ResetHaltReq, .BreakpointFaultM,
+    .DebugHaveReset, .DebugHaveResetAck, .DebugResetHaltReq, .BreakpointFaultM,
     .DebugEBreakM, .DebugEBreakS, .DebugEBreakU,
     .IEUAdrM, .PCSrcE, .DebugStepIE, .DebugStep,
     .DebugPrivilegeMode, .DebugSetPrivMode
