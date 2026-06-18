@@ -53,20 +53,29 @@ def parse_args():
 
 
 def start_spike(test, isa):
-    spikeargs = SPIKEARGS
+    spikeargs = SPIKEARGS[:]
 
     if (isa == "32"):
         spikeargs[1] = f"--isa={ISA32}"
 
     spikeargs = spikeargs + \
-        [f"+signature={os.path.splitext(args.test)[0]}.signature.output", test]
+        [f"+signature={os.path.splitext(test)[0]}.signature.output", test]
     print(" ".join(spikeargs))
     return subprocess.Popen(spikeargs)
 
 
-def start_openocd(tclscript):
-    openocd_args = ["openocd", "-f",
-                    "openocd.cfg", "-c", f"source {tclscript}"]
+def start_openocd(tclscript, isa, elf):
+    test_name = os.path.splitext(os.path.basename(elf))[0]
+    build_dir = "build32" if isa == "32" else "build"
+
+    openocd_args = [
+        "openocd",
+        "-f", "openocd.cfg",
+        "-c", f"set ISA32 {1 if isa == '32' else 0}",
+        "-c", f"set BUILD_DIR {build_dir}",
+        "-c", f"set TEST_NAME {test_name}",
+        "-c", f"source {tclscript}"
+    ]
     print(" ".join(openocd_args))
     return subprocess.Popen(openocd_args)
 
@@ -74,7 +83,7 @@ def start_openocd(tclscript):
 def main(args):
     start_spike(args.test, args.isa)
     time.sleep(1)
-    openocd_proc = start_openocd(args.tcl)
+    openocd_proc = start_openocd(args.tcl, args.isa, args.test)
     openocd_proc.wait()
     print(os.path.splitext(args.test))
 
