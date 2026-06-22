@@ -144,6 +144,7 @@ module testbench;
 
   // Debugger tests
   string debugger_tests[];
+  string debugfile;
 
   initial begin
     // look for arguments passed to simulation, or use defaults
@@ -156,6 +157,13 @@ module testbench;
     // Check if sim_log_prefix is passed as a command-line argument
     if (!$value$plusargs("sim_log_prefix=%s", sim_log_prefix)) begin
         sim_log_prefix = "";  // Assign default value if not passed
+    end
+
+    // For single elf testing with Debug testvector files
+    if (!$value$plusargs("DEBUGFILE=%s", debugfile)) begin
+      debugfile = "";
+    end else begin
+      $display("Debug file: %s", debugfile);
     end
     //$display("TEST = %s ElfFile = %s", TEST, ElfFile);
 
@@ -848,6 +856,7 @@ end
     #1;
     IDV_MAX_ERRORS = 3;
     elffilename = ElfFile;
+    debugger_filename = {"../../", debugfile};
 
     // Initialize REF (do this before initializing the DUT)
     if (!rvviVersionCheck(RVVI_API_VERSION)) begin
