@@ -6,6 +6,7 @@ Please contribute by making a pull request to modify this document on GitHub.  S
 
 | Page | Location | Error | Correction  | Contributor | Date |
 | ---- | -------- | ----- | ----------- | ----------- | ----|
+| 20 | 1.6 3rd paragraph | Link for Fig 1.21 takes user to section F.2.6 | fix the link | Prithviraj Prasad, USA | 6/23/26 |
 | 31 | Ch. 2 opening paragraph | "RISC processor sign" | Replace with "RISC processor design". | Sotaro Fujimoto, Japan | 6/17/26 |
 | 133 | 3.7 | The ACT suite has been completely redesigned and no longer uses RISCOF.  |See the [riscv-arch-test](https://github.com/riscv-non-isa/riscv-arch-test) repository for updated information.|David Harris, Claremont, CA | 1/4/26 |
 | 226 | 5.9.2 | cvw-arch-verif has been deprecated and no longer is in use | Replace with riscv-arch-test | David Harris, Claremont, CA | 1/4/26 |
