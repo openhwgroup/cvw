@@ -171,6 +171,13 @@ else
 
     # Update and Upgrade tools
     eval "$UPDATE_COMMAND"
+
+    # OpenSUSE 15.6 has incompatible ncurses packages with the base installation
+    # See: https://bugzilla.suse.com/show_bug.cgi?id=1266957 closed as WONTFIX
+    if [ "$FAMILY" == suse ] && ((SUSE_VERSION == 156)); then
+        zypper -n install --allow-downgrade ncurses-devel ncurses-utils ncurses5-devel
+    fi
+
     # Install packages listed above using appropriate package manager
     eval $PACKAGE_MANAGER install "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${WHISPER_PACKAGES[@]}" "${SAIL_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}" "${VIVADO_PACKAGES[@]}"
 
