@@ -80,7 +80,8 @@ string coverage64gc[] = '{
   "fpuReservedRM",
   "decompReserved",
   "pmpTOR7",
-  "cacheInval"
+  "cacheInval",
+  "wfitimeout"
 };
 
 string buildroot[] = '{
