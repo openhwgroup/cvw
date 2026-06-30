@@ -10,6 +10,7 @@ Please contribute by making a pull request to modify this document on GitHub.  S
 | 33 | Table 2.1 | The source register counts for J-type and U-type instructions are listed as 1. | Change both counts to 0. | Sotaro Fujimoto, Japan | 6/22/26 |
 | 46 | 2.3.1 | "The trap handler and system call validates the parameters ..." | Replace with "The trap handler for the system call validates the parameters ...". | Sotaro Fujimoto, Japan | 6/22/26 |
 | 48 | Fig. 2.6(c) | The final virtual hart label is shown only as "p". | Replace with "Virtual Hart p". | Sotaro Fujimoto, Japan | 6/23/26 |
+| 59 | 2.7.1.1 | The ALUSrc value for the lw in Cycle 1 is given as 10₂. | Change ALUSrc to 01₂. | Sotaro Fujimoto, Japan | 6/30/26 |
 | 133 | 3.7 | The ACT suite has been completely redesigned and no longer uses RISCOF.  |See the [riscv-arch-test](https://github.com/riscv-non-isa/riscv-arch-test) repository for updated information.|David Harris, Claremont, CA | 1/4/26 |
 | 226 | 5.9.2 | cvw-arch-verif has been deprecated and no longer is in use | Replace with riscv-arch-test | David Harris, Claremont, CA | 1/4/26 |
 | 227 | 5.11 | The ACT suite has been completely redesigned and no longer uses RISCOF.  *** Other big changes pending in this section. | n/a | David Harris, Claremont, CA | 1/4/26 |
