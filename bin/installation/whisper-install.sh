@@ -27,7 +27,7 @@
 ## and limitations under the License.
 ################################################################################################
 
-WHISPER_VERSION=e27141d30a15fa9f3c8decee6fe59eefe95c5044 # Latest commit as of June 3, 2026
+WHISPER_VERSION=d1a3e62bf1d222f62f862c03c4b26e2e8a2daa8f # Latest commit as of July 2, 2026
 
 set -e # break on error
 # If run standalone, check environment. Otherwise, use info from main install script
