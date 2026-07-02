@@ -764,15 +764,15 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "adjusttext", specifier = ">=1.2" },
-    { name = "lief", specifier = ">=0.14.1" },
-    { name = "markdown", specifier = ">=3.6" },
+    { name = "adjusttext", specifier = ">=1.4" },
+    { name = "lief", specifier = ">=0.17.6" },
+    { name = "markdown", specifier = ">=3.9" },
     { name = "matplotlib", specifier = ">=3.9.0" },
-    { name = "pre-commit", specifier = ">=4.0.0" },
+    { name = "pre-commit", specifier = ">=4.3.0" },
     { name = "riscof", git = "https://github.com/riscv/riscof.git?rev=be84132874963e001c14d846a140a3edd9c9d48f" },
     { name = "riscv-config", git = "https://github.com/riscv-software-src/riscv-config.git?rev=54171f205be802f9f8e0b1cf4156a6cc826fb467" },
     { name = "riscv-isac", git = "https://github.com/riscv-non-isa/riscv-arch-test.git?subdirectory=riscv-isac&rev=450de2eabfe4fcdfdf54135b5ab2dbb1d94805f8" },
-    { name = "scikit-learn", specifier = ">=1.5.0" },
+    { name = "scikit-learn", specifier = ">=1.6.0" },
     { name = "scipy", specifier = ">=1.13.0" },
 ]
 
