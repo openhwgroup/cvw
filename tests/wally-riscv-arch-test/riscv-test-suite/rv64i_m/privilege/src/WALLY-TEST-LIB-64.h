@@ -1105,7 +1105,7 @@ claim_m_plic_interrupts: // clears one non-pending PLIC interrupt
     lw a4, 4(sp) // load stored SPI priority
     sw a4, 0(t6)
     lw a4, 0(sp) // load stored PWM priority
-    sw t1, 0(a5)
+    sw a4, 0(a5)
     addi sp, sp, 16 // restore stack pointer
     j test_loop
 
@@ -1224,15 +1224,15 @@ pwm_cycle_wait8: //function for waiting 8 pwm cycles for inspection tests
     /*plan: Input = which comparator to check
     */
     mv t2, t4 // place cßomparator num 0-3 in t2
-    addi t1, t2, 28 //generate shift amount
-    li t5, 0x10020000 //load pwm config address
-    lw t3, 0(t5) //load pwm config to t3
-    srl t3, t3, t1 //shift pwmconfig right by 28 + compX to place wanted compXip in [0]
+    li t1, 0x8000
+    sll t1, t1, t2
+    li t6, 0x10020000 //load pwm config address
     li t2, 0x8
     li t5, 0x0
 
 pwm_cycle_branch:
-    bge t3, x0, pwm_cycle_increment
+    lw t3, 0(t6) //load 31:24 of pwm config into t3
+    bgt t3, t1, pwm_cycle_increment
     j pwm_cycle_branch
 
 pwm_cycle_increment:
@@ -1241,26 +1241,53 @@ pwm_cycle_increment:
     j pwm_wait_half
 
 pwm_wait_half:
-    bge t3, x0, pwm_wait_half
+    lb t3, 0(t6) //load pwm config to t3
+    bgt t3, t1, pwm_wait_half
     j pwm_cycle_branch
 
 pwm_cycle_wait1: //function for waiting 1 pwm cycle
     mv t2, t4 // place comparator num 0-3 in t2
-    addi t0, t2, 28 //generate shift amount
-    li t5, 0x10020000 //load pwm config address
-    lw t3, 0(t5) //load pwm config to t3
-    srl t3, t3, t0 //shift pwmconfig right by 28 + compX to place wanted compXip in [0]
+    li t1, 0x8000
+    sll t1, t1, t2
+    li t6, 0x10020000 //load pwm config address
+    lb t3, 0(t6) //load pwm config to t3
     li t2, 0x1
     li t5, 0x0
-    bge t3, x0, pwm_cycle_increment
+    bge t3, t1, pwm_cycle_increment
     j pwm_over
 
 pwm_over: //resets pwm enables and clears interrupt registers
     li t2, 0x10020000
     li t3, 0x00000000
     sw t3, 0(t2)
+    sw t3, 8(t2)
     j test_loop
 
+pwm_dumb_wait: // waits an estimated 8 pwm cycles from timer and scale
+    rdcycle t5 //read starting cycle into t4
+    li t2, 0x10020000 // comp0 register
+    lw t3, 32(t2) //load comp0 into t3
+    lw t6, 0(t2)   //load scale factor into t6
+    andi t6, t6, 0x0000000F
+    add t6, t6, t4 // create total shift for end wait time by adding shift factor and log2(numcycles)
+    sll t3, t3, t6 //shift compare by (scale factor + )
+    add t5, t3, t5 //find estimated end time
+
+pwm_dumb_cycle:
+    rdcycle t4
+    bgt t4, t5, pwm_over
+    j pwm_dumb_cycle
+
+pwm_dumb_wait_center:
+    rdcycle t5
+    li t2, 0x10020000 // comp0 register
+    li t3, 0xFFFF //center technique requires max compare time
+    lw t6, 0(t2)   //load scale factor into t6
+    andi t6, t6, 0x0000000F
+    add t6, t6, t4 // create total shift for end wait time by adding shift factor and log2(numcycles)
+    sll t3, t3, t6 //shift compare by (scale factor + )
+    add t5, t3, t5 //find estimated end time
+    j pwm_dumb_cycle
 goto_s_mode:
     // return to address in t3,
     li a0, 3 // Trap handler behavior (go to supervisor mode)

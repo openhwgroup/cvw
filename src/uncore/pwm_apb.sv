@@ -99,14 +99,15 @@ module pwm_apb import cvw::*; #(parameter cvw_t P) (
 
   assign Carryout = &PWMScaled;
   assign PWMCountEn = PWMEnAlways | PWMEnOneShot;
-  assign PWMCountPrescaled = PWMCount >> PWMScale;
   assign PWMCountIncrement = PWMCount + 1;
+  assign PWMCountPrescaled = PWMCountIncrement >> PWMScale;
+
 
   // Combinatorial signal logic
   logic [3:0] PWMCompareBoolean;
   logic [3:0] PWMDeglitchMux;
   logic PWMCountReset;
-  logic [3:0] PWMCompareXNOR;
+  logic [63:0] PWMCompareXNOR;
 
 
   assign PWMOneShotEnReset = (PWMCompareBoolean[0] & PWMZeroCompare) | Carryout;
@@ -142,8 +143,7 @@ module pwm_apb import cvw::*; #(parameter cvw_t P) (
       PWMCompare1 <= 16'hFFFF;
       PWMCompare2 <= 16'hFFFF;
       PWMCompare3 <= 16'hFFFF;
-    end else if (PWMOneShotEnReset) PWMConfig[8] <= 1'b0;
-    else begin // writes
+    end else begin // writes
       /* verilator lint_off CASEINCOMPLETE */
       if (Memwrite)
         case(Entry) // flop to sample inputs
@@ -155,6 +155,7 @@ module pwm_apb import cvw::*; #(parameter cvw_t P) (
           PWM_CMP2:  PWMCompare2 <= Din[15:0];
           PWM_CMP3:  PWMCompare3 <= Din[15:0];
         endcase
+      else if (PWMOneShotEnReset) PWMConfig[8] <= 1'b0;
       /* verilator lint_on CASEINCOMPLETE */
 
 
@@ -173,25 +174,31 @@ module pwm_apb import cvw::*; #(parameter cvw_t P) (
 
 
   // PWMCount register
-  /*
+
   always_ff @(posedge PCLK)
-    if (PWMOneShotEnReset | ~PRESETn) PWMCount <= 31'b0;
-    else if (PWMCountEn) PWMCount <= PWMCount + 1;
-  */
+    if (PWMCountReset | ~PRESETn) begin
+      PWMCount <= 31'b0;
+      PWMScaled <= 16'b0;
+    end else if (Memwrite & (Entry == PWM_COUNT)) PWMCount <= Din[30:0];
+    else if (PWMCountEn) begin
+      PWMCount <= PWMCountIncrement;
+      PWMScaled <= PWMCountPrescaled[15:0];
+    end
+  /*
   flopenr #(31) pwmcountreg(PCLK, PWMCountReset, PWMCountEn,
                             PWMCountIncrement, PWMCount);
 
   // PWMScaled register
-  flop #(16) pwmscaledreg(PCLK,
+  flopenr #(16) pwmscaledreg(PCLK, PWMCountReset, PWMCountEn,
                           PWMCountPrescaled[15:0], PWMScaled);
 
-
+  */
   flop #(1) pwmholdreg(PCLK,
                        PWMHoldIn, PWMHoldOut);
   //parameterizable pwm comparators
-  assign PWMDeglitchMux[0] = PWMScaled[15] | PWMCompareCenter[0];
-  assign PWMCompareXNOR[0] = ({16{PWMDeglitchMux[0]}} ~^ PWMScaled);
-  assign PWMCompareBoolean[0] = PWMCompareXNOR[0] >= PWMCompare0;
+  assign PWMDeglitchMux[0] = PWMScaled[15] & PWMCompareCenter[0];
+  assign PWMCompareXNOR[15:0] = PWMDeglitchMux[0] ? ~PWMScaled : PWMScaled;
+  assign PWMCompareBoolean[0] = PWMCompareXNOR[15:0] >= PWMCompare0;
   assign PWMCompareIPIn[0] = PWMDeglitchMux[0] ? PWMCompareBoolean[0] : (PWMCompareBoolean[0] | (PWMHoldOut & PWMCompareIP[0]));
 
   flop #(1) pwmcompareipreg0(PCLK,
@@ -200,9 +207,9 @@ module pwm_apb import cvw::*; #(parameter cvw_t P) (
   assign PWMGPIO[0] = PWMCompareIP[0] & (PWMCompareGang[0] ~& PWMCompareIP[1]);
 
 
-  assign PWMDeglitchMux[1] = PWMScaled[15] | PWMCompareCenter[1];
-  assign PWMCompareXNOR[1] = ({16{PWMDeglitchMux[1]}} ~^ PWMScaled);
-  assign PWMCompareBoolean[1] = PWMCompareXNOR[1] >= PWMCompare1;
+  assign PWMDeglitchMux[1] = PWMScaled[15] & PWMCompareCenter[1];
+  assign PWMCompareXNOR[31:16] = PWMDeglitchMux[1] ? ~PWMScaled : PWMScaled;
+  assign PWMCompareBoolean[1] = PWMCompareXNOR[31:16] >= PWMCompare1;
   assign PWMCompareIPIn[1] = PWMDeglitchMux[1] ? PWMCompareBoolean[1] : (PWMCompareBoolean[1] | (PWMHoldOut & PWMCompareIP[1]));
 
   flop #(1) pwmcompareipreg1(PCLK,
@@ -211,9 +218,9 @@ module pwm_apb import cvw::*; #(parameter cvw_t P) (
   assign PWMGPIO[1] = PWMCompareIP[1] & (PWMCompareGang[1] ~& PWMCompareIP[2]);
 
 
-  assign PWMDeglitchMux[2] = PWMScaled[15] | PWMCompareCenter[2];
-  assign PWMCompareXNOR[2] = ({16{PWMDeglitchMux[2]}} ~^ PWMScaled);
-  assign PWMCompareBoolean[2] = PWMCompareXNOR[2] >= PWMCompare2;
+  assign PWMDeglitchMux[2] = PWMScaled[15] & PWMCompareCenter[2];
+  assign PWMCompareXNOR[47:32] = PWMDeglitchMux[2] ? ~PWMScaled : PWMScaled;
+  assign PWMCompareBoolean[2] = PWMCompareXNOR[47:32] >= PWMCompare2;
   assign PWMCompareIPIn[2] = PWMDeglitchMux[2] ? PWMCompareBoolean[2] : (PWMCompareBoolean[2] | (PWMHoldOut & PWMCompareIP[2]));
 
   flop #(1) pwmcompareipreg2(PCLK,
@@ -222,9 +229,9 @@ module pwm_apb import cvw::*; #(parameter cvw_t P) (
   assign PWMGPIO[2] = PWMCompareIP[2] & (PWMCompareGang[2] ~& PWMCompareIP[3]);
 
 
-  assign PWMDeglitchMux[3] = PWMScaled[15] | PWMCompareCenter[3];
-  assign PWMCompareXNOR[3] = ({16{PWMDeglitchMux[3]}} ~^ PWMScaled);
-  assign PWMCompareBoolean[3] = PWMCompareXNOR[3] >= PWMCompare3;
+  assign PWMDeglitchMux[3] = PWMScaled[15] & PWMCompareCenter[3];
+  assign PWMCompareXNOR[63:48] = PWMDeglitchMux[3] ? ~PWMScaled : PWMScaled;
+  assign PWMCompareBoolean[3] = PWMCompareXNOR[63:48] >= PWMCompare3;
   assign PWMCompareIPIn[3] = PWMDeglitchMux[3] ? PWMCompareBoolean[3] : (PWMCompareBoolean[3] | (PWMHoldOut & PWMCompareIP[3]));
 
   flop #(1) pwmcompareipreg3(PCLK,
