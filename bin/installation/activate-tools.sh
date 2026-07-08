@@ -60,4 +60,10 @@ elif (( UBUNTU_VERSION == 20 )); then
         done
     fi
     export PATH="$RISCV"/gcc-10/bin:$PATH
+elif (( UBUNTU_VERSION == 26 )); then
+    if [ ! -e "$RISCV"/gnuinstall/bin/install ]; then
+        mkdir -p "$RISCV"/gnuinstall/bin
+        ln -vsf "$(which gnuinstall)" $RISCV/gnuinstall/bin/install
+    fi
+    export PATH="$RISCV"/gnuinstall/bin:$PATH
 fi
