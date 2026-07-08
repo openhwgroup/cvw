@@ -64,7 +64,9 @@ if {[lcheck lst "--lockstep"]} {
     set IMPERAS_HOME $::env(IMPERAS_HOME)
     set lockstep 1
     set lockstepvlog "+incdir+${IMPERAS_HOME}/ImpPublic/include/host \
+                      +incdir+${IMPERAS_HOME}/ImpPublic/include/host/rvvi \
                       +incdir+${IMPERAS_HOME}/ImpProprietary/include/host \
+                      +incdir+${IMPERAS_HOME}/ImpProprietary/include/host/idv \
                       ${IMPERAS_HOME}/ImpPublic/source/host/rvvi/rvviApiPkg.sv \
                       ${IMPERAS_HOME}/ImpProprietary/source/host/idv/*.sv"
     if {$FCvlog eq ""} {append lockstepvlog " ${IMPERAS_HOME}/ImpPublic/source/host/rvvi/rvviTrace.sv"}
