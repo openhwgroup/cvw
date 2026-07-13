@@ -94,8 +94,8 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic                       DebugGPREnable;
   logic                       DebugCSREnable;
   logic                       DebugFPREnable;
-  logic [P.XLEN-1:0]          DebugRegRDATA;
-  logic [P.XLEN-1:0]          DebugRegWDATA;
+  logic [P.LLEN-1:0]          DebugRegRDATA;
+  logic [P.LLEN-1:0]          DebugRegWDATA;
   logic [11:0]                DebugRegAddr;
   logic                       DebugRegWrite;
   logic                       DebugHaveReset;

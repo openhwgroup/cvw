@@ -54,8 +54,8 @@ module debug import cvw::*; #(parameter cvw_t P) (
   output logic              DMIRSPVALID,
 
   // Reading and Writing Registers
-  input  logic [P.XLEN-1:0] DebugRegRDATA,
-  output logic [P.XLEN-1:0] DebugRegWDATA,
+  input  logic [P.LLEN-1:0] DebugRegRDATA,
+  output logic [P.LLEN-1:0] DebugRegWDATA,
   output logic [11:0]       DebugRegAddr,
   output logic              DebugRegWrite,
 
@@ -291,7 +291,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
       case(DMIADDR[6:0])
         DATA0: DMIRSPDATA <= Data0;
         DATA1: begin
-          if (P.XLEN == 64) begin
+          if (P.LLEN == 64) begin
             DMIRSPDATA <= Data1;
           end else begin
             DMIRSPDATA <= '0;
@@ -380,7 +380,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
   end
 
   // Data[1] -- only need this for
-  if (P.XLEN == 64 | P.D_SUPPORTED) begin
+  if (P.LLEN == 64 | P.D_SUPPORTED) begin
     always_ff @(posedge clk) begin
       if (reset) begin
         Data1 <= '0;
@@ -407,7 +407,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
   // AbstractCS
   always_ff @(posedge clk) begin
     if (reset) begin
-      AbstractCS <= P.XLEN == 32 ? 32'h0000_0001 : 32'h000_0002;
+      AbstractCS <= P.XLEN == 64 | P.D_SUPPORTED ? 32'h0000_0002 : 32'h000_0001;
     end else if (WriteRequest & (DMIADDR == ABSTRACTCS)) begin
       AbstractCS <= {AbstractCS[31:12],
                      DMIDATA[11], // RelaxedPriv
@@ -662,7 +662,11 @@ module debug import cvw::*; #(parameter cvw_t P) (
   if (P.XLEN == 64) begin
     assign DebugRegWDATA = AARSize == 3'd2 ? {32'h0, Data0} : {Data1, Data0};
   end else begin
-    assign DebugRegWDATA = Data0;
+    if (P.D_SUPPORTED) begin
+      assign DebugRegWDATA = {32'h0, Data0};
+    end else begin
+      assign DebugRegWDATA = Data0;
+    end
   end
 
   always_ff @(posedge clk) begin
@@ -830,7 +834,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
   assign NextAARSize = DMIDATA[22:20];
 
   if (P.XLEN == 32) begin
-    assign ValidSize = NextAARSize == 3'd2 | NextAARSize == 3'd0;
+    assign ValidSize = NextAARSize == 3'd2 | (NextAARSize == 3'd3 & NextDebugFPREnable & P.D_SUPPORTED) | NextAARSize == 3'd0;
   end else begin
     assign ValidSize = NextAARSize == 3'd2 | NextAARSize == 3'd3 | NextAARSize == 3'd0;
   end

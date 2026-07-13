@@ -26,6 +26,7 @@ SPIKEARGS = [
     "--dm-no-hasel",
     "--dm-no-halt-groups",
     "--dm-no-impebreak",
+    "--dm-datacount=2",
     "+signature-granularity=4"
 ]
 
@@ -57,6 +58,7 @@ def start_spike(test, isa):
 
     if (isa == "32"):
         spikeargs[1] = f"--isa={ISA32}"
+        #spikeargs[7] = f"--dm-datacount=1" # default is 2 in Spike, despite 32 bit or 64 bit architectures
 
     spikeargs = spikeargs + \
         [f"+signature={os.path.splitext(test)[0]}.signature.output", test]

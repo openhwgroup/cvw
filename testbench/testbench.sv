@@ -361,7 +361,7 @@ module testbench;
     // riscof tests have a different signature, tests[0] == "0" refers to RiscvArchTests
     // and tests[0] == "1" refers to WallyRiscvArchTests
     riscofTest = tests[0] == "0" | tests[0] == "1";
-    debugTest = tests[0] == "7";
+    debugTest = tests[0] == "7" | "9";
     pathname = tvpaths[tests[0].atoi()];
 
     case(CurrState)

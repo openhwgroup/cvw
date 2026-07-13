@@ -1,4 +1,10 @@
-log_output build/log/WALLY-debug-dmactive.log
+######################################################################
+# Receives the following arguments when called from debugtestgen.py
+# ISA32      [32/64]
+# BUILD_DIR  [build32/build]
+# TEST_NAME  [WALLY-debug-******]
+######################################################################
+log_output "${BUILD_DIR}/log/${TEST_NAME}.log"
 debug_level 3
 init
 poll off
@@ -18,7 +24,8 @@ proc get_address {filename label} {
 
     # Iterate over every line and find the match. There should be only
     # one match.
-    set regex "^(\[0-9a-fA-f\]{16})\\s+<${label}"
+    #set regex "^(\[0-9a-fA-f\]{16})\\s+<${label}"
+    set regex "^(\[0-9a-fA-f\]+)\\s+<${label}"
     while {[gets $fd line] != -1} {
         if {[regexp $regex $line match address]} {
             # Convert address to OpenOCD format (e.g., 0x80000010)
@@ -36,16 +43,11 @@ proc get_address {filename label} {
 puts [pwd]
 
 # Grab tests
-set objdump_file "build/WALLY-debug-dmactive.elf.objdump"
+set objdump_file "${BUILD_DIR}/${TEST_NAME}.elf.objdump"
 set test2_addr [get_address $objdump_file test2]
 set test3_addr [get_address $objdump_file test3]
 set test4_addr [get_address $objdump_file test4]
 set test_end_addr [get_address $objdump_file test_end]
-
-# log_output build/log/WALLY-debug-dmactive.log
-# log_output "build/log/${filename}.log"
-# debug level 3
-# poll off
 
 # --------------------------------------------------------------------
 # Begin tests

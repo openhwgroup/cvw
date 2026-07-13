@@ -65,8 +65,8 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   // Debug signals
   input  logic                 DebugMode,
   input  logic                 DebugFPREnable,
-  output logic [P.XLEN-1:0]    DebugFRD1D,
-  input  logic [P.XLEN-1:0]    DebugRegWDATA,
+  output logic [P.FLEN-1:0]    DebugFRD1D,
+  input  logic [P.FLEN-1:0]    DebugRegWDATA,
   input  logic [11:0]          DebugRegAddr,
   input  logic                 DebugRegWrite
 );

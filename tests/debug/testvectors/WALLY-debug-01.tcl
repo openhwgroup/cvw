@@ -1,8 +1,8 @@
 ######################################################################
 # Receives the following arguments when called from debugtestgen.py
 # ISA32      [32/64]
-# BUILD_DIR [build32/build]
-# TEST_NAME
+# BUILD_DIR  [build32/build]
+# TEST_NAME  [WALLY-debug-******]
 ######################################################################
 log_output "${BUILD_DIR}/log/${TEST_NAME}.log"
 debug_level 3
@@ -43,7 +43,6 @@ proc get_address {filename label} {
 puts [pwd]
 
 # Grab tests
-#set objdump_file "build/WALLY-debug-01.elf.objdump"
 set objdump_file "${BUILD_DIR}/${TEST_NAME}.elf.objdump"
 set test1_addr [get_address $objdump_file test1]
 set test_end [get_address $objdump_file test_end]

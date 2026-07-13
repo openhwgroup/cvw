@@ -1,5 +1,10 @@
-set TESTNAME WALLY-debug-ebreak
-log_output build/log/$TESTNAME.log
+######################################################################
+# Receives the following arguments when called from debugtestgen.py
+# ISA32      [32/64]
+# BUILD_DIR  [build32/build]
+# TEST_NAME  [WALLY-debug-******]
+######################################################################
+log_output "${BUILD_DIR}/log/${TEST_NAME}.log"
 debug_level 3
 init
 poll off
@@ -19,7 +24,8 @@ proc get_address {filename label} {
 
     # Iterate over every line and find the match. There should be only
     # one match.
-    set regex "^(\[0-9a-fA-f\]{16})\\s+<${label}"
+    #set regex "^(\[0-9a-fA-f\]{16})\\s+<${label}"
+    set regex "^(\[0-9a-fA-f\]+)\\s+<${label}"
     while {[gets $fd line] != -1} {
         if {[regexp $regex $line match address]} {
             # Convert address to OpenOCD format (e.g., 0x80000010)
@@ -38,8 +44,8 @@ proc read_reg {register} {
 }
 
 proc message {STR} {
-    global TESTNAME
-    echo $TESTNAME:
+    global TEST_NAME
+    echo $TEST_NAME:
     echo $STR
 }
 
@@ -48,7 +54,7 @@ proc message {STR} {
 # --------------------------------------------------------------------
 
 # Grab tests
-set objdump_file "build/$TESTNAME.elf.objdump"
+set objdump_file "${BUILD_DIR}/${TEST_NAME}.elf.objdump"
 set do_ebreak [get_address $objdump_file do_ebreak]
 set resume_addr [get_address $objdump_file resume_addr]
 set write_val [get_address $objdump_file write_val]

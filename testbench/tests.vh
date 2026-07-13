@@ -33,6 +33,8 @@
 `define BUILDROOT "6"
 `define DEBUGELFS "7"
 `define DEBUGTV "8"
+`define DEBUG32ELFS "9"
+`define DEBUG32TV "10"
 
 string tvpaths[] = '{
   "../../tests/riscof/work/riscv-arch-test/",
@@ -43,7 +45,9 @@ string tvpaths[] = '{
   "../../tests/coverage/",
   "",
   "../../tests/debug/build/",
-  "../../tests/debug/build/testvectors/"
+  "../../tests/debug/build/testvectors/",
+  "../../tests/debug/build32/",
+  "../../tests/debug/build32/testvectors/"
 };
 
 string coverage64gc[] = '{
@@ -4065,13 +4069,41 @@ string ahb32[] = '{
 };
 
 string wally32debug[] = '{
-  `DEBUGELFS,
-  "rv32i_m/privilege/src/WALLY-spi-01.S"
+  `DEBUG32ELFS,
+  "WALLY-debug-01",
+  "WALLY-debug-02",
+  "WALLY-debug-dmactive",
+  "WALLY-debug-03",
+  "WALLY-debug-fpu",
+  "WALLY-debug-gcd",
+  "WALLY-debug-ebreak",
+  "WALLY-debug-step-loop",
+  "WALLY-debug-step-jump",
+  "WALLY-debug-committed",
+  "WALLY-debug-ex1",
+  "WALLY-debug-ex2",
+  "WALLY-debug-ex3",
+  "WALLY-debug-ex4",
+  "WALLY-debug-prv"
 };
 
 string wally32debug_jtag[] = '{
-  `DEBUGTV,
-  ""
+  `DEBUG32TV,
+  "WALLY-debug-01",
+  "WALLY-debug-02",
+  "WALLY-debug-dmactive",
+  "WALLY-debug-03",
+  "WALLY-debug-fpu",
+  "WALLY-debug-gcd",
+  "WALLY-debug-ebreak",
+  "WALLY-debug-step-loop",
+  "WALLY-debug-step-jump",
+  "WALLY-debug-committed",
+  "WALLY-debug-ex1",
+  "WALLY-debug-ex2",
+  "WALLY-debug-ex3",
+  "WALLY-debug-ex4",
+  "WALLY-debug-prv"
 };
 
 string wally64debug[] = '{
@@ -4111,3 +4143,13 @@ string wally64debug_jtag[] = '{
   "WALLY-debug-ex4",
   "WALLY-debug-prv"
 };
+
+// string wally64debug[] = '{
+//   `DEBUGELFS,
+//   "WALLY-debug-stopcounters"
+// };
+
+// string wally64debug_jtag[] = '{
+//   `DEBUGTV,
+//   "WALLY-debug-stopcounters"
+// };

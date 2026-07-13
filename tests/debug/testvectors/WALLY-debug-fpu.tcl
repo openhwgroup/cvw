@@ -1,4 +1,10 @@
-log_output build/log/WALLY-debug-fpu.log
+######################################################################
+# Receives the following arguments when called from debugtestgen.py
+# ISA32      [32/64]
+# BUILD_DIR  [build32/build]
+# TEST_NAME  [WALLY-debug-******]
+######################################################################
+log_output "${BUILD_DIR}/log/${TEST_NAME}.log"
 debug_level 3
 init
 poll off
@@ -18,7 +24,8 @@ proc get_address {filename label} {
 
     # Iterate over every line and find the match. There should be only
     # one match.
-    set regex "^(\[0-9a-fA-f\]{16})\\s+<${label}"
+    #set regex "^(\[0-9a-fA-f\]{16})\\s+<${label}"
+    set regex "^(\[0-9a-fA-f\]+)\\s+<${label}"
     while {[gets $fd line] != -1} {
         if {[regexp $regex $line match address]} {
             # Convert address to OpenOCD format (e.g., 0x80000010)
@@ -34,7 +41,7 @@ proc get_address {filename label} {
 # --------------------------------------------------------------------
 
 # Grab tests
-set objdump_file "build/WALLY-debug-fpu.elf.objdump"
+set objdump_file "${BUILD_DIR}/${TEST_NAME}.elf.objdump"
 set resume_addr0 [get_address $objdump_file resume_addr]
 
 # --------------------------------------------------------------------

@@ -51,8 +51,8 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
    input  logic                  DebugGPREnable,
    input  logic                  DebugCSREnable,
    input  logic                  DebugFPREnable,
-   output logic [P.XLEN-1:0]     DebugRegRDATA,
-   input  logic [P.XLEN-1:0]     DebugRegWDATA,
+   output logic [P.LLEN-1:0]     DebugRegRDATA,
+   input  logic [P.LLEN-1:0]     DebugRegWDATA,
    input  logic [11:0]           DebugRegAddr,
    input  logic                  DebugRegWrite,
    output logic                  DebugHaveReset,
@@ -185,7 +185,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
 
   // Debug Signals
   logic [P.XLEN-1:0]             DebugR1D;
-  logic [P.XLEN-1:0]             DebugFRD1D;
+  logic [P.FLEN-1:0]             DebugFRD1D;
   logic                          DebugResume;
   logic [P.XLEN-1:0]             NextValidPCE;
   logic [P.XLEN-1:0]             DPC;
@@ -240,7 +240,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
      .StructuralStallD, .LoadStallD, .StoreStallD, .PCSrcE,
      .CSRReadM, .CSRWriteM, .PrivilegedM, .CSRWriteFenceM, .InvalidateICacheM,
      .DebugMode, .DebugGPREnable,
-     .DebugR1D, .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite
+     .DebugR1D, .DebugRegWDATA(DebugRegWDATA[P.XLEN-1:0]), .DebugRegAddr, .DebugRegWrite
   );
 
   lsu #(P) lsu(
@@ -333,7 +333,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
       .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .wfiM, .IntPendingM, .BigEndianM,
       .DebugMode, .DebugHaltReq, .DebugResumeReq, .DebugCSREnable,
-      .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite, .DebugResume, .DPC,
+      .DebugRegWDATA(DebugRegWDATA[P.XLEN-1:0]), .DebugRegAddr, .DebugRegWrite, .DebugResume, .DPC,
       .DebugHaveReset, .DebugHaveResetAck, .DebugResetHaltReq,
       .IEUAdrM, .PCSrcE);
 
@@ -387,7 +387,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .DebugMode,
       .DebugFPREnable,
       .DebugFRD1D,
-      .DebugRegWDATA,
+      .DebugRegWDATA(DebugRegWDATA[P.FLEN-1:0]),
       .DebugRegAddr,
       .DebugRegWrite
       );
@@ -399,7 +399,11 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
 
   if (P.DEBUG_SUPPORTED) begin
     if (P.F_SUPPORTED) begin
-      mux3 #(P.XLEN) debugregmux(DebugR1D, CSRReadValM, DebugFRD1D, {DebugFPREnable, DebugCSREnable}, DebugRegRDATA);
+      if (P.FLEN < P.LLEN) begin
+        mux3 #(P.LLEN) debugregmux(DebugR1D, CSRReadValM, {{(P.LLEN-P.FLEN){1'b0}}, DebugFRD1D}, {DebugFPREnable, DebugCSREnable}, DebugRegRDATA);
+      end else begin
+        mux3 #(P.LLEN) debugregmux({{(P.LLEN - P.XLEN){1'b0}}, DebugR1D}, {{(P.LLEN - P.XLEN){1'b0}},CSRReadValM}, DebugFRD1D, {DebugFPREnable, DebugCSREnable}, DebugRegRDATA);
+      end
     end else begin
       mux2 #(P.XLEN) debugregmux(DebugR1D, CSRReadValM, DebugCSREnable, DebugRegRDATA);
     end
