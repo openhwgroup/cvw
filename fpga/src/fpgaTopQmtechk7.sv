@@ -32,35 +32,35 @@ import cvw::*;
 module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
   (input logic         default_50mhz_clk,
    input logic           resetn,
-   input logic	       south_reset,
+   input logic         south_reset,
 
    // GPIO signals
    input logic [3:0]   GPI,
    output logic [4:0]  GPO,
 
    // UART Signals
-   input logic	       UARTSin,
-   output logic	       UARTSout,
+   input logic         UARTSin,
+   output logic        UARTSout,
 
    // SDC Signals connecting to an SPI peripheral
-   input logic	       SDCIn,
-   output logic	       SDCCLK,
-   output logic	       SDCCmd,
-   output logic	       SDCCS,
-   input logic	       SDCCD,
-   input logic	       SDCWP,
+   input logic         SDCIn,
+   output logic        SDCCLK,
+   output logic        SDCCmd,
+   output logic        SDCCS,
+   input logic         SDCCD,
+   input logic         SDCWP,
    /*
      * Ethernet: 100BASE-T MII
      */
    // Taken from Genesys 2 (RVVI support is missing)
-   //output logic	       phy_ref_clk, // *** add back in when we add rvvi
-   input logic	       phy_rx_clk,
+   //output logic       phy_ref_clk, // *** add back in when we add rvvi
+   input logic         phy_rx_clk,
    input logic [3:0]   phy_rxd,
-   input logic	       phy_rxctl,
-   input logic	       phy_tx_clk,
+   input logic         phy_rxctl,
+   input logic         phy_tx_clk,
    output logic [3:0]  phy_txd,
-   output logic	       phy_tx_en,
-   //output logic	       phy_reset_n,
+   output logic        phy_tx_en,
+   //output logic       phy_reset_n,
 
    inout logic [15:0]  ddr3_dq,
    inout logic [1:0]   ddr3_dqs_n,
@@ -74,124 +74,123 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
    output logic [0:0]    ddr3_ck_p,
    output logic [0:0]    ddr3_ck_n,
    output logic [0:0]    ddr3_cke,
-   output logic [0:0]    ddr3_cs_n,
    output logic [1:0]    ddr3_dm,
    output logic [0:0]    ddr3_odt
    );
 
   // MMCM Signals
-  logic 			   CPUCLK;
-  logic 			   c0_ddr4_ui_clk_sync_rst;
-  logic 			   bus_struct_reset;
-  logic 			   peripheral_reset;
-  logic 			   interconnect_aresetn;
-  logic 			   peripheral_aresetn;
-  logic 			   mb_reset;
+  logic                 CPUCLK;
+  logic                 c0_ddr4_ui_clk_sync_rst;
+  logic                 bus_struct_reset;
+  logic                 peripheral_reset;
+  logic                 interconnect_aresetn;
+  logic                 peripheral_aresetn;
+  logic                 mb_reset;
 
   // AHB Signals from Wally
-  logic 			   HCLKOpen;
-  logic 			   HRESETnOpen;
-  logic [63:0]      HRDATAEXT;
-  logic 			   HREADYEXT;
-  logic 			   HRESPEXT;
-  logic 			   HSELEXT;
-  logic [55:0] 	   HADDR;
-  logic [63:0]      HWDATA;
-  logic [64/8-1:0]  HWSTRB;
-  logic 			   HWRITE;
-  logic [2:0] 	   HSIZE;
-  logic [2:0] 	   HBURST;
-  logic [1:0] 	   HTRANS;
-  logic 			   HREADY;
-  logic [3:0] 	   HPROT;
-  logic 			   HMASTLOCK;
+  logic                 HCLKOpen;
+  logic                 HRESETnOpen;
+  logic [63:0]          HRDATAEXT;
+  logic                 HREADYEXT;
+  logic                 HRESPEXT;
+  logic                 HSELEXT;
+  logic [55:0]          HADDR;
+  logic [63:0]          HWDATA;
+  logic [64/8-1:0]      HWSTRB;
+  logic                 HWRITE;
+  logic [2:0]           HSIZE;
+  logic [2:0]           HBURST;
+  logic [1:0]           HTRANS;
+  logic                 HREADY;
+  logic [3:0]           HPROT;
+  logic                 HMASTLOCK;
 
   // GPIO Signals
-  logic [31:0] 	   GPIOIN, GPIOOUT, GPIOEN;
+  logic [31:0]         GPIOIN, GPIOOUT, GPIOEN;
 
   // AHB to AXI Bridge Signals
-  logic [3:0] 	   m_axi_awid;
-  logic [7:0] 	   m_axi_awlen;
-  logic [2:0] 	   m_axi_awsize;
-  logic [1:0] 	   m_axi_awburst;
-  logic [3:0] 	   m_axi_awcache;
-  logic [31:0] 	   m_axi_awaddr;
-  logic [2:0] 	   m_axi_awprot;
-  logic             m_axi_awvalid;
-  logic             m_axi_awready;
-  logic             m_axi_awlock;
-  logic [63:0] 	   m_axi_wdata;
-  logic [7:0] 	   m_axi_wstrb;
-  logic             m_axi_wlast;
-  logic             m_axi_wvalid;
-  logic             m_axi_wready;
-  logic [3:0] 	   m_axi_bid;
-  logic [1:0] 	   m_axi_bresp;
-  logic             m_axi_bvalid;
-  logic             m_axi_bready;
-  logic [3:0] 	   m_axi_arid;
-  logic [7:0] 	   m_axi_arlen;
-  logic [2:0] 	   m_axi_arsize;
-  logic [1:0] 	   m_axi_arburst;
-  logic [2:0] 	   m_axi_arprot;
-  logic [3:0] 	   m_axi_arcache;
-  logic             m_axi_arvalid;
-  logic [31:0] 	   m_axi_araddr;
-  logic 			   m_axi_arlock;
-  logic             m_axi_arready;
-  logic [3:0] 	   m_axi_rid;
-  logic [63:0] 	   m_axi_rdata;
-  logic [1:0] 	   m_axi_rresp;
-  logic             m_axi_rvalid;
-  logic             m_axi_rlast;
-  logic             m_axi_rready;
+  logic [3:0]           m_axi_awid;
+  logic [7:0]           m_axi_awlen;
+  logic [2:0]           m_axi_awsize;
+  logic [1:0]           m_axi_awburst;
+  logic [3:0]           m_axi_awcache;
+  logic [31:0]          m_axi_awaddr;
+  logic [2:0]           m_axi_awprot;
+  logic                 m_axi_awvalid;
+  logic                 m_axi_awready;
+  logic                 m_axi_awlock;
+  logic [63:0]          m_axi_wdata;
+  logic [7:0]           m_axi_wstrb;
+  logic                 m_axi_wlast;
+  logic                 m_axi_wvalid;
+  logic                 m_axi_wready;
+  logic [3:0]           m_axi_bid;
+  logic [1:0]           m_axi_bresp;
+  logic                 m_axi_bvalid;
+  logic                 m_axi_bready;
+  logic [3:0]           m_axi_arid;
+  logic [7:0]           m_axi_arlen;
+  logic [2:0]           m_axi_arsize;
+  logic [1:0]           m_axi_arburst;
+  logic [2:0]           m_axi_arprot;
+  logic [3:0]           m_axi_arcache;
+  logic                 m_axi_arvalid;
+  logic [31:0]          m_axi_araddr;
+  logic                 m_axi_arlock;
+  logic                 m_axi_arready;
+  logic [3:0]           m_axi_rid;
+  logic [63:0]          m_axi_rdata;
+  logic [1:0]           m_axi_rresp;
+  logic                 m_axi_rvalid;
+  logic                 m_axi_rlast;
+  logic                 m_axi_rready;
 
   // AXI Signals going out of Clock Converter
-  logic [3:0] 	   BUS_axi_arregion;
-  logic [3:0] 	   BUS_axi_arqos;
-  logic [3:0] 	   BUS_axi_awregion;
-  logic [3:0] 	   BUS_axi_awqos;
-  logic [3:0] 	   BUS_axi_awid;
-  logic [7:0] 	   BUS_axi_awlen;
-  logic [2:0] 	   BUS_axi_awsize;
-  logic [1:0] 	   BUS_axi_awburst;
-  logic [3:0] 	   BUS_axi_awcache;
-  logic [31:0] 	   BUS_axi_awaddr;
-  logic [2:0] 	   BUS_axi_awprot;
-  logic 			   BUS_axi_awvalid;
-  logic 			   BUS_axi_awready;
-  logic 			   BUS_axi_awlock;
-  logic [63:0] 	   BUS_axi_wdata;
-  logic [7:0] 	   BUS_axi_wstrb;
-  logic 			   BUS_axi_wlast;
-  logic 			   BUS_axi_wvalid;
-  logic 			   BUS_axi_wready;
-  logic [3:0] 	   BUS_axi_bid;
-  logic [1:0] 	   BUS_axi_bresp;
-  logic 			   BUS_axi_bvalid;
-  logic 			   BUS_axi_bready;
-  logic [3:0] 	   BUS_axi_arid;
-  logic [7:0] 	   BUS_axi_arlen;
-  logic [2:0] 	   BUS_axi_arsize;
-  logic [1:0] 	   BUS_axi_arburst;
-  logic [2:0] 	   BUS_axi_arprot;
-  logic [3:0] 	   BUS_axi_arcache;
-  logic 			   BUS_axi_arvalid;
-  logic [31:0] 	   BUS_axi_araddr;
-  logic 			   BUS_axi_arlock;
-  logic 			   BUS_axi_arready;
-  logic [3:0] 	   BUS_axi_rid;
-  logic [63:0] 	   BUS_axi_rdata;
-  logic [1:0] 	   BUS_axi_rresp;
-  logic 			   BUS_axi_rvalid;
-  logic 			   BUS_axi_rlast;
-  logic 			   BUS_axi_rready;
+  logic [3:0]       BUS_axi_arregion;
+  logic [3:0]       BUS_axi_arqos;
+  logic [3:0]       BUS_axi_awregion;
+  logic [3:0]       BUS_axi_awqos;
+  logic [3:0]       BUS_axi_awid;
+  logic [7:0]       BUS_axi_awlen;
+  logic [2:0]       BUS_axi_awsize;
+  logic [1:0]       BUS_axi_awburst;
+  logic [3:0]       BUS_axi_awcache;
+  logic [31:0]      BUS_axi_awaddr;
+  logic [2:0]       BUS_axi_awprot;
+  logic             BUS_axi_awvalid;
+  logic             BUS_axi_awready;
+  logic             BUS_axi_awlock;
+  logic [63:0]      BUS_axi_wdata;
+  logic [7:0]       BUS_axi_wstrb;
+  logic             BUS_axi_wlast;
+  logic             BUS_axi_wvalid;
+  logic             BUS_axi_wready;
+  logic [3:0]       BUS_axi_bid;
+  logic [1:0]       BUS_axi_bresp;
+  logic             BUS_axi_bvalid;
+  logic             BUS_axi_bready;
+  logic [3:0]       BUS_axi_arid;
+  logic [7:0]       BUS_axi_arlen;
+  logic [2:0]       BUS_axi_arsize;
+  logic [1:0]       BUS_axi_arburst;
+  logic [2:0]       BUS_axi_arprot;
+  logic [3:0]       BUS_axi_arcache;
+  logic             BUS_axi_arvalid;
+  logic [31:0]      BUS_axi_araddr;
+  logic             BUS_axi_arlock;
+  logic             BUS_axi_arready;
+  logic [3:0]       BUS_axi_rid;
+  logic [63:0]      BUS_axi_rdata;
+  logic [1:0]       BUS_axi_rresp;
+  logic             BUS_axi_rvalid;
+  logic             BUS_axi_rlast;
+  logic             BUS_axi_rready;
 
-  logic 			   BUSCLK;
+  logic             BUSCLK;
   logic             sdio_reset_open;
 
   logic             c0_init_calib_complete;
-  logic 			   dbg_clk;
+  logic             dbg_clk;
   logic [511 : 0]   dbg_bus;
   logic             ui_clk_sync_rst;
 
@@ -211,6 +210,7 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
 (* mark_debug = "true" *)  logic              RVVIStall;
 
   assign GPIOIN = {25'b0, SDCCD, SDCWP, 1'b0, GPI};
+  assign GPO = GPIOOUT[4:0];
   assign ahblite_resetn = peripheral_aresetn;
   assign cpu_reset = bus_struct_reset;
   assign calib = c0_init_calib_complete;
@@ -218,7 +218,7 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
   logic [3:0] SDCCSin;
   assign SDCCS = SDCCSin[0];
 
-  
+
   // QMTech board has single-ended clock and IBUFG+BUFG is not automatically 'inferred'.
   // The "extra" buffers add negligible latency (<1ns) while ensuring reliable operation.
   IBUFG ibuf_50m (
@@ -238,7 +238,7 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
   // 2. a second clock which is 200 MHz
   // Wally requires a slower clock.  At this point I don't know what speed the atrix 7 will run so I'm initially targeting 25Mhz.
   // the mig will output a clock at 1/4 the sys clock or 41Mhz which might work with wally so we may be able to simplify the logic a lot.
-  logic	      phy_ref_clk; // *** fix when we add rvvi
+  logic      phy_ref_clk; // *** fix when we add rvvi
   mmcm mmcm(.clk_out1(clk200i),
                      .clk_out2(clk200),
                      .clk_out3(CPUCLK),
@@ -429,7 +429,7 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
      .ddr3_ck_p(ddr3_ck_p),
      .ddr3_ck_n(ddr3_ck_n),
      .ddr3_cke(ddr3_cke),
-     // ddr3_cs_n: always pulled down in this board?
+     // ddr3_cs_n is pulled to GND in hw. Output not generated by MIG
      .ddr3_dm(ddr3_dm),
      .ddr3_odt(ddr3_odt),
 
