@@ -45,7 +45,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   output logic                 ExceptionM,                                      // exception is occurring
   output logic                 IntPendingM,                                     // Interrupt is pending, might occur if enabled
   output logic                 DelegateM,                                       // Delegate trap to supervisor handler
-  output logic [3:0]           CauseM,                                          // trap cause
+  output logic [4:0]           CauseM,                                          // trap cause
   input  logic                 DebugEBreakM, DebugEBreakS, DebugEBreakU,
   input  logic                 DebugMode,
   input  logic                 DebugStepIE,
