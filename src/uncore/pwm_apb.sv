@@ -66,6 +66,12 @@ module pwm_apb import cvw::*; #(parameter cvw_t P) (
   logic [15:0] PWMCompare2;
   logic [15:0] PWMCompare3;
 
+
+  // Bus interface signals
+  logic [7:0]  Entry;
+  logic        Memwrite;
+  logic [31:0] Din,  Dout;
+
     // PWMConfig signals
   logic [3:0] PWMScale;
   logic PWMSticky, PWMZeroCompare, PWMDeglitch;
@@ -95,7 +101,7 @@ module pwm_apb import cvw::*; #(parameter cvw_t P) (
   assign Carryout = &PWMScaled;
   assign PWMCountEn = PWMEnAlways | PWMEnOneShot;
   assign PWMCountIncrement = PWMCount + 1;
-  assign PWMCountPrescaled = PWMCountIncrement >> PWMScale;
+  assign PWMCountPrescaled = ((Memwrite & (Entry == PWM_COUNT)) ? Din[30:0] : PWMCountIncrement) >> PWMScale;
 
 
   // Combinatorial signal logic
@@ -115,10 +121,6 @@ module pwm_apb import cvw::*; #(parameter cvw_t P) (
 
   assign PWMHoldIn = (~PWMOneShotEnReset & PWMDeglitch) | PWMSticky;
 
-  // Bus interface signals
-  logic [7:0]  Entry;
-  logic        Memwrite;
-  logic [31:0] Din,  Dout;
 
   assign Entry = {PADDR[7:2],2'b00};  //  32-bit word-aligned accesses
   assign Memwrite = PWRITE & PENABLE & PSEL;  // Only write in access phase
@@ -176,9 +178,9 @@ module pwm_apb import cvw::*; #(parameter cvw_t P) (
       PWMScaled <= 16'b0;
     end else if (Memwrite & (Entry == PWM_COUNT)) begin
       PWMCount <= Din[30:0];
-      PWMScaled <= Din[30:0] >> PWMScale;
-
-    end else if (PWMCountEn) begin
+      PWMScaled <= PWMCountPrescaled[15:0];
+    end else if (Memwrite & (Entry == PWM_S))PWMScaled <= Din[15:0];
+    else if (PWMCountEn) begin
       PWMCount <= PWMCountIncrement;
       PWMScaled <= PWMCountPrescaled[15:0];
     end
