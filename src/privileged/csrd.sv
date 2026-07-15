@@ -88,9 +88,8 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   logic                     DPCset;
   logic                     PCSrcM;
 
-  // WriteVals
-  // logic [31:0]              DCSRWriteValM;
-  logic [P.XLEN-1:0]        DPCWriteValM;
+  // EBreak
+  logic                     ebreak;
   logic                     BreakpointM;
   logic                     BreakpointS;
   logic                     BreakpointU;
@@ -102,18 +101,25 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   logic                     pelp;      // Not implemented
   logic                     ebreakvs;  // Not implemented
   logic                     ebreakvu;  // Not implemented
-  logic                     ebreakm;   // Must be implemented
-  logic                     ebreaks;   // Must be implemented
-  logic                     ebreaku;   // Must be implemented
-  logic                     stepie;    // Must be implemented
-  logic                     stopcount; // Hardcoded to 0, but should implement
-  logic                     stoptime;  // Hardcoded to 0, but should implement
-  logic [2:0]               cause;     // Cause of halt
+  logic                     ebreakm;   // implemented
+  logic                     ebreaks;   // implemented
+  logic                     ebreaku;   // implemented
+  logic                     stepie;    // implemented
+  logic                     stopcount; // implemented
+  logic                     stoptime;  // Hardcoded to 0, but should implement at some point
+  logic [2:0]               cause;     // Implemented. Cause of halt
   logic                     v;         // Not implemented - related to virtualization
   logic                     mprven;    // See note...
   logic                     nmip;      // Non-maskable interrupt. Tying to 0
-  logic                     step;      // Need to implement this. How to track 1 instruction completing?
-  logic [1:0]               prv;       // Privilege Mode at halt. Set so mode changes when resumed.
+  logic                     step;      // Implemented
+  logic [1:0]               prv;       // Implemented. Privilege Mode at halt. Set so mode changes when resumed.
+
+  // NOTE: When set to 0, mprven allows MPRV to be ignored while in
+  // DebugMode. This can be added later. For now, tying it to 1
+  // implies that MPRV takes effect if it is set, thus DebugMode can't
+  // alter it's behavior. Since I haven't changed anything related to
+  // privileged modes, I'm setting this to 1 temporarily, implying
+  // that the privilege mode always takes effect.
 
   logic                     ResetHaltReqCondition;
   logic                     ResetHaltReqEnable;
@@ -123,14 +129,21 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   localparam dcsrwidth = ($bits(ebreakm) + $bits(ebreaks) + $bits(ebreaku) +
     $bits(stepie) + $bits(stopcount) + $bits(cause) + $bits(step) + $bits(prv));
 
-  logic [dcsrwidth-1:0]              DCSRWriteValM;
+  logic [dcsrwidth-1:0]     DCSRWriteValM;
   logic [dcsrwidth-1:0]     DCSR_REGW;
-  logic [2:0]               NextCause;  // Cause of halt
-  logic                     ebreak;
-  logic                     BreakModeM;
-  logic                     BreakModeS;
-  logic                     BreakModeU;
 
+  logic [P.XLEN-1:0]        DPCWriteValM;
+
+  logic [2:0]               NextCause;  // Cause of halt
+
+  // This signal indicates we are in the middle of a step. Used as an
+  // enable signal for the halting state machine
+  logic Stepping;
+
+  //
+  logic PrivModeSet;
+
+  // Ebreak handling signals
   assign BreakpointM = BreakpointFaultM & ebreakm & PrivilegeModeW == P.M_MODE;
   assign BreakpointS = BreakpointFaultM & ebreaks & PrivilegeModeW == P.S_MODE;
   assign BreakpointU = BreakpointFaultM & ebreaku & PrivilegeModeW == P.U_MODE;
@@ -138,13 +151,6 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   assign DebugEBreakM = ebreakm;
   assign DebugEBreakS = ebreaks;
   assign DebugEBreakU = ebreaku;
-
-  // NOTE: When set to 0, mprven allows MPRV to be ignored while in
-  // DebugMode. This can be added later. For now, tying it to 1
-  // implies that MPRV takes effect if it is set, thus DebugMode can't
-  // alter it's behavior. Since I haven't changed anything related to
-  // privileged modes, I'm setting this to 1 temporarily, implying
-  // that the privilege mode always takes effect.
 
   // Read only and unimplemented DCSR Fields
   assign debugver = 4'b0100; // version 1.0
@@ -162,8 +168,6 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   assign NextHalt = (state_n == HALTED & state == RUNNING);
   assign WriteDCSR = CSRDWriteM & (CSRAdrM == DCSR) | NextHalt;
   assign WriteDPC = CSRDWriteM & (CSRAdrM == DPC) | NextHalt;
-  // Need to assign ebreak appropriately for the combinational logic
-  // below. Not sure what signals gets triggered for ebreak.
 
   // Need to revisit this, as there is already a PCSrcM register in
   // the branch predictor.
@@ -174,9 +178,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
                           CSRWriteValM[8:6], CSRWriteValM[2], CSRWriteValM[1:0]} :
                          {ebreakm, ebreaks, ebreaku, stepie, stopcount, NextCause, step, PrivilegeModeW};
 
-  // assign DPCWriteValM = WriteDPC & (state == HALTED) ? CSRWriteValM : ebreak ? PCM : PCSrcM ? IEUAdrM : NextValidPCE;
-
-  // TODO: Finish this. Going to need this solution
+  // DPC Mux. Selects the correct DPC based on program execution.
   always_comb begin
     if (CSRDWriteM & DebugMode) begin
       DPCWriteValM = CSRWriteValM;
@@ -248,8 +250,6 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   // Halt FSM
   ////////////////////////////////////////////////////////////////////
 
-  logic Stepping;
-
   always_ff @(posedge clk) begin
     if (reset) begin
       state <= RUNNING;
@@ -299,8 +299,6 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   // -----------------------------------------------------------------
   // Priv mode control
   // -----------------------------------------------------------------
-
-  logic PrivModeSet;
 
   always_ff @(posedge clk) begin
     if (reset) begin
