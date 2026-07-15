@@ -694,23 +694,25 @@ add wave -noupdate -group Debug -expand -group dm /testbench/dut/debug/debug/DMI
 add wave -noupdate -group Debug -expand -group dm /testbench/dut/debug/debug/DMIRSPREADY
 add wave -noupdate -group Debug -expand -group dm /testbench/dut/debug/debug/DMIRSPVALID
 add wave -noupdate -group Debug -expand -group dm /testbench/dut/debug/debug/NDMReset
+add wave -noupdate -group Debug -expand -group dm /testbench/dut/debug/debug/AnyResumeAck
 add wave -noupdate -group Debug -expand -group dm -group {Debug Registers} /testbench/dut/debug/debug/DMControl
 add wave -noupdate -group Debug -expand -group dm -group {Debug Registers} /testbench/dut/debug/debug/DMStatus
 add wave -noupdate -group Debug -expand -group dm -group {Debug Registers} /testbench/dut/debug/debug/Data0
 add wave -noupdate -group Debug -expand -group dm -group {Debug Registers} /testbench/dut/debug/debug/Data1
 add wave -noupdate -group Debug -expand -group dm -group {Debug Registers} /testbench/dut/debug/debug/AbstractCS
 add wave -noupdate -group Debug -expand -group dm -group {Debug Registers} /testbench/dut/debug/debug/Command
+add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/DebugMode
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/cause
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/HaltReq
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/ResumeReq
-add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/DebugMode
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/ResumeReq
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/ResetHaltReq
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/DPC_REGW
+add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/DPCWriteValM
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/DCSR_REGW
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/DCSRWriteValM
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/WriteDCSR
-add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/NextHalt
+add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/WriteDPC
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/InstrValidE
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/DPCset
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/DebugResume
@@ -718,35 +720,28 @@ add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/pri
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/ebreakm
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/ebreaks
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/ebreaku
+add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/step
+add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/Stepping
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/state
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/state_n
-add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/StepHoldEnable
-add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/step
-add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/PCSrcM
-add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/IEUAdrM
+add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/NextHalt
+add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug.csrd/HaveReset
+add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug.csrd/HaveResetAck
+add wave -noupdate -group Debug -expand -group csrd -group {DPC Sources} /testbench/dut/core/priv/priv/csr/debug/csrd/PCSrcM
+add wave -noupdate -group Debug -expand -group csrd -group {DPC Sources} /testbench/dut/core/priv/priv/csr/debug/csrd/IEUAdrM
+add wave -noupdate -group Debug -expand -group csrd -group {DPC Sources} /testbench/dut/core/priv/priv/csr/debug/csrd/PCM
+add wave -noupdate -group Debug -expand -group csrd -group {DPC Sources} /testbench/dut/core/priv/priv/csr/debug/csrd/NextValidPCE
 add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/StartCommand
 add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/ValidCommand
 add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/ValidSize
 add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/GPRDebugEnable
 add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/CSRDebugEnable
 add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/FPRDebugEnable
-add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/DebugMode
 add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/DebugControl
 add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/DebugRegRDATA
 add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/DebugRegWDATA
 add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/DebugRegAddr
 add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/DebugRegWrite
-add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/anyresumeack
-add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/CurrHaltState
-add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/NextHaltState
-add wave -noupdate -group Debug -expand -group abstract /testbench/dut/core/priv/priv/csr/debug.csrd/CSRDReadValM
-add wave -noupdate -group Debug -expand -group abstract /testbench/dut/core/priv/priv/csr/debug.csrd/CSRDWriteM
-add wave -noupdate -group Debug -expand -group abstract /testbench/dut/core/priv/priv/csr/debug.csrd/HaveReset
-add wave -noupdate -group Debug -expand -group abstract /testbench/dut/core/priv/priv/csr/debug.csrd/HaveResetAck
-add wave -noupdate -group Debug -expand -group abstract /testbench/dut/core/priv/priv/csr/CSRAdrM
-add wave -noupdate -group Debug -expand -group abstract /testbench/dut/core/priv/priv/csr/CSRReadValM
-add wave -noupdate -group Debug -expand -group abstract /testbench/dut/core/priv/priv/csr/CSRWriteValM
-add wave -noupdate -group Debug -expand -group abstract /testbench/dut/core/priv/priv/csr/EPCM
 
 
 
