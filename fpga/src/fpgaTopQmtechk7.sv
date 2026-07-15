@@ -32,7 +32,7 @@ import cvw::*;
 module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
   (input logic         default_50mhz_clk,
    input logic           resetn,
-   input logic         south_reset,
+   input logic         south_resetn,
 
    // GPIO signals
    input logic [3:0]   GPI,
@@ -248,14 +248,27 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
                      .clk_in1(clk_50m_bufg));
 
 
+  // CDC synchronizer for DDR calib_complete signal
+  logic ddr_ready;
+  (* ASYNC_REG = "TRUE" *) logic [1:0] ddr_ready_cpu_sync;
+
+  always_ff @(posedge CPUCLK or negedge south_resetn) begin
+    if (!south_resetn) begin
+        ddr_ready_cpu_sync <= 2'b00;
+    end else begin
+        ddr_ready_cpu_sync <= {ddr_ready_cpu_sync[0], c0_init_calib_complete};
+    end
+  end
+  assign ddr_ready = ddr_ready_cpu_sync[1];
+
 
   // reset controller XILINX IP
   sysrst sysrst
     (.slowest_sync_clk(CPUCLK),
      .ext_reset_in(1'b0),
-     .aux_reset_in(~south_reset),
+     .aux_reset_in(~south_resetn),
      .mb_debug_sys_rst(1'b0),
-     .dcm_locked(c0_init_calib_complete),
+     .dcm_locked(ddr_ready),
      .mb_reset(mb_reset),  //open
      .bus_struct_reset(bus_struct_reset),
      .peripheral_reset(peripheral_reset), //open
