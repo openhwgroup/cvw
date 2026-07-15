@@ -95,57 +95,57 @@ test_cases:
 .8byte PWMConfig, 0x00000200, write32_test      # initialize config register with ZeroCompare bit set
 #.8byte PWMCompare0, 0x00000000, write32_test    # set Compare0 register to 0
 #.8byte PWMConfig, 0x00001205, write32_test      # set PWMEnAlways to 1 to start cycle
-#.8byte 0x0, 0x0000000, pwm_cycle_wait4          # wait 1 PWM cycle
+#.8byte 0x0, 0x0000000, pwm_cycle_wait          # wait 1 PWM cycle
 .8byte PWMCompare0, 0x00000001, write32_test    # set Compare0 to 1
 .8byte PWMConfig, 0x00001206, write32_test      # set PWMEnAlways to 1 to start cycle
-.8byte 0x0, 0x00000002, pwm_cycle_wait4         # wait 8 PWM cycles
+.8byte 0x0, 0x00000002, pwm_cycle_wait         # wait 8 PWM cycles
 #.8byte PWMCompare0, 0x00008888, write32_test    # set Compare0 to 8888, half of 16 bit capacity
 #.8byte PWMConfig, 0x00001205, write32_test      # set PWMEnAlways to 1 to start cycle
-#.8byte 0x0, 0x00000002, pwm_cycle_wait4         # wait 8 PWM cycles
+#.8byte 0x0, 0x00000002, pwm_cycle_wait         # wait 8 PWM cycles
 #.8byte PWMCompare0, 0x0000FFFE, write32_test    # set Compare0 to max -1
 #.8byte PWMConfig, 0x00001204, write32_test      # set PWMEnAlways to 1 to start cycle
-#.8byte 0x0, 0x00000002, pwm_cycle_wait4         # wait 8 PWM cycles
+#.8byte 0x0, 0x00000002, pwm_cycle_wait         # wait 8 PWM cycles
 #.8byte PWMCompare0, 0x0000FFFF, write32_test    # set Compare0 to 1
 #.8byte PWMConfig, 0x00001204, write32_test      # set PWMEnAlways to 1 to start cycle
-#.8byte 0x0, 0x00000002, pwm_cycle_wait4         # wait 8 PWM cycles
+#.8byte 0x0, 0x00000002, pwm_cycle_wait         # wait 8 PWM cycles
 
 # =========== Scale mid tests ==============
 
 #.8byte PWMConfig, 0x00000207, write32_test      # initialize config register with pwmscale roughly half filled
 #.8byte PWMCompare0, 0x00000000, write32_test    # set Compare0 register to 0
 #.8byte PWMConfig, 0x00002207, write32_test      # set PWMEnOneShot to 1 to start cycle
-#.8byte 0x0, 0x0000000, pwm_cycle_wait4          # wait 1 PWM cycle
+#.8byte 0x0, 0x0000000, pwm_cycle_wait          # wait 1 PWM cycle
 #.8byte PWMCompare0, 0x00000001, write32_test    # set Compare0 to 1
 #.8byte PWMConfig, 0x00001207, write32_test      # set PWMEnAlways to 1 to start cycle
-#.8byte 0x0, 0x00000002, pwm_cycle_wait4         # wait 8 PWM cycles
+#.8byte 0x0, 0x00000002, pwm_cycle_wait         # wait 8 PWM cycles
 #.8byte PWMCompare0, 0x00008888, write32_test    # set Compare0 to 8888, half of 16 bit capacity
 #.8byte PWMConfig, 0x00001207, write32_test      # set PWMEnAlways to 1 to start cycle
-#.8byte 0x0, 0x00000002, pwm_cycle_wait4         # wait 8 PWM cycles
+#.8byte 0x0, 0x00000002, pwm_cycle_wait         # wait 8 PWM cycles
 #.8byte PWMCompare0, 0x0000FFFE, write32_test    # set Compare0 to max -1
 #.8byte PWMConfig, 0x00001207, write32_test      # set PWMEnAlways to 1 to start cycle
-#.8byte 0x0, 0x00000002, pwm_cycle_wait4         # wait 8 PWM cycles
+#.8byte 0x0, 0x00000002, pwm_cycle_wait         # wait 8 PWM cycles
 #.8byte PWMCompare0, 0x0000FFFF, write32_test    # set Compare0 to 1
 #.8byte PWMConfig, 0x00001207, write32_test      # set PWMEnAlways to 1 to start cycle
-#.8byte 0x0, 0x00000002, pwm_cycle_wait4         # wait 8 PWM cycles
+#.8byte 0x0, 0x00000002, pwm_cycle_wait         # wait 8 PWM cycles
 
 # =========== Scale max tests ================
 
 #.8byte PWMConfig, 0x0000020F, write32_test      # initialize config register with pwmscale at max
 #.8byte PWMCompare0, 0x00000000, write32_test    # set Compare0 register to 0
 #.8byte PWMConfig, 0x0000220F, write32_test      # set PWMEnOneShot to 1 to start cycle
-#.8byte 0x0, 0x0000000, pwm_cycle_wait4          # wait 1 PWM cycle
+#.8byte 0x0, 0x0000000, pwm_cycle_wait          # wait 1 PWM cycle
 #.8byte PWMCompare0, 0x00000001, write32_test    # set Compare0 to 1
 #.8byte PWMConfig, 0x0000120F, write32_test      # set PWMEnAlways to 1 to start cycle
-#.8byte 0x0, 0x00000002, pwm_cycle_wait4         # wait 8 PWM cycles
+#.8byte 0x0, 0x00000002, pwm_cycle_wait         # wait 8 PWM cycles
 #.8byte PWMCompare0, 0x00008888, write32_test    # set Compare0 to 8888, half of 16 bit capacity
 #.8byte PWMConfig, 0x0000120F, write32_test      # set PWMEnAlways to 1 to start cycle
-#.8byte 0x0, 0x00000002, pwm_cycle_wait4         # wait 8 PWM cycles
+#.8byte 0x0, 0x00000002, pwm_cycle_wait         # wait 8 PWM cycles
 #.8byte PWMCompare0, 0x0000FFFE, write32_test    # set Compare0 to max -1
 #.8byte PWMConfig, 0x0000120F, write32_test      # set PWMEnAlways to 1 to start cycle
-#.8byte 0x0, 0x00000002, pwm_cycle_wait4         # wait 8 PWM cycles
+#.8byte 0x0, 0x00000002, pwm_cycle_wait         # wait 8 PWM cycles
 #.8byte PWMCompare0, 0x0000FFFF, write32_test    # set Compare0 to 1
 #.8byte PWMConfig, 0x0000120F, write32_test      # set PWMEnAlways to 1 to start cycle
-#.8byte 0x0, 0x00000002, pwm_cycle_wait4         # wait 8 PWM cycles
+#.8byte 0x0, 0x00000002, pwm_cycle_wait         # wait 8 PWM cycles
 
 
 
@@ -155,35 +155,35 @@ test_cases:
 #.8byte PWMCompare0, 0x00000006, write32_test    # generating the waveforms in FU540-C000 manual 14.9
 #.8byte PWMCompare3, 0x00000000, write32_test    #
 #.8byte PWMConfig, 0x00001204, write32_test      # set PWMEnAlways
-#.8byte 0x0, 0x00000002, pwm_cycle_wait4
+#.8byte 0x0, 0x00000002, pwm_cycle_wait
 .8byte PWMConfig, 0x00000206, write32_test      # initialize config register with ZeroCompare set
 .8byte PWMCompare3, 0x00000001, write32_test    #
 .8byte PWMConfig, 0x00001206, write32_test      # set PWMEnalways
-.8byte 0x0, 0x00000002, pwm_cycle_wait4
+.8byte 0x0, 0x00000002, pwm_cycle_wait
 .8byte PWMConfig, 0x00000206, write32_test      # initialize config register with ZeroCompare set
 .8byte PWMCompare3, 0x00000002, write32_test    #
 .8byte PWMConfig, 0x00001206, write32_test      # set PWMEnalways
-.8byte 0x0, 0x00000002, pwm_cycle_wait4
+.8byte 0x0, 0x00000002, pwm_cycle_wait
 .8byte PWMConfig, 0x00000206, write32_test      # initialize config register with ZeroCompare set
 .8byte PWMCompare3, 0x00000003, write32_test    #
 .8byte PWMConfig, 0x00001206, write32_test      # set PWMEnalways
-.8byte 0x0, 0x00000002, pwm_cycle_wait4
+.8byte 0x0, 0x00000002, pwm_cycle_wait
 .8byte PWMConfig, 0x00000206, write32_test      # initialize config register with ZeroCompare set
 .8byte PWMCompare3, 0x00000004, write32_test    #
 .8byte PWMConfig, 0x00001206, write32_test      # set PWMEnalways
-.8byte 0x0, 0x00000002, pwm_cycle_wait4
+.8byte 0x0, 0x00000002, pwm_cycle_wait
 .8byte PWMConfig, 0x00000206, write32_test      # initialize config register with ZeroCompare set
 .8byte PWMCompare3, 0x00000005, write32_test    #
 .8byte PWMConfig, 0x00001206, write32_test      # set PWMEnalways
-.8byte 0x0, 0x00000002, pwm_cycle_wait4
+.8byte 0x0, 0x00000002, pwm_cycle_wait
 .8byte PWMConfig, 0x00000206, write32_test      # initialize config register with ZeroCompare set
 .8byte PWMCompare3, 0x00000006, write32_test    #
 .8byte PWMConfig, 0x00001206, write32_test      # set PWMEnalways
-.8byte 0x0, 0x00000002, pwm_cycle_wait4
+.8byte 0x0, 0x00000002, pwm_cycle_wait
 #.8byte PWMConfig, 0x00000204, write32_test      # initialize config register with eroCompare set
 #.8byte PWMCompare3, 0x00000007, write32_test    #
 #.8byte PWMConfig, 0x00001204, write32_test      # set PWMEnalways
-#.8byte 0x0, 0x00000002, pwm_cycle_wait4
+#.8byte 0x0, 0x00000002, pwm_cycle_wait
 
 # ========== Arbitrary ganged tests===========
 .8byte input_en, 0x00000004, write32_test       #turn on gpio. input pins
@@ -193,15 +193,15 @@ test_cases:
 .8byte PWMCompare2, 0x00000001, write32_test
 .8byte PWMCompare3, 0x00000002, write32_test
 .8byte PWMConfig, 0x04001206, write32_test      # set EnAlways
-.8byte 0x0, 0x00000002, pwm_cycle_wait4           # wait 3 cycles
+.8byte 0x0, 0x00000002, pwm_cycle_wait           # wait 3 cycles
 .8byte PWMCompare2, 0x00000002, write32_test
 .8byte PWMCompare3, 0x00000003, write32_test
 .8byte PWMConfig, 0x04001206, write32_test      # set EnAlways
-.8byte 0x0, 0x00000002, pwm_cycle_wait4           # wait 3 cycles
+.8byte 0x0, 0x00000002, pwm_cycle_wait           # wait 3 cycles
 .8byte PWMCompare2, 0x00000002, write32_test
 .8byte PWMCompare3, 0x00000004, write32_test
 .8byte PWMConfig, 0x04001206, write32_test      # set EnAlways
-.8byte 0x0, 0x00000002, pwm_cycle_wait4           # wait 3 cycles
+.8byte 0x0, 0x00000002, pwm_cycle_wait           # wait 3 cycles
 
 # =========== Center Aligned Tests ============
 .8byte input_en, 0x00000001, write32_test       #turn on gpio. input pins
@@ -218,7 +218,7 @@ test_cases:
 .8byte 0x0, 0x0000000, pwm_cycle_wait_center        # wait 1 PWM cycle
 #.8byte PWMCompare0, 0x00008000, write32_test    #set Compare0 to ((2^16)/2) for the always low
 #.8byte PWMConfig, 0x00011000, write32_test      # set PWMEnOneShot to 1 to start cycle
-#.8byte 0x0, 0x0000001, pwm_cycle_wait4
+#.8byte 0x0, 0x0000001, pwm_cycle_wait
 
 SETUP_PLIC
 # ========== Sticky/Deglitch circuit test ====

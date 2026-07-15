@@ -1220,11 +1220,9 @@ spi_burst_send: //function for loading multiple frames at once to test delays wi
     sw t2, 0(t3)
     j test_loop
 
-pwm_cycle_wait4: //function for waiting 4 pwm cycles for inspection tests
-    /*plan: poll gpio high_ip
+pwm_cycle_wait: //counts number of pwm cycles
 
-    */
-    rdcycle a4 //read starting cycle into t4
+    rdcycle a4 //read starting cycle into a4
     li t2, 0x10020000 // pwm start address
     lw t3, 32(t2) //load comp0 into t3
     lw t6, 0(t2)   //load scale factor into t6
@@ -1239,13 +1237,8 @@ pwm_cycle_wait4: //function for waiting 4 pwm cycles for inspection tests
 
 
 pwm_cycle_branch:
-    /*
-    lw t3, 0(t6) //load 31:24 of pwm config into t3
-    bgt t3, t1, pwm_cycle_increment
-    j pwm_cycle_branch
-    */
-    rdcycle t3
-    bgt t3, t2, pwm_over
+    rdcycle t3 //read current cycle num
+    bgt t3, t2, pwm_over //if cycle over estimated end time, end
     lw t3, 0(t4) //load GPIO 0-3 high_ip
     bgtz t3, pwm_cycle_increment
     j pwm_cycle_branch
@@ -1265,7 +1258,7 @@ pwm_over: //resets pwm enables and clears interrupt registers
     li t3, 0x00000000
     sw t3, 0(t2) //clear pwm config
     sw t3, 8(t2) //set pwm count to 0
-    sd t5, 0(t1)
+    sd t5, 0(t1) //store num of cycles
     addi t1, t1, 8
     addi a6, a6, 8
     j test_loop
@@ -1277,10 +1270,7 @@ pwm_dumb_over: //resets pwm enables and clears interrupt registers
     sw t3, 8(t2) //set pwm count to 0
     j test_loop
 
-pwm_cycle_wait_center: //function for waiting 4 pwm cycles for inspection tests
-    /*plan: poll gpio high_ip
-
-    */
+pwm_cycle_wait_center: //function for waiting t4 pwm cycles for inspection tests when in center mode
     rdcycle a4 //read starting cycle into t4
     li t2, 0x10020000 // pwm start address
     li t3, 0xFFFF //load max count (centered)
@@ -1294,7 +1284,6 @@ pwm_cycle_wait_center: //function for waiting 4 pwm cycles for inspection tests
     li t6, 0xFFFFFFFF
     lw t3, 0(t4)
     j pwm_cycle_branch
-
 
 pwm_dumb_wait: // waits an estimated 8 pwm cycles from timer and scale
     rdcycle t5 //read starting cycle into t4
@@ -1321,6 +1310,7 @@ pwm_dumb_wait_center:
     sll t3, t3, t6 //shift compare by (scale factor + )
     add t5, t3, t5 //find estimated end time
     j pwm_dumb_cycle
+
 goto_s_mode:
     // return to address in t3,
     li a0, 3 // Trap handler behavior (go to supervisor mode)

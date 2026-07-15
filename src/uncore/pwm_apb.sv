@@ -32,7 +32,6 @@
 /* Issues:
 parameterize
 all config.vhs range, base
-fix scaled reset and read/write
 */
 module pwm_apb import cvw::*; #(parameter cvw_t P) (
   input  logic                PCLK, PRESETn,
