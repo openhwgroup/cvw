@@ -67,19 +67,15 @@ module csru import cvw::*;  #(parameter cvw_t P) (
 
   // CSR Reads
   always_comb begin
-    if (STATUS_FS == 2'b00) begin // fpu disabled, trap
-      IllegalCSRUAccessM = 1'b1;
-      CSRUReadValM = '0;
-    end else begin
-      IllegalCSRUAccessM = 1'b0;
+    CSRUReadValM = '0;
+    IllegalCSRUAccessM = 1'b0;
+    if (STATUS_FS == 2'b00)  IllegalCSRUAccessM = 1'b1; // fpu disabled, trap
+    else begin
       case (CSRAdrM)
         FFLAGS:    CSRUReadValM = {{(P.XLEN-5){1'b0}}, FFLAGS_REGW};
         FRM:       CSRUReadValM = {{(P.XLEN-3){1'b0}}, FRM_REGW};
         FCSR:      CSRUReadValM = {{(P.XLEN-8){1'b0}}, FRM_REGW, FFLAGS_REGW};
-        default: begin
-                   CSRUReadValM = '0;
-                   IllegalCSRUAccessM = 1'b1;
-        end
+        default:   IllegalCSRUAccessM = 1'b1;
       endcase
     end
   end

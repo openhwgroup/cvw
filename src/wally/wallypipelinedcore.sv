@@ -123,7 +123,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic [1:0]                    STATUS_MPP, STATUS_FS;
   logic [1:0]                    PrivilegeModeW;
   logic [P.XLEN-1:0]             PTE;
-  logic [1:0]                    PageType;
+  logic [2:0]                    PageType;
   logic                          sfencevmaM;
   logic                          SelHPTW;
 
@@ -279,7 +279,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .PCSpillF, .ITLBMissOrUpdateAF, .PTE, .PageType, .ITLBWriteF, .SelHPTW,
     .LSUStallM);
 
-  if(P.BUS_SUPPORTED) begin : ebu
+  if (P.BUS_SUPPORTED) begin : ebu
     ebu #(P) ebu(// IFU connections
       .clk, .reset,
       // IFU interface
@@ -310,7 +310,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .FlushD, .FlushE, .FlushM, .FlushW);
 
   // privileged unit
-  if (P.ZICSR_SUPPORTED) begin:priv
+  if (P.ZICSR_SUPPORTED) begin : priv
     privileged #(P) priv(
       .clk, .reset,
       .FlushD, .FlushE, .FlushM, .FlushW, .StallD, .StallE, .StallM, .StallW,
@@ -348,7 +348,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   end
 
   // multiply/divide unit
-  if (P.ZMMUL_SUPPORTED) begin:mdu
+  if (P.ZMMUL_SUPPORTED) begin : mdu
     mdu #(P) mdu(.clk, .reset, .StallM, .StallW, .FlushE, .FlushM, .FlushW,
       .ForwardedSrcAE, .ForwardedSrcBE,
       .Funct3E, .Funct3M, .IntDivE, .W64E, .MDUActiveE,
@@ -359,7 +359,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   end
 
   // floating point unit
-  if (P.F_SUPPORTED) begin:fpu
+  if (P.F_SUPPORTED) begin : fpu
     fpu #(P) fpu(
       .clk, .reset,
       .FRM_REGW,                           // Rounding mode from CSR

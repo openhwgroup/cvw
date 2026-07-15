@@ -88,6 +88,8 @@ module testbench;
   // Variables that can be overwritten with $value$plusargs at start of simulation
   string       TEST, ElfFile, sim_log_prefix;
   integer      INSTR_LIMIT;
+  string       UART_LOG_FILE;
+  integer      UART_LOG;
 
   // Debugger signals
   logic        tck, tms, tdi, tdo;
@@ -159,12 +161,18 @@ module testbench;
         sim_log_prefix = "";  // Assign default value if not passed
     end
 
+
     // For single elf testing with Debug testvector files
     if (!$value$plusargs("DEBUGFILE=%s", debugfile)) begin
       debugfile = "";
     end else begin
       $display("Debug file: %s", debugfile);
     end
+
+    if (!$value$plusargs("UART_LOG=%d", UART_LOG))
+      UART_LOG = (TEST == "buildroot"); // Default to true for buildroot test, false otherwise
+    if (!$value$plusargs("UART_LOG_FILE=%s", UART_LOG_FILE))
+      UART_LOG_FILE = {"logs/", TEST, "_uart.out"};
     //$display("TEST = %s ElfFile = %s", TEST, ElfFile);
 
     if (ElfFile != "none") begin // If Elf File passed in, check its bit width
@@ -239,9 +247,13 @@ module testbench;
             debugger_tests = wally64debug_jtag;
           end
         end
-
-        "arch64vm_sv39": if (P.VIRTMEM_SUPPORTED) tests = arch64vm_sv39;
-        "arch64vm_sv48": if (P.VIRTMEM_SUPPORTED) tests = arch64vm_sv48;
+        "arch64vm_sv39": if (P.SV39_SUPPORTED)    tests = arch64vm_sv39;
+        "arch64vm_sv48": if (P.SV48_SUPPORTED)    tests = arch64vm_sv48;
+        "arch64vm_sv48_a": if (P.SV48_SUPPORTED)    tests = arch64vm_sv48_a;
+        "arch64vm_sv48_b": if (P.SV48_SUPPORTED)    tests = arch64vm_sv48_b;
+        "arch64vm_sv39_isolate":     if (P.SV39_SUPPORTED) tests = arch64vm_sv39_isolate;
+        "arch64vm_sv48_mxr_isolate": if (P.SV48_SUPPORTED) tests = arch64vm_sv48_mxr_isolate;
+        "arch64vm_sv57": if (P.SV57_SUPPORTED)    tests = arch64vm_sv57;
       endcase
     end else begin // RV32
       case (TEST)
@@ -291,6 +303,7 @@ module testbench;
         "arch32zkne":    if (P.ZKNE_SUPPORTED)    tests = arch32zkne;
         "arch32zknh":    if (P.ZKNH_SUPPORTED)    tests = arch32zknh;
         "arch32pmp":     if (P.PMP_ENTRIES > 0)   tests = arch32pmp;
+
         "arch32vm_sv32": if (P.VIRTMEM_SUPPORTED) tests = arch32vm_sv32;
         "wally32debug": begin
           if (P.DEBUG_SUPPORTED) begin
@@ -298,7 +311,6 @@ module testbench;
             debugger_tests = wally32debug_jtag;
           end
         end
-
       endcase
     end
     if (tests.size() == 0 & ElfFile == "none") begin
@@ -440,8 +452,6 @@ module testbench;
         memfilename = {RISCV_DIR, "/linux-testvectors/ram.bin"};
         elffilename = "buildroot";
         bootmemfilename = {RISCV_DIR, "/linux-testvectors/bootmem.bin"};
-        uartoutfilename = {"logs/", TEST, "_uart.out"};
-        uartoutfile = $fopen(uartoutfilename, "w"); // delete UART output file
         ProgramAddrMapFile = {RISCV_DIR, "/buildroot/output/images/disassembly/vmlinux.objdump.addr"};
         ProgramLabelMapFile = {RISCV_DIR, "/buildroot/output/images/disassembly/vmlinux.objdump.lab"};
       end else if(TEST == "fpga") begin
@@ -470,10 +480,16 @@ module testbench;
       // the addr of each label and fill the array. To expand, add more elements to this array
       // and initialize them to zero (also initialize them to zero at the start of the next test)
       updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, memfilename, WALLY_DIR, ProgramAddrLabelArray);
+      // Open UART log file if enabled (buildroot defaults to on, override with +UART_LOG=1)
+      if (UART_LOG) begin
+        uartoutfilename = UART_LOG_FILE;
+        uartoutfile = $fopen(uartoutfilename, "w");
+      end else
+        uartoutfile = 0;
     end
     if(Validate) begin
       if (PrevPCZero) totalerrors = totalerrors + 1; //  error if PC is stuck at zero
-      if (TEST == "buildroot")
+      if (uartoutfile)
         $fclose(uartoutfile);
       if (TEST == "embench") begin
         // Writes contents of begin_signature to .sim.output file
@@ -767,10 +783,10 @@ module testbench;
             .clk(clk), .ProgramAddrMapFile(ProgramAddrMapFile), .ProgramLabelMapFile(ProgramLabelMapFile));
   end
 
-  // Append UART output to file for tests
+  // Optionally log UART output to file (always on for buildroot, enable with +UART_LOG=1)
   if (P.UART_SUPPORTED) begin: uart_logger
     always @(posedge clk) begin
-      if (TEST == "buildroot") begin
+      if (uartoutfile) begin
         if (~dut.uncoregen.uncore.uartgen.uart.MEMWb & dut.uncoregen.uncore.uartgen.uart.uartPC.A == 3'b000 & ~dut.uncoregen.uncore.uartgen.uart.uartPC.DLAB) begin
           $fwrite(uartoutfile, "%c", dut.uncoregen.uncore.uartgen.uart.uartPC.Din); // append characters one at a time so we see a consistent log appearing during the run
           $fflush(uartoutfile);

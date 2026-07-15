@@ -320,7 +320,7 @@ module ppa_shifter #(parameter WIDTH=32) (
       else         z = {A, {WIDTH-1{1'b0}}};
     assign amttrunc = Amt; // shift amount
 
-  // opposite offset for right shfits
+  // opposite offset for right shifts
   assign offset = Right ? amttrunc : ~amttrunc;
 
   // funnel operation

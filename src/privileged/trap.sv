@@ -50,6 +50,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   input  logic                 DebugMode,
   input  logic                 DebugStepIE,
   input  logic                 DebugStep
+
 );
 
   logic                        MIntGlobalEnM, SIntGlobalEnM;                    // Global interrupt enables
@@ -74,7 +75,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   assign ValidIntsM    = Committed ? '0 : EnabledIntsM;
   assign InterruptM    = (|ValidIntsM) & InstrValidM & (~wfiM | wfiW) & ~DebugMode & ~(DebugStep & ~DebugStepIE); // suppress interrupt if the memory system has partially processed a request. Delay interrupt until wfi is in the W stage.
   // wfiW is to support possible but unlikely back to back wfi instructions. wfiM would be high in the M stage, while also in the W stage.
-  assign DelegateM     = P.S_SUPPORTED & (InterruptM ? MIDELEG_REGW[CauseM] : MEDELEG_REGW[CauseM]) &
+  assign DelegateM     = P.S_SUPPORTED & (InterruptM ? MIDELEG_REGW[CauseM[3:0]] : MEDELEG_REGW[CauseM[3:0]]) &
                      (PrivilegeModeW == P.U_MODE | PrivilegeModeW == P.S_MODE);
 
   ///////////////////////////////////////////
@@ -103,29 +104,33 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   ///////////////////////////////////////////
 
   always_comb
-    if      (reset)                    CauseM = 4'd0; // hard reset 3.3
-    else if (ValidIntsM[11])           CauseM = 4'd11; // Machine External Int
-    else if (ValidIntsM[3])            CauseM = 4'd3;  // Machine Sw Int
-    else if (ValidIntsM[7])            CauseM = 4'd7;  // Machine Timer Int
-    else if (ValidIntsM[9])            CauseM = 4'd9;  // Supervisor External Int
-    else if (ValidIntsM[1])            CauseM = 4'd1;  // Supervisor Sw Int
-    else if (ValidIntsM[5])            CauseM = 4'd5;  // Supervisor Timer Int
-    else if (BothInstrPageFaultM)      CauseM = 4'd12;
-    else if (BothInstrAccessFaultM)    CauseM = 4'd1;
-    else if (IllegalInstrFaultM)       CauseM = 4'd2;
+    if      (reset)                                           CauseM = 5'd0; // hard reset 3.3
+    else if (ValidIntsM[11])                                  CauseM = 5'd11; // Machine External Int
+    else if (ValidIntsM[3])                                   CauseM = 5'd3;  // Machine Sw Int
+    else if (ValidIntsM[7])                                   CauseM = 5'd7;  // Machine Timer Int
+    // if any of the interrupts are delegated to S mode they would be moved to lower priority than the undelegated ones
+    else if (~MIDELEG_REGW[9] & ValidIntsM[9])                CauseM = 5'd9;  // not delegated Supervisor External Int
+    else if (~MIDELEG_REGW[1] & ValidIntsM[1])                CauseM = 5'd1;  // not delegated Supervisor Sw Int
+    else if (~MIDELEG_REGW[5] & ValidIntsM[5])                CauseM = 5'd5;  // not delegated Supervisor Timer Int
+    else if (ValidIntsM[9])                                   CauseM = 5'd9;  // delegated Supervisor External Int
+    else if (ValidIntsM[1])                                   CauseM = 5'd1;  // delegated Supervisor Sw Int
+    else if (ValidIntsM[5])                                   CauseM = 5'd5;  // delegated Supervisor Timer Int
+    else if (BothInstrPageFaultM)                             CauseM = 5'd12;
+    else if (BothInstrAccessFaultM)                           CauseM = 5'd1;
+    else if (IllegalInstrFaultM)                              CauseM = 5'd2;
     // coverage off
     // Misaligned instructions cannot occur in rv64gc
-    else if (InstrMisalignedFaultM)    CauseM = 4'd0;
+    else if (InstrMisalignedFaultM)                           CauseM = 5'd0;
     // coverage on
-    else if (BreakpointFaultM)         CauseM = 4'd3;
-    else if (EcallFaultM)              CauseM = {2'b10, PrivilegeModeW};
-    else if (StoreAmoMisalignedFaultM & ~P.ZICCLSM_SUPPORTED) CauseM = 4'd6;  // misaligned faults are higher priority if they always are taken
-    else if (LoadMisalignedFaultM & ~P.ZICCLSM_SUPPORTED)     CauseM = 4'd4;
-    else if (StoreAmoPageFaultM)       CauseM = 4'd15;
-    else if (LoadPageFaultM)           CauseM = 4'd13;
-    else if (StoreAmoAccessFaultM)     CauseM = 4'd7;
-    else if (LoadAccessFaultM)         CauseM = 4'd5;
-    else if (StoreAmoMisalignedFaultM & P.ZICCLSM_SUPPORTED) CauseM = 4'd6; // See priority in Privileged Spec 3.1.15
-    else if (LoadMisalignedFaultM & P.ZICCLSM_SUPPORTED)     CauseM = 4'd4;
-    else                               CauseM = 4'd0;
+    else if (BreakpointFaultM)                                CauseM = 5'd3;
+    else if (EcallFaultM)                                     CauseM = {3'b010, PrivilegeModeW};
+    else if (StoreAmoMisalignedFaultM & ~P.ZICCLSM_SUPPORTED) CauseM = 5'd6;  // misaligned faults are higher priority if they always are taken
+    else if (LoadMisalignedFaultM & ~P.ZICCLSM_SUPPORTED)     CauseM = 5'd4;
+    else if (StoreAmoPageFaultM)                              CauseM = 5'd15;
+    else if (LoadPageFaultM)                                  CauseM = 5'd13;
+    else if (StoreAmoAccessFaultM)                            CauseM = 5'd7;
+    else if (LoadAccessFaultM)                                CauseM = 5'd5;
+    else if (StoreAmoMisalignedFaultM & P.ZICCLSM_SUPPORTED)  CauseM = 5'd6; // See priority in Privileged Spec 3.1.15
+    else if (LoadMisalignedFaultM & P.ZICCLSM_SUPPORTED)      CauseM = 5'd4;
+    else                                                      CauseM = 5'd0;
 endmodule
