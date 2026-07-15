@@ -72,7 +72,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
 
   // Machine CSRs
   localparam MVENDORID     = 16'h0F11;
-  localparam MARCHID       = 16'h0F12; // github.com/riscv/riscv-isa-manual/blob/main/marchid.md
+  localparam MARCHID       = 16'h0F12;
   localparam MIMPID        = 16'h0F13;
   localparam MHARTID       = 16'h0F14;
   localparam MCONFIGPTR    = 16'h0F15;
@@ -234,12 +234,29 @@ module debug import cvw::*; #(parameter cvw_t P) (
 
   logic DMActive;
 
+  // For Data register reads.
+  logic ReadRegister;
+
+  // Resume request pulse state machine
+  typedef enum logic [1:0] {RESUMEREQIDLE, RESUMEREQUEST, RESUMEWAITCLEAR} ResumeReqState;
+  ResumeReqState CurrResumeReq;
+  ResumeReqState NextResumeReq;
+
+  // Halt request pulse state machine
+  typedef enum logic [1:0] {HALTREQIDLE, HALTREQUEST, WAITFORCLEAR} HaltReqState;
+  HaltReqState CurrHaltReq;
+  HaltReqState NextHaltReq;
+
+  // Abstract Access Register Command signals
+  logic ValidCommand;
+  logic NextDebugCSREnable;
+  logic NextDebugGPREnable;
+  logic NextDebugFPREnable;
+
   // Abstract Commands:
   // 0: Access Register Command
   // 1: Quick Access
   // 2: Access Memory Command
-
-  // enum logic {IDLE, GRANTED} DMIState;
 
   // --------------------------------------------------------------------------
   // DMI Interface with Registers
@@ -276,17 +293,12 @@ module debug import cvw::*; #(parameter cvw_t P) (
   // Reading Registers
   always_ff @(posedge clk) begin
     if (reset) begin
-      // DMControl <= '0;
-      // Command <= '0;
-      // HartInfo <= '0;
-      // Data = '{default: '0};
       DMIRSPREADY <= 1'b1;
       DMIRSPDATA <= '0;
       DMIRSPOP <= 2'b0;
       DMIRSPREADY <= 1'b1;
       DMIRSPDATA <= '0;
       DMIRSPOP <= 2'b0;
-      // AbstractCS <= 32'h0000_0001;
     end else if (ReadRequest) begin
       case(DMIADDR[6:0])
         DATA0: DMIRSPDATA <= Data0;
@@ -362,7 +374,8 @@ module debug import cvw::*; #(parameter cvw_t P) (
     end
   end
 
-  logic ReadRegister;
+  // Data Registers, used as arguments for writing to registers and
+  // for storing results read from registers.
   assign ReadRegister = StartCommand & ~Command[16];
 
   // Data[0]
@@ -379,7 +392,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
     end
   end
 
-  // Data[1] -- only need this for
+  // Data[1] -- only need this for configurations that have 64 bit registers.
   if (P.LLEN == 64 | P.D_SUPPORTED) begin
     always_ff @(posedge clk) begin
       if (reset) begin
@@ -435,13 +448,6 @@ module debug import cvw::*; #(parameter cvw_t P) (
   // Halt FSM
   // --------------------------------------------------------------------------
 
-  // assign HaltReq = DMControl[31] & DMActive;
-  // assign ResumeReq = DMControl[30] & ~AnyResumeAck;
-
-  typedef enum logic [1:0] {RESUMEREQIDLE, RESUMEREQUEST, RESUMEWAITCLEAR} ResumeReqState;
-  ResumeReqState CurrResumeReq;
-  ResumeReqState NextResumeReq;
-
   always_ff @(posedge clk) begin
     if (reset) begin
       CurrResumeReq <= RESUMEREQIDLE;
@@ -471,9 +477,6 @@ module debug import cvw::*; #(parameter cvw_t P) (
     endcase
   end
 
-  typedef enum logic [1:0] {HALTREQIDLE, HALTREQUEST, WAITFORCLEAR} HaltReqState;
-  HaltReqState CurrHaltReq;
-  HaltReqState NextHaltReq;
 
   always_ff @(posedge clk) begin
     if (reset) begin
@@ -522,56 +525,11 @@ module debug import cvw::*; #(parameter cvw_t P) (
   // DMStatus signals
   assign NDMResetPending = DebugNDMReset;
 
-  typedef enum logic [1:0] {RUNNING, HALTING, HALTED, RESUMING} HaltState;
-  HaltState CurrHaltState;
-  HaltState NextHaltState;
-
-  // With Multi-hart, this needs to become a vector
-  always_ff @(posedge clk) begin
-    if (reset | ClrResetHaltReq) begin
-      DebugResetHaltReq <= 1'b0;
-    end else if (SetResetHaltReq) begin
-      DebugResetHaltReq <= 1'b1;
-    end
-  end
-
-  // see Figure 2 Debug Specification (2/21/25)
-  always_ff @(posedge clk) begin
-    if (reset) begin
-      if (DebugResetHaltReq) CurrHaltState <= HALTED;
-      else CurrHaltState <= RUNNING;
-    end else begin
-      CurrHaltState <= NextHaltState;
-    end
-  end
-
-  always_comb begin
-    case(CurrHaltState)
-      RUNNING: begin
-        if (DebugHaltReq) NextHaltState = HALTING;
-        else if (DebugMode) NextHaltState = HALTED;
-        else NextHaltState = RUNNING;
-      end
-      HALTING: begin
-        if (DebugMode) NextHaltState = HALTED;
-        else NextHaltState = HALTING;
-      end
-      HALTED: begin
-        if (DebugResumeReq) NextHaltState = RESUMING;
-        else NextHaltState = HALTED;
-      end
-      RESUMING: begin
-        if (~DebugMode) NextHaltState = RUNNING;
-        else NextHaltState = RESUMING;
-      end
-      default: NextHaltState = RUNNING;
-    endcase
-  end
-
-  assign AllRunning = NextHaltState == RUNNING | CurrHaltState == RUNNING;
-  assign AnyRunning = NextHaltState == RUNNING | CurrHaltState == RUNNING;
-  assign AllHalted = NextHaltState == HALTED | CurrHaltState == HALTED;
-  assign AnyHalted = NextHaltState == HALTED | CurrHaltState == HALTED;
+  // Single hart for now. When more harts are added
+  assign AllRunning = ~DebugMode;
+  assign AnyRunning = AllRunning;
+  assign AllHalted  = DebugMode;
+  assign AnyHalted  = AllHalted;
 
   // -----------------------------------------------------------------------------
   // ResumeAck: resumeack handshake.
@@ -607,7 +565,6 @@ module debug import cvw::*; #(parameter cvw_t P) (
       default: next_resack_state = RESACKCLEAR;
     endcase
   end
-
 
   // This allows a momentary clear right after receiving a ResumeRequest
   assign AnyResumeAck = (resack_state == RESACKHIGH);
@@ -648,14 +605,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
     end
   end
 
-  logic ValidCommand;
-  logic NextDebugCSREnable;
-  logic NextDebugGPREnable;
-  logic NextDebugFPREnable;
-
   assign AARSize = Command[22:20];
-  // assign StartCommand = DMIVALID & DMIRSPREADY & (DMIADDR == COMMAND) & ~|CMDErr;
-  //assign DebugRegAddr = Command[11:0];
   assign DebugRegWrite = Command[16] & StartCommand & DebugMode;
 
   // Covering both 32 bit and 64 bit architectures.
@@ -674,8 +624,8 @@ module debug import cvw::*; #(parameter cvw_t P) (
       StartCommand <= 0;
       DebugRegAddr <= '0;
       DebugCSREnable <= 0;
-      DebugFPREnable <= 0; //is this needed as GPR not there
-      DebugGPREnable <= 0; //is this is a bug?
+      DebugFPREnable <= 0;
+      DebugGPREnable <= 0;
     end else begin
       StartCommand <= DMIVALID & DMIRSPREADY & (DMIADDR == COMMAND) & ~|CMDErr & DMActive & DebugMode;
       DebugRegAddr <= DMIDATA[11:0];
@@ -826,7 +776,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
             NextDebugCSREnable = 1;
           end
 
-        default: ;  // all signals stay 0 (already set above)
+        default: ;
       endcase
     end
   end
