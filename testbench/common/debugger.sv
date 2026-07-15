@@ -181,26 +181,28 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
   // Debugger Class
 
   /* This class is special. It simulates what the debugger is
-    * supposed to do as outlined in the RISC-V Debug Specification.
-    *
-    * - Debugger.initialize():
-    *   This initializes the Debug Module by setting DMActive high
-    *   then polling for the the setting to take effect.
-    *
-    * - Debugger.halt():
-    *   This sets haltreq high and polls for the halting to have taken
-    *   effect in DMStatus before deasserting haltreq.
-    *
-    * - Debugger.resume():
-    *   Sets resumereq high and polls DMStatus for when the processor
-    *   resumes.
-    *
-    * - Debugger.readreg(regno):
-    *   Reads a GPR of the user's choice
-    *
-    * - Debugger.readcsr():
-    *
-    */
+   * supposed to do as outlined in the RISC-V Debug Specification.
+   *
+   * - Debugger.initialize():
+   *   This initializes the Debug Module by setting DMActive high
+   *   then polling for the the setting to take effect.
+   *
+   * - Debugger.halt():
+   *   This sets haltreq high and polls for the halting to have taken
+   *   effect in DMStatus before deasserting haltreq.
+   *
+   * - Debugger.resume():
+   *   Sets resumereq high and polls DMStatus for when the processor
+   *   resumes.
+   *
+   * - Debugger.readreg(regno):
+   *   Reads a GPR of the user's choice
+   *
+   * - Debugger.readcsr():
+   *   Performs an Abstract Access Register read of a CSR.
+   *
+   * - Debugger.get_testvectors(filename);
+   */
 
   class Debugger;
     // Primary JTAG Registers
@@ -216,6 +218,7 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
     // Need to store these to allow exceptions for certain values during assertions
     logic [6:0] last_addr;
     logic [15:0] last_abstract_reg;
+    logic [2:0]  last_aarsize;
 
     // For running testvectors instead of the encapsulated tests.
     logic [40:0] testvectors[$];
@@ -238,9 +241,6 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
     // Confirm the DTM is working
     task initialize();
       this.bypass.write(32'hffffffff);
-      //this.bypass.read();
-
-      //$display("Bypass result: 0x%8h", this.bypass.result);
 
       write_instr(5'b00001);
       this.idcode.read();
@@ -280,8 +280,7 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
       this.dmireg.read_dmcontrol();
       this.dmireg.write_dmcontrol(32'h8000_0000 | this.dmireg.result);
       this.dmireg.read_dmstatus();
-      // 0000_0000_0000_0000_0000_0011_0000_0000
-      // 00000300
+
       assert(|(this.dmireg.result[33:2] & 32'h0000_0300)) $display("Hart Halted. DMStatus = 0x%8h, CORRECT", this.dmireg.result[33:2]);
       else $display("Hart not halted. DMStatus = 0x%8h, FAILED", this.dmireg.result[33:2]);
 
@@ -358,7 +357,6 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
       // foreach (this.testvectors[i]) begin
       //    $display("testvector[%0d]:\n  addr: %2h, data: %8h, op: %2b", i, this.testvectors[i][40:34], this.testvectors[i][33:2], this.testvectors[i][1:0]);
       // end
-
     endfunction
 
     function changeState(logic [40:0] testvector);
@@ -495,15 +493,18 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
           end
 
           // The case where the AbstractCS register is read during the
-          // Abstract Register Read process. Spike actually asserts the
-          // busy signal for a regular GPR read for some reason. I'm
-          // unclear as to what reason they would have for asserting
-          // that. It warrants investigation, because I imagine there's
-          // a decent reason to make that go high. I'll examine the code
-          // later.
+          // Abstract Register Read process. Spike actually asserts
+          // the busy signal for a regular Abstract Access Register
+          // GPR read for some reason.
           7'h16: begin
             // $display("HERE");
             if ((expected[14] != actual[14]) | (expected[17] != actual[17])) begin
+              result = 1;
+            end else if (last_aarsize == 3'd3 & P.XLEN == 32 & (expected[12:10] != 3'd2)) begin
+              // Had to add this case because Spike wants to report a
+              // cmderr of 3 (exception) on Abstract Accesss Register
+              // reads that set aarsize to 64 bits on a 32 bit
+              // configuration. This also needs to be investigated.
               result = 1;
             end else begin
               case(last_abstract_reg)
@@ -550,6 +551,7 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
           last_addr = testvectors[i-1][40:34];
           if (last_addr == 7'h17) begin
             last_abstract_reg = testvectors[i-1][17:2];
+            last_aarsize      = testvectors[i-1][24:22];
           end
         end
 
