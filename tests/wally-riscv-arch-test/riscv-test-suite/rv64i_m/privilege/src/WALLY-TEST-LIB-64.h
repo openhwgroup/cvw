@@ -1220,48 +1220,81 @@ spi_burst_send: //function for loading multiple frames at once to test delays wi
     sw t2, 0(t3)
     j test_loop
 
-pwm_cycle_wait8: //function for waiting 8 pwm cycles for inspection tests
-    /*plan: Input = which comparator to check
+pwm_cycle_wait4: //function for waiting 4 pwm cycles for inspection tests
+    /*plan: poll gpio high_ip
+
     */
-    mv t2, t4 // place cßomparator num 0-3 in t2
-    li t1, 0x8000
-    sll t1, t1, t2
-    li t6, 0x10020000 //load pwm config address
-    li t2, 0x8
+    rdcycle a4 //read starting cycle into t4
+    li t2, 0x10020000 // pwm start address
+    lw t3, 32(t2) //load comp0 into t3
+    lw t6, 0(t2)   //load scale factor into t6
+    andi t6, t6, 0x0000000F
+    add t6, t6, t4 // create total shift for end wait time by adding shift factor and log2(numcycles)
+    sll t3, t3, t6 //shift compare by (scale factor + )
+    add t2, t3, a4 //find estimated end time
+    li t4, 0x1006002C // load gpio rise_ip address
     li t5, 0x0
+    li t6, 0xFFFFFFFF
+    lw t3, 0(t4)
+
 
 pwm_cycle_branch:
+    /*
     lw t3, 0(t6) //load 31:24 of pwm config into t3
     bgt t3, t1, pwm_cycle_increment
+    j pwm_cycle_branch
+    */
+    rdcycle t3
+    bgt t3, t2, pwm_over
+    lw t3, 0(t4) //load GPIO 0-3 high_ip
+    bgtz t3, pwm_cycle_increment
     j pwm_cycle_branch
 
 pwm_cycle_increment:
     addi t5, t5, 0x1
-    beq t5, t2, pwm_over
     j pwm_wait_half
 
 pwm_wait_half:
-    lb t3, 0(t6) //load pwm config to t3
-    bgt t3, t1, pwm_wait_half
+    sw t6, 0(t4) // clear high_ip
+    lw t3, 0(t4) //load high_ip
+    bgtz t3, pwm_wait_half //wait for pwm cycle to end
     j pwm_cycle_branch
-
-pwm_cycle_wait1: //function for waiting 1 pwm cycle
-    mv t2, t4 // place comparator num 0-3 in t2
-    li t1, 0x8000
-    sll t1, t1, t2
-    li t6, 0x10020000 //load pwm config address
-    lb t3, 0(t6) //load pwm config to t3
-    li t2, 0x1
-    li t5, 0x0
-    bge t3, t1, pwm_cycle_increment
-    j pwm_over
 
 pwm_over: //resets pwm enables and clears interrupt registers
     li t2, 0x10020000
     li t3, 0x00000000
-    sw t3, 0(t2)
-    sw t3, 8(t2)
+    sw t3, 0(t2) //clear pwm config
+    sw t3, 8(t2) //set pwm count to 0
+    sd t5, 0(t1)
+    addi t1, t1, 8
+    addi a6, a6, 8
     j test_loop
+
+pwm_dumb_over: //resets pwm enables and clears interrupt registers
+    li t2, 0x10020000
+    li t3, 0x00000000
+    sw t3, 0(t2) //clear pwm config
+    sw t3, 8(t2) //set pwm count to 0
+    j test_loop
+
+pwm_cycle_wait_center: //function for waiting 4 pwm cycles for inspection tests
+    /*plan: poll gpio high_ip
+
+    */
+    rdcycle a4 //read starting cycle into t4
+    li t2, 0x10020000 // pwm start address
+    li t3, 0xFFFF //load max count (centered)
+    lw t6, 0(t2)   //load scale factor into t6
+    andi t6, t6, 0x0000000F
+    add t6, t6, t4 // create total shift for end wait time by adding shift factor and log2(numcycles)
+    sll t3, t3, t6 //shift compare by (scale factor + )
+    add t2, t3, a4 //find estimated end time
+    li t4, 0x1006002C // load gpio rise_ip address
+    li t5, 0x0
+    li t6, 0xFFFFFFFF
+    lw t3, 0(t4)
+    j pwm_cycle_branch
+
 
 pwm_dumb_wait: // waits an estimated 8 pwm cycles from timer and scale
     rdcycle t5 //read starting cycle into t4
@@ -1275,7 +1308,7 @@ pwm_dumb_wait: // waits an estimated 8 pwm cycles from timer and scale
 
 pwm_dumb_cycle:
     rdcycle t4
-    bgt t4, t5, pwm_over
+    bgt t4, t5, pwm_dumb_over
     j pwm_dumb_cycle
 
 pwm_dumb_wait_center:

@@ -138,73 +138,56 @@ test_cases:
 #.8byte PWMConfig, 0x00011000, write32_test      # set PWMEnOneShot to 1 to start cycle
 #.8byte 0x0, 0x0000001, pwm_dumb_wait_center          # wait 1 PWM cycle
 
-# =========== Left Aligned tests ==============
-.8byte PWMConfig, 0x01000200, write32_test      # initialize config register with pwmcmp0gang and ZeroCompare set
-.8byte PWMCompare0, 0x00000000, write32_test    # in order to generate left aligned tests, set cmpx to 0 and cmpmax to desired
-.8byte PWMCompare3, 0x00000000, write32_test    # setting PWMCompare1 to 1 to generate a 1 bit left aligned pulse on 0
-.8byte PWMConfig, 0x08001200, write32_test      # set PWMEnOneShot
-.8byte 0x0, 0x00000003, pwm_dumb_wait         # wait 1 cycle
-#.8byte PWMConfig, 0x01001200, write32_test      # set PWMEnAlways
-#.8byte 0x0, 0x00000003, pwm_dumb_wait         # wait 8 cycles
-.8byte PWMCompare3, 0x00000001, write32_test    # setting PWMCompare1 to 1 to generate a 1 bit left aligned pulse on 0
-.8byte PWMConfig, 0x08001200, write32_test      # set PWMEnAlways
-.8byte 0x0, 0x00000003, pwm_dumb_wait         # wait 8 cycles
-.8byte PWMCompare3, 0x00000002, write32_test    # setting PWMCompare to 2
-.8byte PWMConfig, 0x08001200, write32_test      # set PWMEnAlways
-.8byte 0x0, 0x00000003, pwm_dumb_wait         # wait 8 cycles
-.8byte PWMCompare3, 0x00000003, write32_test    # setting PWMCompare1 to 1 to generate a 1 bit left aligned pulse on 0
-.8byte PWMConfig, 0x08001200, write32_test      # set PWMEnAlways
-.8byte 0x0, 0x00000003, pwm_dumb_wait         # wait 8 cycles
-.8byte PWMCompare3, 0x00000004, write32_test    # setting PWMCompare1 to 1 to generate a 1 bit left aligned pulse on 0
-.8byte PWMConfig, 0x08001200, write32_test      # set PWMEnAlways
-.8byte 0x0, 0x00000003, pwm_dumb_wait         # wait 8 cycles
-.8byte PWMCompare3, 0x00000005, write32_test    # setting PWMCompare1 to 1 to generate a 1 bit left aligned pulse on 0
-.8byte PWMConfig, 0x08001200, write32_test      # set PWMEnAlways
-.8byte 0x0, 0x00000003, pwm_dumb_wait         # wait 8 cycles
-.8byte PWMCompare3, 0x00000006, write32_test    # setting PWMCompare1 to 1 to generate a 1 bit left aligned pulse on 0
-.8byte PWMConfig, 0x08001200, write32_test      # set PWMEnAlways
-.8byte 0x0, 0x00000003, pwm_dumb_wait         # wait 8 cycles
-.8byte PWMCompare3, 0x0000000E, write32_test    # setting PWMCompare1 to 1 to generate a 1 bit left aligned pulse on 0
-.8byte PWMConfig, 0x08001200, write32_test      # set PWMEnAlways
-.8byte 0x0, 0x00000003, pwm_dumb_wait         # wait 8 cycles
-.8byte PWMCompare3, 0x0000000F, write32_test    # setting PWMCompare1 to 1 to generate a 1 bit left aligned pulse on 0
-.8byte PWMConfig, 0x08001200, write32_test      # set PWMEnAlways
-.8byte 0x0, 0x00000003, pwm_dumb_wait         # wait 8 cycles
-
 # ========== Right Aligned ganged tests
-.8byte PWMConfig, 0x08000200, write32_test      # initialize config register with pwmcmp0gang and ZeroCompare set
+.8byte PWMConfig, 0x00000200, write32_test      # initialize config register with ZeroCompare set
 .8byte PWMCompare0, 0x00000006, write32_test    # generating the waveforms in FU540-C000 manual 14.9
 .8byte PWMCompare3, 0x00000000, write32_test    #
-.8byte PWMConfig, 0x08001200, write32_test      # set PWMEnOneShot
+.8byte PWMConfig, 0x00001200, write32_test      # set PWMEnOneShot
 .8byte 0x0, 0x00000000, pwm_dumb_wait
-.8byte PWMConfig, 0x08000200, write32_test      # initialize config register with pwmcmp0gang and ZeroCompare set
+.8byte PWMConfig, 0x00000200, write32_test      # initialize config register with ZeroCompare set
 .8byte PWMCompare3, 0x00000001, write32_test    #
 .8byte PWMConfig, 0x08001200, write32_test      # set PWMEnalways
 .8byte 0x0, 0x00000003, pwm_dumb_wait
-.8byte PWMConfig, 0x08000200, write32_test      # initialize config register with pwmcmp0gang and ZeroCompare set
+.8byte PWMConfig, 0x00000200, write32_test      # initialize config register with ZeroCompare set
 .8byte PWMCompare3, 0x00000002, write32_test    #
-.8byte PWMConfig, 0x08001200, write32_test      # set PWMEnalways
+.8byte PWMConfig, 0x00001200, write32_test      # set PWMEnalways
 .8byte 0x0, 0x00000003, pwm_dumb_wait
-.8byte PWMConfig, 0x08000200, write32_test      # initialize config register with pwmcmp0gang and ZeroCompare set
+.8byte PWMConfig, 0x00000200, write32_test      # initialize config register with ZeroCompare set
 .8byte PWMCompare3, 0x00000003, write32_test    #
-.8byte PWMConfig, 0x08001200, write32_test      # set PWMEnalways
+.8byte PWMConfig, 0x00001200, write32_test      # set PWMEnalways
 .8byte 0x0, 0x00000003, pwm_dumb_wait
-.8byte PWMConfig, 0x08000200, write32_test      # initialize config register with pwmcmp0gang and ZeroCompare set
+.8byte PWMConfig, 0x00000200, write32_test      # initialize config register with ZeroCompare set
 .8byte PWMCompare3, 0x00000004, write32_test    #
-.8byte PWMConfig, 0x08001200, write32_test      # set PWMEnalways
+.8byte PWMConfig, 0x00001200, write32_test      # set PWMEnalways
 .8byte 0x0, 0x00000003, pwm_dumb_wait
-.8byte PWMConfig, 0x08000200, write32_test      # initialize config register with pwmcmp0gang and ZeroCompare set
+.8byte PWMConfig, 0x00000200, write32_test      # initialize config register with ZeroCompare set
 .8byte PWMCompare3, 0x00000005, write32_test    #
-.8byte PWMConfig, 0x08001200, write32_test      # set PWMEnalways
+.8byte PWMConfig, 0x00001200, write32_test      # set PWMEnalways
 .8byte 0x0, 0x00000003, pwm_dumb_wait
-.8byte PWMConfig, 0x08000200, write32_test      # initialize config register with pwmcmp0gang and ZeroCompare set
+.8byte PWMConfig, 0x00000200, write32_test      # initialize config register with ZeroCompare set
 .8byte PWMCompare3, 0x00000006, write32_test    #
-.8byte PWMConfig, 0x08001200, write32_test      # set PWMEnalways
+.8byte PWMConfig, 0x00001200, write32_test      # set PWMEnalways
 .8byte 0x0, 0x00000003, pwm_dumb_wait
-.8byte PWMConfig, 0x08000200, write32_test      # initialize config register with pwmcmp0gang and ZeroCompare set
+.8byte PWMConfig, 0x00000200, write32_test      # initialize config register with eroCompare set
 .8byte PWMCompare3, 0x00000007, write32_test    #
-.8byte PWMConfig, 0x08001200, write32_test      # set PWMEnalways
+.8byte PWMConfig, 0x00001200, write32_test      # set PWMEnalways
 .8byte 0x0, 0x00000003, pwm_dumb_wait
+
+# ========== Arbitrary ganged tests===========
+.8byte PWMConfig, 0x02000200, write32_test      # initialize config register w cmp1 gang, zerocmp
+.8byte PWMCompare0, 0x00000006, write32_test       # set compare0 (base cycle) to 6
+.8byte PWMCompare1, 0x00000001, write32_test
+.8byte PWMCompare2, 0x00000002, write32_test
+.8byte PWMConfig, 0x02001200, write32_test      # set EnAlways
+.8byte 0x0, 0x00000003, pwm_dumb_wait           # wait 3 cycles
+.8byte PWMCompare1, 0x00000002, write32_test
+.8byte PWMCompare2, 0x00000003, write32_test
+.8byte PWMConfig, 0x02001200, write32_test      # set EnAlways
+.8byte 0x0, 0x00000003, pwm_dumb_wait           # wait 3 cycles
+.8byte PWMCompare1, 0x00000002, write32_test
+.8byte PWMCompare2, 0x00000004, write32_test
+.8byte PWMConfig, 0x02001200, write32_test      # set EnAlways
+.8byte 0x0, 0x00000003, pwm_dumb_wait           # wait 3 cycles
 
 SETUP_PLIC
 # ========== Sticky/Deglitch circuit test ====

@@ -8,6 +8,7 @@ add wave -noupdate /testbench/dut/core/PCE
 add wave -noupdate /testbench/dut/core/ieu/dp/regf/rf
 add wave -noupdate -label MCYCLE -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[0]}
 add wave -noupdate /testbench/dut/uncoregen/uncore/pwm/pwm/PWMCompareIP
+add wave -noupdate /testbench/dut/uncoregen/uncore/gpio/gpio/high_ip
 add wave -noupdate /testbench/dut/uncoregen/uncore/pwm/pwm/PWMCount
 add wave -noupdate /testbench/dut/uncoregen/uncore/pwm/pwm/PWMScaled
 add wave -noupdate /testbench/dut/uncoregen/uncore/pwm/pwm/PWMCompare0

@@ -4061,8 +4061,9 @@ string wally64periph[] = '{
   "rv64i_m/privilege/src/WALLY-plic-01.S",
   "rv64i_m/privilege/src/WALLY-plic-s-01.S",
   "rv64i_m/privilege/src/WALLY-uart-01.S",
-  "rv64i_m/privilege/src/WALLY-spi-01.S"
-  //"rv64i_m/privilege/src/WALLY-pwm-01.S"
+  "rv64i_m/privilege/src/WALLY-spi-01.S",
+  "rv64i_m/privilege/src/WALLY-pwms-01.S"
+
 };
 
 string wally32priv[] = '{
