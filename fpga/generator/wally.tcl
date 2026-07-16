@@ -113,7 +113,7 @@ if {$board=="ArtyA7"} {
 } elseif {$board=="nexysa7"} {
     source ../constraints/small-debug.xdc
 } elseif {$board=="qmtechk7"} {
-    source ../constraints/small-debug.xdc
+   source ../constraints/small-debug.xdc
 } else {
     #source ../constraints/vcu-small-debug.xdc
     #source ../constraints/small-debug.xdc
@@ -121,10 +121,18 @@ if {$board=="ArtyA7"} {
     source ../constraints/big-debug-spi.xdc
 }
 
-
 # set for RuntimeOptimized implementation
 #set_property "steps.place_design.args.directive" "RuntimeOptimized" [get_runs impl_1]
 #set_property "steps.route_design.args.directive" "RuntimeOptimized" [get_runs impl_1]
+
+# Further optimization tuning
+if {$board=="qmtechk7"} {
+    # best optimization strategy found: Performance_ExploreWithRemap
+    #set_property strategy Performance_ExploreWithRemap [get_runs impl_1]
+    # comment the line below for slower build with better results
+    #set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED false [get_runs impl_1]
+    #puts "Implementation strategy: Performance_ExploreWithRemap"
+}
 
 launch_runs impl_1 -jobs 16
 wait_on_run impl_1

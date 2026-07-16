@@ -40,10 +40,9 @@ nexysa7: export MAXSDCCLOCK  :=  10000000
 nexysa7: FPGA_NEXYSA7
 
 qmtechk7: export XILINX_PART := xc7k325tffg676-1
-# Not really a board from Xilinx
 qmtechk7: export XILINX_BOARD := qmtechk7
 qmtechk7: export board := qmtechk7
-qmtechk7: export SYSTEMCLOCK := 40000000
+qmtechk7: export SYSTEMCLOCK := 32000000
 qmtechk7: export MAXSDCCLOCK  := 10000000
 qmtechk7: FPGA_QMTECHK7
 
