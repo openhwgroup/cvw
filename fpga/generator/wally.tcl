@@ -128,10 +128,10 @@ if {$board=="ArtyA7"} {
 # Further optimization tuning
 if {$board=="qmtechk7"} {
     # best optimization strategy found: Performance_ExploreWithRemap
-    #set_property strategy Performance_ExploreWithRemap [get_runs impl_1]
+    # set_property strategy Performance_ExploreWithRemap [get_runs impl_1]
     # comment the line below for slower build with better results
-    #set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED false [get_runs impl_1]
-    #puts "Implementation strategy: Performance_ExploreWithRemap"
+    # set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED false [get_runs impl_1]
+    # puts "Implementation strategy: Performance_ExploreWithRemap"
 }
 
 launch_runs impl_1 -jobs 16
