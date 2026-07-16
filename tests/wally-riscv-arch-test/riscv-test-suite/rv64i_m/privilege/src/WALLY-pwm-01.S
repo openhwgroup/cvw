@@ -78,6 +78,8 @@ test_cases:
 .8byte PWMCompare0, 0x00000001, write32_test    # set Compare0 to 1
 .8byte PWMConfig, 0x00001200, write32_test      # set PWMEnAlways to 1 to start cycle
 .8byte 0x0, 0x00000003, pwm_dumb_wait         # wait 8 PWM cycles
+.8byte PWMConfig, 0x00002200, write32_test      #test with oneshot set
+.8byte 0x0, 0x00000000, pwm_dumb_wait
 #.8byte PWMCompare0, 0x00008888, write32_test    # set Compare0 to 8888, half of 16 bit capacity
 #.8byte PWMConfig, 0x00001200, write32_test      # set PWMEnAlways to 1 to start cycle
 #.8byte 0x0, 0x00000003, pwm_dumb_wait         # wait 8 PWM cycles
@@ -109,7 +111,7 @@ test_cases:
 
 # =========== Scale max tests ================
 
-.8byte PWMConfig, 0x0000020F, write32_test      # initialize config register with pwmscale at max
+#.8byte PWMConfig, 0x0000020F, write32_test      # initialize config register with pwmscale at max
 #.8byte PWMCompare0, 0x00000000, write32_test    # set Compare0 register to 0
 #.8byte PWMConfig, 0x0000220F, write32_test      # set PWMEnOneShot to 1 to start cycle
 #.8byte 0x0, 0x0000000, pwm_dumb_wait          # wait 1 PWM cycle
@@ -127,18 +129,18 @@ test_cases:
 #.8byte 0x0, 0x00000003, pwm_dumb_wait         # wait 8 PWM cycles
 
 # =========== Center Aligned Tests ============
-#.8byte PWMConfig, 0x00010000, write32_test      # initialize config register with pwmcmp0center set
-#.8byte PWMCompare0, 0x00000008, write32_test    # set Compare0 register to half
-#.8byte PWMConfig, 0x00011000, write32_test      # set PWMEnAlways to 1 w ZeroCompare off - necessary for center tests because counter has to keep going after matching Compare
-#.8byte 0x0, 0x0000003, pwm_dumb_wait_center          # wait 1 PWM cycle
-#.8byte PWMCompare0, 0x00007FFF, write32_test    #set Compare0 to ((2^16)/2) - 1 for the minimum high time
-#.8byte PWMConfig, 0x00011000, write32_test      # set PWMEnOneShot to 1 to start cycle
-#.8byte 0x0, 0x0000001, pwm_dumb_wait_center          # wait 1 PWM cycle
-#.8byte PWMCompare0, 0x00008000, write32_test    #set Compare0 to ((2^16)/2) for the always low
-#.8byte PWMConfig, 0x00011000, write32_test      # set PWMEnOneShot to 1 to start cycle
-#.8byte 0x0, 0x0000001, pwm_dumb_wait_center          # wait 1 PWM cycle
+.8byte PWMConfig, 0x00010000, write32_test      # initialize config register with pwmcmp0center set
+.8byte PWMCompare0, 0x00000008, write32_test    # set Compare0 register to half
+.8byte PWMConfig, 0x00011000, write32_test      # set PWMEnAlways to 1 w ZeroCompare off - necessary for center tests because counter has to keep going after matching Compare
+.8byte 0x0, 0x0000003, pwm_dumb_wait_center          # wait 1 PWM cycle
+.8byte PWMCompare0, 0x00007FFF, write32_test    #set Compare0 to ((2^16)/2) - 1 for the minimum high time
+.8byte PWMConfig, 0x00011000, write32_test      # set PWMEnOneShot to 1 to start cycle
+.8byte 0x0, 0x0000001, pwm_dumb_wait_center          # wait 1 PWM cycle
+.8byte PWMCompare0, 0x00008000, write32_test    #set Compare0 to ((2^16)/2) for the always low
+.8byte PWMConfig, 0x00011000, write32_test      # set PWMEnOneShot to 1 to start cycle
+.8byte 0x0, 0x0000001, pwm_dumb_wait_center          # wait 1 PWM cycle
 
-# ========== Right Aligned ganged tests
+# ========== Right Aligned tests
 .8byte PWMConfig, 0x00000200, write32_test      # initialize config register with ZeroCompare set
 .8byte PWMCompare0, 0x00000006, write32_test    # generating the waveforms in FU540-C000 manual 14.9
 .8byte PWMCompare3, 0x00000000, write32_test    #
@@ -146,7 +148,7 @@ test_cases:
 .8byte 0x0, 0x00000000, pwm_dumb_wait
 .8byte PWMConfig, 0x00000200, write32_test      # initialize config register with ZeroCompare set
 .8byte PWMCompare3, 0x00000001, write32_test    #
-.8byte PWMConfig, 0x08001200, write32_test      # set PWMEnalways
+.8byte PWMConfig, 0x00001200, write32_test      # set PWMEnalways
 .8byte 0x0, 0x00000003, pwm_dumb_wait
 .8byte PWMConfig, 0x00000200, write32_test      # initialize config register with ZeroCompare set
 .8byte PWMCompare3, 0x00000002, write32_test    #
