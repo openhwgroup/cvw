@@ -29,10 +29,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* Issues:
-parameterize
-all config.vhs range, base
-*/
+
 module pwm_apb import cvw::*; #(parameter cvw_t P) (
   input  logic                PCLK, PRESETn,
   input  logic                PSEL,
@@ -71,7 +68,7 @@ module pwm_apb import cvw::*; #(parameter cvw_t P) (
   logic        Memwrite;
   logic [31:0] Din,  Dout;
 
-    // PWMConfig signals
+  // PWMConfig signals
   logic [3:0] PWMScale;
   logic PWMSticky, PWMZeroCompare, PWMDeglitch;
   logic PWMEnAlways, PWMEnOneShot;
@@ -169,7 +166,7 @@ module pwm_apb import cvw::*; #(parameter cvw_t P) (
     end
 
 
-  // PWMCount register
+  // PWMCount and PWMScaled registers
 
   always_ff @(posedge PCLK)
     if (PWMCountReset | ~PRESETn) begin
@@ -183,19 +180,11 @@ module pwm_apb import cvw::*; #(parameter cvw_t P) (
       PWMCount <= PWMCountIncrement;
       PWMScaled <= PWMCountPrescaled[15:0];
     end
-  /*
-  flopenr #(31) pwmcountreg(PCLK, PWMCountReset, PWMCountEn,
-                            PWMCountIncrement, PWMCount);
-
-  // PWMScaled register
-  flopenr #(16) pwmscaledreg(PCLK, PWMCountReset, PWMCountEn,
-                          PWMCountPrescaled[15:0], PWMScaled);
-
-  */
 
   flop #(1) pwmholdreg(PCLK,
                        PWMHoldIn, PWMHoldOut);
-  //parameterizable pwm comparators
+
+  //pwm comparators
   assign PWMDeglitchMux[0] = PWMScaled[15] & PWMCompareCenter[0];
   assign PWMCompareXNOR[15:0] = PWMDeglitchMux[0] ? ~PWMScaled : PWMScaled;
   assign PWMCompareBoolean[0] = PWMCompareXNOR[15:0] >= PWMCompare0;
@@ -242,39 +231,3 @@ module pwm_apb import cvw::*; #(parameter cvw_t P) (
   assign PWMIntr = |(PWMCompareIP);
 
 endmodule
-/*
-module pwmcomparator #(parameter WIDTH = 16) (
-  input logic [WIDTH-1:0] Scaled;
-  input logic [WIDTH-1:0] Compare;
-  logic HoldOut, Center;
-  output logic CompareIP, GPIO;
-
-  logic DeglitchMux, CompareBoolean, CompareIPIn;
-  logic [15:0] CenterInverse;
-
-  assign DeglitchMux[3] = Scaled[15] & Center;
-  assign CompareXNOR[15:0] = DeglitchMux ? ~Scaled : Scaled;
-  assign CompareBoolean = CompareXNOR[15:0] >= Compare;
-  assign CompareIPIn = DeglitchMux ? CompareBoolean : (CompareBoolean | (PWMHoldOut & PWMCompareIP));
-
-  flop #(1) pwmcompareipreg(PCLK,
-                            CompareIPIn, CompareIP);
-
-  assign GPIO = CompareIP & (CompareGang ~& PWMCompareIP[0);
-)
-assign PWMDeglitchMux[3] = PWMScaled[15] & PWMCompareCenter[3];
-  assign PWMCompareXNOR[63:48] = PWMDeglitchMux[3] ? ~PWMScaled : PWMScaled;
-  assign PWMCompareBoolean[3] = PWMCompareXNOR[63:48] >= PWMCompare3;
-  assign PWMCompareIPIn[3] = PWMDeglitchMux[3] ? PWMCompareBoolean[3] : (PWMCompareBoolean[3] | (PWMHoldOut & PWMCompareIP[3]));
-
-  flop #(1) pwmcompareipreg3(PCLK,
-                            PWMCompareIPIn[3], PWMCompareIP[3]);
-
-  assign PWMGPIO[3] = PWMCompareIP[3] & (PWMCompareGang[3] ~& PWMCompareIP[0]);
-
-genvar icomp
-for (icomp = 0; icomp < (numcomps-1); icomp++) begin
-  assign PWMDeglitchMux[icomp] = PWMScaled[15] & PWMCompareCenter[icomp];
-  assign PWMCompareBoolean[icomp] = ((PWMDeglitchMux[icomp]) ? ~PWMScaled : PWMScaled) >= PWMCompare[icomp];
-  assign PWMCompareIPIn
-*/

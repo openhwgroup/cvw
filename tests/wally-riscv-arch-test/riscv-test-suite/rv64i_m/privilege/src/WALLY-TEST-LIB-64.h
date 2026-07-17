@@ -1221,7 +1221,6 @@ spi_burst_send: //function for loading multiple frames at once to test delays wi
     j test_loop
 
 pwm_cycle_wait: //counts number of pwm cycles
-
     rdcycle a4 //read starting cycle into a4
     li t2, 0x10020000 // pwm start address
     lw t3, 32(t2) //load comp0 into t3
@@ -1234,7 +1233,6 @@ pwm_cycle_wait: //counts number of pwm cycles
     li t5, 0x0
     li t6, 0xFFFFFFFF
     lw t3, 0(t4)
-
 
 pwm_cycle_branch:
     rdcycle t3 //read current cycle num
