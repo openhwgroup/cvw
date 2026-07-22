@@ -16,7 +16,7 @@ PROCESSOR_TOP 		?= riscvsingle # top-level module name
 PROCESSOR_CONFIG 	?= $(CURDIR)/sample_processor/config
 
 #--trace-all
-SAIL_TRACE_FLAGS 	?= --trace-all
+SAIL_TRACE_FLAGS 	?= --trace
 
 # ----    Synthesis Configuration ---- #
 SYNTH_TECH 			?= sky130 #tsmc28 #tsmc28psyn
