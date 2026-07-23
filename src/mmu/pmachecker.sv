@@ -46,7 +46,7 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
 
   logic                        PMAAccessFault;
   logic                        AccessRW, AccessRWXC, AccessRX;
-  logic [11:0]                 SelRegions;
+  logic [12:0]                 SelRegions;
   logic                        AtomicAllowed;
   logic                        CacheableRegion, IdempotentRegion;
 
