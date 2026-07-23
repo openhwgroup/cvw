@@ -7,7 +7,7 @@
 // Purpose: PWM module
 //
 // Documentation:
-// Based on PWM design from SiFive 5U540-C000 manual version 1.0
+// Based on PWM design from SiFive FU540-C000 manual version 1.0
 // https://pdos.csail.mit.edu/6.828/2025/readings/FU540-C000-v1.0.pdf
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
