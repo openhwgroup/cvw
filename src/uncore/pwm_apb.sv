@@ -5,11 +5,10 @@
 // Modified:
 //
 // Purpose: PWM module
-//  https://docs.google.com/document/d/1erHBVchBtwmgZ0bCNjb88spYfN7CpRbhmSNFH6cO8CY/edit?tab=t.0
 //
-// Documentation: RISC-V System on Chip Design
+// Documentation:
 // Based on PWM design from SiFive 5U540-C000 manual version 1.0
-//
+// https://pdos.csail.mit.edu/6.828/2025/readings/FU540-C000-v1.0.pdf
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
 //
@@ -29,8 +28,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-module pwm_apb import cvw::*; #(parameter cvw_t P, PWM_WIDTH = 16) (
+module pwm_apb import cvw::*; #(parameter cvw_t P) (
   input  logic                PCLK, PRESETn,
   input  logic                PSEL,
   input  logic [7:0]          PADDR,
@@ -55,13 +53,12 @@ module pwm_apb import cvw::*; #(parameter cvw_t P, PWM_WIDTH = 16) (
 
   // PWM control registers
   logic [20:0] PWMConfig;
-  logic [PWM_WIDTH+14:0] PWMCount;
-  logic [PWM_WIDTH-1:0] PWMScaled;
-  logic [PWM_WIDTH-1:0] PWMCompare0;
-  logic [PWM_WIDTH-1:0] PWMCompare1;
-  logic [PWM_WIDTH-1:0] PWMCompare2;
-  logic [PWM_WIDTH-1:0] PWMCompare3;
-
+  logic [P.PWM_WIDTH+14:0] PWMCount;
+  logic [P.PWM_WIDTH-1:0] PWMScaled;
+  logic [P.PWM_WIDTH-1:0] PWMCompare0;
+  logic [P.PWM_WIDTH-1:0] PWMCompare1;
+  logic [P.PWM_WIDTH-1:0] PWMCompare2;
+  logic [P.PWM_WIDTH-1:0] PWMCompare3;
 
   // Bus interface signals
   logic [7:0]  Entry;
@@ -80,11 +77,23 @@ module pwm_apb import cvw::*; #(parameter cvw_t P, PWM_WIDTH = 16) (
   logic Carryout;
   logic PWMCountEn;
   logic PWMOneShotEnReset;
-  logic [PWM_WIDTH+14:0] PWMCountPrescaled;
-  logic [PWM_WIDTH+14:0] PWMCountIncrement;
+
+  // Deglitch circuit signals
+  logic PWMHoldIn;
+  logic PWMHoldOut;
+  logic [3:0] PWMDeglitchMux;
+
+  // Combinational signal logic
+  logic [P.PWM_WIDTH+14:0] PWMPrescale;
+  logic [3:0] PWMComparator;
+  logic [3:0] PWMDeglitchMuxSelect;
+  logic PWMCountReset;
+  logic [P.PWM_WIDTH-1:0] PWMCompareXNOR0;
+  logic [P.PWM_WIDTH-1:0] PWMCompareXNOR1;
+  logic [P.PWM_WIDTH-1:0] PWMCompareXNOR2;
+  logic [P.PWM_WIDTH-1:0] PWMCompareXNOR3;
 
   // Register signal logic
-
   assign PWMScale = PWMConfig[3:0];
   assign PWMSticky = PWMConfig[4];
   assign PWMZeroCompare = PWMConfig[5];
@@ -93,41 +102,23 @@ module pwm_apb import cvw::*; #(parameter cvw_t P, PWM_WIDTH = 16) (
   assign PWMEnOneShot = PWMConfig[8];
   assign PWMCompareCenter = PWMConfig[12:9];
   assign PWMCompareGang = PWMConfig[16:13];
-
   assign Carryout = &PWMScaled;
   assign PWMCountEn = PWMEnAlways | PWMEnOneShot;
-  assign PWMCountIncrement = PWMCount + 1;
-  assign PWMCountPrescaled = ((Memwrite & (Entry == PWM_COUNT)) ? Din[PWM_WIDTH+14:0] : PWMCountIncrement) >> PWMScale;
-
-
-  // Combinatorial signal logic
-  logic [3:0] PWMCompareBoolean;
-  logic [3:0] PWMDeglitchMux;
-  logic PWMCountReset;
-  logic [PWM_WIDTH-1:0] PWMCompareXNOR0;
-  logic [PWM_WIDTH-1:0] PWMCompareXNOR1;
-  logic [PWM_WIDTH-1:0] PWMCompareXNOR2;
-  logic [PWM_WIDTH-1:0] PWMCompareXNOR3;
-
-
-
-  assign PWMOneShotEnReset = (PWMCompareBoolean[0] & PWMZeroCompare) | Carryout;
+  assign PWMOneShotEnReset = (PWMComparator[0] & PWMZeroCompare) | Carryout;
   assign PWMCountReset = PWMOneShotEnReset | (~PRESETn);
 
-  // Deglitch circuit signals
-  logic PWMHoldIn;
-  logic PWMHoldOut;
-  logic [3:0] PWMCompareIPIn;
 
+  // Deglitch Circuit logic
   assign PWMHoldIn = (~PWMOneShotEnReset & PWMDeglitch) | PWMSticky;
+  flop #(1) pwmholdreg(PCLK,
+                       PWMHoldIn, PWMHoldOut);
 
-
+  // Bus logic
   assign Entry = {PADDR[7:2],2'b00};  //  32-bit word-aligned accesses
   assign Memwrite = PWRITE & PENABLE & PSEL;  // Only write in access phase
   assign PREADY = 1'b1;
-// Account for subword read/write circuitry
 
-
+  //Account for subword read/write circuitry
   assign Din = PWDATA[31:0];
   if (P.XLEN == 64) assign PRDATA = {Dout,  Dout};
   else              assign PRDATA =  Dout;
@@ -136,10 +127,10 @@ module pwm_apb import cvw::*; #(parameter cvw_t P, PWM_WIDTH = 16) (
   always_ff@(posedge PCLK)
     if (~PRESETn) begin
       PWMConfig[20:0] <= 21'b0;
-      PWMCompare0 <= {PWM_WIDTH{1'b1}};
-      PWMCompare1 <= {PWM_WIDTH{1'b1}};
-      PWMCompare2 <= {PWM_WIDTH{1'b1}};
-      PWMCompare3 <= {PWM_WIDTH{1'b1}};
+      PWMCompare0 <= {P.PWM_WIDTH{1'b1}};
+      PWMCompare1 <= {P.PWM_WIDTH{1'b1}};
+      PWMCompare2 <= {P.PWM_WIDTH{1'b1}};
+      PWMCompare3 <= {P.PWM_WIDTH{1'b1}};
     end else begin // writes
       /* verilator lint_off CASEINCOMPLETE */
       if (Memwrite)
@@ -147,90 +138,65 @@ module pwm_apb import cvw::*; #(parameter cvw_t P, PWM_WIDTH = 16) (
           PWM_CFG:   PWMConfig <= {Din[31:24], Din[19:16], Din[13:12], Din[10:8], Din[3:0]};
           //PWM_COUNT: PWMCount <= Din[30:0];
           //PWM_S:     PWMScaled <= Din[15:0];
-          PWM_CMP0:  PWMCompare0 <= Din[PWM_WIDTH-1:0];
-          PWM_CMP1:  PWMCompare1 <= Din[PWM_WIDTH-1:0];
-          PWM_CMP2:  PWMCompare2 <= Din[PWM_WIDTH-1:0];
-          PWM_CMP3:  PWMCompare3 <= Din[PWM_WIDTH-1:0];
+          PWM_CMP0:  PWMCompare0 <= Din[P.PWM_WIDTH-1:0];
+          PWM_CMP1:  PWMCompare1 <= Din[P.PWM_WIDTH-1:0];
+          PWM_CMP2:  PWMCompare2 <= Din[P.PWM_WIDTH-1:0];
+          PWM_CMP3:  PWMCompare3 <= Din[P.PWM_WIDTH-1:0];
         endcase
       else if (PWMOneShotEnReset) PWMConfig[8] <= 1'b0;
       /* verilator lint_on CASEINCOMPLETE */
-
-
-
       case(Entry) // Flop to sample inputs
         PWM_CFG:   Dout <= {PWMConfig[20:13], 4'b0, PWMConfig[12:9], 2'b0, PWMConfig[8:7], 1'b0, PWMConfig[6:4], 4'b0, PWMConfig[3:0]};
-        PWM_COUNT: Dout <= {{(17-PWM_WIDTH){1'b0}}, PWMCount};
-        PWM_S:     Dout <= {{(32-PWM_WIDTH){1'b0}}, PWMScaled[PWM_WIDTH-1:0]};
-        PWM_CMP0:  Dout <= {{(32-PWM_WIDTH){1'b0}}, PWMCompare0[PWM_WIDTH-1:0]};
-        PWM_CMP1:  Dout <= {{(32-PWM_WIDTH){1'b0}}, PWMCompare1[PWM_WIDTH-1:0]};
-        PWM_CMP2:  Dout <= {{(32-PWM_WIDTH){1'b0}}, PWMCompare2[PWM_WIDTH-1:0]};
-        PWM_CMP3:  Dout <= {{(32-PWM_WIDTH){1'b0}}, PWMCompare3[PWM_WIDTH-1:0]};
+        PWM_COUNT: Dout <= {{(17-P.PWM_WIDTH){1'b0}}, PWMCount};
+        PWM_S:     Dout <= {{(32-P.PWM_WIDTH){1'b0}}, PWMScaled[P.PWM_WIDTH-1:0]};
+        PWM_CMP0:  Dout <= {{(32-P.PWM_WIDTH){1'b0}}, PWMCompare0[P.PWM_WIDTH-1:0]};
+        PWM_CMP1:  Dout <= {{(32-P.PWM_WIDTH){1'b0}}, PWMCompare1[P.PWM_WIDTH-1:0]};
+        PWM_CMP2:  Dout <= {{(32-P.PWM_WIDTH){1'b0}}, PWMCompare2[P.PWM_WIDTH-1:0]};
+        PWM_CMP3:  Dout <= {{(32-P.PWM_WIDTH){1'b0}}, PWMCompare3[P.PWM_WIDTH-1:0]};
         default:   Dout <= 32'b0;
       endcase
     end
 
-
-  // PWMCount and PWMScaled registers
-
+  // PWMCount register and PWMScaled logic
   always_ff @(posedge PCLK)
-    if (PWMCountReset | ~PRESETn) begin
-      PWMCount <= {(PWM_WIDTH+15){1'b0}};
-      PWMScaled <= {PWM_WIDTH{1'b0}};
-    end else if (Memwrite & (Entry == PWM_COUNT)) begin
-      PWMCount <= Din[PWM_WIDTH+14:0];
-      PWMScaled <= PWMCountPrescaled[PWM_WIDTH-1:0];
-    end else if (Memwrite & (Entry == PWM_S))PWMScaled <= Din[PWM_WIDTH-1:0];
-    else if (PWMCountEn) begin
-      PWMCount <= PWMCountIncrement;
-      PWMScaled <= PWMCountPrescaled[PWM_WIDTH-1:0];
-    end
+    if (PWMCountReset | ~PRESETn) PWMCount <= {(P.PWM_WIDTH+15){1'b0}};
+    else if (Memwrite & (Entry == PWM_COUNT)) PWMCount <= Din[P.PWM_WIDTH+14:0];
+    else if (Memwrite & (Entry == PWM_S)) PWMCount <= {{(31-P.PWM_WIDTH){1'b0}}, (Din[P.PWM_WIDTH-1:0] << PWMScale)};
+    else if (PWMCountEn) PWMCount <= PWMCount + 1;
+  assign PWMPrescale = PWMCount >> PWMScale;
+  assign PWMScaled = PWMPrescale[P.PWM_WIDTH-1:0];
 
-  flop #(1) pwmholdreg(PCLK,
-                       PWMHoldIn, PWMHoldOut);
-
-  //pwm comparators
-  assign PWMDeglitchMux[0] = PWMScaled[PWM_WIDTH-1] & PWMCompareCenter[0];
-  //assign PWMDeglitchMux[0] = PWMScaled[PWM_WIDTH-1];
-  assign PWMCompareXNOR0[PWM_WIDTH-1:0] = PWMDeglitchMux[0] ? ~PWMScaled : PWMScaled;
-  assign PWMCompareBoolean[0] = PWMCompareXNOR0[PWM_WIDTH-1:0] >= PWMCompare0;
-  assign PWMCompareIPIn[0] = PWMDeglitchMux[0] ? PWMCompareBoolean[0] : (PWMCompareBoolean[0] | (PWMHoldOut & PWMCompareIP[0]));
-
+  //PWM comparators
+  assign PWMDeglitchMuxSelect[0] = PWMScaled[P.PWM_WIDTH-1] & PWMCompareCenter[0];
+  assign PWMCompareXNOR0[P.PWM_WIDTH-1:0] = PWMDeglitchMuxSelect[0] ? ~PWMScaled : PWMScaled;
+  assign PWMComparator[0] = PWMCompareXNOR0[P.PWM_WIDTH-1:0] >= PWMCompare0;
+  assign PWMDeglitchMux[0] = PWMDeglitchMuxSelect[0] ? PWMComparator[0] : (PWMComparator[0] | (PWMHoldOut & PWMCompareIP[0]));
   flop #(1) pwmcompareipreg0(PCLK,
-                            PWMCompareIPIn[0], PWMCompareIP[0]);
-
+                            PWMDeglitchMux[0], PWMCompareIP[0]);
   assign PWMGPIO[0] = PWMCompareIP[0] & (PWMCompareGang[0] ~& PWMCompareIP[1]);
 
-
-  assign PWMDeglitchMux[1] = PWMScaled[PWM_WIDTH-1] & PWMCompareCenter[1];
-  assign PWMCompareXNOR1[PWM_WIDTH-1:0] = PWMDeglitchMux[1] ? ~PWMScaled : PWMScaled;
-  assign PWMCompareBoolean[1] = PWMCompareXNOR1[PWM_WIDTH-1:0] >= PWMCompare1;
-  assign PWMCompareIPIn[1] = PWMDeglitchMux[1] ? PWMCompareBoolean[1] : (PWMCompareBoolean[1] | (PWMHoldOut & PWMCompareIP[1]));
-
+  assign PWMDeglitchMuxSelect[1] = PWMScaled[P.PWM_WIDTH-1] & PWMCompareCenter[1];
+  assign PWMCompareXNOR1[P.PWM_WIDTH-1:0] = PWMDeglitchMuxSelect[1] ? ~PWMScaled : PWMScaled;
+  assign PWMComparator[1] = PWMCompareXNOR1[P.PWM_WIDTH-1:0] >= PWMCompare1;
+  assign PWMDeglitchMux[1] = PWMDeglitchMuxSelect[1] ? PWMComparator[1] : (PWMComparator[1] | (PWMHoldOut & PWMCompareIP[1]));
   flop #(1) pwmcompareipreg1(PCLK,
-                            PWMCompareIPIn[1], PWMCompareIP[1]);
-
+                            PWMDeglitchMux[1], PWMCompareIP[1]);
   assign PWMGPIO[1] = PWMCompareIP[1] & (PWMCompareGang[1] ~& PWMCompareIP[2]);
 
-
-  assign PWMDeglitchMux[2] = PWMScaled[PWM_WIDTH-1] & PWMCompareCenter[2];
-  assign PWMCompareXNOR2[PWM_WIDTH-1:0] = PWMDeglitchMux[2] ? ~PWMScaled : PWMScaled;
-  assign PWMCompareBoolean[2] = PWMCompareXNOR2[PWM_WIDTH-1:0] >= PWMCompare2;
-  assign PWMCompareIPIn[2] = PWMDeglitchMux[2] ? PWMCompareBoolean[2] : (PWMCompareBoolean[2] | (PWMHoldOut & PWMCompareIP[2]));
-
+  assign PWMDeglitchMuxSelect[2] = PWMScaled[P.PWM_WIDTH-1] & PWMCompareCenter[2];
+  assign PWMCompareXNOR2[P.PWM_WIDTH-1:0] = PWMDeglitchMuxSelect[2] ? ~PWMScaled : PWMScaled;
+  assign PWMComparator[2] = PWMCompareXNOR2[P.PWM_WIDTH-1:0] >= PWMCompare2;
+  assign PWMDeglitchMux[2] = PWMDeglitchMuxSelect[2] ? PWMComparator[2] : (PWMComparator[2] | (PWMHoldOut & PWMCompareIP[2]));
   flop #(1) pwmcompareipreg2(PCLK,
-                            PWMCompareIPIn[2], PWMCompareIP[2]);
-
+                            PWMDeglitchMux[2], PWMCompareIP[2]);
   assign PWMGPIO[2] = PWMCompareIP[2] & (PWMCompareGang[2] ~& PWMCompareIP[3]);
 
-
-  assign PWMDeglitchMux[3] = PWMScaled[PWM_WIDTH-1] & PWMCompareCenter[3];
-  assign PWMCompareXNOR3[PWM_WIDTH-1:0] = PWMDeglitchMux[3] ? ~PWMScaled : PWMScaled;
-  assign PWMCompareBoolean[3] = PWMCompareXNOR3[PWM_WIDTH-1:0] >= PWMCompare3;
-  assign PWMCompareIPIn[3] = PWMDeglitchMux[3] ? PWMCompareBoolean[3] : (PWMCompareBoolean[3] | (PWMHoldOut & PWMCompareIP[3]));
-
+  assign PWMDeglitchMuxSelect[3] = PWMScaled[P.PWM_WIDTH-1] & PWMCompareCenter[3];
+  assign PWMCompareXNOR3[P.PWM_WIDTH-1:0] = PWMDeglitchMuxSelect[3] ? ~PWMScaled : PWMScaled;
+  assign PWMComparator[3] = PWMCompareXNOR3[P.PWM_WIDTH-1:0] >= PWMCompare3;
+  assign PWMDeglitchMux[3] = PWMDeglitchMuxSelect[3] ? PWMComparator[3] : (PWMComparator[3] | (PWMHoldOut & PWMCompareIP[3]));
   flop #(1) pwmcompareipreg3(PCLK,
-                            PWMCompareIPIn[3], PWMCompareIP[3]);
-
+                            PWMDeglitchMux[3], PWMCompareIP[3]);
   assign PWMGPIO[3] = PWMCompareIP[3] & (PWMCompareGang[3] ~& PWMCompareIP[0]);
 
   assign PWMIntr = |(PWMCompareIP);

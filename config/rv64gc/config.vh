@@ -208,6 +208,7 @@ localparam logic SPI_LOOPBACK_TEST  = 1;
 
 // Hardware configuration
 localparam UART_PRESCALE = 32'd1;
+localparam PWM_WIDTH = 32'd16;
 
 // Interrupt configuration
 localparam PLIC_NUM_SRC = 32'd10;

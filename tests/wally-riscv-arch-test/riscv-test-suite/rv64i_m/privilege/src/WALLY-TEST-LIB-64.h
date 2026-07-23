@@ -1256,6 +1256,7 @@ pwm_over: //resets pwm enables and clears interrupt registers
     li t3, 0x00000000
     sw t3, 0(t2) //clear pwm config
     sw t3, 8(t2) //set pwm count to 0
+    sw t6, 0(t4) // clear high_ip
     sd t5, 0(t1) //store num of cycles
     addi t1, t1, 8
     addi a6, a6, 8

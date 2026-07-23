@@ -157,7 +157,8 @@ typedef struct packed {
   logic         SPI_LOOPBACK_TEST;
 
 // Hardware configuration
-  int           UART_PRESCALE ;
+  int           UART_PRESCALE;
+  int           PWM_WIDTH;
 
 // Interrupt configuration
   int           PLIC_NUM_SRC;

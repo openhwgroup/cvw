@@ -1063,7 +1063,7 @@ claim_m_plic_interrupts: // clears one non-pending PLIC interrupt
     lw a4, 4(sp) // load stored SPI priority
     sw a4, 0(t6)
     lw a4, 0(sp) // load stored PWM priority
-    sw t1, 0(a5)
+    sw a4, 0(a5)
     addi sp, sp, 16 // restore stack pointer
     j test_loop
 
@@ -1214,6 +1214,7 @@ pwm_over: //resets pwm enables and clears interrupt registers
     li t3, 0x00000000
     sw t3, 0(t2) //clear pwm config
     sw t3, 8(t2) //set pwm count to 0
+    sw t6, 0(t4) // clear high_ip
     sw t5, 0(t1) //store num of cycles
     addi t1, t1, 4
     addi a6, a6, 4
