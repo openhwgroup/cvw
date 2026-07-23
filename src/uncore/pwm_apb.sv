@@ -136,8 +136,6 @@ module pwm_apb import cvw::*; #(parameter cvw_t P) (
       if (Memwrite)
         case(Entry) // flop to sample inputs
           PWM_CFG:   PWMConfig <= {Din[31:24], Din[19:16], Din[13:12], Din[10:8], Din[3:0]};
-          //PWM_COUNT: PWMCount <= Din[30:0];
-          //PWM_S:     PWMScaled <= Din[15:0];
           PWM_CMP0:  PWMCompare0 <= Din[P.PWM_WIDTH-1:0];
           PWM_CMP1:  PWMCompare1 <= Din[P.PWM_WIDTH-1:0];
           PWM_CMP2:  PWMCompare2 <= Din[P.PWM_WIDTH-1:0];
