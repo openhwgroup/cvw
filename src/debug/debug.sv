@@ -173,25 +173,15 @@ module debug import cvw::*; #(parameter cvw_t P) (
   // Registers
   logic [31:0] DMControl;
   logic [31:0] DMStatus;
-  logic [31:0] DMCSR2;
-  logic [31:0] Data [1:0]; // Abstract Data Registers
   logic [31:0] Data0;
   logic [31:0] Data1;
-  logic [31:0] HartInfo;
-  logic [31:0] HaltSum0;
   logic [31:0] AbstractCS;
   logic [31:0] Command;
-  logic [31:0] AbstractAuto;
 
   logic [31:0] NextDMControl;
   logic [31:0] NextDMStatus;
-  logic [31:0] NextDMCSR2;
-  logic [31:0] NextData [1:0];
-  logic [31:0] NextHartInfo;
-  logic [31:0] NextHaltSum0;
   logic [31:0] NextAbstractCS;
   logic [31:0] NextCommand;
-  logic [31:0] NextAbstractAuto;
 
   // DMControl fields
   logic        HartReset;
@@ -326,8 +316,6 @@ module debug import cvw::*; #(parameter cvw_t P) (
                          DMStatus[7:0]};
         end
 
-        HARTINFO: DMIRSPDATA <= HartInfo;
-        HALTSUM0: DMIRSPDATA <= HaltSum0;
         ABSTRACTCS: DMIRSPDATA <= AbstractCS;
         default: DMIRSPDATA <= 32'b0;
       endcase
@@ -420,27 +408,15 @@ module debug import cvw::*; #(parameter cvw_t P) (
   // AbstractCS
   always_ff @(posedge clk) begin
     if (reset) begin
-      AbstractCS <= P.XLEN == 64 | P.D_SUPPORTED ? 32'h0000_0002 : 32'h000_0001;
+      // Number of data registers
+      AbstractCS <= P.LLEN > 32 ? 32'h0000_0002 : 32'h000_0001;
     end else if (WriteRequest & (DMIADDR == ABSTRACTCS)) begin
       AbstractCS <= {AbstractCS[31:12],
                      DMIDATA[11], // RelaxedPriv
                      DMIDATA[8] == 1'b1 ? 3'b0 : AbstractCS[10:8], // CMDErr -> R/W1C
                      AbstractCS[7:0]}; // Only RelaxedPriv and CMDErr are writeable
     end else if (WriteRequest & (DMIADDR == COMMAND)) begin
-      // ISSUE: CMDErr is now based on incoming request data. If it
-      // changes to something else, CMDErr changes and doesn't get
-      // clocked into AbstractCS. AbstractCS must change on when
-      // Commands are incoming, not only on reads.
       AbstractCS <= {AbstractCS[31:11], AbstractCS[10:8] == 3'b0 ? CMDErr : AbstractCS[10:8], AbstractCS[7:0]};
-    end
-  end
-
-  // HartInfo - UNIMPLEMENTED - Returns all zeros
-  always_ff @(posedge clk) begin
-    if (reset) begin
-      HartInfo <= '0;
-    end else if (WriteRequest & (DMIADDR == HARTINFO)) begin
-      HartInfo <= '0;
     end
   end
 
@@ -510,7 +486,10 @@ module debug import cvw::*; #(parameter cvw_t P) (
   assign DebugResumeReq = (CurrResumeReq == RESUMEREQUEST);
   assign DebugHaltReq = (CurrHaltReq == HALTREQUEST) & DMActive;
 
+  // Not implemented, but left here in the case more than one hart is
+  // implemented as a reminder.
   assign HartReset = 1'b0;
+
   assign DebugHaveResetAck = DMControl[28];
   assign DebugNDMReset = DMControl[1];
   assign DMActive = DMControl[0];
@@ -522,10 +501,19 @@ module debug import cvw::*; #(parameter cvw_t P) (
   assign SetResetHaltReq = DMControl[3];
   assign ClrResetHaltReq = DMControl[2];
 
+  // With Multi-hart, this needs to become a vector
+  always_ff @(posedge clk) begin
+    if (reset | ClrResetHaltReq) begin
+      DebugResetHaltReq <= 1'b0;
+    end else if (SetResetHaltReq) begin
+      DebugResetHaltReq <= 1'b1;
+    end
+  end
+
   // DMStatus signals
   assign NDMResetPending = DebugNDMReset;
 
-  // Single hart for now. When more harts are added
+  // Single hart for now. When more harts are added, expand to vectors.
   assign AllRunning = ~DebugMode;
   assign AnyRunning = AllRunning;
   assign AllHalted  = DebugMode;
@@ -609,14 +597,10 @@ module debug import cvw::*; #(parameter cvw_t P) (
   assign DebugRegWrite = Command[16] & StartCommand & DebugMode;
 
   // Covering both 32 bit and 64 bit architectures.
-  if (P.XLEN == 64) begin
+  if (P.LLEN > 32) begin
     assign DebugRegWDATA = AARSize == 3'd2 ? {32'h0, Data0} : {Data1, Data0};
   end else begin
-    if (P.D_SUPPORTED) begin
-      assign DebugRegWDATA = {32'h0, Data0};
-    end else begin
-      assign DebugRegWDATA = Data0;
-    end
+    assign DebugRegWDATA = Data0;
   end
 
   always_ff @(posedge clk) begin

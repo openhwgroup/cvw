@@ -305,8 +305,8 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
       PrivModeSet <= 1'b0;
     end else if (state_n != HALTED) begin
       PrivModeSet <= 1'b0;
-    end else if ((state == HALTED) && CSRDWriteM
-                 && CSRWriteValM[1:0] != prv && (CSRAdrM == DCSR)) begin
+    end else if ((state == HALTED) & CSRDWriteM
+                 & (CSRWriteValM[1:0] != prv) & (CSRAdrM == DCSR)) begin
       PrivModeSet <= 1'b1;
     end
   end
@@ -330,7 +330,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
     if (reset) begin
       DebugResume <= 0;
     end else begin
-      DebugResume <= (state == HALTED) && (state_n == RUNNING) & DPCset;
+      DebugResume <= (state == HALTED) & (state_n == RUNNING) & DPCset;
     end
   end
 
@@ -344,7 +344,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
          DPCset <= 1'b0;
       end else if (state_n != HALTED) begin
          DPCset <= 1'b0;
-      end else if ((state == HALTED) && CSRDWriteM && (CSRAdrM == DPC)) begin
+      end else if ((state == HALTED) & CSRDWriteM & (CSRAdrM == DPC)) begin
          DPCset <= 1'b1;
       end
    end

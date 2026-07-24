@@ -168,6 +168,8 @@ module dtm import cvw::*; #(parameter cvw_t P) (
   end
 
   // DMI
+  // Based on the Debug Module Interface Signals found in Appendix
+  // A.3 of the v1.0 Debug Specification
   always_ff @(posedge clk) begin
     if (reset | ~resetn | DTMHardReset) begin
       DMINextReg[1:0] <= NOP;

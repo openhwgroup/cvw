@@ -401,8 +401,10 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     if (P.F_SUPPORTED) begin
       if (P.FLEN < P.LLEN) begin
         mux3 #(P.LLEN) debugregmux(DebugR1D, CSRReadValM, {{(P.LLEN-P.FLEN){1'b0}}, DebugFRD1D}, {DebugFPREnable, DebugCSREnable}, DebugRegRDATA);
+      end else if (P.FLEN > P.LLEN) begin
+        mux3 #(P.LLEN) debugregmux({{(P.LLEN - P.XLEN){1'b0}}, DebugR1D}, {{(P.LLEN - P.XLEN){1'b0}}, CSRReadValM}, DebugFRD1D, {DebugFPREnable, DebugCSREnable}, DebugRegRDATA);
       end else begin
-        mux3 #(P.LLEN) debugregmux({{(P.LLEN - P.XLEN){1'b0}}, DebugR1D}, {{(P.LLEN - P.XLEN){1'b0}},CSRReadValM}, DebugFRD1D, {DebugFPREnable, DebugCSREnable}, DebugRegRDATA);
+        mux3 #(P.LLEN) debugregmux(DebugR1D, CSRReadValM, DebugFRD1D, {DebugFPREnable, DebugCSREnable}, DebugRegRDATA);
       end
     end else begin
       mux2 #(P.XLEN) debugregmux(DebugR1D, CSRReadValM, DebugCSREnable, DebugRegRDATA);
