@@ -86,6 +86,21 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   logic [P.XLEN-1:0]       IPTEHPTWF;
   logic [P.XLEN-1:0]       DPTEHPTWM;
 
+  // Debug Specification signals
+  logic [6:0]              DMIADDR;
+  logic [31:0]             DMIDATA;
+  logic [1:0]              DMIOP;
+  logic                    DMIREADY;
+  logic                    DMIVALID;
+
+  logic [31:0]             DMControl;
+  logic [31:0]             DMStatus;
+  logic [31:0]             AbstractCS;
+  logic [31:0]             Command;
+  logic [31:0]             Data0;
+  logic [31:0]             Data1;
+
+
   assign clk = testbench.dut.clk;
   //  assign InstrValidF = testbench.dut.core.ieu.InstrValidF;  // not needed yet
   assign InstrValidD    = testbench.dut.core.ieu.c.InstrValidD;
@@ -409,6 +424,50 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
                                ~FlushM ? PCE :
                                ~FlushE ? PCD :
                                ~FlushD ? PCF : PCNextF;
+
+
+  // Debug mode
+  if (P.DEBUG_SUPPORTED) begin
+    assign DMIADDR  = testbench.dut.debug.debug.DMIADDR;
+    assign DMIDATA  = testbench.dut.debug.debug.DMIDATA;
+    assign DMIOP    = testbench.dut.debug.debug.DMIOP;
+    assign DMIREADY = testbench.dut.debug.debug.DMIREADY;
+    assign DMIVALID = testbench.dut.debug.debug.DMIVALID;
+    assign DMControl = testbench.dut.debug.debug.DMControl;
+    assign DMStatus = testbench.dut.debug.debug.DMStatus;
+    assign Command  = testbench.dut.debug.debug.Command;
+    assign AbstractCS = testbench.dut.debug.debug.AbstractCS;
+  end else begin
+    assign DMIADDR = '0;
+    assign DMIDATA = '0;
+    assign DMIOP = '0;
+    assign DMIREADY = 0;
+    assign DMIVALID = 0;
+    assign DMControl = '0;
+    assign DMStatus = '0;
+    assign Command = '0;
+    assign AbstractCS = '0;
+  end
+
+  // Debug stuff
+  assign rvvi.dm.clk = clk;
+  assign rvvi.dm.rd = (DMIOP == 2'b01) & DMIVALID;
+  assign rvvi.dm.wr = (DMIOP == 2'b10) & DMIVALID;
+  assign rvvi.dm.address = DMIADDR;
+  assign rvvi.dm.data = DMIDATA;
+
+  always_comb begin
+    rvvi.dm.store = '{
+                    7'h04: Data0,
+                    7'h05: Data1,
+                    7'h10: DMControl,
+                    7'h11: DMStatus,
+                    7'h17: Command,
+                    7'h16: AbstractCS,
+                    default: '0
+                    };
+  end
+
 
   for(genvar index = 0; index < NUM_REGS; index += 1) begin
     assign rvvi.x_wdata[0][0][index] = rf[index];
