@@ -171,7 +171,7 @@ module pwm_apb import cvw::*; #(parameter cvw_t P) (
   assign PWMDeglitchMux[0] = PWMDeglitchMuxSelect[0] ? PWMComparator[0] : (PWMComparator[0] | (PWMHoldOut & PWMCompareIP[0]));
   flop #(1) pwmcompareipreg0(PCLK,
                             PWMDeglitchMux[0], PWMCompareIP[0]);
-  assign PWMGPIO[0] = PWMCompareIP[0] & (PWMCompareGang[0] ~& PWMCompareIP[1]);
+  assign PWMGPIO[0] = PWMCompareIP[0] & ~(PWMCompareGang[0] & PWMCompareIP[1]);
 
   assign PWMDeglitchMuxSelect[1] = PWMScaled[P.PWM_WIDTH-1] & PWMCompareCenter[1];
   assign PWMCompareXNOR1[P.PWM_WIDTH-1:0] = PWMDeglitchMuxSelect[1] ? ~PWMScaled : PWMScaled;
@@ -179,7 +179,7 @@ module pwm_apb import cvw::*; #(parameter cvw_t P) (
   assign PWMDeglitchMux[1] = PWMDeglitchMuxSelect[1] ? PWMComparator[1] : (PWMComparator[1] | (PWMHoldOut & PWMCompareIP[1]));
   flop #(1) pwmcompareipreg1(PCLK,
                             PWMDeglitchMux[1], PWMCompareIP[1]);
-  assign PWMGPIO[1] = PWMCompareIP[1] & (PWMCompareGang[1] ~& PWMCompareIP[2]);
+  assign PWMGPIO[1] = PWMCompareIP[1] & ~(PWMCompareGang[1] & PWMCompareIP[2]);
 
   assign PWMDeglitchMuxSelect[2] = PWMScaled[P.PWM_WIDTH-1] & PWMCompareCenter[2];
   assign PWMCompareXNOR2[P.PWM_WIDTH-1:0] = PWMDeglitchMuxSelect[2] ? ~PWMScaled : PWMScaled;
@@ -187,7 +187,7 @@ module pwm_apb import cvw::*; #(parameter cvw_t P) (
   assign PWMDeglitchMux[2] = PWMDeglitchMuxSelect[2] ? PWMComparator[2] : (PWMComparator[2] | (PWMHoldOut & PWMCompareIP[2]));
   flop #(1) pwmcompareipreg2(PCLK,
                             PWMDeglitchMux[2], PWMCompareIP[2]);
-  assign PWMGPIO[2] = PWMCompareIP[2] & (PWMCompareGang[2] ~& PWMCompareIP[3]);
+  assign PWMGPIO[2] = PWMCompareIP[2] & ~(PWMCompareGang[2] & PWMCompareIP[3]);
 
   assign PWMDeglitchMuxSelect[3] = PWMScaled[P.PWM_WIDTH-1] & PWMCompareCenter[3];
   assign PWMCompareXNOR3[P.PWM_WIDTH-1:0] = PWMDeglitchMuxSelect[3] ? ~PWMScaled : PWMScaled;
@@ -195,7 +195,7 @@ module pwm_apb import cvw::*; #(parameter cvw_t P) (
   assign PWMDeglitchMux[3] = PWMDeglitchMuxSelect[3] ? PWMComparator[3] : (PWMComparator[3] | (PWMHoldOut & PWMCompareIP[3]));
   flop #(1) pwmcompareipreg3(PCLK,
                             PWMDeglitchMux[3], PWMCompareIP[3]);
-  assign PWMGPIO[3] = PWMCompareIP[3] & (PWMCompareGang[3] ~& PWMCompareIP[0]);
+  assign PWMGPIO[3] = PWMCompareIP[3] & ~(PWMCompareGang[3] & PWMCompareIP[0]);
 
   assign PWMIntr = |(PWMCompareIP);
 
