@@ -117,7 +117,7 @@ $(BUILD)/%.elf.objdump: $(BUILD)/%.elf
 $(BUILD)/%.elf: rv64/%.S
 	$(CC) $(ASFLAGS) -o $@ $<
 
-$(TVBUILDDIR)/%.tv:
+$(TVBUILDDIR)/%.tv: $(BUILD)/%.elf.objdump
 	./debugtestgen.py -s $(BUILD)/$(basename $(notdir $@)).elf -t $(TVDIR)/$(basename $(notdir $@)).tcl -i 64
 	grep "41b" $(LOGSDIR)/$(basename $(notdir $@)).log | sed 's/.*41b \([^;]*\).*/\1/' > $@
 	echo 'w 40000001 @10 -> + 00000000 @00' >> $@
@@ -131,7 +131,7 @@ $(BUILD32)/%.elf.objdump: $(BUILD32)/%.elf
 $(BUILD32)/%.elf: rv32/%.S
 	$(CC) $(ASFLAGS32) -o $@ $<
 
-$(TVBUILDDIR32)/%.tv:
+$(TVBUILDDIR32)/%.tv: $(BUILD32)/%.elf.objdump
 	./debugtestgen.py -s $(BUILD32)/$(basename $(notdir $@)).elf -t $(TVDIR)/$(basename $(notdir $@)).tcl -i 32
 	grep "41b" $(LOGSDIR32)/$(basename $(notdir $@)).log | sed 's/.*41b \([^;]*\).*/\1/' > $@
 	echo 'w 40000001 @10 -> + 00000000 @00' >> $@

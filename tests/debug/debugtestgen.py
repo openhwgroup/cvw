@@ -9,6 +9,7 @@
 
 import argparse
 import os
+import socket
 import subprocess
 import time
 
@@ -30,15 +31,45 @@ SPIKEARGS = [
     "+signature-granularity=4"
 ]
 
+# --------------------------------------------------------------------
+# Port control
+# --------------------------------------------------------------------
+def find_free_port(host = "127.0.0.1"):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        s.bind((host, 0))
+        return s.getsockname()[1]
 
+def is_port_in_use(port, host = "127.0.0.1"):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            s.bind((host, port))
+            return False          # we succeeded → nothing is listening
+        except OSError:
+            return True           # address in use → server is up
+
+def wait_for_port(port, host = "127.0.0.1",
+                  timeout = 10.0,
+                  process = None):
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if process is not None and process.poll() is not None:
+            raise RuntimeError(
+                f"Server process exited early (return code {process.returncode})"
+            )
+        if is_port_in_use(port, host):
+            return
+        time.sleep(0.05)
+    raise TimeoutError(f"Nothing listening on {host}:{port} after {timeout}s")
+
+# --------------------------------------------------------------------
+# Argument parsing
+# --------------------------------------------------------------------
 def non_empty_string(value):
-    if not isinstance(value, str):
-        raise argparse.ArgumentTypeError(
-            f"Argument must be a string, got {type(value).__name__}")
     if len(value.strip()) == 0:
         raise argparse.ArgumentTypeError("Argument must be a non-empty string")
     return value
-
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -52,26 +83,32 @@ def parse_args():
     )
     return parser.parse_args()
 
-
-def start_spike(test, isa):
+# --------------------------------------------------------------------
+# Processes
+# --------------------------------------------------------------------
+def start_spike(test, isa, port = "9824"):
+    print(f"Launching Spike with port: {port}")
     spikeargs = SPIKEARGS[:]
 
     if (isa == "32"):
         spikeargs[1] = f"--isa={ISA32}"
         #spikeargs[7] = f"--dm-datacount=1" # default is 2 in Spike, despite 32 bit or 64 bit architectures
 
+    if (port):
+        spikeargs[2] = f"--rbb-port={port}"
     spikeargs = spikeargs + \
         [f"+signature={os.path.splitext(test)[0]}.signature.output", test]
     print(" ".join(spikeargs))
     return subprocess.Popen(spikeargs)
 
-
-def start_openocd(tclscript, isa, elf):
+def start_openocd(tclscript, isa, elf, port = "9824"):
+    print(f"Launching OpenOCD with port: {port}")
     test_name = os.path.splitext(os.path.basename(elf))[0]
     build_dir = "build32" if isa == "32" else "build"
 
     openocd_args = [
         "openocd",
+        "-c", f"set PORT {port}",
         "-f", "openocd.cfg",
         "-c", f"set ISA32 {1 if isa == '32' else 0}",
         "-c", f"set BUILD_DIR {build_dir}",
@@ -81,14 +118,23 @@ def start_openocd(tclscript, isa, elf):
     print(" ".join(openocd_args))
     return subprocess.Popen(openocd_args)
 
+# --------------------------------------------------------------------
 
 def main(args):
-    start_spike(args.test, args.isa)
-    time.sleep(1)
-    openocd_proc = start_openocd(args.tcl, args.isa, args.test)
+    port = find_free_port()
+
+    spikeinst = start_spike(args.test, args.isa, port)
+
+    try:
+        wait_for_port(port, process=spikeinst)
+    except Exception:
+        spikeinst.kill()
+        spikeinst.wait()
+        raise
+
+    openocd_proc = start_openocd(args.tcl, args.isa, args.test, port)
     openocd_proc.wait()
     print(os.path.splitext(args.test))
-
 
 if __name__ == "__main__":
     args = parse_args()
