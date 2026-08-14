@@ -340,6 +340,13 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
       string items[$];
       int    file = $fopen(filename, "r");
 
+      $display("debugger filename: %s", filename);
+
+      if (file == 0) begin
+        $display("Debugger file is not a valid file descriptor: %s.", filename);
+        $fatal;
+      end
+
       testvectors = {};
       expected_outputs = {};
       while (!$feof(file)) begin
@@ -353,6 +360,8 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
           this.expected_outputs.push_back({items[6].substr(1, 2).atohex(), items[5].atohex(), op_decode(items[4], 1)});
         end
       end
+
+      $fclose(file);
 
       // foreach (this.testvectors[i]) begin
       //    $display("testvector[%0d]:\n  addr: %2h, data: %8h, op: %2b", i, this.testvectors[i][40:34], this.testvectors[i][33:2], this.testvectors[i][1:0]);
