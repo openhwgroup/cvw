@@ -164,7 +164,7 @@ module testbench;
 
     // For single elf testing with Debug testvector files
     if (!$value$plusargs("DEBUGFILE=%s", debugfile)) begin
-      debugfile = "";
+      debugfile = "none";
     end else begin
       $display("Debug file: %s", debugfile);
     end
@@ -464,6 +464,9 @@ module testbench;
         memfilename = {ElfFile, ".memfile"};
         ProgramAddrMapFile = {ElfFile, ".objdump.addr"};
         ProgramLabelMapFile = {ElfFile, ".objdump.lab"};
+        if (debugfile != "none") begin
+          debugger_filename = {"../../", debugfile};
+        end
       end else if (debugTest) begin
         elffilename = {pathname, tests[test], ".elf"};
         memfilename = {pathname, tests[test], ".elf.memfile"};
@@ -873,6 +876,7 @@ end
     IDV_MAX_ERRORS = 3;
     elffilename = ElfFile;
     debugger_filename = {"../../", debugfile};
+    $display("%s", debugger_filename);
 
     // Initialize REF (do this before initializing the DUT)
     if (!rvviVersionCheck(RVVI_API_VERSION)) begin
