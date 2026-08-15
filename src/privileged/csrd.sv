@@ -225,6 +225,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   assign DebugPrivilegeMode = prv;
 
   // CSR Reads
+  // verilator lint_off WIDTH
   always_comb begin
     if (DebugMode == 0) begin // Debug Spec p.
       IllegalCSRDAccessM = 1'b1;
@@ -233,11 +234,19 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
       IllegalCSRDAccessM = 1'b0;
       case (CSRAdrM)
         DCSR: begin
-           CSRDReadValM = {debugver, 1'b0, extcause, 4'd0, cetrig, pelp, ebreakvs, ebreakvu,
+          if (P.XLEN == 32'd64) begin
+            CSRDReadValM = {32'd0, debugver, 1'b0, extcause, 4'd0, cetrig, pelp, ebreakvs, ebreakvu,
                            ebreakm, 1'b0, ebreaks, ebreaku, stepie, stopcount, stoptime,
                            cause, v, mprven, nmip, step, prv};
+          end else begin
+            CSRDReadValM = {debugver, 1'b0, extcause, 4'd0, cetrig, pelp, ebreakvs, ebreakvu,
+                           ebreakm, 1'b0, ebreaks, ebreaku, stepie, stopcount, stoptime,
+                           cause, v, mprven, nmip, step, prv};
+          end
         end
+
         DPC: CSRDReadValM = DPC_REGW;
+
         default:  begin
           CSRDReadValM = '0;
           IllegalCSRDAccessM = 1'b1;
@@ -245,6 +254,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
       endcase
     end
   end
+  // verilator lint_on WIDTH
 
   ////////////////////////////////////////////////////////////////////
   // Halt FSM

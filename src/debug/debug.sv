@@ -625,6 +625,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
   // COMMAND register (Section 3.7.1.1).  Supports GPR, FPR, and CSR
   // accesses through the abstract command interface.
   // ------------------------------------------------------------------
+  // verilator lint_off WIDTH
   always_comb begin
     ValidCommand         = 0;
     NextDebugGPREnable   = 0;
@@ -764,6 +765,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
       endcase
     end
   end
+  // verilator lint_on WIDTH
 
   assign NextAARSize = DMIDATA[22:20];
 

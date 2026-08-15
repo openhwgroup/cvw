@@ -182,7 +182,7 @@ module dtm import cvw::*; #(parameter cvw_t P) (
           if (UpdateDMI) begin
             DMIADDR <= dmi[P.ABITS+34-1:34];
             DMIDATA <= dmi[33:2];
-            DMINextReg <= dmi[33:2];
+            DMINextReg[33:2] <= dmi[33:2];
             if ((dmi[1:0] == RD) | (dmi[1:0] == WR)) begin
               DMIOP <= dmi[1:0];
               DMIVALID <= 1'b1;

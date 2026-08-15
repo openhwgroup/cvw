@@ -96,6 +96,16 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
   // Classes
   // ----------------------------------------------------------------
 
+  // This task must be outside the classes for Verilator. Verilator
+  // can't resolve the port scope from inside class tasks.
+  task automatic jtag_cycle(input logic tms_i, input logic tdi_i, output logic tdo_o);
+    #(tcktime) tck = ~tck;          // go low
+    tms = tms_i;
+    tdi = tdi_i;
+    tdo_o = tdo;
+    #(tcktime) tck = ~tck;          // go high
+  endtask
+
   // JTAG_DR Class that generalizes the task of reading and writing
   // to the Test Data Regisers.
   class JTAG_DR #(parameter WIDTH = 32);
@@ -103,36 +113,51 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
 
     task read();
       logic [5 + WIDTH + 2 - 1:0] tms_seq = {5'b01000, {(WIDTH-1){1'b0}}, 1'b1, 2'b10};
+      logic sampled_tdo;
       for (int i = 5 + WIDTH + 2 - 1; i >= 0; i--) begin
-        #(tcktime) tck = ~tck;
-        tdi = 0;
-        tms = tms_seq[i];
+        jtag_cycle(tms_seq[i], 1'b0, sampled_tdo);
         if ((i < WIDTH + 2) && (i >= 2)) begin
-          this.result[WIDTH - i + 2-1] = tdo;
+          this.result[WIDTH - i + 2 - 1] = sampled_tdo;
         end
-        #(tcktime) tck = ~tck;
       end
-    endtask // read
+    endtask
 
     task write(input logic [WIDTH-1:0] val);
       logic [5 + WIDTH + 2 - 1:0] tms_seq = {5'b01000, {(WIDTH-1){1'b0}}, 1'b1, 2'b10};
+      logic sampled_tdo;
       for (int i = 5 + WIDTH + 2 - 1; i >= 0; i--) begin
-        #(tcktime) tck = ~tck;
-        tms = tms_seq[i];
-        if ((i < WIDTH + 2) && (i >= 2)) begin
-          tdi = val[WIDTH - i + 2-1];
-        end
-        this.result[WIDTH - i + 2-1] = tdo;
-        #(tcktime) tck = ~tck;
+        logic tdi_bit = ((i < WIDTH + 2) && (i >= 2)) ? val[WIDTH - i + 2 - 1] : 1'b0;
+        jtag_cycle(tms_seq[i], tdi_bit, sampled_tdo);
+        this.result[WIDTH - i + 2 - 1] = sampled_tdo;
       end
     endtask
   endclass
 
   // Debug Module Interface Abstraction.
-  // TODO: Can probably be further abstracted with a Debugger class
-  class DMI extends JTAG_DR #(41);
-    //logic [40:0] result;
-    // DMControl = 0x10
+  class DMI #(parameter WIDTH = 41);
+    logic [WIDTH-1:0] result;
+
+    task read();
+      logic [5 + WIDTH + 2 - 1:0] tms_seq = {5'b01000, {(WIDTH-1){1'b0}}, 1'b1, 2'b10};
+      logic sampled_tdo;
+      for (int i = 5 + WIDTH + 2 - 1; i >= 0; i--) begin
+        jtag_cycle(tms_seq[i], 1'b0, sampled_tdo);
+        if ((i < WIDTH + 2) && (i >= 2)) begin
+          this.result[WIDTH - i + 2 - 1] = sampled_tdo;
+        end
+      end
+    endtask
+
+    task write(input logic [WIDTH-1:0] val);
+      logic [5 + WIDTH + 2 - 1:0] tms_seq = {5'b01000, {(WIDTH-1){1'b0}}, 1'b1, 2'b10};
+      logic sampled_tdo;
+      for (int i = 5 + WIDTH + 2 - 1; i >= 0; i--) begin
+        logic tdi_bit = ((i < WIDTH + 2) && (i >= 2)) ? val[WIDTH - i + 2 - 1] : 1'b0;
+        jtag_cycle(tms_seq[i], tdi_bit, sampled_tdo);
+        this.result[WIDTH - i + 2 - 1] = sampled_tdo;
+      end
+    endtask
+
     task read_dmcontrol();
       this.write({7'h10, 32'h0000_0000, 2'b01});
       this.write({7'h10, 32'h0000_0000, 2'b00});
@@ -209,7 +234,7 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
     JTAG_DR #(32) idcode;
     JTAG_DR #(32) dtmcs;
     JTAG_DR #(32) bypass;
-    DMI dmireg;
+    DMI #(41) dmireg;
 
     // state enum
     typedef enum {IDLE, DMREG_READ, DMREG_WRITE, ABSTRACT_READ, ABSTRACT_WRITE, DATA0_READ, DATA1_READ} debugger_state;
@@ -278,14 +303,14 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
     // Halt the processor, and confirm halted
     task halt();
       this.dmireg.read_dmcontrol();
-      this.dmireg.write_dmcontrol(32'h8000_0000 | this.dmireg.result);
+      this.dmireg.write_dmcontrol(32'h8000_0000 | this.dmireg.result[33:2]);
       this.dmireg.read_dmstatus();
 
       assert(|(this.dmireg.result[33:2] & 32'h0000_0300)) $display("Hart Halted. DMStatus = 0x%8h, CORRECT", this.dmireg.result[33:2]);
       else $display("Hart not halted. DMStatus = 0x%8h, FAILED", this.dmireg.result[33:2]);
 
       this.dmireg.read_dmcontrol();
-      this.dmireg.write_dmcontrol(32'h7fff_ffff & this.dmireg.result);
+      this.dmireg.write_dmcontrol(32'h7fff_ffff & this.dmireg.result[33:2]);
       this.dmireg.read_dmcontrol();
 
       assert(|(this.dmireg.result[33:2] & 32'h8000_0000) == 0) $display("Haltreq de-asserted. DMControl = 0x%8h, CORRECT", this.dmireg.result[33:2]);
@@ -295,14 +320,14 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
     // Resume the processor, and confirm resume
     task resume();
       this.dmireg.read_dmcontrol();
-      this.dmireg.write_dmcontrol(32'h4000_0000 | this.dmireg.result);
+      this.dmireg.write_dmcontrol(32'h4000_0000 | this.dmireg.result[33:2]);
 
       this.dmireg.read_dmstatus();
       assert(|(this.dmireg.result[33:2] & 32'h0000_0c00)) $display("Hart resumed! DMStatus = 0x%8h, CORRECT", this.dmireg.result[33:2]);
       else $display("Hart not resumed. DMStatus = 0x%8h, FAILED", this.dmireg.result[33:2]);
 
       this.dmireg.read_dmcontrol();
-      this.dmireg.write_dmcontrol(32'hbfff_ffff & this.dmireg.result);
+      this.dmireg.write_dmcontrol(32'hbfff_ffff & this.dmireg.result[33:2]);
       this.dmireg.read_dmcontrol();
 
       assert(|(this.dmireg.result[33:2] & 32'h4000_0000) == 0) $display("Resumereq de-asserted. DMControl = 0x%8h, CORRECT", this.dmireg.result[33:2]);
@@ -340,8 +365,6 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
       string items[$];
       int    file = $fopen(filename, "r");
 
-      $display("debugger filename: %s", filename);
-
       if (file == 0) begin
         $display("Debugger file is not a valid file descriptor: %s.", filename);
         $fatal;
@@ -350,14 +373,30 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
       testvectors = {};
       expected_outputs = {};
       while (!$feof(file)) begin
-        if ($fgets(line, file)) begin
+        if ($fgets(line, file) != 0) begin
           // Allow comments and whitespace
           if (line[0] == "#" | line[0] == " " | line[0] == "\n") begin
             continue;
           end
-          items = split(line, " ");
-          this.testvectors.push_back({items[2].substr(1, 2).atohex(), items[1].atohex(), op_decode(items[0], 0)});
-          this.expected_outputs.push_back({items[6].substr(1, 2).atohex(), items[5].atohex(), op_decode(items[4], 1)});
+
+          // Split needs to be a function with side effects apparently
+          // because the old way of returning a Queue was not
+          // compatible with Verilator.
+          split(line, " ", items);
+
+          // These values must be converted to the write bit widths
+          // for Verilator.
+          this.testvectors.push_back(
+            {7'(items[2].substr(1, 2).atohex()),
+            32'(items[1].atohex()),
+            op_decode(items[0], 0)}
+          );
+
+          this.expected_outputs.push_back(
+            {7'(items[6].substr(1, 2).atohex()),
+            32'(items[5].atohex()),
+            op_decode(items[4], 1)}
+          );
         end
       end
 
@@ -368,7 +407,7 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
       // end
     endfunction
 
-    function changeState(logic [40:0] testvector);
+    function void changeState(logic [40:0] testvector);
       logic [6:0]  addr;
       logic [31:0] data;
       logic [1:0]  op;
@@ -565,12 +604,13 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
         end
 
         this.dmireg.write(testvectors[i]);
+
+        // Uncomment the following lines in order to see every
+        // testvector in the log output.
+
         // $display("\n");
-        // $display("%2h", last_addr);
-        // $display("%2h", last_abstract_reg);
         // $display("\033[1mtestvector\033[0m[%0d]: \033[1m addr:\033[0m %2h, data: %8h, op: %2b", i, this.testvectors[i][40:34], this.testvectors[i][33:2], this.testvectors[i][1:0]);
 
-        // $display("state = %s", state.name());
         if (state == DATA0_READ | state == DATA1_READ | state == DMREG_READ | state == ABSTRACT_READ) begin
           exception = this.knownExceptions(this.expected_outputs[i], this.dmireg.result);
         end
@@ -580,11 +620,17 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
 
         // Assert that the output should equal what Spike outputs.
         assert(this.dmireg.result == expected_outputs[i] | exception | i == 0) begin
+          string green   = "\033[1;32m"; // Green text
+          string normal  = "\033[0m";    // Reset to default
           exception = 0;
+
+          // Uncomment the following lines to see all matching expected outputs.
           // $display("%sMATCHES%s", green, normal);
           // $display("  Expected[%0d] = \033[1m addr:\033[0m %2h, data: %8h, op: %2b", i, this.expected_outputs[i][40:34], this.expected_outputs[i][33:2], this.expected_outputs[i][1:0]);
           // $display("  Actual[%0d] =  addr: %2h, data: %8h, op: %2b", i, this.dmireg.result[40:34], this.dmireg.result[33:2], this.dmireg.result[1:0]);
         end else begin
+          string red     = "\033[1;31m"; // Red text
+          string normal  = "\033[0m";    // Reset to default
           $display("%sFAILED:%s Wally does not match Spike.", red, normal);
           // Report both the expected and actual results
           $display("  Expected[%0d] = \033[1m addr:\033[0m %2h, data: %8h, op: %2b", i, this.expected_outputs[i][40:34], this.expected_outputs[i][33:2], this.expected_outputs[i][1:0]);
@@ -594,7 +640,7 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
       end
     endtask
 
-    function getEndVector();
+    function void getEndVector();
       logic [6:0] addr;
       logic [31:0] data;
       int          endVector;
@@ -604,12 +650,12 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
         data = testvectors[i][33:2];
         if (data[30] & addr == 7'h10) begin
           endIndex = i;
-          return 0;
+          return;
         end
       end
     endfunction
 
-    function reportErrors();
+    function void reportErrors();
       if (error_locations.size() > 0) begin
         $display("errors: %d", error_locations.size());
         $display("Number of errors: %d. The following testvector indices had errors.", error_locations.size());
@@ -650,13 +696,13 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
   end
 endmodule
 
-typedef string stringarr[];
-// No native split function in System Verilog. Coming up with a way
-// of doing this natively for better testvector parsing.
-function automatic stringarr split(string str, string delimiter);
-  string result[$];
-  int    strlen = str.len();
+// typedef string stringarr[];
+// No native split function in System Verilog. This function splits the lines
+function automatic void split(string str, string delimiter, ref string result[$]);
   string temp = "";
+  int strlen = str.len();
+  result = '{};
+
   for (int i = 0; i <= strlen; i++) begin
     if (str[i] == delimiter[0] || (i == strlen && temp.len() != 0) || str[i] == "\n") begin
       result.push_back(temp);
@@ -665,7 +711,9 @@ function automatic stringarr split(string str, string delimiter);
       temp = {temp, str[i]};
     end
   end
-  return result;
+
+  if (temp.len() != 0)
+    result.push_back(temp);
 endfunction
 
 function automatic logic isAbstractCommand(input logic [40:0] testvector);
@@ -696,8 +744,4 @@ function automatic logic [1:0] op_decode(string op_str, logic response);
     end
   end
   return 2'b00;
-endfunction
-
-function printArr();
-
 endfunction
