@@ -83,6 +83,9 @@ elif [[ "$ID" == ubuntu || "$ID_LIKE" == *ubuntu* ]]; then
             "is $PRETTY_NAME. The regular Ubuntu install will be attempted, but there may be issues."
         # Ubuntu derivates may use different version numbers. Attempt to derive version from Ubuntu codename
         case "$UBUNTU_CODENAME" in
+            resolute)
+                export UBUNTU_VERSION=26
+                ;;
             noble)
                 export UBUNTU_VERSION=24
                 ;;
@@ -103,12 +106,12 @@ elif [[ "$ID" == ubuntu || "$ID_LIKE" == *ubuntu* ]]; then
         UBUNTU_MINOR="${VERSION_ID#*.}"
     fi
     if (( UBUNTU_VERSION < 20 )); then
-        printf "${FAIL_COLOR}%s\n${ENDC}" "The Wally installation script has only been tested with Ubuntu versions 20.04 LTS, 22.04 LTS, and 24.04 LTS. You have version $VERSION. Please upgrade to a supported version of Ubuntu."
+        printf "${FAIL_COLOR}%s\n${ENDC}" "The Wally installation script has only been tested with Ubuntu versions 20.04 LTS, 22.04 LTS, 24.04 LTS, and 26.04 LTS. You have version $VERSION. Please upgrade to a supported version of Ubuntu."
         exit 1
     fi
     # Warn if non LTS version or newer version
-    if ! [[ "$UBUNTU_MINOR" == 04 && "$UBUNTU_VERSION" =~ ^(20|22|24)$ ]]; then
-        printf "${WARNING_COLOR}%s\n${ENDC}" "The Wally installation script has only been tested with Ubuntu versions 20.04 LTS, 22.04 LTS, and 24.04 LTS. You have version $VERSION. The installation for the preceding Ubuntu LTS release will be attempted, but there may be issues."
+    if ! [[ "$UBUNTU_MINOR" == 04 && "$UBUNTU_VERSION" =~ ^(20|22|24|26)$ ]]; then
+        printf "${WARNING_COLOR}%s\n${ENDC}" "The Wally installation script has only been tested with Ubuntu versions 20.04 LTS, 22.04 LTS, 24.04 LTS, and 26.04 LTS. You have version $VERSION. The installation for the preceding Ubuntu LTS release will be attempted, but there may be issues."
     fi
 elif [[ "$ID" == debian || "$ID_LIKE" == *debian* ]]; then
     export FAMILY=debian

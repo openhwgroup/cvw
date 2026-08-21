@@ -55,7 +55,9 @@ def getCompileOptions(wkdir, args):
     compileOptions = []
     if args.lockstep:
         compileOptions.extend(["+incdir+$IMPERAS_HOME/ImpPublic/include/host",
+                                "+incdir+$IMPERAS_HOME/ImpPublic/include/host/rvvi",
                                 "+incdir+$IMPERAS_HOME/ImpProprietary/include/host",
+                                "+incdir+$IMPERAS_HOME/ImpProprietary/include/host/idv",
                                 "$IMPERAS_HOME/ImpPublic/source/host/rvvi/*.sv",
                                 "$IMPERAS_HOME/ImpProprietary/source/host/idv/*.sv"])
     if args.breker:

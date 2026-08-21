@@ -192,6 +192,10 @@ def isDesignUpToDate(target):
     return True
 
 
+def targetMtime(target):
+    return target.stat().st_mtime if target.exists() else None
+
+
 def runSim(args, flags, prefix):
     if args.sim == "questa":
         runQuesta(args, flags, prefix)
@@ -220,8 +224,12 @@ def runQuesta(args, flags, prefix):
     # Phase 1: Compile (only once per config/flags/params/defines combo)
     print(f"Running Questa on {args.config} {args.testsuite}")
     wkdir_path = WALLY / "sim" / "questa" / wkdir
+    target = wkdir_path / "testbenchopt"
+    target_mtime = targetMtime(target)
+    needs_compile = target_mtime is None or not isDesignUpToDate(target)
     with compileLock("questa", f"{args.config}_{args.tb}{'_' + bhash if bhash else ''}"):
-        if not isDesignUpToDate(wkdir_path / "testbenchopt"):
+        current_mtime = targetMtime(target)
+        if needs_compile and current_mtime == target_mtime:
             compile_cmd = f'do wally-compile.do {args.config} {args.tb} {wkdir} {compile_flags}'
             compile_cmd = f'cd {sim_dir}; {prefix} vsim -c -do "{compile_cmd}"'
             if os.system(compile_cmd):
@@ -252,8 +260,11 @@ def runVerilator(args):
         f' DEFINE_ARGS="{args.define}"'
         f' BUILD_HASH="{bhash}"'
     )
+    target_mtime = targetMtime(binary)
+    needs_compile = target_mtime is None or not isDesignUpToDate(binary)
     with compileLock("verilator", f"{args.config}_{args.tb}{'_' + bhash if bhash else ''}"):
-        if not isDesignUpToDate(binary):
+        current_mtime = targetMtime(binary)
+        if needs_compile and current_mtime == target_mtime:
             if os.system(compile_cmd):
                 return
 
@@ -283,8 +294,11 @@ def runVCS(args, flags, prefix):
         compile_flags += f' --define "{args.define}"'
 
     # Phase 1: Compile (only once per config/flags/params/defines combo)
+    target_mtime = targetMtime(binary)
+    needs_compile = target_mtime is None or not isDesignUpToDate(binary)
     with compileLock("vcs", f"{args.config}_{args.tb}{'_' + bhash if bhash else ''}"):
-        if not isDesignUpToDate(binary):
+        current_mtime = targetMtime(binary)
+        if needs_compile and current_mtime == target_mtime:
             compile_cmd = f'cd {sim_dir}; {prefix} ./run_vcs compile {args.config} {args.testsuite} --wkdir {wkdir} {compile_flags}'
             if os.system(compile_cmd):
                 return

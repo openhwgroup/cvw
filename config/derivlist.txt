@@ -68,6 +68,9 @@ EXT_MEM_RANGE       64'h3FFFFFFF
 deriv fpgavcu108 fpga
 EXT_MEM_RANGE       64'h7FFFFFFF
 
+deriv fpganexysa7 fpga
+EXT_MEM_RANGE       64'h07FFFFFF
+
 # temporary spitest configuration
 deriv spitest rv64gc
 UNCORE_RAM_RANGE    64'h0FFFFFFF
@@ -538,10 +541,6 @@ ICACHE_WAYSIZEINBYTES 32'd2048
 deriv way_4_4096_256_rv64gc way_4_4096_512_rv64gc
 DCACHE_LINELENINBITS 32'd256
 ICACHE_LINELENINBITS 32'd256
-
-deriv way_4_4096_1024_rv64gc way_4_4096_512_rv64gc
-DCACHE_LINELENINBITS 32'd1024
-ICACHE_LINELENINBITS 32'd1024
 
 # TLB Size variants
 

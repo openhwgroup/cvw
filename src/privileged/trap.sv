@@ -99,9 +99,13 @@ module trap import cvw::*;  #(parameter cvw_t P) (
     else if (ValidIntsM[11])                                  CauseM = 5'd11; // Machine External Int
     else if (ValidIntsM[3])                                   CauseM = 5'd3;  // Machine Sw Int
     else if (ValidIntsM[7])                                   CauseM = 5'd7;  // Machine Timer Int
-    else if (ValidIntsM[9])                                   CauseM = 5'd9;  // Supervisor External Int
-    else if (ValidIntsM[1])                                   CauseM = 5'd1;  // Supervisor Sw Int
-    else if (ValidIntsM[5])                                   CauseM = 5'd5;  // Supervisor Timer Int
+    // if any of the interrupts are delegated to S mode they would be moved to lower priority than the undelegated ones
+    else if (~MIDELEG_REGW[9] & ValidIntsM[9])                CauseM = 5'd9;  // not delegated Supervisor External Int
+    else if (~MIDELEG_REGW[1] & ValidIntsM[1])                CauseM = 5'd1;  // not delegated Supervisor Sw Int
+    else if (~MIDELEG_REGW[5] & ValidIntsM[5])                CauseM = 5'd5;  // not delegated Supervisor Timer Int
+    else if (ValidIntsM[9])                                   CauseM = 5'd9;  // delegated Supervisor External Int
+    else if (ValidIntsM[1])                                   CauseM = 5'd1;  // delegated Supervisor Sw Int
+    else if (ValidIntsM[5])                                   CauseM = 5'd5;  // delegated Supervisor Timer Int
     else if (BothInstrPageFaultM)                             CauseM = 5'd12;
     else if (BothInstrAccessFaultM)                           CauseM = 5'd1;
     else if (IllegalInstrFaultM)                              CauseM = 5'd2;
