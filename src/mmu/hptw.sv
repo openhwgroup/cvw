@@ -156,7 +156,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   flopenr #(P.XLEN) PTEReg(clk, reset, PRegEn, NextPTE2, PTE); // Capture page table entry from data cache
 
   // Assign PTE descriptors common across all XLEN values
-  // For non-leaf PTEs, D, A, U bits are reserved and ignored.  They do not cause faults while walking the page table
+  // For non-leaf PTEs, D, A, U bits are reserved and cause faults while walking the page table
   assign {PTE_U, Executable, Writable, Readable, Valid} = PTE[4:0];
   assign LeafPTE = Executable | Writable | Readable;
   assign ValidPTE = Valid & ~(Writable & ~Readable);
