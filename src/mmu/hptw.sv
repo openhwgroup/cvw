@@ -162,7 +162,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   assign ValidPTE = Valid & ~(Writable & ~Readable);
   assign ValidLeafPTE = ValidPTE & LeafPTE;
   assign ValidNonLeafPTE = Valid & ~LeafPTE;
-  if(P.XLEN == 64) assign PBMTFaultM = ValidNonLeafPTE & (|PTE[62:61]);
+  if(P.XLEN == 64) assign PBMTFaultM = ValidNonLeafPTE & (|PTE[63:54]);
   else assign PBMTFaultM = 1'b0;
   assign DAUFaultM = ValidNonLeafPTE & (|PTE[7:6] | PTE[4]);
 
