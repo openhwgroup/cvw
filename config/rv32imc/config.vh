@@ -84,6 +84,19 @@ localparam logic Q_SUPPORTED   = 0;
 localparam logic ZFH_SUPPORTED = 0;
 localparam logic ZFA_SUPPORTED = 0;
 
+// Vector extensions
+localparam logic V_SUPPORTED = 0;
+localparam VLEN = 32'd256;
+localparam VPU_MAX_EU = 32'd4;
+localparam VPU_INT_EU = 32'd2;
+localparam VPU_INT_LANES = 32'd2;
+localparam VPU_INT_MUL = 32'd2;
+localparam VPU_INT_MUL_LANES = 32'd2;
+localparam VPU_FP_EU = 32'd2;
+localparam VPU_FP_LANES = 32'd2;
+localparam VPU_LSU_EU = 32'd2;
+localparam VPU_LSU_LANES = 32'd2;
+
 // privilege modes
 localparam logic S_SUPPORTED = 0; // Supervisor mode
 localparam logic U_SUPPORTED = 1; // User mode
