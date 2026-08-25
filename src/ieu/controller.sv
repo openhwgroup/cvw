@@ -44,6 +44,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   output logic        LoadStallD,              // Structural stalls for load, sent to performance counters
   output logic        StoreStallD,             // load after store hazard
   output logic [4:0]  Rs1D, Rs2D, Rs2E,        // Register sources to read in Decode or Execute stage
+  output logic        VectorD,                 // Instruction is a Vector, transfer control to VPU
   // Execute stage control signals
   input  logic        StallE, FlushE,          // Stall, flush Execute stage
   input  logic [1:0]  FlagsE,                  // Comparison flags ({eq, lt})
@@ -142,6 +143,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic        IFunctD, RFunctD, MFunctD;      // Detect I, R, and M-type RV32IM/Rv64IM instructions
   logic        LFunctD, SFunctD, BFunctD;      // Detect load, store, branch instructions
   logic        FLSFunctD;                      // Detect floating-point loads and stores
+  logic        VLSFunctD;                      // Detect vector loads and stores
   logic        JRFunctD;                       // detect jalr instruction
   logic        FenceFunctD;                    // Detect fence instruction
   logic        CMOFunctD;                      // Detect CMO instruction
@@ -190,6 +192,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     assign MFunctD          = (Funct7D == 7'b0000001) & (P.M_SUPPORTED | (P.ZMMUL_SUPPORTED & ~Funct3D[2])); // muldiv
     assign LFunctD          = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b010 | Funct3D == 3'b100 | Funct3D == 3'b101 |
                               ((P.XLEN == 64) & (Funct3D == 3'b011 | Funct3D == 3'b110));
+    assign VLSFunctD        = (Funct3D == 3'b000 | Funct3D == 3'b101 | Funct3D == 3'b110 | Funct3D == 3'b111) & P.V_SUPPORTED;  //*** needed in else branch?
     assign FLSFunctD        = (STATUS_FS != 2'b00) & ((Funct3D == 3'b010 & P.F_SUPPORTED) | (Funct3D == 3'b011 & P.D_SUPPORTED) |
                               (Funct3D == 3'b100 & P.Q_SUPPORTED) | (Funct3D == 3'b001 & P.ZFH_SUPPORTED));
     assign FenceFunctD      = (Funct3D == 3'b000) | (P.ZIFENCEI_SUPPORTED & Funct3D == 3'b001);
@@ -223,6 +226,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     assign MFunctD = Funct7D[0] & (P.M_SUPPORTED | (P.ZMMUL_SUPPORTED & ~Funct3D[2])); // muldiv
     assign LFunctD = 1'b1; // don't bother to check Funct3 for loads
     assign FLSFunctD = 1'b1; // don't bother to check Func3 for floating-point loads/stores
+    assign VLSFunctD = 1'b1; // **** ?
     assign FenceFunctD = 1'b1; // don't bother to check fields for fences
     assign CMOFunctD = 1'b1; // don't bother to check fields for CMO instructions
     assign AFunctD = 1'b1; // don't bother to check fields for atomics
@@ -294,6 +298,13 @@ module controller import cvw::*;  #(parameter cvw_t P) (
                   end
     endcase
   end
+
+  if (P.V_SUPPORTED) begin
+    assign VectorD = ((OpD == 7'b0000111 | OpD == 7'b0100111) & VLSFunctD) | OpD == 7'b1010111;
+  end else begin
+    assign VectorD = '0;
+  end
+
   /* verilator lint_on CASEINCOMPLETE */
 
   // Unswizzle control bits
