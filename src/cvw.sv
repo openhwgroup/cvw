@@ -229,6 +229,7 @@ typedef struct packed {
   logic D_SUPPORTED;
   logic E_SUPPORTED;
   logic F_SUPPORTED;
+  logic V_SUPPORTED;
   logic I_SUPPORTED;
   logic M_SUPPORTED;
   logic Q_SUPPORTED;
@@ -302,6 +303,23 @@ typedef struct packed {
   int DIVBLEN    ;
 // integer division/remainder constants
   int INTDIVb    ;
+
+  // Vector extensions
+  int VLEN;
+  int VPU_MAX_EU;
+  int VPU_INT_EU;
+  int VPU_INT_LANES;
+  int VPU_INT_MUL;
+  int VPU_INT_MUL_LANES;
+  int VPU_FP_EU;
+  int VPU_FP_LANES;
+  int VPU_LSU_EU;
+  int VPU_LSU_LANES;
+  int VPU_LSU_BLEN;
+  int VPU_INT_BLEN;
+  int VPU_INT_MUL_BLEN;
+  int VPU_FP_BLEN;
+
 } cvw_t;
 
 endpackage

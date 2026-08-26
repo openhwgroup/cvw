@@ -171,6 +171,14 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          DCacheStallM, ICacheStallF;
   logic                          wfiM, IntPendingM;
 
+  logic                          VectorD;
+  logic                          VPUFrontEndBusyD;
+  logic                          IllegalVPUInstrD;
+  logic [P.XLEN-1:0]             VResultIntFPW;
+  logic [P.VPU_LSU_BLEN-1:0]     VWriteDataM [P.VPU_LSU_EU-1:0];
+  logic [P.VPU_LSU_BLEN-1:0]     VReadDataW [P.VPU_LSU_EU-1:0];
+
+
   // instruction fetch unit: PC, branch prediction, instruction cache
   ifu #(P) ifu(.clk, .reset,
     .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
@@ -180,7 +188,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .HRDATA, .PCSpillF, .IFUHADDR,
     .IFUStallF, .IFUHBURST, .IFUHTRANS, .IFUHSIZE, .IFUHREADY, .IFUHWRITE,
     .ICacheAccess, .ICacheMiss,
-    // Execute
+    // Execute1
     .PCLinkE, .PCSrcE, .IEUAdrE, .IEUAdrM, .PCE, .BPWrongE,  .BPWrongM,
     // Mem
     .CommittedF, .EPCM, .TrapVectorM, .RetM, .TrapM, .InvalidateICacheM, .CSRWriteFenceM,
@@ -197,7 +205,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   // integer execution unit: integer register file, datapath and controller
   ieu #(P) ieu(.clk, .reset,
      // Decode Stage interface
-     .InstrD, .STATUS_FS, .ENVCFG_CBE, .IllegalIEUFPUInstrD, .IllegalBaseInstrD,
+     .InstrD, .STATUS_FS, .ENVCFG_CBE, .IllegalIEUFPUInstrD, .IllegalBaseInstrD, .VectorD,
      // Execute Stage interface
      .PCE, .PCLinkE, .FWriteIntE, .FCvtIntE, .IEUAdrE, .IntDivE, .W64E,
      .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, .MDUActiveE, .CMOpM, .IFUPrefetchE, .LSUPrefetchM,
@@ -357,6 +365,20 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     assign {FPUStallD, FWriteIntE, FCvtIntE, FIntResM, FCvtIntW, FRegWriteM,
             IllegalFPUInstrD, SetFflagsM, FpLoadStoreM,
             FWriteDataM, FCvtIntResW, FIntDivResultW, FDivBusyE} = '0;
+  end
+
+  // *** fix me replace with driver from LSU
+  genvar i;
+  for(i = 0; i < P.VPU_LSU_LANES; i++) begin
+      assign VReadDataW[i] = '0;
+  end
+  if (P.V_SUPPORTED) begin : vpu
+    vpu #(P) vpu(.clk, .reset, .StallD, .StallE, .StallM, .StallW,
+                 .FlushD, .FlushE, .FlushM, .FlushW, .VPUFrontEndBusyD,
+                 .InstrD, .VectorD, .ForwardedSrcAE, .ForwardedSrcBE,
+                 .VWriteDataM, .IllegalVPUInstrD, .VReadDataW, .VResultIntFPW);
+  end else begin
+    //assign {VPUFrontEndBusyD, IllegalVPUInstrD, VResultIntFPW} = '0;
   end
 
 endmodule

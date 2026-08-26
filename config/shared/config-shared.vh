@@ -127,3 +127,9 @@ localparam FMALEN = 3*NF + 6;
 localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1), (DIVb + 1 + NF + 1)), (FMALEN + 2));
 
 localparam LOGNORMSHIFTSZ = ($clog2(NORMSHIFTSZ));                  // log_2(NORMSHIFTSZ)
+
+// *** change 64 to the max vector element length
+localparam VPU_LSU_BLEN = 64 * VPU_LSU_LANES;
+localparam VPU_INT_BLEN = 64 * VPU_INT_LANES;
+localparam VPU_INT_MUL_BLEN = 64 * VPU_INT_MUL_LANES;
+localparam VPU_FP_BLEN = 64 * VPU_FP_LANES;
