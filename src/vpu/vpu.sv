@@ -41,7 +41,7 @@ module vpu import cvw::*;  #(parameter cvw_t P) (
 
   // Decode stage
   input  logic [31:0]          InstrD,                             // instruction (from IFU)
-  input  logic VectorD,                                            // This instruction is a vector
+  input  logic VectorD,                                            //
   // Execute state
   input  logic [P.XLEN-1:0]    ForwardedSrcAE, ForwardedSrcBE,     // Integer/FP input for convert, move (from IEU)
   // Memory stage
