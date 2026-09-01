@@ -28,7 +28,10 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
+/* verilator lint_off UNUSEDPARAM */
+// *** this will be useful later. Remove the lint_off when ready
 module vdecoder import cvw::*;  #(parameter cvw_t P) (
+/* verilator lint_on UNUSEDPARAM */
   input  logic        clk, reset,
   // Decode stage control signals
   input  logic        StallD, FlushD,          // Stall, flush Decode stage
@@ -54,6 +57,9 @@ module vdecoder import cvw::*;  #(parameter cvw_t P) (
   logic [6:0] OpD;                             // Opcode in Decode stage
   logic OPIVVD, OPFVVD, OPMVVD, OPIVID;
   logic OPIVXD, OPFVFD, OPMVXD, VSETD;
+  logic VLSFunctD;
+  logic MewD;
+
 
   assign OpD = InstrD[6:0];
   assign Funct3D = InstrD[14:12];
@@ -70,17 +76,18 @@ module vdecoder import cvw::*;  #(parameter cvw_t P) (
   assign OPMVXD = Funct3D == 3'b110;
   assign VSETD  = Funct3D == 3'b111;
   assign VMD    = InstrD[25];
+  assign MewD   = InstrD[28];
 
-
+  assign VLSFunctD = (Funct3D == 3'b000) | (Funct3D == 3'b101) | (Funct3D == 3'b110) | (Funct3D == 3'b111) & ~MewD;
 
   logic [`VCTRLW-1:0] ControlsD;                // Main Instruction Decoder control signals // *** far from complete
 
   always_comb begin
     case(OpD)
       // RegWrite_VRegWrite_ALUSrc(A_B)_ALUResult_Illegal
-      7'b0000111: if(VLFunctD)
+      7'b0000111: if(VLSFunctD)
         ControlsD = `VCTRLW'b0_1_10_0_1_0; // unit-strip; vl // *** add the address modes later
-      7'b0100111: if(VSFuctD)
+      7'b0100111: if(VLSFunctD)
         ControlsD = `VCTRLW'b0_0_10_1_0_0; // unit-strip; vs
       7'b1010111: begin // vector data operation
         if(OPIVVD)
@@ -100,6 +107,8 @@ module vdecoder import cvw::*;  #(parameter cvw_t P) (
         else if(VSETD)
           ControlsD = `VCTRLW'b1_0_10_0_0_0; // *** incomplete
       end
+      default:
+        ControlsD = `VCTRLW'b0_0_00_0_0_1;
     endcase
   end
 

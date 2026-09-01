@@ -32,18 +32,39 @@ module vdispatcher import cvw::*;  #(parameter cvw_t P) (
   input  logic        clk, reset,
   // Decode stage control signals
   input  logic        StallD, FlushD,          // Stall, flush Decode stage
-  input  logic [31:0] InstrD,                  // Instruction in Decode stage
   input  logic        VectorD,                 // This instruction is a vector
+  input  logic [4:0]  Vs1D, Vs2D, VdD,
+  input  logic [6:0]  lmulDecodedD,
   // hand shaking controls
   output logic [VPU_MAX_EU-1:0] ControllerValidD,
   input  logic [VPU_MAX_EU-1:0] ExecutionUnitReadyD,
   // output micro vector instruction
-  output logic [31:0] MicroInstrD,             // lmul sequenced micro-op instruction in Decode stage
-  output logic MicroVectorD
+  output logic MicroVectorD,
+  output logic [4:0] Vs1FinalD, Vs2FinalD, VdFinalD
 );
 
   logic        IncrMicroOpD;            // Next micro vector instruction when lmul > 1
 
   //input  logic        SelectedControllerValidD,
+
+  // The EU selector
+  // ExecutionUnitReadyD indications which EUs can take a new vector instruction this cycle
+  // However not all EUs can take the same instructions.  They may only accept int, float, load/store, fixed,
+  // or specific sub categories.
+  // For this initial version All EUs will accept all instructions. *** fix me later.
+  // Selection mechanism is currently priority encoder.  Should be round robin. *** fix me later.
+
+  logic [VPU_MAX_EU-1:0] SelectedD;
+  logic                  AnyExecutionUnitReadyD;
+
+  priorityonehot #(P.VPU_MAX_EU) SelectedEUPriority(ExecutionUnitReadyD, SelectedD);
+  assign AnyExecutionUnitReadyD = |ExecutionUnitReadyD;
+
+  lmulsequencer lmulsequencer(.clk, .reset, .StallD, .FlushD,
+                                   .VectorD, .Vs1D, .Vs2D, .VdD, .lmulDecodedD,
+                                   .AnyExecutionUnitReadyD, .Vs1FinalD, .Vs2FinalD, .VdFinalD);
+
+  assign ControllerValidD = SelectedD & {VPU_MAX_EU{VectorD}}; // demux to selected EU
+  assign MicroVectorD = |ControllerValidD;
 
 endmodule

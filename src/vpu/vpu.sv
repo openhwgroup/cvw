@@ -53,6 +53,23 @@ module vpu import cvw::*;  #(parameter cvw_t P) (
   output logic [P.XLEN-1:0] VResultIntFPW                            // Int or FP result for X or F regs.
 );
 
+  logic [4:0] Vs1FinalD, Vs2FinalD;               // Vector Source 1 and 2
+  logic [4:0] VdFinalD;                      // Vector Destination read (overwrite)
+  logic       VMD;                            // 0 = mask enabled; 1 mask disabled
+  logic [5:0] Funct6D;
+  logic [2:0] Funct3D;
+  logic       RegWriteD;
+  logic       VRegWriteD;
+  logic [1:0] VALUSrcAD;
+  logic       VALUSrcBD;
+  logic       VALUResultD;
+  logic       IllegalVectorInstructionD;
+
+  logic [VPU_MAX_EU-1:0] ControllerValidD;
+  logic [VPU_MAX_EU-1:0] ExecutionUnitReadyD;
+
+
+
   // divide into control and data path
 
   // decoder inputs
@@ -76,6 +93,14 @@ module vpu import cvw::*;  #(parameter cvw_t P) (
   end
   assign VPUFrontEndBusyD = '0;
 
+  vcontroller #(P) vcontroller(.clk, .reset, .StallD, .FlushD,
+                               .InstrD, .VectorD, .Vs1FinalD, .Vs2FinalD, .VdFinalD,
+                               .VMD, .Funct6D, .Funct3D, .RegWriteD, .VRegWriteD, .VALUSrcAD, .VALUSrcBD,
+                               .VALUResultD, .IllegalVectorInstructionD, .ControllerValidD, .ExecutionUnitReadyD);
+
+
+  // **** add EUs here. Remove this code
+  assign ExecutionUnitReadyD = '1;
 
 
 
