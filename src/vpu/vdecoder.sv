@@ -32,8 +32,7 @@ module vdecoder import cvw::*;  #(parameter cvw_t P) (
   input  logic        clk, reset,
   // Decode stage control signals
   input  logic        StallD, FlushD,          // Stall, flush Decode stage
-  input  logic [31:0] InstrD,                  // Instruction in Decode stage
-  input  logic  VectorD,                       // This instruction is a vector
+  input  logic [31:0] MicroInstrD,             // lmul sequenced micro-op instruction in Decode stage
 
   // Decode stage outputs
   output logic [4:0] Vs1D, Vs2D,               // Vector Source 1 and 2
@@ -41,15 +40,69 @@ module vdecoder import cvw::*;  #(parameter cvw_t P) (
   output logic VMD,                            // 0 = mask enabled, 1 mask disabled
   output logic [5:0] Funct6D,
   output logic [2:0] Funct3D,
-  // VLSU control
-  output logic [2:0] NfD,                      // segment load/store, number of fields in each segment
-  output logic MewD,                           // extended memory element width
-  output logic [1:0] MopD,                     // memory addressing mode
-  output logic [4:0] lumop,                    // unit-stride load control
-  output logic [4:0] sumop                     // unit-stride store control
+  output logic RegWriteD,
+  output logic VRegWriteD,
+  output logic [1:0] VALUSrcAD,
+  output logic VALUSrcBD,
+  output logic VALUResultD,
+  output logic IllegalVectorInstructionD
 );
 
 
+`define VCTRLW 7
 
+  logic [6:0] OpD;                             // Opcode in Decode stage
+  logic OPIVVD, OPFVVD, OPMVVD, OPIVID;
+  logic OPIVXD, OPFVFD, OPMVXD, VSETD;
+
+  assign OpD = MicroInstrD[6:0];
+  assign Funct3D = MicroInstrD[14:12];
+  assign Funct6D = MicroInstrD[31:26];
+  assign Vs1D    = MicroInstrD[19:15];
+  assign Vs2D    = MicroInstrD[24:20];
+  assign VdD     = MicroInstrD[11:7];
+  assign OPIVVD = Funct3D == 3'b000;
+  assign OPFVVD = Funct3D == 3'b001;
+  assign OPMVVD = Funct3D == 3'b010;
+  assign OPIVID = Funct3D == 3'b011;
+  assign OPIVXD = Funct3D == 3'b100;
+  assign OPFVFD = Funct3D == 3'b101;
+  assign OPMVXD = Funct3D == 3'b110;
+  assign VSETD  = Funct3D == 3'b111;
+  assign VMD    = MicroInstrD[25];
+
+
+
+  logic [`VCTRLW-1:0] ControlsD;                // Main Instruction Decoder control signals // *** far from complete
+
+  always_comb begin
+    case(OpD)
+      // RegWrite_VRegWrite_ALUSrc(A_B)_ALUResult_Illegal
+      7'b0000111: if(VLFunctD)
+        ControlsD = `VCTRLW'b0_1_10_0_1_0; // unit-strip; vl // *** add the address modes later
+      7'b0100111: if(VSFuctD)
+        ControlsD = `VCTRLW'b0_0_10_1_0_0; // unit-strip; vs
+      7'b1010111: begin // vector data operation
+        if(OPIVVD)
+          ControlsD = `VCTRLW'b0_1_00_0_0_0;
+        else if(OPFVVD)
+          ControlsD = `VCTRLW'b0_1_00_0_0_0; // *** expand later writes either GPR or VRF
+        else if(OPMVVD)
+          ControlsD = `VCTRLW'b0_1_00_0_0_0; // *** expand later writes either GPR or VRF
+        else if(OPIVID)
+          ControlsD = `VCTRLW'b0_1_01_0_0_0;
+        else if(OPIVXD)
+          ControlsD = `VCTRLW'b0_1_10_0_0_0;
+        else if(OPFVFD)
+          ControlsD = `VCTRLW'b0_1_10_0_0_0;
+        else if(OPMVXD)
+          ControlsD = `VCTRLW'b0_1_10_0_0_0; // *** expand later writes either GPR or VRF
+        else if(VSETD)
+          ControlsD = `VCTRLW'b1_0_10_0_0_0; // *** incomplete
+      end
+    endcase
+  end
+
+  assign {RegWriteD, VRegWriteD, VALUSrcAD, VALUSrcBD, VALUResultD, IllegalVectorInstructionD} = ControlsD;
 
 endmodule
