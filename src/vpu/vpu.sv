@@ -65,8 +65,8 @@ module vpu import cvw::*;  #(parameter cvw_t P) (
   logic       VALUResultD;
   logic       IllegalVectorInstructionD;
 
-  logic [VPU_MAX_EU-1:0] ControllerValidD;
-  logic [VPU_MAX_EU-1:0] ExecutionUnitReadyD;
+  logic [P.VPU_MAX_EU-1:0] ControllerValidD;
+  logic [P.VPU_MAX_EU-1:0] ExecutionUnitReadyD;
 
 
 
@@ -104,4 +104,4 @@ module vpu import cvw::*;  #(parameter cvw_t P) (
 
 
 
-endmodule; // vpu
+endmodule

@@ -36,8 +36,8 @@ module vdispatcher import cvw::*;  #(parameter cvw_t P) (
   input  logic [4:0]  Vs1D, Vs2D, VdD,
   input  logic [6:0]  lmulDecodedD,
   // hand shaking controls
-  output logic [VPU_MAX_EU-1:0] ControllerValidD,
-  input  logic [VPU_MAX_EU-1:0] ExecutionUnitReadyD,
+  output logic [P.VPU_MAX_EU-1:0] ControllerValidD,
+  input  logic [P.VPU_MAX_EU-1:0] ExecutionUnitReadyD,
   // output micro vector instruction
   output logic MicroVectorD,
   output logic [4:0] Vs1FinalD, Vs2FinalD, VdFinalD
@@ -54,8 +54,8 @@ module vdispatcher import cvw::*;  #(parameter cvw_t P) (
   // For this initial version All EUs will accept all instructions. *** fix me later.
   // Selection mechanism is currently priority encoder.  Should be round robin. *** fix me later.
 
-  logic [VPU_MAX_EU-1:0] SelectedD;
-  logic                  AnyExecutionUnitReadyD;
+  logic [P.VPU_MAX_EU-1:0] SelectedD;
+  logic                    AnyExecutionUnitReadyD;
 
   priorityonehot #(P.VPU_MAX_EU) SelectedEUPriority(ExecutionUnitReadyD, SelectedD);
   assign AnyExecutionUnitReadyD = |ExecutionUnitReadyD;
@@ -64,7 +64,7 @@ module vdispatcher import cvw::*;  #(parameter cvw_t P) (
                                    .VectorD, .Vs1D, .Vs2D, .VdD, .lmulDecodedD,
                                    .AnyExecutionUnitReadyD, .Vs1FinalD, .Vs2FinalD, .VdFinalD);
 
-  assign ControllerValidD = SelectedD & {VPU_MAX_EU{VectorD}}; // demux to selected EU
+  assign ControllerValidD = SelectedD & {P.VPU_MAX_EU{VectorD}}; // demux to selected EU
   assign MicroVectorD = |ControllerValidD;
 
 endmodule

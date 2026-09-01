@@ -48,8 +48,8 @@ module vcontroller import cvw::*;  #(parameter cvw_t P) (
   output logic VALUResultD,
   output logic IllegalVectorInstructionD,
   // hand shaking controls
-  output logic [VPU_MAX_EU-1:0] ControllerValidD,
-  input  logic [VPU_MAX_EU-1:0] ExecutionUnitReadyD
+  output logic [P.VPU_MAX_EU-1:0] ControllerValidD,
+  input  logic [P.VPU_MAX_EU-1:0] ExecutionUnitReadyD
 );
 
   logic        MicroVectorD;
