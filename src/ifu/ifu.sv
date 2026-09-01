@@ -62,7 +62,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   input  logic                 RetM, TrapM,                              // return instruction, or trap
   output logic [31:0]          InstrD,                                   // The decoded instruction in Decode stage
   output logic [31:0]          InstrM,                                   // The decoded instruction in Memory stage
-  output logic [31:0]          InstrOrigM,                               // Original compressed or uncompressed instruction in Memory stage for Illegal Instruction MTVAL
+  output logic [31:0]          InstrOrigM,                               // Original compressed or uncompressed instruction in Memory stage for Illegal Instruction XTVAL
   output logic [P.XLEN-1:0]    PCM,                                      // Memory stage instruction address
   output logic [P.XLEN-1:0]    PCSpillM,                                 // Memory stage instruction address
   // branch predictor
@@ -431,7 +431,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     assign PCLinkE = PCE + 'd4;
   end
 
-  // pipeline original compressed instruction in case it is needed for MTVAL on an illegal instruction exception
+  // pipeline original compressed instruction in case it is needed for XTVAL on an illegal instruction exception
   if (P.ZICSR_SUPPORTED & P.ZCA_SUPPORTED | 1) begin
     logic CompressedM; // instruction is compressed
     flopenrc #(16) InstrRawEReg(clk, reset, FlushE, ~StallE, InstrRawD[15:0], InstrRawE);
