@@ -44,5 +44,6 @@ module vdispatcher import cvw::*;  #(parameter cvw_t P) (
 
   logic        IncrMicroOpD;            // Next micro vector instruction when lmul > 1
 
+  //input  logic        SelectedControllerValidD,
 
 endmodule

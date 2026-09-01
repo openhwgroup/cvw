@@ -56,12 +56,13 @@ module vcontroller import cvw::*;  #(parameter cvw_t P) (
   logic        MicroVectorD;
 
 
+  vdecoder #(P) vdecoder(.clk, .reset, .StallD, .FlushD,
+                         .InstrD, .Vs1D, .Vs2D, .VdD, .VMD,
+                         .Funct6D, .Funct3D, .RegWriteD, .VRegWriteD,
+                         .VALUResultD, .VALUSrcAD, .VALUSrcBD, .VALUResultD, .IllegalVectorInstructionD);
+
   vdispatcher #(P) vdispatcher(.clk, .reset, .StallD, .FlushD,
                                .InstrD, .VectorD, .ControllerValidD, .ExecutionUnitReadyD,
                                .MicroInstrD, .MicroVectorD);
 
-  vdecoder #(P) vdecoder(.clk, .reset, .StallD, .FlushD,
-                         .MicroInstrD, .Vs1D, .Vs2D, .VdD, .VMD,
-                         .Funct6D, .Funct3D, .RegWriteD, .VRegWriteD,
-                         .VALUResultD, .VALUSrcAD, .VALUSrcBD, .VALUResultD, .IllegalVectorInstructionD);
 endmodule

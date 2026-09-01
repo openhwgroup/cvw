@@ -32,7 +32,7 @@ module vdecoder import cvw::*;  #(parameter cvw_t P) (
   input  logic        clk, reset,
   // Decode stage control signals
   input  logic        StallD, FlushD,          // Stall, flush Decode stage
-  input  logic [31:0] MicroInstrD,             // lmul sequenced micro-op instruction in Decode stage
+  input  logic [31:0] InstrD,             // lmul sequenced micro-op instruction in Decode stage
 
   // Decode stage outputs
   output logic [4:0] Vs1D, Vs2D,               // Vector Source 1 and 2
@@ -55,12 +55,12 @@ module vdecoder import cvw::*;  #(parameter cvw_t P) (
   logic OPIVVD, OPFVVD, OPMVVD, OPIVID;
   logic OPIVXD, OPFVFD, OPMVXD, VSETD;
 
-  assign OpD = MicroInstrD[6:0];
-  assign Funct3D = MicroInstrD[14:12];
-  assign Funct6D = MicroInstrD[31:26];
-  assign Vs1D    = MicroInstrD[19:15];
-  assign Vs2D    = MicroInstrD[24:20];
-  assign VdD     = MicroInstrD[11:7];
+  assign OpD = InstrD[6:0];
+  assign Funct3D = InstrD[14:12];
+  assign Funct6D = InstrD[31:26];
+  assign Vs1D    = InstrD[19:15];
+  assign Vs2D    = InstrD[24:20];
+  assign VdD     = InstrD[11:7];
   assign OPIVVD = Funct3D == 3'b000;
   assign OPFVVD = Funct3D == 3'b001;
   assign OPMVVD = Funct3D == 3'b010;
@@ -69,7 +69,7 @@ module vdecoder import cvw::*;  #(parameter cvw_t P) (
   assign OPFVFD = Funct3D == 3'b101;
   assign OPMVXD = Funct3D == 3'b110;
   assign VSETD  = Funct3D == 3'b111;
-  assign VMD    = MicroInstrD[25];
+  assign VMD    = InstrD[25];
 
 
 
