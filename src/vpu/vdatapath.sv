@@ -58,6 +58,18 @@ module vdatapath import cvw::*;  #(parameter cvw_t P) (
   //
 );
 
+  logic [P.VLEN-1:0] SrcAD, SrcBD, SrcCD;
+  logic [P.VLEN-1:0] v0D;
+  logic [P.VLEN-1:0] VResultFinalW;
+
+
+  logic            VdFinalweW;
+  logic [4:0]      VdFinalW;
+
+  vregfile #(P.VLEN) vregfile(clk, reset, VdFinalweW, Vs1FinalD, Vs2FinalD, VdFinalD, VdFinalW,
+                              VResultFinalW, SrcAD, SrcBD, SrcCD, v0D);
+
+
   // *** remove all of this when ready
   genvar i;
   for(i = 0; i < P.VPU_LSU_LANES; i++) begin
@@ -67,5 +79,8 @@ module vdatapath import cvw::*;  #(parameter cvw_t P) (
 
   assign ExecutionUnitReadyD = '1;
   assign VIEUFPResultW = '0;
+  assign VdFinalweW = '0;
+  assign VdFinalW = '0;
+  assign VResultFinalW = '0;
 
 endmodule
