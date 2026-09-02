@@ -180,6 +180,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic [P.VPU_LSU_BLEN-1:0]     VReadDataM [P.VPU_LSU_EU-1:0];
 
 
+
   // instruction fetch unit: PC, branch prediction, instruction cache
   ifu #(P) ifu(.clk, .reset,
     .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
