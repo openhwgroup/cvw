@@ -47,11 +47,29 @@ module vpu import cvw::*;  #(parameter cvw_t P) (
   // Memory stage
   // TODO *** Cannot use decoded control from IEU because the there are overlapping vector instructions?
   output logic [P.VPU_LSU_BLEN-1:0]    VWriteDataM [P.VPU_LSU_EU-1:0],          // Data to be written to memory (to LSU)
-  output logic                 IllegalVPUInstrD,                   // Is the instruction an illegal fpu instruction (to IFU)
+  output logic [P.XLEN-1:0]            VEUAdrM     [P.VPU_LSU_EU-1:0],          // Data to be written to memory (to LSU)
+  input  logic [P.VPU_LSU_BLEN-1:0]    VReadDataM  [P.VPU_LSU_EU-1:0], // Read data (from LSU)
+  output logic                 IllegalVectorInstructionD,                   // Is the instruction an illegal fpu instruction (to IFU)
   // Writeback stage
-  input  logic [P.VPU_LSU_BLEN-1:0]    VReadDataW [P.VPU_LSU_EU-1:0], // Read data (from LSU)
-  output logic [P.XLEN-1:0] VResultIntFPW                            // Int or FP result for X or F regs.
+  output logic [P.XLEN-1:0] VIEUFPResultW                            // Int or FP result for X or F regs.
 );
+
+  logic [4:0] Vs1FinalD, Vs2FinalD;               // Vector Source 1 and 2
+  logic [4:0] VdFinalD;                      // Vector Destination read (overwrite)
+  logic       VMD;                            // 0 = mask enabled; 1 mask disabled
+  logic [5:0] Funct6D;
+  logic [2:0] Funct3D;
+  logic       RegWriteD;
+  logic       VRegWriteD;
+  logic [1:0] VALUSrcAD;
+  logic       VALUSrcBD;
+  logic       VALUResultD;
+  //logic       IllegalVectorInstructionD;
+
+  logic [P.VPU_MAX_EU-1:0] ControllerValidD;
+  logic [P.VPU_MAX_EU-1:0] ExecutionUnitReadyD;
+
+
 
   // divide into control and data path
 
@@ -68,15 +86,22 @@ module vpu import cvw::*;  #(parameter cvw_t P) (
   // the VPU must be delayed to ensure inorder commit.  StallE, StallM, and StallW need to post pone the progress of
   // vector instruction progress under this condiction.
 
-  assign VResultIntFPW = '0;
-  assign IllegalVPUInstrD = '0;
-  genvar i;
-  for(i = 0; i < P.VPU_LSU_LANES; i++) begin
-      assign VWriteDataM[i] = '0;
-  end
-  assign VPUFrontEndBusyD = '0;
+
+  assign VPUFrontEndBusyD = '0; // *** vcontroller needs to drive VPUFrontEndBusyD when all the EUs are busy
+
+  vcontroller #(P) vcontroller(.clk, .reset, .StallD, .FlushD,
+                               .InstrD, .VectorD, .Vs1FinalD, .Vs2FinalD, .VdFinalD,
+                               .VMD, .Funct6D, .Funct3D, .RegWriteD, .VRegWriteD, .VALUSrcAD, .VALUSrcBD,
+                               .VALUResultD, .IllegalVectorInstructionD, .ControllerValidD, .ExecutionUnitReadyD);
+
+  vdatapath #(P) vdatapath(.clk, .reset, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+                           .ControllerValidD, .ExecutionUnitReadyD, .Vs1FinalD, .Vs2FinalD, .VdFinalD, .VMD, .Funct6D, .Funct3D,
+                           .RegWriteD, .VRegWriteD, .VALUSrcAD, .VALUSrcBD, .VALUResultD, .IllegalVectorInstructionD,
+                           .ForwardedSrcAE, .ForwardedSrcBE, .VWriteDataM, .VEUAdrM, .VReadDataM, .VIEUFPResultW);
+
+  // **** add EUs here. Remove this code
+  assign ExecutionUnitReadyD = '1;
 
 
 
-
-endmodule; // vpu
+endmodule
