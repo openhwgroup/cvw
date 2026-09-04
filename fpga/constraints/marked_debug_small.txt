@@ -4,4 +4,4 @@ wally/wallypipelinedcore.sv: logic                InstrValidM
 wally/wallypipelinedcore.sv: logic                 InstrM
 lsu/lsu.sv: logic        IEUAdrM
 lsu/lsu.sv: logic       MemRWM
-mmu/hptw.sv: logic	   SATP_REGW
+mmu/hptw.sv: logic     SATP_REGW

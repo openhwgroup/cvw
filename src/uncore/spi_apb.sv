@@ -7,27 +7,27 @@
 //
 // Purpose: SPI peripheral
 //
-// SPI module is written to the specifications described in FU540-C000-v1.0. At the top level, it is consists of synchronous 8 byte transmit and receive FIFOs connected to shift registers. 
+// SPI module is written to the specifications described in FU540-C000-v1.0. At the top level, it is consists of synchronous 8 byte transmit and receive FIFOs connected to shift registers.
 // The FIFOs are connected to WALLY by an apb control register interface, which includes various control registers for modifying the SPI transmission along with registers for writing
-// to the transmit FIFO and reading from the receive FIFO. The transmissions themselves are then controlled by a finite state machine. The SPI module uses 4 tristate pins for SPI input/output, 
+// to the transmit FIFO and reading from the receive FIFO. The transmissions themselves are then controlled by a finite state machine. The SPI module uses 4 tristate pins for SPI input/output,
 // along with a 4 bit Chip Select signal, a clock signal, and an interrupt signal to WALLY.
 // Current limitations: Flash read sequencer mode not implemented, dual and quad mode not supported
-// 
+//
 // A component of the Wally configurable RISC-V project.
-// 
+//
 // Copyright (C) 2021-24 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -63,12 +63,12 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
   localparam SPI_RXMARK =  8'h54;
   localparam SPI_IE =      8'h70;
   localparam SPI_IP =      8'h74;
-  
-  // SPI control registers. Refer to SiFive FU540-C000 manual 
+
+  // SPI control registers. Refer to SiFive FU540-C000 manual
   logic [11:0] SckDiv;
   logic [1:0]  SckMode;
   logic [1:0]  ChipSelectID;
-  logic [3:0]  ChipSelectDef; 
+  logic [3:0]  ChipSelectDef;
   logic [1:0]  ChipSelectMode;
   logic [15:0] Delay0, Delay1;
   logic [4:0]  Format;
@@ -87,7 +87,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
   logic        EndOfFrame;
   logic        Transmitting;
   logic        InactiveState;
-  logic [3:0]  FrameLength;  
+  logic [3:0]  FrameLength;
 
   // Starting Transmission and restarting SCLKenable
   logic        ResetSCLKenable;
@@ -97,7 +97,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
   // Transmit Start State Machine Variables
   typedef enum logic [1:0] {READY, START, WAIT} txState;
   txState CurrState, NextState;
-  
+
   // FIFO Watermark signals - TransmitReadMark = ip[0], ReceiveWriteMark = ip[1]
   logic        TransmitWriteMark, TransmitReadMark, ReceiveWriteMark, ReceiveReadMark;
 
@@ -111,7 +111,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
   logic        ReceiveFIFOWriteInc;
   logic        ReceiveFIFOReadInc;
   logic        ReceiveFIFOFull, ReceiveFIFOEmpty;
-  
+
   /* verilator lint_off UNDRIVEN */
   logic [2:0]  TransmitWriteWatermarkLevel, ReceiveReadWatermarkLevel; // unused generic FIFO outputs
   /* verilator lint_on UNDRIVEN */
@@ -127,9 +127,9 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
   logic        TransmitRegLoaded;
 
   // Shift stuff due to Format register?
-  logic        ShiftIn;                            // Determines whether to shift from SPIIn or SPIOut (if SPI_LOOPBACK_TEST)  
-  logic [3:0]  LeftShiftAmount;                    // Determines left shift amount to left-align data when little endian              
-  logic [7:0]  ASR;                                // AlignedReceiveShiftReg   
+  logic        ShiftIn;                            // Determines whether to shift from SPIIn or SPIOut (if SPI_LOOPBACK_TEST)
+  logic [3:0]  LeftShiftAmount;                    // Determines left shift amount to left-align data when little endian
+  logic [7:0]  ASR;                                // AlignedReceiveShiftReg
 
   // CS signals
   logic [3:0]  ChipSelectAuto;                     // Assigns ChipSelect value to selected CS signal based on CS ID
@@ -139,17 +139,17 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
   assign Entry = {PADDR[7:2],2'b00};  //  32-bit word-aligned accesses
   assign Memwrite = PWRITE & PENABLE & PSEL;  // Only write in access phase
   assign PREADY = 1'b1;
-  
+
   // Account for subword read/write circuitry
   // -- Note SPI registers are 32 bits no matter what; access them with LW SW.
-  
-  assign Din = PWDATA[31:0]; 
-  if (P.XLEN == 64) assign PRDATA = { Dout,  Dout}; 
-  else              assign PRDATA =  Dout;  
-  
-  // Register access  
+
+  assign Din = PWDATA[31:0];
+  if (P.XLEN == 64) assign PRDATA = { Dout,  Dout};
+  else              assign PRDATA =  Dout;
+
+  // Register access
   always_ff@(posedge PCLK)
-    if (~PRESETn) begin 
+    if (~PRESETn) begin
       SckDiv <= 12'd3;
       SckMode <= 2'b0;
       ChipSelectID <= 2'b0;
@@ -181,12 +181,12 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
           SPI_IE:      InterruptEnable <= Din[1:0];
         endcase
       /* verilator lint_on CASEINCOMPLETE */
-      
-      // According to FU540 spec: Once interrupt is pending, it will remain set until number 
+
+      // According to FU540 spec: Once interrupt is pending, it will remain set until number
       // of entries in tx/rx fifo is strictly more/less than tx/rxmark
       InterruptPending[0] <= TransmitReadMark;
-      InterruptPending[1] <= ReceiveWriteMark;  
-      
+      InterruptPending[1] <= ReceiveWriteMark;
+
       case(Entry) // Flop to sample inputs
         SPI_SCKDIV:  Dout <= {20'b0, SckDiv};
         SPI_SCKMODE: Dout <= {30'b0, SckMode};
@@ -210,7 +210,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
   // This module controls state and timing signals that drive the rest of this module
   assign ResetSCLKenable = Memwrite & (Entry == SPI_SCKDIV);
   assign FrameLength = Format[4:1];
-  
+
   spi_controller controller(PCLK, PRESETn,
                             // Transmit Signals
                             TransmitStart, TransmitRegLoaded, ResetSCLKenable,
@@ -224,7 +224,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
                             Transmitting, InactiveState,
                             // Outputs
                             SPICLK);
-  
+
   // Transmit FIFO ---------------------------------------------------
 
   // txFIFO write increment logic
@@ -234,9 +234,9 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
 
   // txFIFO read increment logic
   flopenr #(1) txrincreg(PCLK, ~PRESETn, SCLKenable,
-                         TransmitStartD | (EndOfFrame & ~TransmitFIFOEmpty),                  
+                         TransmitStartD | (EndOfFrame & ~TransmitFIFOEmpty),
                          TransmitFIFOReadInc);
-  
+
   // Check whether TransmitReg has been loaded.
   // We use this signal to prevent returning to the Ready state for TransmitStart
   always_ff @(posedge PCLK) begin
@@ -245,15 +245,15 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     end else if (TransmitLoad) begin
       TransmitRegLoaded <= 1'b1;
     end else if (ShiftEdge | EndOfFrame) begin
-      TransmitRegLoaded <= 1'b0;  
+      TransmitRegLoaded <= 1'b0;
     end
   end
-  
+
   // Setup TransmitStart state machine
   always_ff @(posedge PCLK)
     if (~PRESETn) CurrState <= READY;
     else          CurrState <= NextState;
-  
+
   // State machine for starting transmissions
   always_comb begin
     case (CurrState)
@@ -298,7 +298,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
   spi_fifo #(3,8) rxFIFO(PCLK, SCLKenable, 1'b1, PRESETn,
                          ReceiveFIFOWriteInc, ReceiveFIFOReadInc,
                          ReceiveShiftRegEndian, ReceiveWatermark[2:0],
-                         ReceiveReadWatermarkLevel, 
+                         ReceiveReadWatermarkLevel,
                          ReceiveData[7:0],
                          ReceiveFIFOFull,
                          ReceiveFIFOEmpty,
@@ -314,13 +314,13 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     else if (ShiftEdge)     TransmitReg <= {TransmitReg[6:0], TransmitReg[0]};
 
   assign SPIOut = TransmitReg[7];
-  
+
   // If in loopback mode, receive shift register is connected directly
   // to module's output pins. Else, connected to SPIIn. There are no
   // setup/hold time issues because transmit shift register and receive
   // shift register always shift/sample on opposite edges
   assign ShiftIn = P.SPI_LOOPBACK_TEST ? SPIOut : SPIIn;
-  
+
   // Receive shift register
   always_ff @(posedge PCLK)
     if(~PRESETn) begin
@@ -347,5 +347,5 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
       2'b11: ChipSelectAuto = {ChipSelectInternal[3],ChipSelectDef[2], ChipSelectDef[1], ChipSelectDef[0]};
     endcase
   assign SPICS = ChipSelectMode[0] ? ChipSelectDef : ChipSelectAuto;
-  
+
 endmodule

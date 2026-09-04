@@ -6,25 +6,25 @@
 // Modified: 31 May 2024
 //
 // Purpose: Converts raw socket into rvvi interface to connect into ImperasDV
-// 
-// Documentation: 
+//
+// Documentation:
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -45,26 +45,26 @@
 #include "idv/idv.h"
 
 
-#define DEST_MAC0	0x43
-#define DEST_MAC1	0x68
-#define DEST_MAC2	0x11
-#define DEST_MAC3	0x11
-#define DEST_MAC4	0x02
-#define DEST_MAC5	0x45
+#define DEST_MAC0 0x43
+#define DEST_MAC1 0x68
+#define DEST_MAC2 0x11
+#define DEST_MAC3 0x11
+#define DEST_MAC4 0x02
+#define DEST_MAC5 0x45
 
-#define SRC_MAC0	0x54
-#define SRC_MAC1	0x16
-#define SRC_MAC2	0x00
-#define SRC_MAC3	0x00
-#define SRC_MAC4	0x54
-#define SRC_MAC5	0x8F
+#define SRC_MAC0  0x54
+#define SRC_MAC1  0x16
+#define SRC_MAC2  0x00
+#define SRC_MAC3  0x00
+#define SRC_MAC4  0x54
+#define SRC_MAC5  0x8F
 
-#define BUF_SIZ		1024
+#define BUF_SIZ   1024
 
-//#define ETHER_TYPE	0x0801  // The type defined in packetizer.sv
-#define ETHER_TYPE	0x5c00  // The type defined in packetizer.sv
-//#define ETHER_TYPE	0x0000  // The type defined in packetizer.sv
-#define DEFAULT_IF	"eno1"
+//#define ETHER_TYPE   0x0801  // The type defined in packetizer.sv
+#define ETHER_TYPE   0x5c00  // The type defined in packetizer.sv
+//#define ETHER_TYPE   0x0000  // The type defined in packetizer.sv
+#define DEFAULT_IF   "eno1"
 
 struct sockaddr_ll socket_address;
 uint8_t sendbuf[BUF_SIZ];
@@ -89,7 +89,7 @@ typedef struct {
   uint8_t CSRWen[3];
   uint16_t CSRReg[3];
   uint64_t CSRValue[3];
-  
+
 } RequiredRVVI_t; // total size is 241 bits or 30.125 bytes
 
 typedef struct __attribute__((packed)) {
@@ -140,7 +140,7 @@ void set_fpr(int hart, int reg, uint64_t value);
 int state_compare(int hart, uint64_t Minstret);
 
 int main(int argc, char **argv){
-  
+
   if(argc != 2){
     printf("Wrong number of arguments.\n");
     printf("rvvidaemon <ethernet device>\n");
@@ -149,10 +149,10 @@ int main(int argc, char **argv){
 
   uint8_t buf[BUF_SIZ];
   int sockopt;
-  struct ifreq ifopts;	/* set promiscuous mode */
+  struct ifreq ifopts;   /* set promiscuous mode */
   struct ether_header *eh = (struct ether_header *) buf;
   ssize_t headerbytes, numbytes, payloadbytes;
-  
+
   /* Open RAW socket to receive frames */
   if ((sockfd = socket(AF_PACKET, SOCK_RAW, htons(ETHER_TYPE))) == -1) {
     perror("socket");
@@ -168,7 +168,7 @@ int main(int argc, char **argv){
   printf("Here 2\n");
   if (ioctl(sockfd, SIOCGIFINDEX, &ifopts) < 0)
     perror("SIOCGIFINDEX");
-  
+
   /* Allow the socket to be reused - in case connection is closed prematurely */
   if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &sockopt, sizeof sockopt) == -1) {
     perror("setsockopt");
@@ -176,9 +176,9 @@ int main(int argc, char **argv){
     exit(EXIT_FAILURE);
   }
   printf("Here 3\n");
-  
+
   /* Bind to device */
-  if (setsockopt(sockfd, SOL_SOCKET, SO_BINDTODEVICE, argv[1], IFNAMSIZ-1) == -1)	{
+  if (setsockopt(sockfd, SOL_SOCKET, SO_BINDTODEVICE, argv[1], IFNAMSIZ-1) == -1)   {
     perror("SO_BINDTODEVICE");
     close(sockfd);
     exit(EXIT_FAILURE);
@@ -243,7 +243,7 @@ int main(int argc, char **argv){
   // eventually we want to put the elffiles here
   rvviRefInit(NULL);
   rvviRefPcSet(0, 0x1000);
-  
+
   // Volatile CSRs
   rvviRefCsrSetVolatile(0, 0xC00);   // CYCLE
   rvviRefCsrSetVolatile(0, 0xB00);   // MCYCLE
@@ -309,7 +309,7 @@ int main(int argc, char **argv){
 
   close(sockfd);
 
-  
+
 
   return 0;
 }
@@ -336,7 +336,7 @@ int ProcessRvviAll(RequiredRVVI_t *InstructionData){
   //found = rvviRefNetIndexGet("pc_rdata");
   //rvviRefNetSet(found, InstructionData->PC, time);
   return result;
-  
+
 }
 
 int state_compare(int hart, uint64_t Minstret){
@@ -367,7 +367,7 @@ int state_compare(int hart, uint64_t Minstret){
     idvMsgError(buf);
     return -1;
   }
-  
+
 }
 
 void set_gpr(int hart, int reg, uint64_t value){
@@ -395,7 +395,7 @@ void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, RequiredRVVI_t *Instructi
   InstructionData->FPRReg = FixedInstructionData->FPRReg;
   InstructionData->FPRValue = FixedInstructionData->FPRValue;
 
-  
+
   InstructionData->CSRReg[0] = FixedInstructionData->CSR0Wen;
   if(InstructionData->CSRReg[0] != 0) InstructionData->CSRWen[0] = 1;
   else InstructionData->CSRWen[0] = 0;
@@ -422,12 +422,12 @@ void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, RequiredRVVI_t *Instructi
   if(InstructionData->CSRReg[4] != 0) InstructionData->CSRWen[4] = 1;
   else InstructionData->CSRWen[4] = 0;
   InstructionData->CSRValue[4] = FixedInstructionData->CSR4Value;
-} 
+}
 
 void PrintInstructionData(RequiredRVVI_t *InstructionData){
   int CSRIndex;
   printf("PC = %lx, insn = %x, Mcycle = %lx, Minstret = %lx, Trap = %hhx, PrivilegeMode = %hhx",
-	 InstructionData->PC, InstructionData->insn, InstructionData->Mcycle, InstructionData->Minstret, InstructionData->Trap, InstructionData->PrivilegeMode);
+    InstructionData->PC, InstructionData->insn, InstructionData->Mcycle, InstructionData->Minstret, InstructionData->Trap, InstructionData->PrivilegeMode);
   if(InstructionData->GPREn){
     printf(", GPR[%d] = %lx", InstructionData->GPRReg, InstructionData->GPRValue);
   }

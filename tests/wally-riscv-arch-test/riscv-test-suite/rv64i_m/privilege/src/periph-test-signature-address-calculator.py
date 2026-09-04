@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
 if __name__ == "__main__":
     import sys
     if (('-h' in sys.argv) or ('--help' in sys.argv)):
@@ -20,4 +20,3 @@ if __name__ == "__main__":
         print(f"IntrNum 0x{test_num:02X}")
         print(f"Offset 0x{offset:02X}")
         print("LineNum "+str(line_num))
-   

@@ -49,4 +49,3 @@ trek:
 
     # turn off MMU Tests
     pss_top.rvMmu.rvMmuOp: 0
-

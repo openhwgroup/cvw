@@ -33,7 +33,7 @@ TRAP_HANDLER m
 
 // Misa is a specific case *** so I don't want to add a whole test case for reading nonzero but unknown value CSRs.
 csrr x30, misa // should not cause a fault in machine mode. *** not writing to output because MISA is different for different configs.
-li x7, 0x111 // success value for read of nonzero misa 
+li x7, 0x111 // success value for read of nonzero misa
 bnez x30, misa_nonzero
 li x7, 0xbad // misa was zero, store bad value
 

@@ -9,7 +9,7 @@ module testbench();
   fulladder dut(a, b, c, s, cout);
 
   // generate clock
-  always 
+  always
     begin
       clk = 1; #5; clk = 0; #5;
       cycle = cycle + 1;
@@ -42,10 +42,10 @@ module testbench();
         errors = errors + 1;
       end
       vectornum = vectornum + 1;
-      //if (testvectors[vectornum] === 5'bx) begin 
-      if (vectornum === 10) begin 
-        $display("%d tests completed with %d errors", 
-	           vectornum, errors);
+      //if (testvectors[vectornum] === 5'bx) begin
+      if (vectornum === 10) begin
+        $display("%d tests completed with %d errors",
+                  vectornum, errors);
 `ifdef QUESTA
         $stop;  // if this is changed to $finish for Questa, coverage is not collected
 `else
@@ -60,5 +60,5 @@ module fulladder(input  logic a, b, c,
                  output logic s, cout);
 
   assign s = a ^ b ^ c;
-  assign cout = (a & b) | (a & c) | (b & c); 
+  assign cout = (a & b) | (a & c) | (b & c);
 endmodule

@@ -12,7 +12,7 @@ This will generate a testsuite for each of the constraint yaml files in the `con
 $ wsim breker $WALLY/tests/breker/riscv/riscv.elf
 ```
 
-To run all of the generated Breker tests use 
+To run all of the generated Breker tests use
 ```bash
 $ regression-wally --breker
 ```

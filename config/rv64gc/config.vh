@@ -102,6 +102,10 @@ localparam logic ZICBOZ_SUPPORTED = 1;
 localparam logic ZICBOP_SUPPORTED = 1;
 
 // Virtual memory extensions
+localparam logic SV32_SUPPORTED    = 0;
+localparam logic SV39_SUPPORTED    = 1;
+localparam logic SV48_SUPPORTED    = 1;
+localparam logic SV57_SUPPORTED    = 1;
 localparam logic SVPBMT_SUPPORTED  = 1;
 localparam logic SVNAPOT_SUPPORTED = 1;
 localparam logic SVINVAL_SUPPORTED = 1;
@@ -112,7 +116,6 @@ localparam logic SVADU_SUPPORTED   = 1;
 localparam logic BUS_SUPPORTED = 1;
 localparam logic DCACHE_SUPPORTED = 1;
 localparam logic ICACHE_SUPPORTED = 1;
-localparam logic VIRTMEM_SUPPORTED = 1;
 localparam logic VECTORED_INTERRUPTS_SUPPORTED = 1;
 localparam logic BIGENDIAN_SUPPORTED = 1;
 
@@ -186,6 +189,9 @@ localparam logic [63:0] SDC_RANGE        = 64'h00000FFF;
 localparam logic SPI_SUPPORTED = 1;
 localparam logic [63:0] SPI_BASE         = 64'h10040000;
 localparam logic [63:0] SPI_RANGE        = 64'h00000FFF;
+localparam logic PWM_SUPPORTED = 1;
+localparam logic [63:0] PWM_BASE         = 64'h10020000;
+localparam logic [63:0] PWM_RANGE        = 64'h000000FF;
 
 // Bus Interface width
 localparam AHBW = (XLEN);
@@ -202,6 +208,7 @@ localparam logic SPI_LOOPBACK_TEST  = 1;
 
 // Hardware configuration
 localparam UART_PRESCALE = 32'd1;
+localparam PWM_WIDTH = 32'd16;
 
 // Interrupt configuration
 localparam PLIC_NUM_SRC = 32'd10;
@@ -211,6 +218,7 @@ localparam PLIC_GPIO_ID = 32'd3;
 localparam PLIC_UART_ID = 32'd10;
 localparam PLIC_SPI_ID = 32'd6;
 localparam PLIC_SDC_ID = 32'd9;
+localparam PLIC_PWM_ID = 32'd7;
 
 // Branch prediction
 localparam logic BPRED_SUPPORTED = 1;

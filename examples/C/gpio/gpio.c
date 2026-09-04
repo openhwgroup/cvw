@@ -6,7 +6,7 @@
 // compile with make
 // simulate with: wsim rv64gc --elf gpio --sim verilator
 
-#include <stdio.h>  
+#include <stdio.h>
 #include "gpiolib.h"
 
 int main(void) {
@@ -20,7 +20,7 @@ int main(void) {
         int val = digitalRead(0);
         printf("Pin 0: %d\n", val);
         digitalWrite(1, val);
-        
+
         // Toggle pin 2
         printf("Pin 2: %d\n", i%2);
         digitalWrite(2, i%2);

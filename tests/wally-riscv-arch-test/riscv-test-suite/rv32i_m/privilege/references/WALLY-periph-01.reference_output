@@ -273,13 +273,13 @@ FFFFFF00
 02BEEF11 # Test 2 interrupt 17
 8000000B
 00000000
-00000003 
+00000003
 00000033 # input
 00000000 # output
 00000000 # rise ip
 00000000 # serviced rise ip
 000000CC # fall ip
-00000000 
+00000000
 000000FF # high ip
 00000033 # why is this 0x33?
 FFFFFFCC # low ip

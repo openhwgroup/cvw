@@ -30,7 +30,7 @@ INIT_TESTS
 
 CAUSE_TRAP_TRIGGERS // initialize code that will cause traps for consistent mtval addresses
 
-// test 5.3.1.4 Basic trap tests 
+// test 5.3.1.4 Basic trap tests
 
 TRAP_HANDLER m, EXT_SIGNATURE=1 // necessary to handle switching privilege modes
 TRAP_HANDLER s, EXT_SIGNATURE=1 // have S mode trap handler as well
@@ -58,7 +58,7 @@ GOTO_S_MODE // Causes U mode ecall
 
 
 // some interrupts excluded because writing MIP is illegal from S mode and writing SIP is only possible when delegated, which is tested below (priv spec 3.1.9)
-//jal cause_s_soft_interrupt 
+//jal cause_s_soft_interrupt
 jal cause_m_soft_interrupt
 jal cause_m_time_interrupt
 li a3, 0x40 // this interrupt involves a time loop waiting for the interrupt to go off.
@@ -68,7 +68,7 @@ li a3, 0x40
 jal cause_m_ext_interrupt
 
 // Now delegate all traps to S mode and attempt them again, ensuring they now go to the S mode trap handler
-// We can tell which one because the different trap handler modes write different bits of the status register 
+// We can tell which one because the different trap handler modes write different bits of the status register
 // to the output when EXT_SIGNATURE is on.
 
 GOTO_M_MODE // so we can write the delegate registers
@@ -97,4 +97,3 @@ jal cause_s_ext_interrupt_GPIO
 END_TESTS
 
 TEST_STACK_AND_DATA
-

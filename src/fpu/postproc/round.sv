@@ -5,25 +5,25 @@
 // Modified: 7/5/2022
 //
 // Purpose: Rounder
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -67,19 +67,19 @@ module round import cvw::*;  #(parameter cvw_t P) (
   logic                            FpLsbRes;           // least significant bit of floating point result
   logic                            LsbRes;             // lsb of result
   logic                            CalcPlus1;          // calculated plus1
-  logic                            FpPlus1;            // do you add one to the fp result 
+  logic                            FpPlus1;            // do you add one to the fp result
   logic [P.FLEN:0]                 RoundAdd;           // how much to add to the result
   logic                            CvtToInt;           // Convert to integer operation
 
 // what position is XLEN in?
-//  options: 
+//  options:
 //     1: XLEN > NF   > NF1
 //     2: NF   > XLEN > NF1
 //     3: NF   > NF1  > XLEN
 //  single and double will always be smaller than XLEN
 //`define XLENPOS ((`XLEN>`NF) ? 1 : (`XLEN>`NF1) ? 2 : 3)
   localparam XLENPOS = P.XLEN > P.NF ? 1 : P.XLEN > P.NF1 ? 2 : 3;
-  
+
   ///////////////////////////////////////////////////////////////////////////////
   // Rounding
   ///////////////////////////////////////////////////////////////////////////////
@@ -138,7 +138,7 @@ module round import cvw::*;  #(parameter cvw_t P) (
                                                 (|Mf[P.NORMSHIFTSZ-P.NF-2:P.NORMSHIFTSZ-P.XLEN-1]&FpRes) |
                                                 (|Mf[P.NORMSHIFTSZ-P.XLEN-2:0]);
       // 2: NF   > XLEN > NF1
-      if (XLENPOS == 2) assign NormSticky = (|Mf[P.NORMSHIFTSZ-P.NF1-2:P.NORMSHIFTSZ-P.XLEN-1]&FpRes&~OutFmt) | 
+      if (XLENPOS == 2) assign NormSticky = (|Mf[P.NORMSHIFTSZ-P.NF1-2:P.NORMSHIFTSZ-P.XLEN-1]&FpRes&~OutFmt) |
                                                 (|Mf[P.NORMSHIFTSZ-P.XLEN-2:P.NORMSHIFTSZ-P.NF-1]&(IntRes|~OutFmt)) |
                                                 (|Mf[P.NORMSHIFTSZ-P.NF-2:0]);
       // 3: NF   > NF1  > XLEN
@@ -154,7 +154,7 @@ module round import cvw::*;  #(parameter cvw_t P) (
                                                 (|Mf[P.NORMSHIFTSZ-P.XLEN-2:0]);
       // 2: NF   > XLEN > NF1
       if (XLENPOS == 2) assign NormSticky = (|Mf[P.NORMSHIFTSZ-P.NF2-2:P.NORMSHIFTSZ-P.NF1-1]&FpRes&(OutFmt==P.FMT2)) |
-                                                (|Mf[P.NORMSHIFTSZ-P.NF1-2:P.NORMSHIFTSZ-P.XLEN-1]&FpRes&~(OutFmt==P.FMT)) | 
+                                                (|Mf[P.NORMSHIFTSZ-P.NF1-2:P.NORMSHIFTSZ-P.XLEN-1]&FpRes&~(OutFmt==P.FMT)) |
                                                 (|Mf[P.NORMSHIFTSZ-P.XLEN-2:P.NORMSHIFTSZ-P.NF-1]&(IntRes|~(OutFmt==P.FMT))) |
                                                 (|Mf[P.NORMSHIFTSZ-P.NF-2:0]);
       // 3: NF   > NF1  > XLEN
@@ -167,8 +167,8 @@ module round import cvw::*;  #(parameter cvw_t P) (
       // Quad precision will always be greater than XLEN
       // 2: NF   > XLEN > NF1
       if (XLENPOS == 2) assign NormSticky = (|Mf[P.NORMSHIFTSZ-P.H_NF-2:P.NORMSHIFTSZ-P.S_NF-1]&FpRes&(OutFmt==P.H_FMT)) |
-                                                (|Mf[P.NORMSHIFTSZ-P.S_NF-2:P.NORMSHIFTSZ-P.D_NF-1]&FpRes&((OutFmt==P.S_FMT)|(OutFmt==P.H_FMT))) | 
-                                                (|Mf[P.NORMSHIFTSZ-P.D_NF-2:P.NORMSHIFTSZ-P.XLEN-1]&FpRes&~(OutFmt==P.Q_FMT)) | 
+                                                (|Mf[P.NORMSHIFTSZ-P.S_NF-2:P.NORMSHIFTSZ-P.D_NF-1]&FpRes&((OutFmt==P.S_FMT)|(OutFmt==P.H_FMT))) |
+                                                (|Mf[P.NORMSHIFTSZ-P.D_NF-2:P.NORMSHIFTSZ-P.XLEN-1]&FpRes&~(OutFmt==P.Q_FMT)) |
                                                 (|Mf[P.NORMSHIFTSZ-P.XLEN-2:P.NORMSHIFTSZ-P.Q_NF-1]&(~(OutFmt==P.Q_FMT)|IntRes)) |
                                                 (|Mf[P.NORMSHIFTSZ-P.Q_NF-2:0]);
       // 3: NF   > NF1  > XLEN
@@ -184,7 +184,7 @@ module round import cvw::*;  #(parameter cvw_t P) (
   // only add the Addend sticky if doing an FMA operation
   //      - the shifter shifts too far left when there's an underflow (shifting out all possible sticky bits)
   assign Sticky = FmaASticky&FmaOp | NormSticky | CvtResUf&CvtOp | FmaMe[P.NE+1]&FmaOp | DivSticky&DivOp;
-  
+
   // determine round and LSB of the rounded value
   //      - underflow round bit is used to determint the underflow flag
   if (P.FPSIZES == 1) begin
@@ -270,7 +270,7 @@ module round import cvw::*;  #(parameter cvw_t P) (
           3'b100: UfCalcPlus1  = Round;//round to nearest max magnitude
           default: UfCalcPlus1 = 1'bx;
       endcase
-  
+
   end
 
   // If an answer is exact don't round
@@ -292,12 +292,12 @@ module round import cvw::*;  #(parameter cvw_t P) (
   end else if (P.FPSIZES == 3) begin
       assign RoundAdd = {(P.NE+1+P.NF2)'(0), FpPlus1&(OutFmt==P.FMT2), (P.NF1-P.NF2-1)'(0), FpPlus1&(OutFmt==P.FMT1), (P.NF-P.NF1-1)'(0), FpPlus1&(OutFmt==P.FMT)};
 
-  end else if (P.FPSIZES == 4)      
+  end else if (P.FPSIZES == 4)
       assign RoundAdd = {(P.Q_NE+1+P.H_NF)'(0), FpPlus1&(OutFmt==P.H_FMT), (P.S_NF-P.H_NF-1)'(0), FpPlus1&(OutFmt==P.S_FMT), (P.D_NF-P.S_NF-1)'(0), FpPlus1&(OutFmt==P.D_FMT), (P.Q_NF-P.D_NF-1)'(0), FpPlus1&(OutFmt==P.Q_FMT)};
 
   // trim unneeded bits from fraction
   assign RoundFrac = Mf[P.NORMSHIFTSZ-1:P.NORMSHIFTSZ-P.NF];
-  
+
   // select the exponent
   always_comb
       case(PostProcSel)
@@ -305,7 +305,7 @@ module round import cvw::*;  #(parameter cvw_t P) (
           2'b00:    Me = {CvtCe[P.NE], CvtCe}&{P.NE+2{~CvtResSubnormUf|CvtResUf}}; // cvt
           // 2'b01: Me = DivDone ? Ue : 0; // divide
           2'b01:    Me = Ue; // divide
-          default:  Me = '0; 
+          default:  Me = '0;
       endcase
 
 

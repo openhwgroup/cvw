@@ -23,10 +23,10 @@ trap_handler:
     csrrw tp, mscratch, tp  # swap tp and mscratch to put a trap stack pointer in tp
 
     # save some registers on trap stack. ß
-    sw t0, 0(tp)            
+    sw t0, 0(tp)
     sw t1, 4(tp)
     sw t2, 8(tp)
- 
+
     lw t0, 12(tp)           # get current length of buffer
     li t1, 0x10000000       # UART base address
     lbu t1, 0(t1)           # fetch next character

@@ -1,5 +1,5 @@
-beef00b4 # Test 12.3.2.1: read 64 bits success in CLINT 
-0000dead # all of these read successes are also confirming successful writes 
+beef00b4 # Test 12.3.2.1: read 64 bits success in CLINT
+0000dead # all of these read successes are also confirming successful writes
 beef00b5 # read 32 bits success in CLINT (bottom 32 bits sign extended)
 ffffffff
 000000b6 # read 16 bits success in CLINT (bottom 16 bits sign extended)

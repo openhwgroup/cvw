@@ -2,25 +2,25 @@
 // fpgaTop.sv
 //
 // Written: rose@rosethompson.net November 17, 2021
-// Modified: 
+// Modified:
 //
 // Purpose: This is a top level for the fpga's implementation of wally.
 //          Instantiates wallysoc, ddr4, abh lite to axi converters, pll, etc
-// 
+//
 // A component of the Wally configurable RISC-V project.
-// 
+//
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
-// files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, 
-// modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software 
+// files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,
+// modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
 // is furnished to do so, subject to the following conditions:
 //
 // The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
-// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-// BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+// BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
@@ -47,7 +47,7 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
    output logic        SDCCmd,
    output logic        SDCCS,
    input logic         SDCCD,
-   input logic         SDCWP,         
+   input logic         SDCWP,
  /*
      * Ethernet: 100BASE-T MII
      */
@@ -81,131 +81,131 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
    );
 
   // MMCM Signals
-  logic 			   CPUCLK;
-  logic 			   c0_ddr4_ui_clk_sync_rst;
-  logic 			   bus_struct_reset;
-  logic 			   peripheral_reset;
-  logic 			   interconnect_aresetn;
-  logic 			   peripheral_aresetn;
-  logic 			   mb_reset;
-  
+  logic          CPUCLK;
+  logic          c0_ddr4_ui_clk_sync_rst;
+  logic          bus_struct_reset;
+  logic          peripheral_reset;
+  logic          interconnect_aresetn;
+  logic          peripheral_aresetn;
+  logic          mb_reset;
+
   // AHB Signals from Wally
-  logic 			   HCLKOpen;
-  logic 			   HRESETnOpen;
-  logic [63:0]      HRDATAEXT;
-  logic 			   HREADYEXT;
-  logic 			   HRESPEXT;
-  logic 			   HSELEXT;
-  logic [55:0] 	   HADDR;
-  logic [63:0]      HWDATA;
-  logic [64/8-1:0]  HWSTRB;
-  logic 			   HWRITE;
-  logic [2:0] 	   HSIZE;
-  logic [2:0] 	   HBURST;
-  logic [1:0] 	   HTRANS;
-  logic 			   HREADY;
-  logic [3:0] 	   HPROT;
-  logic 			   HMASTLOCK;
+  logic            HCLKOpen;
+  logic            HRESETnOpen;
+  logic [63:0]     HRDATAEXT;
+  logic            HREADYEXT;
+  logic            HRESPEXT;
+  logic            HSELEXT;
+  logic [55:0]     HADDR;
+  logic [63:0]     HWDATA;
+  logic [64/8-1:0] HWSTRB;
+  logic            HWRITE;
+  logic [2:0]      HSIZE;
+  logic [2:0]      HBURST;
+  logic [1:0]      HTRANS;
+  logic            HREADY;
+  logic [3:0]      HPROT;
+  logic            HMASTLOCK;
 
   // GPIO Signals
-  logic [31:0] 	   GPIOIN, GPIOOUT, GPIOEN;
+  logic [31:0]    GPIOIN, GPIOOUT, GPIOEN;
 
   // AHB to AXI Bridge Signals
-  logic [3:0] 	   m_axi_awid;
-  logic [7:0] 	   m_axi_awlen;
-  logic [2:0] 	   m_axi_awsize;
-  logic [1:0] 	   m_axi_awburst;
-  logic [3:0] 	   m_axi_awcache;
-  logic [31:0] 	   m_axi_awaddr;
-  logic [2:0] 	   m_axi_awprot;
-  logic             m_axi_awvalid;
-  logic             m_axi_awready;
-  logic             m_axi_awlock;
-  logic [63:0] 	   m_axi_wdata;
-  logic [7:0] 	   m_axi_wstrb;
-  logic             m_axi_wlast;
-  logic             m_axi_wvalid;
-  logic             m_axi_wready;
-  logic [3:0] 	   m_axi_bid;
-  logic [1:0] 	   m_axi_bresp;
-  logic             m_axi_bvalid;
-  logic             m_axi_bready;
-  logic [3:0] 	   m_axi_arid;
-  logic [7:0] 	   m_axi_arlen;
-  logic [2:0] 	   m_axi_arsize;
-  logic [1:0] 	   m_axi_arburst;
-  logic [2:0] 	   m_axi_arprot;
-  logic [3:0] 	   m_axi_arcache;
-  logic             m_axi_arvalid;
-  logic [31:0] 	   m_axi_araddr;
-  logic 			   m_axi_arlock;
-  logic             m_axi_arready;
-  logic [3:0] 	   m_axi_rid;
-  logic [63:0] 	   m_axi_rdata;
-  logic [1:0] 	   m_axi_rresp;
-  logic             m_axi_rvalid;
-  logic             m_axi_rlast;
-  logic             m_axi_rready;
+  logic [3:0]      m_axi_awid;
+  logic [7:0]      m_axi_awlen;
+  logic [2:0]      m_axi_awsize;
+  logic [1:0]      m_axi_awburst;
+  logic [3:0]      m_axi_awcache;
+  logic [31:0]     m_axi_awaddr;
+  logic [2:0]      m_axi_awprot;
+  logic            m_axi_awvalid;
+  logic            m_axi_awready;
+  logic            m_axi_awlock;
+  logic [63:0]     m_axi_wdata;
+  logic [7:0]      m_axi_wstrb;
+  logic            m_axi_wlast;
+  logic            m_axi_wvalid;
+  logic            m_axi_wready;
+  logic [3:0]      m_axi_bid;
+  logic [1:0]      m_axi_bresp;
+  logic            m_axi_bvalid;
+  logic            m_axi_bready;
+  logic [3:0]      m_axi_arid;
+  logic [7:0]      m_axi_arlen;
+  logic [2:0]      m_axi_arsize;
+  logic [1:0]      m_axi_arburst;
+  logic [2:0]      m_axi_arprot;
+  logic [3:0]      m_axi_arcache;
+  logic            m_axi_arvalid;
+  logic [31:0]     m_axi_araddr;
+  logic            m_axi_arlock;
+  logic            m_axi_arready;
+  logic [3:0]      m_axi_rid;
+  logic [63:0]     m_axi_rdata;
+  logic [1:0]      m_axi_rresp;
+  logic            m_axi_rvalid;
+  logic            m_axi_rlast;
+  logic            m_axi_rready;
 
   // AXI Signals going out of Clock Converter
-  logic [3:0] 	   BUS_axi_arregion;
-  logic [3:0] 	   BUS_axi_arqos;
-  logic [3:0] 	   BUS_axi_awregion;
-  logic [3:0] 	   BUS_axi_awqos;
-  logic [3:0] 	   BUS_axi_awid;
-  logic [7:0] 	   BUS_axi_awlen;
-  logic [2:0] 	   BUS_axi_awsize;
-  logic [1:0] 	   BUS_axi_awburst;
-  logic [3:0] 	   BUS_axi_awcache;
-  logic [31:0] 	   BUS_axi_awaddr;
-  logic [2:0] 	   BUS_axi_awprot;
-  logic 			   BUS_axi_awvalid;
-  logic 			   BUS_axi_awready;
-  logic 			   BUS_axi_awlock;
-  logic [63:0] 	   BUS_axi_wdata;
-  logic [7:0] 	   BUS_axi_wstrb;
-  logic 			   BUS_axi_wlast;
-  logic 			   BUS_axi_wvalid;
-  logic 			   BUS_axi_wready;
-  logic [3:0] 	   BUS_axi_bid;
-  logic [1:0] 	   BUS_axi_bresp;
-  logic 			   BUS_axi_bvalid;
-  logic 			   BUS_axi_bready;
-  logic [3:0] 	   BUS_axi_arid;
-  logic [7:0] 	   BUS_axi_arlen;
-  logic [2:0] 	   BUS_axi_arsize;
-  logic [1:0] 	   BUS_axi_arburst;
-  logic [2:0] 	   BUS_axi_arprot;
-  logic [3:0] 	   BUS_axi_arcache;
-  logic 			   BUS_axi_arvalid;
-  logic [31:0] 	   BUS_axi_araddr;
-  logic 			   BUS_axi_arlock;
-  logic 			   BUS_axi_arready;
-  logic [3:0] 	   BUS_axi_rid;
-  logic [63:0] 	   BUS_axi_rdata;
-  logic [1:0] 	   BUS_axi_rresp;
-  logic 			   BUS_axi_rvalid;
-  logic 			   BUS_axi_rlast;
-  logic 			   BUS_axi_rready;
-  
-  logic 			   BUSCLK;
-  logic             sdio_reset_open;
-  
-  logic             c0_init_calib_complete;
-  logic 			   dbg_clk;
-  logic [511 : 0]   dbg_bus;
-  logic             ui_clk_sync_rst;
-  
-  logic 			   CLK208;
-  logic             clk167;
-  logic             clk200;
+  logic [3:0]      BUS_axi_arregion;
+  logic [3:0]      BUS_axi_arqos;
+  logic [3:0]      BUS_axi_awregion;
+  logic [3:0]      BUS_axi_awqos;
+  logic [3:0]      BUS_axi_awid;
+  logic [7:0]      BUS_axi_awlen;
+  logic [2:0]      BUS_axi_awsize;
+  logic [1:0]      BUS_axi_awburst;
+  logic [3:0]      BUS_axi_awcache;
+  logic [31:0]     BUS_axi_awaddr;
+  logic [2:0]      BUS_axi_awprot;
+  logic            BUS_axi_awvalid;
+  logic            BUS_axi_awready;
+  logic            BUS_axi_awlock;
+  logic [63:0]     BUS_axi_wdata;
+  logic [7:0]      BUS_axi_wstrb;
+  logic            BUS_axi_wlast;
+  logic            BUS_axi_wvalid;
+  logic            BUS_axi_wready;
+  logic [3:0]      BUS_axi_bid;
+  logic [1:0]      BUS_axi_bresp;
+  logic            BUS_axi_bvalid;
+  logic            BUS_axi_bready;
+  logic [3:0]      BUS_axi_arid;
+  logic [7:0]      BUS_axi_arlen;
+  logic [2:0]      BUS_axi_arsize;
+  logic [1:0]      BUS_axi_arburst;
+  logic [2:0]      BUS_axi_arprot;
+  logic [3:0]      BUS_axi_arcache;
+  logic            BUS_axi_arvalid;
+  logic [31:0]     BUS_axi_araddr;
+  logic            BUS_axi_arlock;
+  logic            BUS_axi_arready;
+  logic [3:0]      BUS_axi_rid;
+  logic [63:0]     BUS_axi_rdata;
+  logic [1:0]      BUS_axi_rresp;
+  logic            BUS_axi_rvalid;
+  logic            BUS_axi_rlast;
+  logic            BUS_axi_rready;
 
-  logic             app_sr_active;
-  logic             app_ref_ack;
-  logic             app_zq_ack;
-  logic             mmcm_locked;
-  logic [11:0]      device_temp;
-  logic             mmcm1_locked;
+  logic            BUSCLK;
+  logic            sdio_reset_open;
+
+  logic            c0_init_calib_complete;
+  logic            dbg_clk;
+  logic [511 : 0]  dbg_bus;
+  logic            ui_clk_sync_rst;
+
+  logic            CLK208;
+  logic            clk167;
+  logic            clk200;
+
+  logic            app_sr_active;
+  logic            app_ref_ack;
+  logic            app_zq_ack;
+  logic            mmcm_locked;
+  logic [11:0]     device_temp;
+  logic            mmcm1_locked;
 
 (* mark_debug = "true" *)  logic              RVVIStall;
 
@@ -220,7 +220,7 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
 
   // mmcm
 
-  // the ddr3 mig7 requires 2 input clocks 
+  // the ddr3 mig7 requires 2 input clocks
   // 1. sys clock which is 167 MHz = ddr3 clock / 4
   // 2. a second clock which is 200 MHz
   // Wally requires a slower clock.  At this point I don't know what speed the atrix 7 will run so I'm initially targeting 25Mhz.
@@ -233,7 +233,7 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
                      .locked(mmcm1_locked),
                      .clk_in1(default_100mhz_clk));
 
-  
+
 
   // reset controller XILINX IP
   sysrst sysrst
@@ -249,16 +249,16 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
      .peripheral_aresetn(peripheral_aresetn));
 
   `include "parameter-defs.vh"
-  
-  // Wally 
-  wallypipelinedsoc  #(P) 
-  wallypipelinedsoc(.clk(CPUCLK), .reset_ext(bus_struct_reset), .reset(), 
+
+  // Wally
+  wallypipelinedsoc  #(P)
+  wallypipelinedsoc(.clk(CPUCLK), .reset_ext(bus_struct_reset), .reset(),
                     .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT,
-                    .HCLK(HCLKOpen), .HRESETn(HRESETnOpen), 
+                    .HCLK(HCLKOpen), .HRESETn(HRESETnOpen),
                     .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
-                    .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), 
+                    .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0),
                     .GPIOIN, .GPIOOUT, .GPIOEN,
-                    .UARTSin, .UARTSout, .SDCIn, .SDCCmd, .SDCCS(SDCCSin), .SDCCLK, .ExternalStall(RVVIStall)); 
+                    .UARTSin, .UARTSout, .SDCIn, .SDCCmd, .SDCCS(SDCCSin), .SDCCLK, .ExternalStall(RVVIStall));
 
 
   // ahb lite to axi bridge
@@ -425,7 +425,7 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
      .ui_clk(BUSCLK),
      .ui_clk_sync_rst(ui_clk_sync_rst),
      .aresetn(resetn),
-     .sys_rst(resetn),    // omg. this is active low?!?!?? 
+     .sys_rst(resetn),    // omg. this is active low?!?!??
      .mmcm_locked(mmcm_locked),
 
      .app_sr_req(1'b0),  // reserved command
@@ -478,14 +478,14 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
      .device_temp(device_temp));
 
   (* mark_debug = "true" *)  logic IlaTrigger;
-    
-   
+
+
   if(RVVI_SYNTH_SUPPORTED) begin : rvvi_synth
     localparam MAX_CSRS = 3;
     localparam TOTAL_CSRS = 36;
     localparam [31:0] RVVI_INIT_TIME_OUT = 32'd100000000;
     localparam [31:0] RVVI_PACKET_DELAY = 32'd400;
-    
+
     // pipeline controls
     logic                                             StallE, StallM, StallW, FlushE, FlushM, FlushW;
     // required
@@ -564,7 +564,7 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
     assign CSRArray[35] = {fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csru.csru.FRM_REGW, fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csru.csru.FFLAGS_REGW}; // 12'h003
 
     rvvisynth #(P, MAX_CSRS) rvvisynth(.clk(CPUCLK), .reset(bus_struct_reset), .StallE, .StallM, .StallW, .FlushE, .FlushM, .FlushW,
-      .PCM, .InstrValidM, .InstrRawD, .Mcycle, .Minstret, .TrapM, 
+      .PCM, .InstrValidM, .InstrRawD, .Mcycle, .Minstret, .TrapM,
       .PrivilegeModeW, .GPRWen, .FPRWen, .GPRAddr, .FPRAddr, .GPRValue, .FPRValue, .CSRArray,
       .valid, .rvvi);
 
@@ -603,7 +603,7 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
 
       // status
       .tx_error_underflow, .tx_fifo_overflow, .tx_fifo_bad_frame, .tx_fifo_good_frame, .rx_error_bad_frame,
-      .rx_error_bad_fcs, .rx_fifo_overflow, .rx_fifo_bad_frame, .rx_fifo_good_frame, 
+      .rx_error_bad_fcs, .rx_fifo_overflow, .rx_fifo_bad_frame, .rx_fifo_good_frame,
       .cfg_ifg(8'd12), .cfg_tx_enable(1'b1), .cfg_rx_enable(1'b1)
       );
 
@@ -613,9 +613,8 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
     assign IlaTrigger = '0;
     assign RVVIStall = '0;
   end
-   
+
   //assign phy_reset_n = ~bus_struct_reset;
    assign phy_reset_n = ~1'b0;
-  
-endmodule
 
+endmodule

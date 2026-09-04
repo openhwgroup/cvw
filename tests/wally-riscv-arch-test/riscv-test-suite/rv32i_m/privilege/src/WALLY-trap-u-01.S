@@ -30,7 +30,7 @@ INIT_TESTS
 
 CAUSE_TRAP_TRIGGERS // initialize code that will cause traps for consistent mtval addresses
 
-// test 5.3.1.4 Basic trap tests 
+// test 5.3.1.4 Basic trap tests
 
 TRAP_HANDLER m, EXT_SIGNATURE=1 // turn on recording mtval and status bits on traps
 TRAP_HANDLER s, EXT_SIGNATURE=1 // have S mode trap handler as well
@@ -65,7 +65,7 @@ li a3, 0x40
 jal cause_m_ext_interrupt
 
 // Now delegate all traps to S mode and attempt them again, ensuring they now go to the S mode trap handler
-// We can tell which one because the different trap handler modes write different bits of the status register 
+// We can tell which one because the different trap handler modes write different bits of the status register
 // to the output when EXT_SIGNATURE is on.
 
 GOTO_M_MODE // so we can write the delegate registers
@@ -83,7 +83,7 @@ jal cause_load_acc
 jal cause_store_addr_misaligned
 jal cause_store_acc
 jal cause_ecall
- 
+
 // M mode interrupts cannot be delegated in this implementation, so they are excluded from tests
 li a3, 0x40
 jal cause_s_ext_interrupt_GPIO

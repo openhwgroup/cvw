@@ -6,31 +6,31 @@
 // Modified: 25 January 2023
 //
 // Purpose: 2 bit saturating counter predictor with parameterized table depth.
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module RASPredictor import cvw::*;  #(parameter cvw_t P)(
   input  logic             clk,
-  input  logic             reset, 
+  input  logic             reset,
   input  logic             StallD, StallE, StallM, FlushD, FlushE, FlushM,
   input  logic             BPReturnWrongD,                      // Prediction class is wrong
   input  logic             ReturnD,
@@ -51,12 +51,12 @@ module RASPredictor import cvw::*;  #(parameter cvw_t P)(
   logic      PushE;
   logic      RepairD;
   logic      IncrRepairD, DecRepairD;
-  
+
   logic      DecPtr;
   logic      FlushedReturnDE;
   logic      WrongPredReturnD;
-  
-  
+
+
   assign PopF = BPReturnF & ~StallD & ~FlushD;
   assign PushE = CallE & ~StallM & ~FlushM;
 
@@ -68,7 +68,7 @@ module RASPredictor import cvw::*;  #(parameter cvw_t P)(
   assign IncrRepairD = FlushedReturnDE | (WrongPredReturnD & ~ReturnD); // Guessed it was a return, but its not
 
   assign DecRepairD =  WrongPredReturnD & ReturnD; // Guessed non return but is a return.
-    
+
   assign CounterEn = PopF | PushE | RepairD;
 
   assign DecPtr = (PopF | DecRepairD) & ~IncrRepairD;
@@ -86,7 +86,7 @@ module RASPredictor import cvw::*;  #(parameter cvw_t P)(
 
   flopenr #(Depth) PTR(clk, reset, CounterEn, NextPtr, Ptr);
 
-  // RAS must be reset. 
+  // RAS must be reset.
   always_ff @ (posedge clk) begin
     if(reset) begin
       for(index=0; index<P.RAS_SIZE; index++)
@@ -97,6 +97,6 @@ module RASPredictor import cvw::*;  #(parameter cvw_t P)(
   end
 
   assign RASPCF = memory[Ptr];
-  
-  
+
+
 endmodule

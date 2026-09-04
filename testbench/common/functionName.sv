@@ -2,24 +2,24 @@
 // functionName.sv
 //
 // Written: Rose Thompson rose@rosethompson.net
-// 
+//
 // Purpose: decode name of function
-// 
+//
 // A component of the Wally configurable RISC-V project.
-// 
+//
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -29,21 +29,21 @@ module functionName import cvw::*; #(parameter cvw_t P) (
   input string ProgramAddrMapFile,
   input string ProgramLabelMapFile
   );
-  
-  logic [P.XLEN-1:0] ProgramAddrMapMemory [logic [P.XLEN-1:0]];
-  string 	    ProgramLabelMapMemory [logic [P.XLEN-1:0]];
-  string 	    FunctionName;
-  
+
+  logic [P.XLEN-1:0] ProgramAddrMapMemory  [logic [P.XLEN-1:0]];
+  string             ProgramLabelMapMemory [logic [P.XLEN-1:0]];
+  string             FunctionName;
+
 
   logic [P.XLEN-1:0] PCF, PCD, PCE, PCM, FunctionAddr, PCM_temp, PCMOld;
-  logic 	    StallD, StallE, StallM, FlushD, FlushE, FlushM;
-  logic 		InstrValidM;
-  logic [P.XLEN-1:0] 	    ProgramAddrIndex, ProgramAddrIndexQ;
+  logic              StallD, StallE, StallM, FlushD, FlushE, FlushM;
+  logic              InstrValidM;
+  logic [P.XLEN-1:0] ProgramAddrIndex, ProgramAddrIndexQ;
 
   assign PCF = testbench.dut.core.ifu.PCF;
   assign StallD = testbench.dut.core.StallD;
-  assign StallE = testbench.dut.core.StallE;  
-  assign StallM = testbench.dut.core.StallM;  
+  assign StallE = testbench.dut.core.StallE;
+  assign StallM = testbench.dut.core.StallM;
   assign FlushD = testbench.dut.core.FlushD;
   assign FlushE = testbench.dut.core.FlushE;
   assign FlushM = testbench.dut.core.FlushM;
@@ -60,50 +60,50 @@ module functionName import cvw::*; #(parameter cvw_t P) (
   assign PCM = InstrValidM ? PCM_temp : PCMOld;
 
   task automatic bin_search_min;
-    input logic [P.XLEN-1:0] pc;
-    input logic [P.XLEN-1:0] length;
-    ref logic [P.XLEN-1:0]   array [logic [P.XLEN-1:0]];
+    input  logic [P.XLEN-1:0] pc;
+    input  logic [P.XLEN-1:0] length;
+    ref    logic [P.XLEN-1:0] array [logic [P.XLEN-1:0]];
     output logic [P.XLEN-1:0] minval;
-    output     logic [P.XLEN-1:0] mid;
+    output logic [P.XLEN-1:0] mid;
 
-    logic [P.XLEN-1:0] 	     left, right;
+    logic [P.XLEN-1:0] left, right;
 
     begin
       if ( pc == 0 ) begin
-	// want to  keep the old value for mid and minval
-	mid = 0;
-	return;
+        // want to  keep the old value for mid and minval
+        mid = 0;
+        return;
       end
       left = 0;
       right = length;
       while (left <= right) begin
-	mid = left + ((right - left) / 2);
-	if (array[mid] == pc) begin
-	  minval = array[mid];
-	  return;
+        mid = left + ((right - left) / 2);
+        if (array[mid] == pc) begin
+          minval = array[mid];
+          return;
         end
-	if (array[mid] < pc) begin
-	  left = mid + 1;
-	end else if( array[mid] > pc) begin
-	  right = mid -1;
-	end else begin
-	  //$display("Critical Error in FunctionName. PC, %x not found.", pc);
-	  return;
-	  //$stop();
-	end	  
+        if (array[mid] < pc) begin
+          left = mid + 1;
+        end else if( array[mid] > pc) begin
+          right = mid -1;
+        end else begin
+          //$display("Critical Error in FunctionName. PC, %x not found.", pc);
+          return;
+          //$stop();
+        end
       end // while (left <= right)
       // if the element pc is now found, right and left will be equal at this point.
       // we need to check if pc is less than the array at left or greater.
       // if it is less than pc, then we select left as the index.
       // if it is greater we want 1 less than left.
       if (array[left] < pc) begin
-	minval = array[left];
-	mid = left;      
-	return;	    
+        minval = array[left];
+        mid = left;
+        return;
       end else begin
-	minval = array[left-1];
-	mid = left - 1;	
-	return;
+        minval = array[left-1];
+        mid = left - 1;
+        return;
       end
     end
   endtask // bin_search_min
@@ -114,17 +114,17 @@ module functionName import cvw::*; #(parameter cvw_t P) (
   logic [P.XLEN-1:0] ProgramAddrMapLine;
   string  ProgramLabelMapLine;
   integer status;
-  
+
 
   // preload
-//  initial begin
+  //  initial begin
   always @ (negedge reset) begin
 
     // cannot readmemh directly to a dynamic array. Sad times :(
     // Let's initialize a static array with FFFF_FFFF for all addresses.
     // Then we can readmemh and finally copy to the dynamic array.
-    
-	// clear out the old mapping between programs.
+
+    // clear out the old mapping between programs.
     ProgramAddrMapMemory.delete();
     ProgramLabelMapMemory.delete();
 
@@ -138,9 +138,9 @@ module functionName import cvw::*; #(parameter cvw_t P) (
     // read line by line to count lines
     if (ProgramAddrMapFP != 0) begin
       while (! $feof(ProgramAddrMapFP)) begin
-	    status = $fscanf(ProgramAddrMapFP, "%h\n", ProgramAddrMapLine);
+        status = $fscanf(ProgramAddrMapFP, "%h\n", ProgramAddrMapLine);
         ProgramAddrMapMemory[ProgramAddrMapLineCount] = ProgramAddrMapLine;
-	    ProgramAddrMapLineCount = ProgramAddrMapLineCount + 1;
+        ProgramAddrMapLineCount = ProgramAddrMapLineCount + 1;
       end
     end else begin
       $display("Cannot open file %s for reading.", ProgramAddrMapFile);
@@ -153,12 +153,12 @@ module functionName import cvw::*; #(parameter cvw_t P) (
     // Build an associative array to convert the name to an index.
     ProgramLabelMapLineCount = 0;
     ProgramLabelMapFP = $fopen(ProgramLabelMapFile, "r");
-    
+
     if (ProgramLabelMapFP != 0) begin
       while (! $feof(ProgramLabelMapFP)) begin
-	status = $fscanf(ProgramLabelMapFP, "%s\n", ProgramLabelMapLine);
-	ProgramLabelMapMemory[ProgramLabelMapLineCount] = ProgramLabelMapLine;
-	ProgramLabelMapLineCount = ProgramLabelMapLineCount + 1;
+        status = $fscanf(ProgramLabelMapFP, "%s\n", ProgramLabelMapLine);
+        ProgramLabelMapMemory[ProgramLabelMapLineCount] = ProgramLabelMapLine;
+        ProgramLabelMapLineCount = ProgramLabelMapLineCount + 1;
       end
     end else begin
       $display("Cannot open file %s for reading.", ProgramLabelMapFile);
@@ -179,4 +179,3 @@ module functionName import cvw::*; #(parameter cvw_t P) (
   always @(*) FunctionName = AnyUnknown ? "Unknown!" : ProgramLabelMapMemory[ProgramAddrIndex];
 
 endmodule // function_radix
-

@@ -4,7 +4,7 @@
 ##
 ## Written: Jacob Pease jacobpease@protonmail.com
 ## Created: November 2nd, 2024
-## Modified: 
+## Modified:
 ##
 ## Purpose: Write a sequence of bytes from text file to an output file and a flash card.
 ##

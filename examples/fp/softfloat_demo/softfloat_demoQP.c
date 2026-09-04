@@ -1,6 +1,6 @@
 // softfloat_demo3.c
 // james.stine@okstate.edu 15 August 2023
-// 
+//
 // Demonstrate using SoftFloat do compute a floating-point for quad, then print results
 
 #include <stdio.h>
@@ -46,14 +46,14 @@ void printF128 (char *msg, float128_t q) {
   int i, j;
   char buf[64];
   conv.v[0] = q.v[0]; // use union to convert between hexadecimal and floating-point views
-  conv.v[1] = q.v[1]; // use union to convert between hexadecimal and floating-point views  
+  conv.v[1] = q.v[1]; // use union to convert between hexadecimal and floating-point views
   printf("%s: ", msg);  // print out nicely
 
   // Some compilers can understand %Q for printf on quad precision instead of the
   // API call of quadmath_snprintf
   // printf("0x%016" PRIx64 "_%016" PRIx64 " = %1.15Qe\n", q.v[1], q.v[0], conv.q);
   quadmath_snprintf (buf, sizeof buf, "%1.15Qe", conv.q);
-  printf("0x%016" PRIx64 "_%016" PRIx64 " = %s\n", q.v[1], q.v[0], buf);  
+  printf("0x%016" PRIx64 "_%016" PRIx64 " = %s\n", q.v[1], q.v[0], buf);
 
 }
 
@@ -63,7 +63,7 @@ void printFlags(void) {
   int OF = (softfloat_exceptionFlags >> 2) % 2;
   int DZ = (softfloat_exceptionFlags >> 3) % 2;
   int NV = (softfloat_exceptionFlags >> 4) % 2;
-  printf ("Flags: Inexact %d Underflow %d Overflow %d DivideZero %d Invalid %d\n", 
+  printf ("Flags: Inexact %d Underflow %d Overflow %d DivideZero %d Invalid %d\n",
           NX, UF, OF, DZ, NV);
 }
 
@@ -72,13 +72,13 @@ void softfloatInit(void) {
     //                 RZ:  softfloat_round_minMag
     //                 RP:  softfloat_round_max
     //                 RM:  softfloat_round_min
-    softfloat_roundingMode = softfloat_round_near_even; 
+    softfloat_roundingMode = softfloat_round_near_even;
     softfloat_exceptionFlags = 0; // clear exceptions
     softfloat_detectTininess = softfloat_tininess_afterRounding; // RISC-V behavior for tininess
 }
 
 int main() {
-  
+
   float128_t x, y, z;
   float128_t r;
   uint32_t u, v, w;
@@ -96,5 +96,5 @@ int main() {
   r = f128_mulAdd(x, y, z);
   printf("\n");
   printF128("r", r);
-  
+
 }

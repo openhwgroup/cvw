@@ -8,7 +8,7 @@
 00000000
 00001800 # masked out mstatus.MPP = 11, mstatus.MPIE = 0, and mstatus.MIE = 0
 00000000
-0007ec01 # value to indicate successful vectoring on s soft interrupt 
+0007ec01 # value to indicate successful vectoring on s soft interrupt
 00000000
 00000001 # scause value from s soft interrupt
 80000000

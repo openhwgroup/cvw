@@ -21,7 +21,7 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-#include "WALLY-TEST-LIB-32.h" 
+#include "WALLY-TEST-LIB-32.h"
 
 RVTEST_ISA("RV32I_Zicsr_Zifencei")
 RVTEST_CASE(0,"//check ISA:=regex(.*32.*);check ISA:=regex(.*I.*); def Drvtest_mtrap_routine=True;def TEST_CASE_1=True;def NO_SAIL=True;",gpio)
@@ -45,13 +45,13 @@ test_cases:
 #
 #   Here is where the actual tests are held, or rather, what the actual tests do.
 #   each entry consists of 3 values that will be read in as follows:
-#   
+#
 #   '.4byte [x28 Value], [x29 Value], [x30 value]'
 #                     or
 #   '.4byte [address], [value], [test type]'
 #
 #   The encoding for x30 test type values can be found in the test handler in the framework file
-# 
+#
 # ---------------------------------------------------------------------------------------------
 
 .equ GPIO, 0x10060000

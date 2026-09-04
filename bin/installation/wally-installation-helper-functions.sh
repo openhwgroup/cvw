@@ -4,7 +4,7 @@
 ##
 ## Written: Jordan Carlin, jcarlin@hmc.edu
 ## Created: May 30 2025
-## Modified: 
+## Modified:
 ##
 ## Purpose: Common functions for toolchain installation scripts
 ##
@@ -40,7 +40,7 @@ error() {
     exit 1
 }
 
-# Check if the specificed version of a tool is installed
+# Check if the specified version of a tool is installed
 # $1: required version
 # Tool inferred from $STATUS variable
 check_tool_version() {

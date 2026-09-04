@@ -1,4 +1,4 @@
-# fma.do 
+# fma.do
 #
 # run with vsim -do "do fma.do"
 # add -c before -do for batch simulation

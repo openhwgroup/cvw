@@ -8,13 +8,17 @@ localparam S_MODE  = (2'b01);
 localparam U_MODE  = (2'b00);
 
 // Virtual Memory Constants
+localparam VIRTMEM_SUPPORTED = (SV32_SUPPORTED | SV39_SUPPORTED);
 localparam VPN_SEGMENT_BITS = (XLEN == 32 ? 32'd10 : 32'd9);
-localparam VPN_BITS = (XLEN==32 ? (2*VPN_SEGMENT_BITS) : (4*VPN_SEGMENT_BITS));
-localparam PPN_BITS = (XLEN==32 ? 32'd22 : 32'd44);
-localparam PA_BITS = (XLEN==32 ? 32'd34 : 32'd56);
-localparam SVMODE_BITS = (XLEN==32 ? 32'd1 : 32'd4);
-localparam ASID_BASE = (XLEN==32 ? 32'd22 : 32'd44);
-localparam ASID_BITS = (XLEN==32 ? 32'd9 : 32'd16);
+localparam VPN_BITS = (SV57_SUPPORTED ? (5*VPN_SEGMENT_BITS) :
+                       SV48_SUPPORTED ? (4*VPN_SEGMENT_BITS) :
+                       SV39_SUPPORTED ? (3*VPN_SEGMENT_BITS) :
+                                        (2*VPN_SEGMENT_BITS));
+localparam PPN_BITS    = (XLEN==32 ? 32'd22 : 32'd44);
+localparam PA_BITS     = (XLEN==32 ? 32'd34 : 32'd56);
+localparam SVMODE_BITS = (XLEN==32 ? 32'd1  : 32'd4);
+localparam ASID_BASE   = (XLEN==32 ? 32'd22 : 32'd44);
+localparam ASID_BITS   = (XLEN==32 ? 32'd9  : 32'd16);
 
 // constants to check SATP_MODE against
 // defined in Table 4.3 of the privileged spec
@@ -22,6 +26,7 @@ localparam NO_TRANSLATE = 4'd0;
 localparam SV32 = 4'd1;
 localparam SV39 = 4'd8;
 localparam SV48 = 4'd9;
+localparam SV57 = 4'd10;
 
 // macros to define supported modes
 localparam logic I_SUPPORTED = (!E_SUPPORTED);
@@ -31,7 +36,7 @@ localparam logic C_SUPPORTED = ZCA_SUPPORTED & (D_SUPPORTED ? ZCD_SUPPORTED : 1)
 localparam logic ZKN_SUPPORTED = (ZBKB_SUPPORTED & ZBKC_SUPPORTED & ZBKX_SUPPORTED & ZKND_SUPPORTED & ZKNE_SUPPORTED & ZKNH_SUPPORTED);
 
 // Configure MISA based on supported extensions
-localparam MISA = {6'b0, 5'b0, U_SUPPORTED, 1'b0, S_SUPPORTED, 1'b0, Q_SUPPORTED, 3'b0, M_SUPPORTED, 3'b0, I_SUPPORTED, 2'b0, 
+localparam MISA = {6'b0, 5'b0, U_SUPPORTED, 1'b0, S_SUPPORTED, 1'b0, Q_SUPPORTED, 3'b0, M_SUPPORTED, 3'b0, I_SUPPORTED, 2'b0,
                    F_SUPPORTED, E_SUPPORTED, D_SUPPORTED, C_SUPPORTED, B_SUPPORTED, A_SUPPORTED};
 
 // logarithm of XLEN, used for number of index bits to select
@@ -41,7 +46,7 @@ localparam LOG_XLEN = (XLEN == 32 ? 32'd5 : 32'd6);
 localparam PMPCFG_ENTRIES = (PMP_ENTRIES/32'd8);
 
 // Floating point constants for Quad, Double, Single, and Half precisions
-// Lim: I've made some of these 64 bit to avoid width warnings. 
+// Lim: I've made some of these 64 bit to avoid width warnings.
 // If errors crop up, try downsizing back to 32.
 localparam Q_LEN = 32'd128;
 localparam Q_NE = 32'd15;
@@ -97,7 +102,7 @@ localparam RK          = LOGR*DIVCOPIES;                            // r*k bits 
 localparam FPDIVMINb   = NF + 2; // minimum length of fractional part: Nf result bits + guard and round bits + 1 extra bit to allow sqrt being shifted right
 localparam DIVMINb     = ((FPDIVMINb<XLEN) & IDIV_ON_FPU) ? XLEN : FPDIVMINb; // minimum fractional bits b = max(XLEN, FPDIVMINb)
 localparam RESBITS     = DIVMINb + LOGR; // number of bits in a result: r integer + b fractional
-                 
+
 // division constants
 localparam FPDUR       = (RESBITS-1)/RK + 1 ;                       // ceiling((r+b)/rk)
 localparam DIVb        = FPDUR*RK - LOGR;                           // divsqrt fractional bits, so total number of bits is a multiple of rk after r integer bits
@@ -106,8 +111,8 @@ localparam DIVBLEN     = $clog2(DIVb+1);                            // enough bi
 
 // integer division/remainder constants
 localparam INTRESBITS     = XLEN + LOGR; // number of bits in a result: r integer + XLEN fractional
-localparam INTFPDUR       = (INTRESBITS-1)/RK + 1 ;                 
-localparam INTDIVb        = INTFPDUR*RK - LOGR;                     
+localparam INTFPDUR       = (INTRESBITS-1)/RK + 1 ;
+localparam INTDIVb        = INTFPDUR*RK - LOGR;
 
 // largest length in IEU/FPU
 localparam BASECVTLEN = `max(XLEN, NF); // convert length excluding Zfa fcvtmod.w.d

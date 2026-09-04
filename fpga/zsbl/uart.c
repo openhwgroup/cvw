@@ -6,10 +6,10 @@
 // Purpose: Uart printing functions, as well as functions for printing
 //          hex, decimal, and floating point numbers.
 //
-// 
+//
 //
 // A component of the Wally configurable RISC-V project.
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
@@ -108,7 +108,7 @@ void print_uart_dec(uint64_t addr) {
   // floor(log(2^64)) = 19
   char str[19] = {'\0'};
   uint8_t length = 1;
-  
+
   uint64_t cur = addr;
   while (cur != 0) {
     char digit = bin_to_hex_table[cur % 10];
@@ -123,14 +123,14 @@ void print_uart_dec(uint64_t addr) {
   }
 }
 
-// Print a floating point number on the UART 
+// Print a floating point number on the UART
 void print_uart_float(float num, int precision) {
   char str[32] = {'\0'};
   char digit;
   uint8_t length = precision + 1;
   int i;
   uint64_t cur;
-  
+
   str[precision] = '.';
 
   int pow = 1;
@@ -139,7 +139,7 @@ void print_uart_float(float num, int precision) {
   for (i = 0; i < precision; i++) {
     pow = pow * 10;
   }
-  
+
   cur = (uint64_t)(num * pow);
   for (i = 0; i < precision; i++) {
     digit = bin_to_hex_table[cur % 10];
@@ -154,7 +154,7 @@ void print_uart_float(float num, int precision) {
     cur = cur/10;
     length++;
   } while (cur != 0);
-  
+
   for (i = length; i > -1; i--) {
     write_serial(str[i]);
   }

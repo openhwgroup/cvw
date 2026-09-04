@@ -41,5 +41,3 @@
 00000003 # Glaim GPIO in supervisor conxtex even though it is masked by priority
 00000000 # No interrupts pending
 00000000 # No interrupts pending
-
-

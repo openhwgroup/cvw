@@ -28,8 +28,8 @@ RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*A.*F.*);def TEST
 INIT_TESTS
 
 // Set the FS bits to 01, This makes sure SAILs mstatus matches wally in the signature
-li x29, 0x00002000 
-csrw mstatus, x29 
+li x29, 0x00002000
+csrw mstatus, x29
 
 TRAP_HANDLER m
 
@@ -72,7 +72,7 @@ addi x16, x16, 8
 
 li x29, 0x6000
 csrc mstatus, x29 // clear FS to be 00, disabling floating point
-fmv.s ft0, ft0 // should be an illegal instruction with fs set to 00 
+fmv.s ft0, ft0 // should be an illegal instruction with fs set to 00
 
 END_TESTS
 

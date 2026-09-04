@@ -3,9 +3,9 @@
 ###########################################
 ## extractArea.pl
 ##
-## Written: David_Harris@hmc.edu 
+## Written: David_Harris@hmc.edu
 ## Created: 19 Feb 2023
-## Modified: 
+## Modified:
 ##
 ## Purpose: Pull area statistics from run directory
 ##
@@ -16,15 +16,15 @@
 ##
 ## SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 ##
-## Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-## except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+## Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+## except in compliance with the License, or, at your option, the Apache License version 2.0. You
 ## may obtain a copy of the License at
 ##
 ## https:##solderpad.org/licenses/SHL-2.1/
 ##
-## Unless required by applicable law or agreed to in writing, any work distributed under the 
-## License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-## either express or implied. See the License for the specific language governing permissions 
+## Unless required by applicable law or agreed to in writing, any work distributed under the
+## License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+## either express or implied. See the License for the specific language governing permissions
 ## and limitations under the License.
 ################################################################################################
 
@@ -44,21 +44,21 @@ my $seqC = "Number of sequential cells:";
 my $bufC = "Number of buf/inv:";
 my $combC = "Number of combinational cells:";
 my @keywords = ("ifu", "ieu", "lsu", "hzu", "ebu.ebu", "priv.priv", "mdu.mdu", "fpu.fpu", "wallypipelinedcore", $macro, $seq, $buf, $comb, $macroC, $seqC, $bufC, $combC);
-my @keywordsp = ("ifu", "ieu", "lsu", "hzu", "ebu.ebu", "priv.priv", "mdu.mdu", "fpu.fpu", "wallypipelinedcore", 
+my @keywordsp = ("ifu", "ieu", "lsu", "hzu", "ebu.ebu", "priv.priv", "mdu.mdu", "fpu.fpu", "wallypipelinedcore",
                  "RAMs", "Flip-flops", "Inv/Buf", "Logic", "RAMs Cnt", "Flip-flops Cnt", "Inv/Buf Cnt", "Logic Cnt", "Total Cnt");
 my @configs = ("rv32e", "rv32i", "rv32imc", "rv32gc", "rv64i", "rv64gc");
 
 opendir(DIR, $dir) or die "Could not open $dir";
 
 while (my $filename = readdir(DIR)) {
-    if ($filename =~ /orig_tsmc28psyn/) { 
+    if ($filename =~ /orig_tsmc28psyn/) {
 #    if ($filename =~ /orig_sky90/) {
         &processRun("$dir/$filename");
     }
 }
 closedir(DIR);
 
-# print table of results 
+# print table of results
 printf("%20s\t", "");
 foreach my $config (@configs) {
     printf("%s\t", $config);
@@ -76,7 +76,7 @@ foreach my $kw (@keywordsp) {
             print "$area\t";
         } else {
             print("\t");
-        }        
+        }
     }
     print("\n");
 }
@@ -87,7 +87,7 @@ sub processRun {
     open(FILE, "$ffname") or die ("Could not read $ffname");
 
     # Extract configuration from fname;
-    $fname =~ /_([^_]*)_orig/; 
+    $fname =~ /_([^_]*)_orig/;
     my $config = $1;
     #print("Reading $config from $ffname\n");
 

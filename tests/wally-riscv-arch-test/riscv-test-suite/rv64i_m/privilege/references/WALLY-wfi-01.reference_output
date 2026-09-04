@@ -1,6 +1,6 @@
 00000aaa # writeback value of writing all 1's to mie
 00000000
-0007ec07 # value to indicate successful vectoring on m time interrupt 
+0007ec07 # value to indicate successful vectoring on m time interrupt
 00000000
 00000007 # mcause value from m time interrupt
 80000000

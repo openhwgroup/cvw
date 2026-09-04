@@ -14,5 +14,5 @@ all:	$(PROGS)
 %: %.c
 	$(CC) $(CFLAGS) $(IFLAGS) $(LFLAGS) -o $@ $< $(LIBS)
 
-clean: 
+clean:
 	rm -f $(PROGS)

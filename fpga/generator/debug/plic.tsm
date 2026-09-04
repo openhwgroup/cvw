@@ -20,13 +20,13 @@ state state_reset:
     else
         goto state_reset;
     endif
-    
+
 state state_1:
     if(wallypipelinedsoc/uncoregen.uncore/plic.plic/intInProgress == 12'h000) then
         goto state_trigger;
     else
         goto state_1;
     endif
-    
+
 state state_trigger:
     trigger;

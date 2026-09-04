@@ -16,7 +16,7 @@ set_input_delay -clock [get_clocks mmcm_clkout1] -min -add_delay 2.000 [get_port
 set_input_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 2.000 [get_ports {GPI[*]}]
 set_max_delay -from [get_ports {GPI[*]}] 10.000
 
-##### GPO #### 
+##### GPO ####
 set_property PACKAGE_PIN AT32 [get_ports {GPO[0]}]
 set_property PACKAGE_PIN AV34 [get_ports {GPO[1]}]
 set_property PACKAGE_PIN AY30 [get_ports {GPO[2]}]
@@ -249,4 +249,3 @@ set_max_delay -datapath_only -from [get_pins xlnx_ddr4_c0/inst/u_ddr4_mem_intfc/
 
 
 set_max_delay -from [get_pins {xlnx_ddr4_c0/inst/u_ddr4_mem_intfc/u_ddr_cal_top/cal_RESET_n_reg[0]/C}] -to [get_ports c0_ddr4_reset_n] 50.000
-

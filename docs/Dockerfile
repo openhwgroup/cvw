@@ -2,26 +2,26 @@
 ## Dockerfile
 ##
 ## Written: james.stine@okstate.edu 28 January 2023
-## Modified: 
+## Modified:
 ##
 ## Purpose: Dockerfile for Wally docker container creation
-## 
+##
 ## A component of the CORE-V-WALLY configurable RISC-V project.
 ## https://github.com/openhwgroup/cvw
-## 
+##
 ## Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 ##
 ## SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 ##
-## Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-## except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+## Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+## except in compliance with the License, or, at your option, the Apache License version 2.0. You
 ## may obtain a copy of the License at
 ##
 ## https:##solderpad.org#licenses#SHL-2.1#
 ##
-## Unless required by applicable law or agreed to in writing, any work distributed under the 
-## License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-## either express or implied. See the License for the specific language governing permissions 
+## Unless required by applicable law or agreed to in writing, any work distributed under the
+## License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+## either express or implied. See the License for the specific language governing permissions
 ## and limitations under the License.
 ################################################################################################
 # Compliance Development Environment Image
@@ -72,16 +72,6 @@ RUN git clone https://github.com/riscv/riscv-gnu-toolchain && \
     ./configure --prefix=${RISCV} --enable-multilib --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;" && \
     make --jobs && \
     make install
-
-# elf2hex
-ENV PATH=$RISCV/riscv-gnu-toolchain/bin:$PATH
-WORKDIR /opt/riscv
-RUN git clone https://github.com/sifive/elf2hex.git && \
-  cd elf2hex && \
-  autoreconf -i && \
-  ./configure --target=riscv64-unknown-elf --prefix=$RISCV && \
-  make && \
-  make install
 
 # QEMU
 WORKDIR /opt/riscv

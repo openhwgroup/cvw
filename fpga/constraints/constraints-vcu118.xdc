@@ -265,5 +265,3 @@ set_output_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 20.000 [get_po
 
 
 set_max_delay -from [get_pins {xlnx_ddr4_c0/inst/u_ddr4_mem_intfc/u_ddr_cal_top/cal_RESET_n_reg[0]/C}] -to [get_ports c0_ddr4_reset_n] 50.000
-
-

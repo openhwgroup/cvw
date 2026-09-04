@@ -5,10 +5,10 @@
 //
 // Purpose: Code to read GPT Partitions off of an SD card.
 //
-// 
+//
 //
 // A component of the Wally configurable RISC-V project.
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
@@ -37,7 +37,7 @@ int gpt_load_partitions() {
   // long int lba1_buf[block_size];
 
   BYTE lba1_buf[512];
-  
+
   int ret = 0;
   //ret = disk_read(/* BYTE * buf, LBA_t sector, UINT count, BYTE card_type */);
   print_time();

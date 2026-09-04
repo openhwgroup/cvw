@@ -1,7 +1,7 @@
 TARGETDIR	:= bin
 TARGET		:= $(TARGETDIR)/start
 ROOT		:= ..
-LIBRARY_DIRS	:= 
+LIBRARY_DIRS	:=
 LIBRARY_FILES	:=
 
 MARCH           :=-march=rv64imfdc

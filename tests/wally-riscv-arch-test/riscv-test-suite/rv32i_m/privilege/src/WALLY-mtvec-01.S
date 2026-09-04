@@ -30,7 +30,7 @@ INIT_TESTS
 
 CAUSE_TRAP_TRIGGERS // initialize code that will cause traps for consistent mtval addresses
 
-// test 5.3.1.5 Unvectored interrupt tests 
+// test 5.3.1.5 Unvectored interrupt tests
 
 TRAP_HANDLER m, VECTORED=0, EXT_SIGNATURE=1 // turn off vectored interrupts, while turning on recording of mstatus bits.
 

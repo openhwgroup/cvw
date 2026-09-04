@@ -36,8 +36,8 @@ li x28, 0x8
 csrs mstatus, x28 // set mstatus.MIE bit to 1
 WRITE_READ_CSR stimecmp, 0xFFFFFFFF // set timer to high value so it doesn't go off immediately
 WRITE_READ_CSR menvcfgh, 0x80000000 // Enable menvcfg.STCE
-WRITE_READ_CSR mie, 0xFFF // Enable interrupts from all sources 
-// test 5.3.1.4 Basic trap tests 
+WRITE_READ_CSR mie, 0xFFF // Enable interrupts from all sources
+// test 5.3.1.4 Basic trap tests
 
 // instr address misaligned instructions are excluded from this test since they are impossible to cause when compressed instructions are enabled.
 jal cause_instr_access
@@ -52,7 +52,7 @@ GOTO_S_MODE // Causes U mode ecall
 GOTO_M_MODE // Causes S mode ecall
 
 
-jal cause_s_soft_from_m_interrupt 
+jal cause_s_soft_from_m_interrupt
 jal cause_m_soft_interrupt
 jal cause_s_time_interrupt
 jal cause_m_time_interrupt
@@ -76,7 +76,7 @@ jal cause_ecall // M mode ecall
 
 jal cause_s_soft_from_m_interrupt // The delegated S mode interrupts should not fire since we're running in M mode.
 jal cause_m_soft_interrupt
-jal cause_s_time_interrupt 
+jal cause_s_time_interrupt
 jal cause_m_time_interrupt
 jal cause_s_ext_interrupt_GPIO
 jal cause_m_ext_interrupt
@@ -85,4 +85,3 @@ jal cause_m_ext_interrupt
 END_TESTS
 
 TEST_STACK_AND_DATA
-

@@ -21,7 +21,7 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-#include "WALLY-TEST-LIB-64.h" 
+#include "WALLY-TEST-LIB-64.h"
 RVTEST_ISA("RV64I_Zicsr_Zifencei")
 RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_1=True;def NO_SAIL=True",sv48)
 
@@ -44,13 +44,13 @@ test_cases:
 #
 #   Here is where the actual tests are held, or rather, what the actual tests do.
 #   each entry consists of 3 values that will be read in as follows:
-#   
+#
 #   '.8byte [x28 Value], [x29 Value], [x30 value]'
 #                     or
 #   '.8byte [address], [value], [test type]'
 #
 #   The encoding for x30 test type values can be found in the test handler in the framework file
-# 
+#
 # ---------------------------------------------------------------------------------------------
 
 
@@ -109,15 +109,15 @@ test_cases:
 .8byte 0x800F0AB8, 0x0880DEADBEEF0055, write64_test # 11.3.1.1.4 megapage
 .8byte 0x80201888, 0x0220DEADBEEF0099, write64_test # 11.3.1.1.4 kilopage
 .8byte 0x80099000, 0x0000806711100393, write64_test # 11.3.1.3.1 write executable code for "li x7, 0x111; ret"
-.8byte 0x80200400, 0x0000806711100393, write64_test # 11.3.1.3.2 write same executable code 
-.8byte 0x80200AC0, 0x0990DEADBEEF0033, write64_test # 11.3.1.3.2 
+.8byte 0x80200400, 0x0000806711100393, write64_test # 11.3.1.3.2 write same executable code
+.8byte 0x80200AC0, 0x0990DEADBEEF0033, write64_test # 11.3.1.3.2
 .8byte 0x80200130, 0x0110DEADBEEF0077, write64_test # 11.3.1.3.2
 .8byte 0x85212348, 0x0330DEADBEEF0440, write64_test # 11.3.1.3.3
 .8byte 0x87888000, 0x0000806711100393, write64_test # 11.3.1.3.5 write same executable code
-.8byte 0x80203658, 0xDEADBEEFDEADBEEF, write64_test # 11.3.1.3.7(a) 
-	
+.8byte 0x80203658, 0xDEADBEEFDEADBEEF, write64_test # 11.3.1.3.7(a)
+
 #.8byte 0x85bc0ab0, 0x0123456789abcdf0, write64_test # 11.3.1.1.4
-        
+
 # test 11.3.1.1.3 read values back from Paddrs without translation (this also verifies the previous test)
 .8byte 0x0, 0x0, goto_baremetal # satp.MODE = baremetal / no translation.
 .8byte 0x0, 0x0, goto_s_mode # change to S mode, 0xb written to output
@@ -146,7 +146,7 @@ test_cases:
 .8byte 0x80205000, 0x0, read64_test
 
 # test 11.3.1.2.3 write fault if PTE has W and ~R flags set
-.8byte 0x80202000, 0x0, write64_test 
+.8byte 0x80202000, 0x0, write64_test
 
 # test 11.3.1.2.4 Fault if last level PTE is a pointer
 .8byte 0x80200000, 0x0, read64_test
@@ -167,10 +167,10 @@ test_cases:
 
 # test 11.3.1.3.2 User flag == 1
 .8byte 0x80201AC0, 0x0990DEADBEEF0033, read64_test # read success when U=1, priv=U
-.8byte 0x80000000, 0x2, goto_s_mode 
+.8byte 0x80000000, 0x2, goto_s_mode
 .8byte 0x0, 0x3, write_mxr_sum                        # set sstatus.[MXR, SUM] = 11
 .8byte 0x80201130, 0x0110DEADBEEF0077, read64_test # read success when U=1, priv=S, sstatus.SUM=1
-.8byte 0x80201400, 0xbad, executable_test               # execute fault when U=1, priv=S (with any sstatus.SUM) 
+.8byte 0x80201400, 0xbad, executable_test               # execute fault when U=1, priv=S (with any sstatus.SUM)
 .8byte 0x0, 0x2, write_mxr_sum                        # set sstatus.[MXR, SUM] = 10.
 .8byte 0x80201AC0, 0x0990DEADBEEF0033, read64_test # read fault when U=1, priv=S, sstatus.SUM=0
 
@@ -188,7 +188,7 @@ test_cases:
 
 # test 11.3.1.3.5 eXecute flag
 # executes on pages with X = 1 already tested in 11.3.1.3.1
-.8byte 0x010087888000, 0x2, executable_test               # execute fault when X=0 
+.8byte 0x010087888000, 0x2, executable_test               # execute fault when X=0
 
 
 # In the following two tests, SVADU is supported, so the hardware handles the A/D bits
@@ -222,7 +222,7 @@ test_cases:
 # test 11.3.1.4.1 SATP ASID and PPN fields (test having two page tables with different ASID)
 // *** .8byte 0xFFFFFFFFFFFFF888, 0x0220DEADBEEF0099, write64_test # write identical value to global PTE to make sure it's still in the TLB
 .8byte 0x8000F, 0x11, goto_sv48 # go to SV39 on a second, very minimal page table
-.8byte 0x5BC0AB0, 0x0000DEADBEEF0000, read64_test # Read success of old written value from a new page table mapping 
+.8byte 0x5BC0AB0, 0x0000DEADBEEF0000, read64_test # Read success of old written value from a new page table mapping
 
 # test 11.3.1.4.2 Test Global mapping
 // ***.8byte 0x7FFFFFF888, 0x0220DEADBEEF0099, read64_test # read success of global PTE undefined in current mapping.
@@ -239,7 +239,7 @@ test_cases:
 
 # test 11.3.1.5.2 mstatus.mprv clearing
 # mstatus.mprv is already 1 from the last test so going to S mode should clear it with the mret
-.8byte 0x80000000, 0x1, goto_s_mode // This should zero out the mprv bit but now to read and write mstatus, we have to 
+.8byte 0x80000000, 0x1, goto_s_mode // This should zero out the mprv bit but now to read and write mstatus, we have to
 .8byte 0x80000000, 0x1, goto_m_mode // go back to m mode to allow us to reread mstatus.
 .8byte 0x0, 0x0, read_write_mprv // read what should be a zeroed out mprv value and then force it back to zero.
 
@@ -248,4 +248,3 @@ test_cases:
 
 # terminate tests
 .8byte 0x0, 0x0, terminate_test # brings us back into machine mode with a final ecall, writing 0x9 to the output.
-

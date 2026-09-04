@@ -22,7 +22,7 @@
 ///////////////////////////////////////////
 
 
-#include "WALLY-TEST-LIB-32.h" 
+#include "WALLY-TEST-LIB-32.h"
 
 RVTEST_ISA("RV32I_Zicsr_Zifencei")
 RVTEST_CASE(0,"//check ISA:=regex(.*32.*);check ISA:=regex(.*I.*); def Drvtest_mtrap_routine=True;def TEST_CASE_1=True;def NO_SAIL=True;",uart-timeout)
@@ -68,14 +68,14 @@ wait_for_timeout_loop:
 no_interrupt:
     li t2, 0xbad // interrupt not taken. write bad value to the output
     sw t2, 0(t1)
-    addi t1, t1, 4 
+    addi t1, t1, 4
     addi a6, a6, 4
     j end_of_section
 
 interrupt_success:
     li t2, 0x600d // interrupt successfully taken after some time. write good value to the output.
     sw t2, 0(t1)
-    addi t1, t1, 4 
+    addi t1, t1, 4
     addi a6, a6, 4
     j end_of_section
 
@@ -87,20 +87,20 @@ TEST_STACK_AND_DATA
 
         // in your isa
         // first claim the plic's uart interrupt by reading the claim register corresponding to 10 on context 0.
-        // then you'll read all entries in the fifo. 
+        // then you'll read all entries in the fifo.
         // then you'll write the completed plic register to 10 on context 0.
         // claim and completed have the same address.
         // then you'll return by mret.
 
-# trap_handler:   
+# trap_handler:
 #         // this will only get uart interrupts
 #         //li s0, plicBaseAddr
-#         addi s0, s0, 0x200004 // claim offset 
+#         addi s0, s0, 0x200004 // claim offset
 #         lw s1, 0(s0)
 
 #         // check that s1 is 10 and not something else
 #         // read uart rx fifo
-        
+
 
 #         // completed
 #         sw s1, 0(s0) // tells the plic the isr is done.

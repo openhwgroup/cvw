@@ -30,7 +30,7 @@ INIT_TESTS
 
 CAUSE_TRAP_TRIGGERS // initialize code that will cause traps for consistent mtval addresses
 
-// test 5.3.1.5 Unvectored interrupt tests 
+// test 5.3.1.5 Unvectored interrupt tests
 
 TRAP_HANDLER m, VECTORED=0, EXT_SIGNATURE=1 // necessary to handle changing modes
 TRAP_HANDLER s, VECTORED=0, EXT_SIGNATURE=1 // turn off vectored interrupts, while turning on recording of mstatus bits.
@@ -48,11 +48,11 @@ GOTO_S_MODE
 
 jal cause_s_soft_interrupt // *** only cause one interrupt since we just want to test the tvec csr
 
-GOTO_M_MODE 
+GOTO_M_MODE
 
 jal cause_s_soft_interrupt // set software interrupt pending without it firing so we can make it fire in U mode
 
-GOTO_U_MODE // Should cause software interrupt to fire off. 
+GOTO_U_MODE // Should cause software interrupt to fire off.
 
 END_TESTS
 

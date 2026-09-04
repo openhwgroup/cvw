@@ -88,6 +88,8 @@ module testbench;
   // Variables that can be overwritten with $value$plusargs at start of simulation
   string       TEST, ElfFile, sim_log_prefix;
   integer      INSTR_LIMIT;
+  string       UART_LOG_FILE;
+  integer      UART_LOG;
 
   // DUT signals
   logic [P.AHBW-1:0]    HRDATAEXT;
@@ -112,6 +114,7 @@ module testbench;
   logic        SDCIn;
   logic [3:0]  SDCCS;
   logic        SDCCLK;
+  logic [3:0]  PWMGPIO;
 
   logic        HREADY;
   logic        HSELEXT;
@@ -134,6 +137,10 @@ module testbench;
   logic PrevPCZero;
   logic RVVIStall;
 
+  integer elfFD;
+  byte header[0:4];
+  byte readBytes;
+
   initial begin
     // look for arguments passed to simulation, or use defaults
     if (!$value$plusargs("TEST=%s", TEST))
@@ -146,7 +153,26 @@ module testbench;
     if (!$value$plusargs("sim_log_prefix=%s", sim_log_prefix)) begin
         sim_log_prefix = "";  // Assign default value if not passed
     end
+    if (!$value$plusargs("UART_LOG=%d", UART_LOG))
+      UART_LOG = (TEST == "buildroot"); // Default to true for buildroot test, false otherwise
+    if (!$value$plusargs("UART_LOG_FILE=%s", UART_LOG_FILE))
+      UART_LOG_FILE = {"logs/", TEST, "_uart.out"};
     //$display("TEST = %s ElfFile = %s", TEST, ElfFile);
+
+    if (ElfFile != "none") begin // If Elf File passed in, check its bit width
+      elfFD = $fopen(ElfFile, "rb");
+      readBytes = $fread(header, elfFD);
+      $fclose(elfFD);
+
+      // If DUT and elf bit width misaligned, exit and return error message
+      if (header[4] == 1 & integer'(P.XLEN) == 64) begin
+        $display("Error: You can not run a 32 bit elf on a 64 bit DUT");
+        $finish;
+      end else if (header[4] == 2 & integer'(P.XLEN) == 32) begin
+        $display("Error: You can not run a 64 bit elf on a 32 bit DUT");
+        $finish;
+      end
+    end
 
     // pick tests based on modes supported
     //tests = '{};
@@ -155,7 +181,7 @@ module testbench;
         "arch64i":                                tests = arch64i;
         "arch64priv":                             tests = arch64priv;
         "arch64c":      if (P.ZCA_SUPPORTED)
-                          if (P.ZICSR_SUPPORTED)  
+                          if (P.ZICSR_SUPPORTED)
                             if (P.ZCD_SUPPORTED)  tests = {arch64c, arch64cpriv, arch64zcd};
                             else                  tests = {arch64c, arch64cpriv};
                           else                    tests = {arch64c};
@@ -184,7 +210,7 @@ module testbench;
         "arch64zbs":     if (P.ZBS_SUPPORTED)     tests = arch64zbs;
         "arch64zicboz":  if (P.ZICBOZ_SUPPORTED)  tests = arch64zicboz;
         "arch64zcb":     if (P.ZCB_SUPPORTED)     tests = arch64zcb;
-        "arch64zfh":     if (P.ZFH_SUPPORTED)     
+        "arch64zfh":     if (P.ZFH_SUPPORTED)
                            if (P.D_SUPPORTED)     tests = {arch64zfh, arch64zfh_d};
                            else                   tests = arch64zfh;
         "arch64zfh_fma": if (P.ZFH_SUPPORTED)     tests = arch64zfh_fma;
@@ -199,6 +225,13 @@ module testbench;
         "arch64zkne":    if (P.ZKNE_SUPPORTED)    tests = arch64zkne;
         "arch64zknh":    if (P.ZKNH_SUPPORTED)    tests = arch64zknh;
         "arch64pmp":     if (P.PMP_ENTRIES > 0)   tests = arch64pmp;
+        "arch64vm_sv39": if (P.SV39_SUPPORTED)    tests = arch64vm_sv39;
+        "arch64vm_sv48": if (P.SV48_SUPPORTED)    tests = arch64vm_sv48;
+        "arch64vm_sv48_a": if (P.SV48_SUPPORTED)    tests = arch64vm_sv48_a;
+        "arch64vm_sv48_b": if (P.SV48_SUPPORTED)    tests = arch64vm_sv48_b;
+        "arch64vm_sv39_isolate":     if (P.SV39_SUPPORTED) tests = arch64vm_sv39_isolate;
+        "arch64vm_sv48_mxr_isolate": if (P.SV48_SUPPORTED) tests = arch64vm_sv48_mxr_isolate;
+        "arch64vm_sv57": if (P.SV57_SUPPORTED)    tests = arch64vm_sv57;
       endcase
     end else begin // RV32
       case (TEST)
@@ -206,8 +239,8 @@ module testbench;
         "arch32i":                                tests = arch32i;
         "arch32priv":                             tests = arch32priv;
         "arch32c":      if (P.C_SUPPORTED)
-                          if (P.ZICSR_SUPPORTED)  
-                            if (P.ZCF_SUPPORTED)  
+                          if (P.ZICSR_SUPPORTED)
+                            if (P.ZCF_SUPPORTED)
                               if (P.ZCD_SUPPORTED)  tests = {arch32c, arch32cpriv, arch32zcf, arch32zcd};
                               else                tests = {arch32c, arch32cpriv, arch32zcf};
                             else                  tests = {arch32c, arch32cpriv};
@@ -234,7 +267,7 @@ module testbench;
         "arch32zbs":     if (P.ZBS_SUPPORTED)     tests = arch32zbs;
         "arch32zicboz":  if (P.ZICBOZ_SUPPORTED)  tests = arch32zicboz;
         "arch32zcb":     if (P.ZCB_SUPPORTED)     tests = arch32zcb;
-        "arch32zfh":     if (P.ZFH_SUPPORTED)     
+        "arch32zfh":     if (P.ZFH_SUPPORTED)
                            if (P.D_SUPPORTED)     tests = {arch32zfh, arch32zfh_d};
                            else                   tests = arch32zfh;
         "arch32zfh_fma": if (P.ZFH_SUPPORTED)     tests = arch32zfh_fma;
@@ -248,15 +281,11 @@ module testbench;
         "arch32zkne":    if (P.ZKNE_SUPPORTED)    tests = arch32zkne;
         "arch32zknh":    if (P.ZKNH_SUPPORTED)    tests = arch32zknh;
         "arch32pmp":     if (P.PMP_ENTRIES > 0)   tests = arch32pmp;
-        "arch32vm_sv32": if (P.VIRTMEM_SUPPORTED) tests = arch32vm_sv32;
+        "arch32vm_sv32": if (P.SV32_SUPPORTED)    tests = arch32vm_sv32;
       endcase
     end
     if (tests.size() == 0 & ElfFile == "none") begin
-      if (tests.size() == 0) begin
-        $display("TEST %s not supported in this configuration", TEST);
-      end else if(ElfFile == "none") begin
-        $display("ElfFile %s not found", ElfFile);
-      end
+      $display("TEST %s not supported in this configuration", TEST);
       $finish;
     end
     if (MAKE_VCD) begin
@@ -361,9 +390,9 @@ module testbench;
   //procedural blocks. VCS supports the dynamic types in the implicit sensitivity list of always @* block as specified in the Section 9.2 of the IEEE Standard SystemVerilog Specification 1800-2012.
   //To support memory load and dump task verbosity: flag : -diag sys_task_mem
   always @(*) begin
-  	begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
- 	end_signature_addr = ProgramAddrLabelArray["sig_end_canary"];
-  	signature_size = end_signature_addr - begin_signature_addr;
+    begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
+    end_signature_addr = ProgramAddrLabelArray["sig_end_canary"];
+    signature_size = end_signature_addr - begin_signature_addr;
   end
   logic EcallFaultM;
   if (P.ZICSR_SUPPORTED)
@@ -391,8 +420,6 @@ module testbench;
         memfilename = {RISCV_DIR, "/linux-testvectors/ram.bin"};
         elffilename = "buildroot";
         bootmemfilename = {RISCV_DIR, "/linux-testvectors/bootmem.bin"};
-        uartoutfilename = {"logs/", TEST, "_uart.out"};
-        uartoutfile = $fopen(uartoutfilename, "w"); // delete UART output file
         ProgramAddrMapFile = {RISCV_DIR, "/buildroot/output/images/disassembly/vmlinux.objdump.addr"};
         ProgramLabelMapFile = {RISCV_DIR, "/buildroot/output/images/disassembly/vmlinux.objdump.lab"};
       end else if(TEST == "fpga") begin
@@ -415,10 +442,16 @@ module testbench;
       // the addr of each label and fill the array. To expand, add more elements to this array
       // and initialize them to zero (also initialize them to zero at the start of the next test)
       updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, memfilename, WALLY_DIR, ProgramAddrLabelArray);
+      // Open UART log file if enabled (buildroot defaults to on, override with +UART_LOG=1)
+      if (UART_LOG) begin
+        uartoutfilename = UART_LOG_FILE;
+        uartoutfile = $fopen(uartoutfilename, "w");
+      end else
+        uartoutfile = 0;
     end
     if(Validate) begin
       if (PrevPCZero) totalerrors = totalerrors + 1; //  error if PC is stuck at zero
-      if (TEST == "buildroot")
+      if (uartoutfile)
         $fclose(uartoutfile);
       if (TEST == "embench") begin
         // Writes contents of begin_signature to .sim.output file
@@ -637,7 +670,7 @@ module testbench;
     .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT,
     .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
     .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
-    .UARTSin, .UARTSout, .SPIIn, .SPIOut, .SPICS, .SPICLK, .SDCIn, .SDCCmd, .SDCCS, .SDCCLK);
+    .UARTSin, .UARTSout, .SPIIn, .SPIOut, .SPICS, .SPICLK, .SDCIn, .SDCCmd, .SDCCS, .SDCCLK, .PWMGPIO);
 
   // generate clock to sequence tests
   always begin
@@ -691,7 +724,7 @@ module testbench;
   // watch for problems such as lockup, reading uninitialized memory, bad configs
   watchdog #(P.XLEN, 1000000) watchdog(.clk, .reset, .TEST);  // check if PCW is stuck
   ramxdetector #(P.XLEN, P.LLEN) ramxdetector(clk, dut.core.lsu.MemRWM[1], dut.core.lsu.LSULoadAccessFaultM, dut.core.lsu.ReadDataM,
-                                      dut.core.ifu.PCM, InstrM, dut.core.lsu.IEUAdrM, InstrMName);
+                                      dut.core.ifu.PCM, InstrM, dut.core.lsu.IEUAdrM, dut.core.lsu.StallW, InstrMName);
   riscvassertions       #(P) riscvassertions();     // check assertions for a legal architectural configuration
   riscvassertions_wally #(P) riscvassertions_wally();  // check assertions for a legal microarchitectural configuration
   loggers #(P, PrintHPMCounters, I_CACHE_ADDR_LOGGER, D_CACHE_ADDR_LOGGER, BPRED_LOGGER)
@@ -703,10 +736,10 @@ module testbench;
             .clk(clk), .ProgramAddrMapFile(ProgramAddrMapFile), .ProgramLabelMapFile(ProgramLabelMapFile));
   end
 
-  // Append UART output to file for tests
+  // Optionally log UART output to file (always on for buildroot, enable with +UART_LOG=1)
   if (P.UART_SUPPORTED) begin: uart_logger
     always @(posedge clk) begin
-      if (TEST == "buildroot") begin
+      if (uartoutfile) begin
         if (~dut.uncoregen.uncore.uartgen.uart.MEMWb & dut.uncoregen.uncore.uartgen.uart.uartPC.A == 3'b000 & ~dut.uncoregen.uncore.uartgen.uart.uartPC.DLAB) begin
           $fwrite(uartoutfile, "%c", dut.uncoregen.uncore.uartgen.uart.uartPC.Din); // append characters one at a time so we see a consistent log appearing during the run
           $fflush(uartoutfile);
@@ -727,7 +760,7 @@ module testbench;
   flopenr #(P.XLEN) PCMReg(clk, reset, ~dut.core.StallM, dut.core.PCE, PCM);
   always @(posedge clk) begin
     TestComplete <= ((InstrM == 32'h6f) & dut.core.InstrValidM ) |
-		   ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"] & dut.core.lsu.IEUAdrM != 0) & InstrMName == "SW"); // |
+       ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"] & dut.core.lsu.IEUAdrM != 0) & InstrMName == "SW"); // |
     //   (functionName.PCM == 0 & dut.core.ifu.InstrM == 0 & dut.core.InstrValidM & PrevPCZero));
     if (reset) PrevPCZero <= 0;
     else if (dut.core.InstrValidM) PrevPCZero <= (PCM == 0 & dut.core.ifu.InstrM == 0);
@@ -1015,7 +1048,7 @@ end
       if (signature[i] !== testbench.DCacheFlushFSM.ShadowRAM[testadr+i]) begin
         errors = errors+1;
         $display("  Error on test %s result %d: adr = %h sim (D$) %h signature = %h",
-			     TestName, i, (testadr+i)*(P.XLEN/8), testbench.DCacheFlushFSM.ShadowRAM[testadr+i], signature[i]);
+          TestName, i, (testadr+i)*(P.XLEN/8), testbench.DCacheFlushFSM.ShadowRAM[testadr+i], signature[i]);
         $stop; // if this is changed to $finish, wally-batch.do does not get to the next step to run coverage
       end
     end
@@ -1071,4 +1104,3 @@ task automatic updateProgramAddrLabelArray;
   /* verilator lint_on WIDTHTRUNC */
   /* verilator lint_on WIDTHEXPAND */
 endtask
-

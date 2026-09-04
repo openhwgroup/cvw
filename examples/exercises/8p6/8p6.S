@@ -9,7 +9,7 @@ rvtest_entry_point:
     la t0, trapstack    # address of trap stack
     csrw mscratch, t0   # mscratch = pointer to trap stack
 
-    li t0, 7        
+    li t0, 7
     li t1, 9
     mul t2, t0, t1      # try 7 * 9.  It will trap and invoke trap handler
 
@@ -155,8 +155,8 @@ exit:
     li t0, 3            # 1 for success, 3 for failure
     sw t0, 0(t1)        # send fail code
     j self_loop         # wait
-    
-.section .tohost 
+
+.section .tohost
 tohost:                 # write to HTIF
     .dword 0
 

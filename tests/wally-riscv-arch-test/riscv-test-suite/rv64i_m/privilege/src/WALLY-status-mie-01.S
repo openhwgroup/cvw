@@ -32,10 +32,10 @@ CAUSE_TRAP_TRIGGERS // initialize code that will cause traps for consistent mtva
 TRAP_HANDLER m, EXT_SIGNATURE=1
 
 li x28, 0x8
-csrs mstatus, x28 // set mstatus.MIE bit to 1 
+csrs mstatus, x28 // set mstatus.MIE bit to 1
 WRITE_READ_CSR mie, 0xFFF
 
-// test 5.3.1.6 Interrupt enabling and priority tests 
+// test 5.3.1.6 Interrupt enabling and priority tests
 
 jal cause_m_soft_interrupt /// only cause one interrupt because we just want to test the status stack
 

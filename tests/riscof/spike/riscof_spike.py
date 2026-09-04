@@ -155,7 +155,7 @@ class spike(pluginTemplate):
           # convert from G to bytes: g = 2^(G+2) bytes
           self.granularity = pow(2, ispec['PMP']['pmp-grain']+2)
       else:
-        self.granularity = 4  # default granularity is 4 bytes 
+        self.granularity = 4  # default granularity is 4 bytes
 
     def runTests(self, testList):
 
@@ -211,7 +211,7 @@ class spike(pluginTemplate):
                 reference_output = re.sub("/src/","/references/", re.sub(".S",".reference_output", test))
                 simcmd = f'cut -c-{8:g} {reference_output} > {sig_file}' #use cut to remove comments when copying
             else:
-                simcmd = self.dut_exe + f' {"--misaligned" if self.xlen == "64" else ""} --isa={self.isa} --pmpgranularity={self.granularity} +signature={sig_file} +signature-granularity=4 {elf}'
+                simcmd = self.dut_exe + f' --isa={self.isa}{"_zicclsm" if self.xlen == "64" and "zicclsm" not in self.isa else ""} --pmpgranularity={self.granularity} +signature={sig_file} +signature-granularity=4 {elf}'
           else:
             simcmd = 'echo "NO RUN"'
 
@@ -231,7 +231,7 @@ class spike(pluginTemplate):
       #make.execute_all(self.work_dir)
       # DH 7/26/22 increase timeout to 1800 seconds so sim will finish on slow machines
       # DH 5/17/23 increase timeout to 3600 seconds
-      make.execute_all(self.work_dir, timeout = 3600) 
+      make.execute_all(self.work_dir, timeout = 3600)
 
 
       # if target runs are not required then we simply exit as this point after running all

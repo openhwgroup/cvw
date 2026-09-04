@@ -21,6 +21,6 @@ int pre_main(int argc, char *argv[]) {
   brcnt1 = readPerfCnt(BR_DIR_COUNT, 0);
   bpmp_diff = bpmp1 - bpmp0;
   brcnt_diff = brcnt1 - brcnt0;
-  
+
   return res;
 }

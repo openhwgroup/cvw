@@ -31,7 +31,7 @@ INIT_TESTS
 CAUSE_TRAP_TRIGGERS // initialize code that will cause traps for consistent mtval addresses
 
 TRAP_HANDLER m, EXT_SIGNATURE=1 // necessary so we can go to S mode
-TRAP_HANDLER s, EXT_SIGNATURE=1 // necessary to handle s mode interrupts. 
+TRAP_HANDLER s, EXT_SIGNATURE=1 // necessary to handle s mode interrupts.
 
 li x28, 0x2
 csrs sstatus, x28 // set sstatus.SIE bit to 1
@@ -40,11 +40,11 @@ csrc mstatus, x28 // clear mstatus.MIE bit
 WRITE_READ_CSR mie, 0xFFF // enable all interrupts, including supervisor ones
 WRITE_READ_CSR mideleg 0xFFFF // delegate all interrupts to S mode.
 
-// test 5.3.1.6 Interrupt enabling and priority tests 
+// test 5.3.1.6 Interrupt enabling and priority tests
 
 GOTO_S_MODE
 
-// Cause interrupt, ensuring that status.sie = 0 , status.spie = 1, and status.spp = 1 during trap handling 
+// Cause interrupt, ensuring that status.sie = 0 , status.spie = 1, and status.spp = 1 during trap handling
 jal cause_s_soft_interrupt // *** only cause one interrupt because we just want to test the status stack
 
 li x28, 0x2

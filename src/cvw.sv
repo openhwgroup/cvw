@@ -11,15 +11,15 @@
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -41,7 +41,7 @@ typedef struct packed {
   logic         IEEE754;  // IEEE754 NaN handling (0 = use RISC-V NaN propagation instead)
   int           MISA;     // Machine Instruction Set Architecture
   int           AHBW;     // AHB bus width (usually = XLEN)
-  int           RAM_LATENCY; // Latency to stress AHB 
+  int           RAM_LATENCY; // Latency to stress AHB
   logic         BURST_EN; // Support AHB Burst Mode
 
   // RISC-V Features
@@ -54,18 +54,22 @@ typedef struct packed {
   logic         ZFA_SUPPORTED;
   logic         SSTC_SUPPORTED;
   logic         VIRTMEM_SUPPORTED;
+  logic         SVPBMT_SUPPORTED;
+  logic         SVNAPOT_SUPPORTED;
+  logic         SVINVAL_SUPPORTED;
+  logic         SVADU_SUPPORTED;
+  logic         SV32_SUPPORTED;
+  logic         SV39_SUPPORTED;
+  logic         SV48_SUPPORTED;
+  logic         SV57_SUPPORTED;
   logic         VECTORED_INTERRUPTS_SUPPORTED;
   logic         BIGENDIAN_SUPPORTED;
-  logic         SVADU_SUPPORTED;
   logic         ZMMUL_SUPPORTED;
   logic         ZICBOM_SUPPORTED;
   logic         ZICBOZ_SUPPORTED;
   logic         ZICBOP_SUPPORTED;
   logic         ZICCLSM_SUPPORTED;
   logic         ZICOND_SUPPORTED;
-  logic         SVPBMT_SUPPORTED;
-  logic         SVNAPOT_SUPPORTED;
-  logic         SVINVAL_SUPPORTED;
   logic         ZAAMO_SUPPORTED;
   logic         ZALRSC_SUPPORTED;
 
@@ -95,7 +99,7 @@ typedef struct packed {
 
 // Legal number of PMP entries are 0, 16, or 64
   int           PMP_ENTRIES;
-  int           PMP_G; // grain 
+  int           PMP_G; // grain
 
 // Address space
   logic [63:0]  RESET_VECTOR;
@@ -141,6 +145,10 @@ typedef struct packed {
   logic         SPI_SUPPORTED;
   logic [63:0]  SPI_BASE;
   logic [63:0]  SPI_RANGE;
+  logic         PWM_SUPPORTED;
+  logic [63:0]  PWM_BASE;
+  logic [63:0]  PWM_RANGE;
+
 
 // Test modes
 
@@ -149,7 +157,8 @@ typedef struct packed {
   logic         SPI_LOOPBACK_TEST;
 
 // Hardware configuration
-  int           UART_PRESCALE ;
+  int           UART_PRESCALE;
+  int           PWM_WIDTH;
 
 // Interrupt configuration
   int           PLIC_NUM_SRC;
@@ -158,6 +167,7 @@ typedef struct packed {
   int           PLIC_UART_ID;
   int           PLIC_SPI_ID;
   int           PLIC_SDC_ID;
+  int           PLIC_PWM_ID;
 
   logic                BPRED_SUPPORTED;
   logic [31:0]         BPRED_TYPE;
@@ -213,9 +223,10 @@ typedef struct packed {
 // constants to check SATP_MODE against
 // defined in Table 4.3 of the privileged spec
   logic [3:0] NO_TRANSLATE;
-  logic [3:0] SV32; 
+  logic [3:0] SV32;
   logic [3:0] SV39;
   logic [3:0] SV48;
+  logic [3:0] SV57;
 
 // macros to define supported modes
   logic A_SUPPORTED;
@@ -229,7 +240,7 @@ typedef struct packed {
   logic Q_SUPPORTED;
   logic S_SUPPORTED;
   logic U_SUPPORTED;
-  
+
 // logarithm of XLEN, used for number of index bits to select
   int LOG_XLEN;
 

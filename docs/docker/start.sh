@@ -1,3 +1,4 @@
+#!/bin/bash
 if [ -n "$USE_PODMAN" ]; then
     DOCKER_EXEC=$(which podman)
 else

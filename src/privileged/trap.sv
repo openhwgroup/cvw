@@ -5,30 +5,30 @@
 // Modified: dottolia@hmc.edu 14 April 2021: Add support for vectored interrupts
 //
 // Purpose: Handle Traps: Exceptions and Interrupts
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module trap import cvw::*;  #(parameter cvw_t P) (
-  input  logic                 reset, 
+  input  logic                 reset,
   input  logic                 InstrMisalignedFaultM, InstrAccessFaultM, HPTWInstrAccessFaultM, HPTWInstrPageFaultM, IllegalInstrFaultM,
   input  logic                 BreakpointFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM,
   input  logic                 LoadAccessFaultM, StoreAmoAccessFaultM, EcallFaultM, InstrPageFaultM,
@@ -45,7 +45,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   output logic                 ExceptionM,                                      // exception is occurring
   output logic                 IntPendingM,                                     // Interrupt is pending, might occur if enabled
   output logic                 DelegateM,                                       // Delegate trap to supervisor handler
-  output logic [3:0]           CauseM                                           // trap cause
+  output logic [4:0]           CauseM                                           // trap cause
 );
 
   logic                        MIntGlobalEnM, SIntGlobalEnM;                    // Global interrupt enables
@@ -67,17 +67,17 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   assign Committed     = CommittedM | CommittedF;
   assign EnabledIntsM  = (MIntGlobalEnM ? PendingIntsM & ~MIDELEG_REGW : '0) | (SIntGlobalEnM ? PendingIntsM & MIDELEG_REGW : '0);
   assign ValidIntsM    = Committed ? '0 : EnabledIntsM;
-  assign InterruptM    = (|ValidIntsM) & InstrValidM & (~wfiM | wfiW); // suppress interrupt if the memory system has partially processed a request. Delay interrupt until wfi is in the W stage. 
+  assign InterruptM    = (|ValidIntsM) & InstrValidM & (~wfiM | wfiW); // suppress interrupt if the memory system has partially processed a request. Delay interrupt until wfi is in the W stage.
   // wfiW is to support possible but unlikely back to back wfi instructions. wfiM would be high in the M stage, while also in the W stage.
-  assign DelegateM     = P.S_SUPPORTED & (InterruptM ? MIDELEG_REGW[CauseM] : MEDELEG_REGW[CauseM]) & 
+  assign DelegateM     = P.S_SUPPORTED & (InterruptM ? MIDELEG_REGW[CauseM[3:0]] : MEDELEG_REGW[CauseM[3:0]]) &
                      (PrivilegeModeW == P.U_MODE | PrivilegeModeW == P.S_MODE);
 
   ///////////////////////////////////////////
-  // Trigger Traps 
+  // Trigger Traps
   // According to RISC-V Spec Section 1.6, exceptions are caused by instructions.  Interrupts are external asynchronous.
   // Traps are the union of exceptions and interrupts.
   ///////////////////////////////////////////
-  
+
   assign BothInstrAccessFaultM = InstrAccessFaultM | HPTWInstrAccessFaultM;
   assign BothInstrPageFaultM = InstrPageFaultM | HPTWInstrPageFaultM;
   // coverage off -item e 1 -fecexprrow 2
@@ -95,29 +95,33 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   ///////////////////////////////////////////
 
   always_comb
-    if      (reset)                    CauseM = 4'd0; // hard reset 3.3
-    else if (ValidIntsM[11])           CauseM = 4'd11; // Machine External Int
-    else if (ValidIntsM[3])            CauseM = 4'd3;  // Machine Sw Int
-    else if (ValidIntsM[7])            CauseM = 4'd7;  // Machine Timer Int
-    else if (ValidIntsM[9])            CauseM = 4'd9;  // Supervisor External Int 
-    else if (ValidIntsM[1])            CauseM = 4'd1;  // Supervisor Sw Int       
-    else if (ValidIntsM[5])            CauseM = 4'd5;  // Supervisor Timer Int    
-    else if (BothInstrPageFaultM)      CauseM = 4'd12;
-    else if (BothInstrAccessFaultM)    CauseM = 4'd1;
-    else if (IllegalInstrFaultM)       CauseM = 4'd2;
+    if      (reset)                                           CauseM = 5'd0; // hard reset 3.3
+    else if (ValidIntsM[11])                                  CauseM = 5'd11; // Machine External Int
+    else if (ValidIntsM[3])                                   CauseM = 5'd3;  // Machine Sw Int
+    else if (ValidIntsM[7])                                   CauseM = 5'd7;  // Machine Timer Int
+    // if any of the interrupts are delegated to S mode they would be moved to lower priority than the undelegated ones
+    else if (~MIDELEG_REGW[9] & ValidIntsM[9])                CauseM = 5'd9;  // not delegated Supervisor External Int
+    else if (~MIDELEG_REGW[1] & ValidIntsM[1])                CauseM = 5'd1;  // not delegated Supervisor Sw Int
+    else if (~MIDELEG_REGW[5] & ValidIntsM[5])                CauseM = 5'd5;  // not delegated Supervisor Timer Int
+    else if (ValidIntsM[9])                                   CauseM = 5'd9;  // delegated Supervisor External Int
+    else if (ValidIntsM[1])                                   CauseM = 5'd1;  // delegated Supervisor Sw Int
+    else if (ValidIntsM[5])                                   CauseM = 5'd5;  // delegated Supervisor Timer Int
+    else if (BothInstrPageFaultM)                             CauseM = 5'd12;
+    else if (BothInstrAccessFaultM)                           CauseM = 5'd1;
+    else if (IllegalInstrFaultM)                              CauseM = 5'd2;
     // coverage off
     // Misaligned instructions cannot occur in rv64gc
-    else if (InstrMisalignedFaultM)    CauseM = 4'd0;
+    else if (InstrMisalignedFaultM)                           CauseM = 5'd0;
     // coverage on
-    else if (BreakpointFaultM)         CauseM = 4'd3;
-    else if (EcallFaultM)              CauseM = {2'b10, PrivilegeModeW};
-    else if (StoreAmoMisalignedFaultM & ~P.ZICCLSM_SUPPORTED) CauseM = 4'd6;  // misaligned faults are higher priority if they always are taken
-    else if (LoadMisalignedFaultM & ~P.ZICCLSM_SUPPORTED)     CauseM = 4'd4;
-    else if (StoreAmoPageFaultM)       CauseM = 4'd15;
-    else if (LoadPageFaultM)           CauseM = 4'd13;
-    else if (StoreAmoAccessFaultM)     CauseM = 4'd7;
-    else if (LoadAccessFaultM)         CauseM = 4'd5;
-    else if (StoreAmoMisalignedFaultM & P.ZICCLSM_SUPPORTED) CauseM = 4'd6; // See priority in Privileged Spec 3.1.15
-    else if (LoadMisalignedFaultM & P.ZICCLSM_SUPPORTED)     CauseM = 4'd4;
-    else                               CauseM = 4'd0;
+    else if (BreakpointFaultM)                                CauseM = 5'd3;
+    else if (EcallFaultM)                                     CauseM = {3'b010, PrivilegeModeW};
+    else if (StoreAmoMisalignedFaultM & ~P.ZICCLSM_SUPPORTED) CauseM = 5'd6;  // misaligned faults are higher priority if they always are taken
+    else if (LoadMisalignedFaultM & ~P.ZICCLSM_SUPPORTED)     CauseM = 5'd4;
+    else if (StoreAmoPageFaultM)                              CauseM = 5'd15;
+    else if (LoadPageFaultM)                                  CauseM = 5'd13;
+    else if (StoreAmoAccessFaultM)                            CauseM = 5'd7;
+    else if (LoadAccessFaultM)                                CauseM = 5'd5;
+    else if (StoreAmoMisalignedFaultM & P.ZICCLSM_SUPPORTED)  CauseM = 5'd6; // See priority in Privileged Spec 3.1.15
+    else if (LoadMisalignedFaultM & P.ZICCLSM_SUPPORTED)      CauseM = 5'd4;
+    else                                                      CauseM = 5'd0;
 endmodule

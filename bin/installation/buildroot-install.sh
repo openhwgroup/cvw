@@ -4,7 +4,7 @@
 ##
 ## Written: Jordan Carlin, jcarlin@hmc.edu
 ## Created: May 30 2025
-## Modified: 
+## Modified:
 ##
 ## Purpose: Buildroot and Linux testvector installation script
 ##
@@ -34,6 +34,7 @@ if [ -z "$FAMILY" ]; then
     WALLY="$(dirname $(dirname "$dir"))"
     export WALLY
     source "${dir}"/../wally-environment-check.sh
+    source "${dir}"/activate-tools.sh
 fi
 
 # Buildroot and Linux testvectors

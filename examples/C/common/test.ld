@@ -63,4 +63,3 @@ SECTIONS
   /* End of uninitialized data segment */
   _end = .;
 }
-

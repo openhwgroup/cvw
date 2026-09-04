@@ -30,14 +30,14 @@ INIT_TESTS
 
 TRAP_HANDLER m, EXT_SIGNATURE=1
 
-// test 5.3.1.6 Interrupt enabling and priority tests 
+// test 5.3.1.6 Interrupt enabling and priority tests
 
 li x28, 0x400000
 csrs mstatus, x28 // Set mstatus.tsr to 1.
 
 GOTO_S_MODE
 
-sret // attempt to run sret instruction. 
+sret // attempt to run sret instruction.
 // should cause illegal instruction exception despite being in s mode
 
 END_TESTS

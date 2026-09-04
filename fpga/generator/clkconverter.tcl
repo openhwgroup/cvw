@@ -14,12 +14,12 @@ if {$boardName!="ArtyA7"} {
 create_ip -name axi_clock_converter -vendor xilinx.com -library ip -module_name $ipName
 
 set_property -dict [list CONFIG.ACLK_ASYNC {1} \
-			CONFIG.PROTOCOL {AXI4} \
-			CONFIG.ADDR_WIDTH {32} \
-			CONFIG.DATA_WIDTH {64} \
-			CONFIG.ID_WIDTH {4} \
-		        CONFIG.MI_CLK.FREQ_HZ {208333333} \
-			CONFIG.SI_CLK.FREQ_HZ {10000000}] [get_ips $ipName]
+      CONFIG.PROTOCOL {AXI4} \
+      CONFIG.ADDR_WIDTH {32} \
+      CONFIG.DATA_WIDTH {64} \
+      CONFIG.ID_WIDTH {4} \
+      CONFIG.MI_CLK.FREQ_HZ {208333333} \
+      CONFIG.SI_CLK.FREQ_HZ {10000000}] [get_ips $ipName]
 
 generate_target {instantiation_template} [get_files ./$ipName.srcs/sources_1/ip/$ipName/$ipName.xci]
 generate_target all [get_files  ./$ipName.srcs/sources_1/ip/$ipName/$ipName.xci]

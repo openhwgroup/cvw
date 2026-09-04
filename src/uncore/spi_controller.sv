@@ -5,36 +5,36 @@
 // Created: October 28th, 2024
 //
 // Purpose: Controller logic for SPI
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-24 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module spi_controller (                                            
+module spi_controller (
   input logic        PCLK,
   input logic        PRESETn,
 
   // Start Transmission
   input logic        TransmitStart,
   input logic        TransmitRegLoaded,
-  input logic        ResetSCLKenable, 
+  input logic        ResetSCLKenable,
 
   // Registers
   input logic [11:0] SckDiv,
@@ -51,21 +51,21 @@ module spi_controller (
   output logic       SCLKenable,
   output logic       ShiftEdge,
   output logic       SampleEdge,
-  output logic       EndOfFrame, 
+  output logic       EndOfFrame,
   output logic       Transmitting,
   output logic       InactiveState,
   output logic       SPICLK
 );
-  
+
   // CSMode Stuff
   localparam         HOLDMODE = 2'b10;
   localparam         AUTOMODE = 2'b00;
-  localparam         OFFMODE = 2'b11;         
+  localparam         OFFMODE = 2'b11;
 
   // FSM States
   typedef enum       logic [2:0] {INACTIVE, CSSCK, TRANSMIT, SCKCS, HOLD, INTERCS, INTERXFR} statetype;
   statetype CurrState, NextState;
-  
+
   // SCLKenable stuff
   logic [11:0]       DivCounter;
   logic              SCK;
@@ -82,7 +82,7 @@ module spi_controller (
   logic       LastBit;
 
   // Transmit Stuff
-  logic       ContinueTransmit;       
+  logic       ContinueTransmit;
   logic       EndTransmission;
   // logic       TransmitRegLoaded; // TODO: Could be replaced by TransmitRegLoaded?
   logic       NextEndDelay;
@@ -94,22 +94,22 @@ module spi_controller (
   logic [7:0] intercs;
   logic [7:0] interxfr;
   logic       Phase;
-  
+
   logic       HasCSSCK;
   logic       HasSCKCS;
   logic       HasINTERCS;
   logic       HasINTERXFR;
-  
+
   logic       EndOfCSSCK;
   logic       EndOfSCKCS;
   logic       EndOfINTERCS;
   logic       EndOfINTERXFR;
-  logic       EndOfDelay;       
-  
+  logic       EndOfDelay;
+
   logic [7:0] DelayCounter;
 
   logic       DelayState;
-  
+
   // Convenient Delay Reg Names
   assign cssck = Delay0[7:0];
   assign sckcs = Delay0[15:8];
@@ -129,7 +129,7 @@ module spi_controller (
   assign EndOfINTERXFR = (DelayCounter == interxfr) & (CurrState == INTERXFR);
 
   assign EndOfDelay = EndOfCSSCK | EndOfSCKCS | EndOfINTERCS | EndOfINTERXFR;
-  
+
   // Clock Signal Stuff -----------------------------------------------
   // SPI enable generation, where SCLK = PCLK/(2*(SckDiv + 1))
   // Asserts SCLKenable at the rising and falling edge of SCLK by counting from 0 to SckDiv
@@ -139,7 +139,7 @@ module spi_controller (
   assign ContinueTransmit = ~TransmitFIFOEmpty & EndOfFrame;
   assign EndTransmission = TransmitFIFOEmpty & EndOfFrame;
   assign Phase = SckMode[0];
-  
+
   always_ff @(posedge PCLK) begin
     if (~PRESETn) begin
       DivCounter <= 12'b0;
@@ -148,7 +148,7 @@ module spi_controller (
       BitNum <= 4'h0;
       DelayCounter <= 0;
     end else begin
-      // SCK logic for delay times  
+      // SCK logic for delay times
       if (TransmitStart & ~DelayState) begin
         SCK <= 0;
       end else if (SCLKenable) begin
@@ -161,7 +161,7 @@ module spi_controller (
       end else if ((SCLKenable & EndOfDelay) | Transmitting) begin
         DelayCounter <= 8'd0;
       end
-      
+
       // SPICLK Logic
       // We only want to trigger the clock during Transmission.
       // If Phase == 1, then we want to trigger as soon as NextState == TRANSMIT
@@ -172,26 +172,26 @@ module spi_controller (
         end else if (SCLKenable) begin
         SPICLK <= (NextState == TRANSMIT) & (~Phase & Transmitting | Phase) ? ~SPICLK : SckMode[1];
       end
-      
-      // Reset divider 
+
+      // Reset divider
       if (SCLKenable | (TransmitStart & ~DelayState) | ResetSCLKenable) begin
         DivCounter <= 12'b0;
       end else begin
         DivCounter <= DivCounter + 12'd1;
       end
-      
+
       // Increment BitNum
       if (ShiftEdge & Transmitting) begin
         BitNum <= BitNum + 4'd1;
       end else if (EndOfFrame) begin
-        BitNum <= 4'b0;  
+        BitNum <= 4'b0;
       end
     end
   end
 
   // The very last bit in a frame of any length.
   assign LastBit = (BitNum == FrameLength - 4'b1);
-  
+
   // Any SCLKenable pulse aligns with leading or trailing edge during
   // Transmission. We can use this signal as the basis for ShiftEdge
   // and SampleEdge.
@@ -212,12 +212,12 @@ module spi_controller (
       ShiftEdge <= 0;
       SampleEdge <= 0;
       EndOfFrame <= 0;
-    end else begin 
+    end else begin
       ShiftEdge <= (InvertClock ^ SPICLK) & ShiftEdgePulse;
       SampleEdge <= (InvertClock ^ ~SPICLK) & SampleEdgePulse;
       EndOfFrame <= (InvertClock ^ SPICLK) & EndOfFramePulse;
-    end 
-  end 
+    end
+  end
 
   always_ff @(posedge PCLK) begin
     if (~PRESETn) begin
@@ -226,9 +226,9 @@ module spi_controller (
       CurrState <= NextState;
     end
   end
-  
+
   always_comb begin
-    case (CurrState)  
+    case (CurrState)
       INACTIVE: if (TransmitRegLoaded) begin
                   if (~HasCSSCK) NextState = TRANSMIT;
                   else NextState = CSSCK;
@@ -239,13 +239,13 @@ module spi_controller (
              else NextState = CSSCK;
       TRANSMIT: begin // TRANSMIT case --------------------------------
         case(CSMode)
-          AUTOMODE: begin  
+          AUTOMODE: begin
             if (EndTransmission & ~HasSCKCS) NextState = INACTIVE;
             else if (EndOfFrame & HasSCKCS) NextState = SCKCS;
             else if (EndOfFrame & ~HasSCKCS) NextState = INTERCS;
             else NextState = TRANSMIT;
           end
-          HOLDMODE: begin  
+          HOLDMODE: begin
             if (EndOfFrame & HasINTERXFR) NextState = INTERXFR;
             else if (EndTransmission) NextState = HOLD;
             else NextState = TRANSMIT;
@@ -279,7 +279,7 @@ module spi_controller (
             else NextState = TRANSMIT;
           end else NextState = INACTIVE;
         end else begin
-          NextState = INTERCS;  
+          NextState = INTERCS;
         end
       end
       INTERXFR: begin // INTERXFR case --------------------------------
@@ -287,7 +287,7 @@ module spi_controller (
           if (TransmitRegLoaded)  NextState = TRANSMIT;
           else NextState = HOLD;
         end else begin
-          NextState = INTERXFR;  
+          NextState = INTERXFR;
         end
       end
       default: begin
@@ -299,5 +299,5 @@ module spi_controller (
   assign Transmitting = CurrState == TRANSMIT;
   assign DelayState = (CurrState == CSSCK | CurrState == SCKCS | CurrState == INTERCS | CurrState == INTERXFR);
   assign InactiveState = CurrState == INACTIVE | CurrState == INTERCS;
-  
+
 endmodule

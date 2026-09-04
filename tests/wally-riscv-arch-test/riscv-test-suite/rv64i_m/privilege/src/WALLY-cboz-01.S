@@ -1,6 +1,6 @@
 ///////////////////////////////////////////
 //
-// WALLY-cache-management-tests 
+// WALLY-cache-management-tests
 // invalidate, clean, and flush
 //
 // Author: Rose Thompson <rose@rosethompson.net>
@@ -11,14 +11,14 @@
 # Purpose: Tests the Zicboz cache instruction which all operate on cacheline
 #          granularity blocks of memory.  The instruction cbo.zero allocates a cacheline
 #          and writes 0 to each byte.  A dirty cacheline is overwritten, any data in main
-#          memory is over written.        
+#          memory is over written.
 # -----------
 # Copyright (c) 2020. RISC-V International. All rights reserved.
 # SPDX-License-Identifier: BSD-3-Clause
 # -----------
 #
 # This assembly file tests the cbo.zero instruction of the RISC-V Zicboz extension.
-# 
+#
 
 #include "model_test.h"
 #include "arch_test.h"
@@ -26,7 +26,7 @@ RVTEST_ISA("RV64I_Zicboz_Zicbom")
 # Test code region
 .section .text.init
 .globl rvtest_entry_point
-	
+
 rvtest_entry_point:
 RVMODEL_BOOT
 RVTEST_CODE_BEGIN
@@ -34,7 +34,7 @@ RVTEST_CODE_BEGIN
 RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_1=True;",cbo.zero)
 
 RVMODEL_IO_WRITE_STR(x31, "# Test Begin\n")
-	
+
 CBOZTest:
         # *** TODO
         # first need to discover the length of the cacheline.
@@ -44,7 +44,7 @@ CBOZTest:
         #sd s0, 0(sp)
         #sd ra, 8(sp)
 
-	la s0, signature
+        la s0, signature
 
         ################################################################################
         # Zero cache line hit overwrites
@@ -57,14 +57,14 @@ CBOZTest:
         # 4. Verify the second region is all zero.
 
         # step 1
-CBOZTest_zero_step1: 
+CBOZTest_zero_step1:
         la a0, SourceData
         la a1, Destination1
         li a2, 64
         jal ra, memcpy8
 
         # step 2
-CBOZTest_zero_step2: 
+CBOZTest_zero_step2:
         la a0, SourceData
         la a1, Destination1
         li a2, 64
@@ -73,7 +73,7 @@ CBOZTest_zero_step2:
         addi s0, s0, 8
 
         # step 3
-CBOZTest_zero_step3: 
+CBOZTest_zero_step3:
         la a1, Destination1
         cbo.zero (a1)
         la a1, Destination1+64
@@ -91,7 +91,7 @@ CBOZTest_zero_step3:
         la a1, Destination1+448
         cbo.zero (a1)
 
-CBOZTest_zero_step4:    
+CBOZTest_zero_step4:
         # step 4  (should be zero)
         la a0, ZeroData
         la a1, Destination1
@@ -112,14 +112,14 @@ CBOZTest_zero_step4:
         # 5. Verify the second region is zero
 
         # step 1
-CBOZTest_miss_zero_step1: 
+CBOZTest_miss_zero_step1:
         la a0, SourceData
         la a1, Destination1
         li a2, 8
         jal ra, memcpy8
 
         # step 2
-CBOZTest_miss_zero_step2: 
+CBOZTest_miss_zero_step2:
         la a0, SourceData
         la a1, Destination1
         li a2, 8
@@ -128,12 +128,12 @@ CBOZTest_miss_zero_step2:
         addi s0, s0, 8
 
         # step 3
-CBOZTest_miss_zero_step3: 
+CBOZTest_miss_zero_step3:
         la a1, Destination1
         cbo.flush (a1)
         cbo.zero (a1)
 
-CBOZTest_miss_zero_step4:    
+CBOZTest_miss_zero_step4:
         # step 4  (should be Invalid)
         la a0, ZeroData
         la a1, Destination1
@@ -141,7 +141,7 @@ CBOZTest_miss_zero_step4:
         jal ra, memcmp8
         sd a0, 0(s0)    # should be -1
         addi s0, s0, 8
-	
+
         ################################################################################
         # Verify cbo.zero miss with eviction overwrites
         ################################################################################
@@ -154,38 +154,38 @@ CBOZTest_miss_zero_step4:
         # 5. Verify the second region is zero
 
         # step 1
-CBOZTest_eviction_zero_step1_0: 
+CBOZTest_eviction_zero_step1_0:
         la a0, SourceData
         la a1, Destination2
         li a2, 8
         jal ra, memcpy8
 
-CBOZTest_eviction_zero_step2_4096: 
+CBOZTest_eviction_zero_step2_4096:
         la a0, SourceData+8
         la a1, Destination2+4096
         li a2, 8
         jal ra, memcpy8
 
-CBOZTest_eviction_zero_step2_8192: 
+CBOZTest_eviction_zero_step2_8192:
         la a0, SourceData+16
         la a1, Destination2+8192
         li a2, 8
         jal ra, memcpy8
 
-CBOZTest_eviction_zero_step2_12288: 
+CBOZTest_eviction_zero_step2_12288:
         la a0, SourceData+24
         la a1, Destination2+12288
         li a2, 8
         jal ra, memcpy8
 
-CBOZTest_eviction_zero_step2_16384: 
+CBOZTest_eviction_zero_step2_16384:
         la a0, SourceData+32
         la a1, Destination2+16384
         li a2, 8
         jal ra, memcpy8
 
         # step 3
-CBOZTest_eviction_zero_step3_0: 
+CBOZTest_eviction_zero_step3_0:
         la a0, SourceData
         la a1, Destination2
         li a2, 8
@@ -193,7 +193,7 @@ CBOZTest_eviction_zero_step3_0:
         sd a0, 0(s0)     # should be -1
         addi s0, s0, 8
 
-CBOZTest_eviction_zero_step3_4096: 
+CBOZTest_eviction_zero_step3_4096:
         la a0, SourceData+8
         la a1, Destination2+4096
         li a2, 8
@@ -201,23 +201,23 @@ CBOZTest_eviction_zero_step3_4096:
         sd a0, 0(s0)     # should be -1
         addi s0, s0, 8
 
-CBOZTest_eviction_zero_step3_8192: 
+CBOZTest_eviction_zero_step3_8192:
         la a0, SourceData+16
         la a1, Destination2+8192
         li a2, 8
         jal ra, memcmp8
         sd a0, 0(s0)     # should be -1
         addi s0, s0, 8
-        
-CBOZTest_eviction_zero_step3_12288: 
+
+CBOZTest_eviction_zero_step3_12288:
         la a0, SourceData+24
         la a1, Destination2+12288
         li a2, 8
         jal ra, memcmp8
         sd a0, 0(s0)     # should be -1
         addi s0, s0, 8
-        
-CBOZTest_eviction_zero_step3_16384: 
+
+CBOZTest_eviction_zero_step3_16384:
         la a0, SourceData+32
         la a1, Destination2+16384
         li a2, 8
@@ -226,7 +226,7 @@ CBOZTest_eviction_zero_step3_16384:
         addi s0, s0, 8
 
         # step 4
-CBOZTest_eviction_zero_step4: 
+CBOZTest_eviction_zero_step4:
         la a1, Destination2
         cbo.zero (a1)
         la a1, Destination2+4096
@@ -255,7 +255,7 @@ CBOZTest_eviction_zero_step5_4096:
         jal ra, memcmp8
         sd a0, 0(s0)    # should be -1
         addi s0, s0, 8
-        
+
 CBOZTest_eviction_zero_step5_8192:
         # step 5  (should be zero)
         la a0, ZeroData
@@ -273,7 +273,7 @@ CBOZTest_eviction_zero_step5_12288:
         jal ra, memcmp8
         sd a0, 0(s0)    # should be -1
         addi s0, s0, 8
-        
+
 CBOZTest_eviction_zero_step5_16384:
         # step 5  (should be zero)
         la a0, ZeroData
@@ -282,7 +282,7 @@ CBOZTest_eviction_zero_step5_16384:
         jal ra, memcmp8
         sd a0, 0(s0)    # should be -1
         addi s0, s0, 8
-	
+
 
         #ld s0, 0(sp)
         #ld ra, 8(sp)
@@ -290,16 +290,16 @@ CBOZTest_eviction_zero_step5_16384:
         #ret
 RVMODEL_HALT
 
-	
+
 .type memcpy8, @function
-memcpy8:        
+memcpy8:
         # a0 is the source
         # a1 is the dst
         # a2 is the number of 8 byte words
         mv t0, a0
         mv t1, a1
         li t2, 0
-memcpy8_loop:   
+memcpy8_loop:
         ld t3, 0(t0)
         sd t3, 0(t1)
         addi t0, t0, 8
@@ -310,7 +310,7 @@ memcpy8_loop:
 
 .type memcmp8, @function
 # returns which index mismatch, -1 if none
-memcmp8:        
+memcmp8:
         # a0 is the source1
         # a1 is the source2
         # a2 is the number of 8 byte words
@@ -332,7 +332,7 @@ memcmp8_ne:
         ret
 
 RVTEST_CODE_END
-        
+
 
 RVTEST_DATA_BEGIN
 # Input data section.
@@ -368,13 +368,12 @@ RVMODEL_DATA_BEGIN
         .align 6
 Destination1:
         .fill 128, 4, 0xdeadbeef
-Destination2:   
+Destination2:
         .fill 16, 4, 0xdeadbeef
 signature:
         .fill 32, 4, 0x0bad0bad
 sig_end_canary:
 .int 0x0
 rvtest_sig_end:
-	
-RVMODEL_DATA_END
 
+RVMODEL_DATA_END

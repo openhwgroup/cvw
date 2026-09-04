@@ -17,16 +17,16 @@ Wally is presently at Technology Readiness Level 4, passing the RISC-V compatibi
 New users may wish to do the following setup to access the server via a GUI and use a text editor.
 
 - Git started with Git configuration and authentication: C.1  (replace with your name and email)
-	```bash
-	$ git config --global user.name "Ben Bitdiddle"
-	$ git config --global user.email "ben_bitdiddle@wally.edu"
-	$ git config --global pull.rebase false
-	```
+  ```bash
+  $ git config --global user.name "Ben Bitdiddle"
+  $ git config --global user.email "ben_bitdiddle@wally.edu"
+  $ git config --global pull.rebase false
+  ```
 - Optional: Download and install x2go - B.1.1
 - Optional: Download and install VSCode - B.4.2
 - Optional: Make sure you can log into your server via x2go and via a terminal
-	- Terminal on Mac, cmd on Windows, xterm on Linux
-	- See B.1 about ssh -Y login from a terminal
+  - Terminal on Mac, cmd on Windows, xterm on Linux
+  - See B.1 about ssh -Y login from a terminal
 
 Then fork and clone the repo, source setup, make the tests and run regression
 
@@ -36,68 +36,71 @@ Then fork and clone the repo, source setup, make the tests and run regression
 4. Create a fork, choosing the owner as your github account and the repository as cvw.
 5. On the Linux computer where you will be working, log in.
 6. Clone your fork of the repo. Change `<yourgithubid>` to your github id.
-	```bash
-	$ git clone --recurse-submodules https://github.com/<yourgithubid>/cvw
-	$ cd cvw
-	$ git remote add upstream https://github.com/openhwgroup/cvw
-	```
+  ```bash
+  $ git clone --recurse-submodules https://github.com/<yourgithubid>/cvw
+  $ cd cvw
+  $ git remote add upstream https://github.com/openhwgroup/cvw
+  ```
 
 > [!NOTE]
 > If you are installing on a new system without any tools installed, please jump to the next section, [Toolchain Installation](#toolchain-installation-and-configuration-sys-admin), then come back here.
 
 7. Run the setup script to update your `PATH` and activate the python virtual environment.
 
-	```bash
-	$ source ./setup.sh
-	```
+  ```bash
+  $ source ./setup.sh
+  ```
 
 8. Add the following lines to your `.bashrc` or `.bash_profile` to run the setup script each time you log in.
 
-	```bash
-	if [ -f ~/cvw/setup.sh ]; then
-		source ~/cvw/setup.sh
-	fi
-	```
+  ```bash
+  if [ -f ~/cvw/setup.sh ]; then
+    source ~/cvw/setup.sh
+  fi
+  ```
 
 9. Try compiling the HelloWally program and simulating it on the SystemVerilog with Verilator and on the Spike simulator.
-	```
-	$ cd examples/C/hello
-	$ make
-	$ wsim --sim verilator rv64gc --elf hello
-	Hello Wally!
-	0 1 2 3 4 5 6 7 8 9 
-	$ spike hello
-	Hello Wally!
-	0 1 2 3 4 5 6 7 8 9 
-	```
+  ```
+  $ cd examples/C/hello
+  $ make
+  $ wsim --sim verilator rv64gc --elf hello
+  Hello Wally!
+  0 1 2 3 4 5 6 7 8 9
+  $ spike hello
+  Hello Wally!
+  0 1 2 3 4 5 6 7 8 9
+  ```
 
 10. Build the tests from the cvw directory and run a regression simulation to prove everything is installed.  Building tests may take a while.
 
-	```bash
-	$ cd ~/cvw && make --jobs
-	$ regression-wally
-	```
+  ```bash
+  $ cd ~/cvw && make --jobs
+  $ regression-wally
+  ```
 
 # Toolchain Installation and Configuration (Sys Admin)
 
 > This section describes the open source toolchain installation.
 
 ### Compatibility
-The current version of the toolchain has been tested on Ubuntu (versions 20.04 LTS, 22.04 LTS, and 24.04 LTS), Debian (versions 11, 12, and 13), Red Hat/Rocky/AlmaLinux (versions 8, 9, and 10), and SUSE version 15.6. Only the latest minor release of each major version is tested.
+The current version of the toolchain has been tested on Ubuntu (versions 20.04 LTS, 22.04 LTS, 24.04 LTS, and 26.04 LTS), Debian (versions 11, 12, and 13), Red Hat/Rocky/AlmaLinux (versions 8, 9, and 10), and SUSE versions 15.6 and 16.0. Only the latest minor release of each major version is tested.
 
 > [!WARNING]
 > - Ubuntu 22.04LTS is incompatible with Synopsys Design Compiler.
 > - Verilator currently fails to simulate correctly on Ubuntu 20.04 LTS and Red Hat/Rocky/AlmaLinux 8.
+> - Whisper is not installed on Ubuntu 20.04 LTS or Debian 11 due to issues compiling the boost libraries.
 
 ### Overview
 The toolchain installation script installs the following tools:
 - [RISC-V GNU Toolchain](https://github.com/riscv-collab/riscv-gnu-toolchain): GCC and accompanying compiler tools
-- [elf2hex](https://github.com/sifive/elf2hex): executable file to hexadecimal converter
 - [QEMU](https://www.qemu.org/docs/master/system/target-riscv.html): emulator
 - [Spike](https://github.com/riscv-software-src/riscv-isa-sim): functional RISC-V model
+- [Whisper](https://github.com/tenstorrent/whisper): RISC-V instruction set simulator (ISS)
 - [Verilator](https://github.com/verilator/verilator): open-source Verilog simulator
 - [RISC-V Sail Model](https://github.com/riscv/sail-riscv): golden reference model for RISC-V
 - [OSU Skywater 130 cell library](https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12): standard cell library
+- [uv](https://docs.astral.sh/uv/): Python package manager and virtual environment tool
+- [mise](https://mise.jdx.dev/): development environment setup tool for managing tool versions and environment variables
 - [RISCOF](https://github.com/riscv-software-src/riscof.git): RISC-V compliance test framework
 
 Additionally, Buildroot Linux is built for Wally and linux test-vectors are generated for simulation. See the [Linux README](linux/README.md) for more details. This can be skipped using the `--no-buildroot` flag.
@@ -157,7 +160,7 @@ Running code or functional coverage simulations or lock-step presently require c
 
 Note: Some EDA tools utilize `LM_LICENSE_FILE` for their environmental variable to point to their license server.  Some operating systems may also utilize `MGLS_LICENSE_FILE` instead, therefore, it is important to read the user manual on the preferred environmental variable required to point to a user’s license file.  Although there are different mechanisms to allow licenses to work, many companies commonly utilize the FlexLM (i.e., Flex-enabled) license server manager that runs off a node locked license.
 
-Although most EDA tools are Linux-friendly, they tend to have issues when not installed on recommended OS flavors.  Red Hat Enterprise Linux (and its free Rocky clone) and SUSE Linux products  typically tend to be recommended for installing commercial-based EDA tools and are recommended for utilizing complex simulation and architecture exploration.  
+Although most EDA tools are Linux-friendly, they tend to have issues when not installed on recommended OS flavors.  Red Hat Enterprise Linux (and its free Rocky clone) and SUSE Linux products  typically tend to be recommended for installing commercial-based EDA tools and are recommended for utilizing complex simulation and architecture exploration.
 
 ### Siemens Questa
 
@@ -239,8 +242,8 @@ Parameters and options:
 --ccov, -c                                                   Code Coverage
 --fcov, -f                                                   Functional Coverage with cvw-arch-verif, implies lockstep
 --args ARGS, -a ARGS                                         Optional arguments passed to simulator via $value$plusargs
---params PARAMS, -p PARAMS            			 								 Optional top-level parameter overrides of the form param=value
---define DEFINE, -d DEFINE            											 Optional define macros passed to simulator
+--params PARAMS, -p PARAMS                                   Optional top-level parameter overrides of the form param=value
+--define DEFINE, -d DEFINE                                   Optional define macros passed to simulator
 --vcd, -v                                                    Generate testbench.vcd
 --lockstep, -l                                               Run ImperasDV lock, step, and compare.
 --lockstepverbose, -lv                                       Run ImperasDV lock, step, and compare with tracing enabled
@@ -282,3 +285,7 @@ Run Linux boot simulation in lock step between Wally and ImperasDV
 ```bash
 wsim buildroot buildroot --args +INSTR_LIMIT=600000000 --lockstep
 ```
+
+# Textbook Errata
+
+See [errata.md](./errata.md) for errata on the [RISC-V System-on-Chip Design](https://www.amazon.com/RISC-V-Microprocessor-System-Chip-Design/dp/0323994989/ref=sr_1_1?crid=YOSKDWK56LXC&dib=eyJ2IjoiMSJ9.i4blNUie7NEcJ_TrpjJwYQ_y6wL-OSpvTGm0v2Wh2IoJEaId29iR3DrWO5fSXIZU.3W9njvBVqXebkFyqQkDg46q8zg1hjoo5cqXEPYe3k5c&dib_tag=se&keywords=riscv+system+on+chip+design&qid=1767552817&sprefix=riscv+system+on+chip+design%2Caps%2C175&sr=8-1) textbook.

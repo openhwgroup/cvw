@@ -14,10 +14,10 @@ if {$boardName!="ArtyA7"} {
 # really just these two lines which change
 create_ip -name proc_sys_reset -vendor xilinx.com -library ip -module_name $ipName
 set_property -dict [list CONFIG.C_AUX_RESET_HIGH {1} \
-			CONFIG.C_AUX_RST_WIDTH {1} \
-			CONFIG.C_EXT_RESET_HIGH {1} \
-			CONFIG.C_EXT_RST_WIDTH {1} \
-			CONFIG.C_NUM_BUS_RST {1}] [get_ips $ipName]
+                         CONFIG.C_AUX_RST_WIDTH {1} \
+                         CONFIG.C_EXT_RESET_HIGH {1} \
+                         CONFIG.C_EXT_RST_WIDTH {1} \
+                         CONFIG.C_NUM_BUS_RST {1}] [get_ips $ipName]
 
 generate_target {instantiation_template} [get_files ./$ipName.srcs/sources_1/ip/$ipName/$ipName.xci]
 generate_target all [get_files  ./$ipName.srcs/sources_1/ip/$ipName/$ipName.xci]

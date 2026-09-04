@@ -7,32 +7,32 @@
 // Purpose: General Purpose I/O peripheral
 //   See FE310-G002-Manual-v19p05 for specifications
 //   No interrupts, drive strength, or pull-ups supported
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module gpio_apb import cvw::*;  #(parameter cvw_t P) (
   input  logic                PCLK, PRESETn,
   input  logic                PSEL,
-  input  logic [7:0]          PADDR, 
+  input  logic [7:0]          PADDR,
   input  logic [P.XLEN-1:0]   PWDATA,
   input  logic [P.XLEN/8-1:0] PSTRB,
   input  logic                PWRITE,
@@ -64,12 +64,12 @@ module gpio_apb import cvw::*;  #(parameter cvw_t P) (
 
   logic [31:0]                input0d, input1d, input2d, input3d;
   logic [31:0]                input_val, input_en, output_en, output_val;
-  logic [31:0]                rise_ie, rise_ip, fall_ie, fall_ip, high_ie, high_ip, low_ie, low_ip; 
+  logic [31:0]                rise_ie, rise_ip, fall_ie, fall_ip, high_ie, high_ip, low_ie, low_ip;
   logic [31:0]                out_xor, iof_en, iof_sel, iof_out, gpio_out;
   logic [7:0]                 entry;
   logic [31:0]                Din, Dout;
   logic                       memwrite;
-  
+
   // APB I/O
   assign entry    = {PADDR[7:2],2'b00};       // 32-bit word-aligned accesses
   assign memwrite = PWRITE & PENABLE & PSEL;  // only write in access phase
@@ -77,9 +77,9 @@ module gpio_apb import cvw::*;  #(parameter cvw_t P) (
 
   // account for subword read/write circuitry
   // -- Note GPIO registers are 32 bits no matter what; access them with LW SW.
-  assign Din = PWDATA[31:0]; 
-  if (P.XLEN == 64) assign PRDATA = {Dout, Dout}; 
-  else              assign PRDATA = Dout;    
+  assign Din = PWDATA[31:0];
+  if (P.XLEN == 64) assign PRDATA = {Dout, Dout};
+  else              assign PRDATA = Dout;
 
   // register access
   always_ff @(posedge PCLK)
@@ -101,7 +101,7 @@ module gpio_apb import cvw::*;  #(parameter cvw_t P) (
     end else begin     // writes
         // According to FE310 spec: Once the interrupt is pending, it will remain set until a 1 is written to the *_ip register at that bit.
         /* verilator lint_off CASEINCOMPLETE */
-      if (memwrite) 
+      if (memwrite)
         case(entry)
           GPIO_INPUT_EN:   input_en   <= Din;
           GPIO_OUTPUT_EN:  output_en  <= Din;
@@ -141,7 +141,7 @@ module gpio_apb import cvw::*;  #(parameter cvw_t P) (
         GPIO_LOW_IP:      Dout <= low_ip;
         GPIO_IOF_EN:      Dout <= iof_en;
         GPIO_IOF_SEL:     Dout <= iof_sel;
-        GPIO_OUT_XOR:     Dout <= out_xor; 
+        GPIO_OUT_XOR:     Dout <= out_xor;
         default:          Dout <= '0;
       endcase
     end

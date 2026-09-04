@@ -34,7 +34,7 @@
 #define PLIC_BASE      0x0C000000
 #define PLIC_RANGE     0x03FFFFFF
 
-#include "WALLY-TEST-LIB-32.h" 
+#include "WALLY-TEST-LIB-32.h"
 
 RVTEST_ISA("RV32I_Zicsr_Zifencei")
 RVTEST_CASE(0,"//check ISA:=regex(.*32.*);check ISA:=regex(.*I.*); def Drvtest_mtrap_routine=True;def TEST_CASE_1=True;def NO_SAIL=True;",pma)
@@ -56,13 +56,13 @@ test_cases:
 #
 #   Here is where the actual tests are held, or rather, what the actual tests do.
 #   each entry consists of 3 values that will be read in as follows:
-#   
+#
 #   '.4byte [x28 Value], [x29 Value], [x30 value]'
 #                     or
 #   '.4byte [address], [value], [test type]'
 #
 #   The encoding for x30 test type values can be found in the test handler
-#   
+#
 # ---------------------------------------------------------------------------------------------
 
 # =========== test 12.3.2.1 PMAs: Memory Access Size, Type protection test ===========
@@ -77,11 +77,11 @@ test_cases:
 
 # ************** Cacheable, Idempotent, Atomic tests are not implemented yet.
 
-#  ----------------- ROM --------------------- 
-# ROM goes untested because it isn't writeable and these tests rely on writing a known value to memory. 
+#  ----------------- ROM ---------------------
+# ROM goes untested because it isn't writeable and these tests rely on writing a known value to memory.
 
 
-#  ----------------- CLINT --------------------- 
+#  ----------------- CLINT ---------------------
 
 # Use timecmp register as readable and writable section of the CLINT
 .4byte CLINT_BASE + 0x4000, 0xBEEF00B5, write32_test    # 32-bit write:  success
@@ -93,7 +93,7 @@ test_cases:
 
 .4byte CLINT_BASE, 0xbad, executable_test # execute: instruction access fault
 
-#  ----------------- PLIC --------------------- 
+#  ----------------- PLIC ---------------------
 
 # Write 0x2 instead of wider value to plic address because the register width might change.
 .4byte PLIC_BASE + 0x2000, 0x2, write32_test # 32-bit write:  success
@@ -105,7 +105,7 @@ test_cases:
 
 .4byte PLIC_BASE, 0xbad, executable_test# execute:    instruction access fault
 
-#  ----------------- UART0 --------------------- 
+#  ----------------- UART0 ---------------------
 
 .4byte UART_BASE, 0xBEEF00BD, write32_test # 32-bit write:  store access fault
 .4byte UART_BASE, 0xBEEF00BD, read32_test # 32-bit read:   load access fault
@@ -117,7 +117,7 @@ test_cases:
 
 .4byte UART_BASE, 0xbad, executable_test# execute:    instruction access fault
 
-#  ----------------- GPIO --------------------- 
+#  ----------------- GPIO ---------------------
 
 .4byte GPIO_BASE + 0x8, 0xBEEF00C1, write32_test # 32-bit write:  success
 .4byte GPIO_BASE + 0x8, 0xBEEF00C1, read32_test# 32-bit read:   success
@@ -129,9 +129,9 @@ test_cases:
 .4byte GPIO_BASE, 0xbad, executable_test# execute:    instruction access fault
 
 
-#  ----------------- Inaccessible --------------------- 
+#  ----------------- Inaccessible ---------------------
 
-# show that load, store, and jalr cause faults in a region not defined by PMAs.  
+# show that load, store, and jalr cause faults in a region not defined by PMAs.
 
 # Tests 'random' place in unimplemented memory
 .4byte 0x40000000, 0xBEEF00C7, write32_test  # 32-bit write:  store access fault
@@ -160,21 +160,3 @@ test_cases:
 .4byte (GPIO_BASE+GPIO_RANGE+1), 0x111, executable_test               # execute:       instruction access fault
 
 .4byte 0x0, 0x0, terminate_test # terminate tests
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    

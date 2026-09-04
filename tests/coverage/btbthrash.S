@@ -7,20 +7,20 @@
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -65,7 +65,7 @@ main:
         li x31, 4
 
 .align 12
-jump1:  
+jump1:
         divuw x0, x1, x2
         j jump3
 jump4:
@@ -102,37 +102,37 @@ jump22:
 .align 12 # size of the 1024 btb apart
 jump2:
         j jump1
-jump3:  
+jump3:
         divuw x0, x4, x3
         j jump4
-jump5:  
+jump5:
         divuw x0, x7, x8
         j jump6
-jump7:  
+jump7:
         divuw x0, x12, x11
         j jump8
-jump9:  
+jump9:
         divuw x0, x15, x16
         j jump10
-jump11:  
+jump11:
         divuw x0, x20, x19
         j jump12
-jump13:  
+jump13:
         divuw x0, x24, x23
         j jump14
-jump15:  
+jump15:
         divuw x0, x26, x27
         j jump16
-jump17:  
+jump17:
         divuw x0, x29, x30
         j jump18
-jump19:  
+jump19:
         divuw x0, x2, x3
         j jump20
-jump21:  
+jump21:
         divuw x0, x4, x5
         j jump22
-jump23:  
+jump23:
         divuw x0, x20, x21
         #j jump22
 
@@ -140,6 +140,5 @@ jump23:
 
         addi x31, x31, -1
         bne x31, x0, jump1
-finished:       
+finished:
     j done
-
