@@ -109,21 +109,21 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   logic                     HPTWLoadPageFaultDelay, HPTWStoreAmoPageFaultDelay, HPTWInstrPageFaultDelay;
   logic                     HPTWAccessFaultDelay;
   logic                     TakeHPTWFault;
-  logic                     PBMTFaultM;
+  logic                     NonLeafReservedFaultM;
   logic                     DAUFaultM;
-  logic                     PBMTOrDAUFaultM;
+  logic                     NonLeafPageFaultM;
   logic                     HPTWFaultM;
 
   // map hptw access faults onto either the original LSU load/store fault or instruction access fault
   assign LSUAccessFaultM         = LSULoadAccessFaultM | LSUStoreAmoAccessFaultM;
-  assign PBMTOrDAUFaultM         = PBMTFaultM | DAUFaultM;
-  assign HPTWFaultM              = LSUAccessFaultM | PBMTOrDAUFaultM;
+  assign NonLeafPageFaultM       = NonLeafReservedFaultM | DAUFaultM;
+  assign HPTWFaultM              = LSUAccessFaultM | NonLeafPageFaultM;
   assign HPTWLoadAccessFault     = LSUAccessFaultM & DTLBWalk & MemRWM[1] & ~MemRWM[0];
   assign HPTWStoreAmoAccessFault = LSUAccessFaultM & DTLBWalk & (MemRWM[0] | (|CMOpM));
   assign HPTWInstrAccessFault    = LSUAccessFaultM & ~DTLBWalk;
-  assign HPTWLoadPageFault       = PBMTOrDAUFaultM & DTLBWalk & MemRWM[1] & ~MemRWM[0];
-  assign HPTWStoreAmoPageFault   = PBMTOrDAUFaultM & DTLBWalk & (MemRWM[0] | (|CMOpM));
-  assign HPTWInstrPageFault      = PBMTOrDAUFaultM & ~DTLBWalk;
+  assign HPTWLoadPageFault       = NonLeafPageFaultM & DTLBWalk & MemRWM[1] & ~MemRWM[0];
+  assign HPTWStoreAmoPageFault   = NonLeafPageFaultM & DTLBWalk & (MemRWM[0] | (|CMOpM));
+  assign HPTWInstrPageFault      = NonLeafPageFaultM & ~DTLBWalk;
 
   flopr #(6) HPTWAccesFaultReg(clk, reset, {HPTWLoadAccessFault, HPTWStoreAmoAccessFault, HPTWInstrAccessFault,
                                             HPTWLoadPageFault, HPTWStoreAmoPageFault, HPTWInstrPageFault},
@@ -156,14 +156,17 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   flopenr #(P.XLEN) PTEReg(clk, reset, PRegEn, NextPTE2, PTE); // Capture page table entry from data cache
 
   // Assign PTE descriptors common across all XLEN values
-  // For non-leaf PTEs, D, A, U bits are reserved and cause faults while walking the page table
+  // For non-leaf PTEs, D, A, U bits (7:6, 4) are reserved and cause faults while walking the page table.
+  // Likewise, N (63), PBMT (62:61), and reserved (60:54) bits must be zero in non-leaf PTEs regardless of
+  // whether Svnapot/Svpbmt are supported (privileged spec: "these bits remain reserved and must be zeroed
+  // in non-leaf PTEs")
   assign {PTE_U, Executable, Writable, Readable, Valid} = PTE[4:0];
   assign LeafPTE = Executable | Writable | Readable;
   assign ValidPTE = Valid & ~(Writable & ~Readable);
   assign ValidLeafPTE = ValidPTE & LeafPTE;
   assign ValidNonLeafPTE = Valid & ~LeafPTE;
-  if(P.XLEN == 64) assign PBMTFaultM = ValidNonLeafPTE & (|PTE[63:54]);
-  else assign PBMTFaultM = 1'b0;
+  if(P.XLEN == 64) assign NonLeafReservedFaultM = ValidNonLeafPTE & (|PTE[63:54]);
+  else assign NonLeafReservedFaultM = 1'b0;
   assign DAUFaultM = ValidNonLeafPTE & (|PTE[7:6] | PTE[4]);
 
   if(P.SVADU_SUPPORTED) begin : hptwwrites
