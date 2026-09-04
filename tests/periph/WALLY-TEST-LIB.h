@@ -464,6 +464,7 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
     .equ PLIC_INTPRI_GPIO, 0x0C00000C       # GPIO is interrupt 3
     .equ PLIC_INTPRI_UART, 0x0C000028       # UART is interrupt 10
     .equ PLIC_INTPRI_SPI,  0x0C000018       # SPI is interrupt 6
+    .equ PLIC_INTPRI_PWM,  0x0C00001C       # PWM is interrupt 7
     .equ PLIC_INTPENDING0, 0x0C001000       # intPending0 register
     .equ PLIC_INTEN00,     0x0C002000       # interrupt enables for context 0 (machine mode) sources 31:1
     .equ PLIC_INTEN10,     0x0C002080       # interrupt enables for context 1 (supervisor mode) sources 31:1
@@ -477,6 +478,7 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
     WORD PLIC_INTPRI_GPIO, 7, write32_test # Set GPIO to high priority
     WORD PLIC_INTPRI_UART, 7, write32_test # Set UART to high priority
     WORD PLIC_INTPRI_SPI, 7, write32_test # Set SPI to high priority
+    WORD PLIC_INTPRI_PWM, 7, write32_test # Set PWM to high priority
     WORD PLIC_INTEN00, 0xFFFFFFFF, write32_test # Enable all interrupt sources for machine mode
     WORD PLIC_INTEN10, 0x00000000, write32_test # Disable all interrupt sources for supervisor mode
 .endm
@@ -538,6 +540,11 @@ test_loop:
 //   uart_lsr_intr_wait     : wait for a UART line status interrupt              : IIR & 7
 //   spi_data_wait          : wait for SPI receive watermark t4                  : none
 //   spi_burst_send         : write the 4 bytes of t4 to SPI address t3          : none
+//   pwm_cycle_wait         : observe 2^t4 PWM periods on the GPIO pins           : number of PWM cycles seen
+//   pwm_cycle_wait_center  : same for center-aligned mode (full 16-bit period)   : number of PWM cycles seen
+//   pwm_wait               : wait t4 clock cycles, leaving the PWM running        : none
+//   pwm_dumb_wait          : wait 2^t4 PWM periods, then disable the PWM         : none
+//   pwm_dumb_wait_center   : same for center-aligned mode                        : none
 //   goto_m_mode            : ecall into machine mode                            : mcause (0xb from M, 0x9 from S)
 //   goto_s_mode            : ecall into supervisor mode                         : mcause (0xb from M, 0x9 from S)
 //   write_mideleg          : write t4 to mideleg                                : none
@@ -611,6 +618,12 @@ claim_m_plic_interrupts: // clears one non-pending PLIC interrupt
     sw t3, 0(t2)
     sw t4, -4(sp)
     addi sp, sp, -4
+    li t2, 0x0C00001C // PWM priority
+    li t3, 7
+    lw t4, 0(t2)
+    sw t3, 0(t2)
+    sw t4, -4(sp)
+    addi sp, sp, -4
     li t2, 0x0C002000
     li t3, 0x0C200004
     li t4, 0xFFF
@@ -620,15 +633,18 @@ claim_m_plic_interrupts: // clears one non-pending PLIC interrupt
     sw t5, 0(t3) // complete claim made
     sw t6, 0(t2) // restore saved enable status
     li t2, 0x0C00000C // GPIO priority
-    lw t4, 8(sp) // restore stored GPIO priority
+    lw t4, 12(sp) // restore stored GPIO priority
     sw t4, 0(t2)
     li t2, 0x0C000028 // UART priority
-    lw t4, 4(sp) // restore stored UART priority
+    lw t4, 8(sp) // restore stored UART priority
     sw t4, 0(t2)
     li t2, 0x0C000018 // SPI priority
-    lw t4, 0(sp) // restore stored SPI priority
+    lw t4, 4(sp) // restore stored SPI priority
     sw t4, 0(t2)
-    addi sp, sp, 12 // restore stack pointer
+    li t2, 0x0C00001C // PWM priority
+    lw t4, 0(sp) // restore stored PWM priority
+    sw t4, 0(t2)
+    addi sp, sp, 16 // restore stack pointer
     j test_loop
 
 claim_s_plic_interrupts: // clears one non-pending PLIC interrupt
@@ -733,6 +749,112 @@ spi_burst_send: //function for loading multiple frames at once to test delays wi
     srli t2, t2, 8
     sw t2, 0(t3)
     j test_loop
+
+// PWM test types.  The PWM outputs are routed to GPIO pins 0-3 (iof_en), so PWM activity is observed
+// through the GPIO high_ip register.  t4 = log2 of the number of PWM periods N to observe.  The period
+// is derived from pwmcmp0 and pwmscale (or the full 16-bit count in center-aligned mode).  The routine
+// waits for the first high output, then counts high intervals for another N - 1/2 periods, so the
+// result is exactly N for a correct waveform regardless of software timing, fewer if pulses are
+// missing, and more if extra pulses appear.  If no output goes high within N + 1 periods the result is 0.
+pwm_cycle_wait:
+    li t2, 0x10020000 // PWM base address
+    lw t3, 32(t2) // period in scaled counts: pwmcmp0
+    j pwm_cycle_wait_common
+
+pwm_cycle_wait_center: // center-aligned mode runs the full 16-bit count
+    li t2, 0x10020000 // PWM base address
+    li t3, 0xFFFF // period in scaled counts: maximum count
+
+pwm_cycle_wait_common:
+    lw t6, 0(t2) // pwmcfg
+    andi t6, t6, 0xF // pwmscale
+    sll t3, t3, t6 // period in clocks
+    sll t2, t3, t4 // N periods
+    srli t6, t3, 1 // half a period
+    sub a5, t2, t6 // window after the first edge: N - 1/2 periods
+    add t2, t2, t3 // N + 1 periods: limit for the first edge
+    rdcycle a4
+    add a4, a4, t2 // time limit for the first edge
+    li t4, 0x1006002C // GPIO high_ip address
+    li t5, 0 // number of high intervals seen
+    li t6, 0xFFFFFFFF
+    sw t6, 0(t4) // clear high_ip
+
+pwm_first_edge:
+    rdcycle t3
+    bgt t3, a4, pwm_over // no output went high: result 0
+    lw t3, 0(t4)
+    beqz t3, pwm_first_edge
+    rdcycle t3
+    add a4, t3, a5 // end of the observation window
+
+pwm_next_edge:
+    addi t5, t5, 1
+
+pwm_wait_low:
+    sw t6, 0(t4) // clear high_ip
+    rdcycle t3
+    bgt t3, a4, pwm_over // end of the observation window (an output that never falls counts as one interval)
+    lw t3, 0(t4)
+    bnez t3, pwm_wait_low // wait until all PWM outputs are low
+
+pwm_poll:
+    rdcycle t3
+    bgt t3, a4, pwm_over // end of the observation window
+    lw t3, 0(t4)
+    bnez t3, pwm_next_edge
+    j pwm_poll
+
+pwm_over: // disable the PWM, clear the interrupt, and record the number of high intervals seen
+    li t2, 0x10020000
+    li t3, 0x00000000
+    sw t3, 0(t2) // clear pwmcfg
+    sw t3, 8(t2) // set pwmcount to 0
+    sw t6, 0(t4) // clear high_ip
+    SREG t5, 0(t1) // store number of PWM cycles
+    SIG_NEXT
+    j test_loop
+
+pwm_wait: // wait t4 clock cycles, leaving the PWM running
+    rdcycle t2
+    add t2, t2, t4 // end time
+pwm_wait_loop:
+    rdcycle t3
+    bgt t3, t2, test_loop
+    j pwm_wait_loop
+
+pwm_dumb_over: // disable the PWM without recording anything
+    li t2, 0x10020000
+    li t3, 0x00000000
+    sw t3, 0(t2) // clear pwmcfg
+    sw t3, 8(t2) // set pwmcount to 0
+    j test_loop
+
+pwm_dumb_wait: // wait 2^t4 PWM periods (from pwmcmp0 and pwmscale) without watching the outputs
+    rdcycle t5 // read starting cycle into t5
+    li t2, 0x10020000 // PWM base address
+    lw t3, 32(t2) // load pwmcmp0 into t3
+    lw t6, 0(t2) // load pwmcfg into t6
+    andi t6, t6, 0x0000000F // pwmscale
+    add t6, t6, t4 // total shift for the end time: pwmscale + log2(number of cycles)
+    sll t3, t3, t6
+    add t5, t3, t5 // estimated end time
+
+pwm_dumb_cycle:
+    rdcycle t4
+    bgt t4, t5, pwm_dumb_over
+    j pwm_dumb_cycle
+
+pwm_dumb_wait_center: // like pwm_dumb_wait, for center mode
+    rdcycle t5
+    li t2, 0x10020000 // PWM base address
+    li t3, 0xFFFF // center mode runs the full 16-bit count
+    lw t6, 0(t2) // load pwmcfg into t6
+    andi t6, t6, 0x0000000F // pwmscale
+    add t6, t6, t4 // total shift for the end time: pwmscale + log2(number of cycles)
+    sll t3, t3, t6
+    add t5, t3, t5 // estimated end time
+    j pwm_dumb_cycle
 
 goto_s_mode:
     li a0, 3 // Trap handler behavior (go to supervisor mode)
