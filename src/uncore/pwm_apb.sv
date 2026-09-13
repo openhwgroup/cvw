@@ -38,7 +38,7 @@ module pwm_apb import cvw::*; #(parameter cvw_t P) (
   input  logic                PENABLE,
   output logic [P.XLEN-1:0]   PRDATA,
   output logic                PREADY,
-  output logic                PWMIntr,
+  output logic [3:0]          PWMIntr,
   output logic [3:0]          PWMGPIO
 );
 
@@ -205,7 +205,9 @@ module pwm_apb import cvw::*; #(parameter cvw_t P) (
   assign PWMCompareIPNext = PWMConfigWrite ? Din[31:28] : PWMDeglitchMux;
   flopr #(4) pwmcompareipreg(PCLK, ~PRESETn, PWMCompareIPNext, PWMCompareIP);
 
-  // All four pending bits are ORed into one PLIC source (FU540 has four); software identifies the comparator through pwmcfg[31:28]
-  assign PWMIntr = |(PWMCompareIP);
+  // Each comparator drives its own PLIC source, as in the FU540.  One ORed source would fire at the
+  // pwms wrap even when the comparator of interest is low, for example a centered comparator while
+  // another is set to all ones.
+  assign PWMIntr = PWMCompareIP;
 
 endmodule

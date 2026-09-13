@@ -660,7 +660,10 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
     .equ PLIC_INTPRI_GPIO, 0x0C00000C       # GPIO is interrupt 3
     .equ PLIC_INTPRI_UART, 0x0C000028       # UART is interrupt 10
     .equ PLIC_INTPRI_SPI,  0x0C000018       # SPI is interrupt 6
-    .equ PLIC_INTPRI_PWM,  0x0C00001C       # PWM is interrupt 7
+    .equ PLIC_INTPRI_PWM0, 0x0C00002C       # PWM comparator 0 is interrupt 11
+    .equ PLIC_INTPRI_PWM1, 0x0C000030       # PWM comparator 1 is interrupt 12
+    .equ PLIC_INTPRI_PWM2, 0x0C000034       # PWM comparator 2 is interrupt 13
+    .equ PLIC_INTPRI_PWM3, 0x0C000038       # PWM comparator 3 is interrupt 14
     .equ PLIC_INTPENDING0, 0x0C001000       # intPending0 register
     .equ PLIC_INTEN00,     0x0C002000       # interrupt enables for context 0 (machine mode) sources 31:1
     .equ PLIC_INTEN10,     0x0C002080       # interrupt enables for context 1 (supervisor mode) sources 31:1
@@ -674,7 +677,10 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
     WORD PLIC_INTPRI_GPIO, 7, write32_test # Set GPIO to high priority
     WORD PLIC_INTPRI_UART, 7, write32_test # Set UART to high priority
     WORD PLIC_INTPRI_SPI, 7, write32_test # Set SPI to high priority
-    WORD PLIC_INTPRI_PWM, 7, write32_test # Set PWM to high priority
+    WORD PLIC_INTPRI_PWM0, 7, write32_test # Set each PWM comparator to high priority
+    WORD PLIC_INTPRI_PWM1, 7, write32_test
+    WORD PLIC_INTPRI_PWM2, 7, write32_test
+    WORD PLIC_INTPRI_PWM3, 7, write32_test
     WORD PLIC_INTEN00, 0xFFFFFFFF, write32_test # Enable all interrupt sources for machine mode
     WORD PLIC_INTEN10, 0x00000000, write32_test # Disable all interrupt sources for supervisor mode
 .endm
@@ -730,7 +736,8 @@ test_loop:
 //   read04_test            : read 8 bits from address t3, keep the low nibble   : value read
 //   readmip_test           : read mip                                           : mip
 //   readsip_test           : read sip                                           : sip
-//   claim_m_plic_interrupts: claim and complete a pending M-mode PLIC interrupt : claim ID
+//   claim_m_plic_interrupts: claim and complete every pending M-mode PLIC interrupt: none
+//   claim_m_plic_id_test   : claim and complete one M-mode PLIC interrupt        : claim ID
 //   claim_s_plic_interrupts: claim and complete a pending S-mode PLIC interrupt : claim ID
 //   uart_data_wait         : wait for UART data ready, servicing FIFO interrupts: {IIR, LSR & 0x9F}
 //   uart_lsr_intr_wait     : wait for a UART line status interrupt              : IIR & 7
@@ -796,7 +803,18 @@ readsip_test:  // read the MIP into the signature
     SIG_NEXT
     j test_loop // go to next test case
 
-claim_m_plic_interrupts: // clears one non-pending PLIC interrupt
+claim_m_plic_id_test: // claim and complete one PLIC interrupt, recording its source ID
+    // The priorities and enables set up by SETUP_PLIC are left alone, so this reports the source
+    // the PLIC actually selects.  mip has a single external interrupt bit and pwmcfg[31:28] reads
+    // the pending flops inside the PWM, so the claim ID is the only way to tell the sources apart.
+    li t3, 0x0C200004 // machine mode claim/complete register
+    lw t2, 0(t3) // make PLIC claim
+    sw t2, 0(t3) // complete the claim
+    SREG t2, 0(t1)
+    SIG_NEXT
+    j test_loop // go to next test case
+
+claim_m_plic_interrupts: // claims and completes every pending PLIC interrupt
     li t2, 0x0C00000C // GPIO priority
     li t3, 7
     lw t4, 0(t2)
@@ -815,7 +833,25 @@ claim_m_plic_interrupts: // clears one non-pending PLIC interrupt
     sw t3, 0(t2)
     sw t4, -4(sp)
     addi sp, sp, -4
-    li t2, 0x0C00001C // PWM priority
+    li t2, 0x0C00002C // PWM comparator 0 priority
+    li t3, 7
+    lw t4, 0(t2)
+    sw t3, 0(t2)
+    sw t4, -4(sp)
+    addi sp, sp, -4
+    li t2, 0x0C000030 // PWM comparator 1 priority
+    li t3, 7
+    lw t4, 0(t2)
+    sw t3, 0(t2)
+    sw t4, -4(sp)
+    addi sp, sp, -4
+    li t2, 0x0C000034 // PWM comparator 2 priority
+    li t3, 7
+    lw t4, 0(t2)
+    sw t3, 0(t2)
+    sw t4, -4(sp)
+    addi sp, sp, -4
+    li t2, 0x0C000038 // PWM comparator 3 priority
     li t3, 7
     lw t4, 0(t2)
     sw t3, 0(t2)
@@ -823,25 +859,40 @@ claim_m_plic_interrupts: // clears one non-pending PLIC interrupt
     addi sp, sp, -4
     li t2, 0x0C002000
     li t3, 0x0C200004
-    li t4, 0xFFF
+    li t4, 0x7FFF
     lw t6, 0(t2) // save current enable status
     sw t4, 0(t2) // enable all relevant interrupts on PLIC
+    li t4, 16 // bound the drain so a still-asserted source cannot hang the test
+claim_m_plic_loop:
     lw t5, 0(t3) // make PLIC claim
+    beqz t5, claim_m_plic_done // no more pending interrupts
     sw t5, 0(t3) // complete claim made
+    addi t4, t4, -1
+    bnez t4, claim_m_plic_loop
+claim_m_plic_done:
     sw t6, 0(t2) // restore saved enable status
     li t2, 0x0C00000C // GPIO priority
-    lw t4, 12(sp) // restore stored GPIO priority
+    lw t4, 24(sp) // restore stored GPIO priority
     sw t4, 0(t2)
     li t2, 0x0C000028 // UART priority
-    lw t4, 8(sp) // restore stored UART priority
+    lw t4, 20(sp) // restore stored UART priority
     sw t4, 0(t2)
     li t2, 0x0C000018 // SPI priority
-    lw t4, 4(sp) // restore stored SPI priority
+    lw t4, 16(sp) // restore stored SPI priority
     sw t4, 0(t2)
-    li t2, 0x0C00001C // PWM priority
-    lw t4, 0(sp) // restore stored PWM priority
+    li t2, 0x0C00002C // PWM comparator 0 priority
+    lw t4, 12(sp) // restore stored PWM priorities
     sw t4, 0(t2)
-    addi sp, sp, 16 // restore stack pointer
+    li t2, 0x0C000030 // PWM comparator 1 priority
+    lw t4, 8(sp)
+    sw t4, 0(t2)
+    li t2, 0x0C000034 // PWM comparator 2 priority
+    lw t4, 4(sp)
+    sw t4, 0(t2)
+    li t2, 0x0C000038 // PWM comparator 3 priority
+    lw t4, 0(sp)
+    sw t4, 0(t2)
+    addi sp, sp, 28 // restore stack pointer
     j test_loop
 
 claim_s_plic_interrupts: // clears one non-pending PLIC interrupt

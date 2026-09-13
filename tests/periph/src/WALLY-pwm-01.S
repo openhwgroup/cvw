@@ -436,6 +436,65 @@ WORD 0x0, 0x00000000, claim_m_plic_interrupts
 WORD 0x0, 0x00000000, readmip_test    # interrupt gone
 WORD PWMConfig, 0x00000000, write32_test
 
+# =========== Each comparator drives its own PLIC source (FU540 numbering) ===========
+# pwmcmp0ip through pwmcmp3ip are PLIC sources 11 through 14.  The claim ID is the only thing that
+# distinguishes the four outputs: mip has a single external interrupt bit, and pwmcfg[31:28] reads the
+# pending flops inside the PWM, upstream of the PLIC.  Each pending bit is set by software, then cleared
+# before the claim so the source does not immediately re-assert.
+WORD PWMConfig, 0x00000100, write32_test    # sticky, counter stopped, no pending bits
+WORD PWMConfig, 0x10000100, write32_test    # set pwmcmp0ip
+WORD PWMConfig, 0x00000100, write32_test    # clear it; the PLIC keeps the source latched
+WORD 0x0, 0x0000000B, claim_m_plic_id_test    # comparator 0 is PLIC source 11
+WORD 0x0, 0x00000000, readmip_test    # interrupt gone
+WORD PWMConfig, 0x20000100, write32_test    # set pwmcmp1ip
+WORD PWMConfig, 0x00000100, write32_test
+WORD 0x0, 0x0000000C, claim_m_plic_id_test    # comparator 1 is PLIC source 12
+WORD 0x0, 0x00000000, readmip_test
+WORD PWMConfig, 0x40000100, write32_test    # set pwmcmp2ip
+WORD PWMConfig, 0x00000100, write32_test
+WORD 0x0, 0x0000000D, claim_m_plic_id_test    # comparator 2 is PLIC source 13
+WORD 0x0, 0x00000000, readmip_test
+WORD PWMConfig, 0x80000100, write32_test    # set pwmcmp3ip
+WORD PWMConfig, 0x00000100, write32_test
+WORD 0x0, 0x0000000E, claim_m_plic_id_test    # comparator 3 is PLIC source 14
+WORD 0x0, 0x00000000, readmip_test
+
+# =========== Several comparators pending at once ===========
+WORD PWMConfig, 0x50000100, write32_test    # set pwmcmp0ip and pwmcmp2ip together
+WORD PWMConfig, 0x00000100, write32_test    # clear both; two PLIC sources stay latched
+WORD 0x0, 0x00000800, readmip_test    # interrupt pending
+WORD 0x0, 0x0000000B, claim_m_plic_id_test    # the lowest numbered source is claimed first
+WORD 0x0, 0x00000800, readmip_test    # comparator 2 is still pending
+WORD 0x0, 0x0000000D, claim_m_plic_id_test
+WORD 0x0, 0x00000000, readmip_test    # both serviced
+WORD PWMConfig, 0xF0000100, write32_test    # all four at once
+WORD PWMConfig, 0x00000100, write32_test
+WORD 0x0, 0x0000000B, claim_m_plic_id_test
+WORD 0x0, 0x0000000C, claim_m_plic_id_test
+WORD 0x0, 0x0000000D, claim_m_plic_id_test
+WORD 0x0, 0x0000000E, claim_m_plic_id_test
+WORD 0x0, 0x00000000, readmip_test    # all four serviced, one claim each
+WORD PWMConfig, 0x00000000, write32_test
+
+# =========== A centered comparator low at the wrap raises no source of its own ===========
+# Comparators 0, 2 and 3 are centered, so they are low when pwms is all ones; comparator 1 is at the
+# maximum and fires at the wrap.  A single ORed source reported the PWM interrupt here without saying
+# which comparator caused it, so a handler for comparator 0 ran although comparator 0 was low.
+WORD PWMCount, 0x00000000, write32_test
+WORD PWMCompare0, 0x00004000, write32_test
+WORD PWMCompare1, 0x0000FFFF, write32_test    # fires at the wrap
+WORD PWMCompare2, 0x00004000, write32_test
+WORD PWMCompare3, 0x00004000, write32_test
+WORD PWMConfig, 0x000D0000, write32_test    # center on comparators 0, 2 and 3 before the counter is loaded,
+                                            # otherwise they are briefly in wrap mode at 0xFFF0 and latch their pending bits
+WORD PWMCount, 0x0000FFF0, write32_test    # start just below the pwms carry out
+WORD PWMConfig, 0x000D1000, write32_test    # add enalways, no zerocmp
+WORD 0x0, 0x00000100, pwm_wait    # run past the wrap
+WORD 0x0, 0x00000800, readmip_test    # an interrupt is pending
+WORD 0x0, 0x0000000C, claim_m_plic_id_test    # comparator 1 raised it, not the centered comparators
+WORD 0x0, 0x00000000, readmip_test    # sources 11, 13 and 14 never fired
+WORD PWMConfig, 0x00000000, write32_test
+
 WORD 0x0, 0x0, terminate_test
 
 // ---------------------------------------------------------------------------------------------
@@ -530,5 +589,26 @@ WORD 0x00000800 // 79: interrupt pending from a software-set pwmcmp0ip
 WORD 0x10000100 // 80: pwmcmp0ip set by software reads back
 WORD 0x00000100 // 81: pwmcmp0ip cleared by software with pwmsticky set
 WORD 0x00000000 // 82: interrupt gone
-WORD 0x0000000B // 83: ecall from test termination in M mode
+WORD 0x0000000B // 83: comparator 0 is PLIC source 11
+WORD 0x00000000 // 84: interrupt gone
+WORD 0x0000000C // 85: comparator 1 is PLIC source 12
+WORD 0x00000000 // 86
+WORD 0x0000000D // 87: comparator 2 is PLIC source 13
+WORD 0x00000000 // 88
+WORD 0x0000000E // 89: comparator 3 is PLIC source 14
+WORD 0x00000000 // 90
+WORD 0x00000800 // 91: comparators 0 and 2 pending together
+WORD 0x0000000B // 92: lowest numbered source claimed first
+WORD 0x00000800 // 93: comparator 2 still pending after the first claim
+WORD 0x0000000D // 94: comparator 2
+WORD 0x00000000 // 95: both serviced
+WORD 0x0000000B // 96: all four pending, one claim each
+WORD 0x0000000C // 97
+WORD 0x0000000D // 98
+WORD 0x0000000E // 99
+WORD 0x00000000 // 100: all four serviced
+WORD 0x00000800 // 101: the wrap raised an interrupt
+WORD 0x0000000C // 102: comparator 1 raised it, not the centered comparators
+WORD 0x00000000 // 103: sources 11, 13 and 14 never fired
+WORD 0x0000000B // 104: ecall from test termination in M mode
 expected_signature_end:
