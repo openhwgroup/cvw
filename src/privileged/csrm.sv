@@ -267,7 +267,8 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
       MEPC:          CSRMReadValM = MEPC_REGW;
       MCAUSE:        CSRMReadValM = MCAUSE_REGW;
       MTVAL:         CSRMReadValM = MTVAL_REGW;
-      MCOUNTEREN:    CSRMReadValM = {{(P.XLEN-32){1'b0}}, MCOUNTEREN_REGW};
+      MCOUNTEREN:    if (P.U_SUPPORTED) CSRMReadValM = {{(P.XLEN-32){1'b0}}, MCOUNTEREN_REGW};
+                     else IllegalCSRMAccessM = 1'b1;
       MENVCFG:       if (P.U_SUPPORTED) CSRMReadValM = MENVCFG_REGW[P.XLEN-1:0];
                      else IllegalCSRMAccessM = 1'b1;
       MENVCFGH:      if (P.U_SUPPORTED & P.XLEN==32) CSRMReadValM = MENVCFGH_REGW;
