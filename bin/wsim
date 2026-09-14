@@ -15,6 +15,7 @@ import argparse
 import fcntl
 import hashlib
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -196,15 +197,6 @@ def targetMtime(target):
     return target.stat().st_mtime if target.exists() else None
 
 
-def runCmd(cmd):
-    """Run a shell command and return a normalized exit code, 0 on success.
-    os.system returns a wait status rather than an exit code; passing that
-    straight to sys.exit silently turns an exit code of 1 into 256, which
-    exits 0."""
-    code = os.waitstatus_to_exitcode(os.system(cmd))
-    return code if code >= 0 else 128 - code  # killed by signal N reports 128+N
-
-
 def checkCompiled(target, sim):
     """Report an error if compilation did not leave a design behind."""
     if not target.exists():
@@ -251,7 +243,7 @@ def runQuesta(args, flags, prefix):
         if needs_compile and current_mtime == target_mtime:
             compile_cmd = f'do wally-compile.do {args.config} {args.tb} {wkdir} {compile_flags}'
             compile_cmd = f'cd {sim_dir}; {prefix} vsim -c -do "{compile_cmd}"'
-            rc = runCmd(compile_cmd)
+            rc = subprocess.run(compile_cmd, shell=True).returncode
             if rc:
                 print(f"Error: Questa compilation failed for {args.config} {args.tb}", file=sys.stderr)
                 return rc
@@ -264,7 +256,7 @@ def runQuesta(args, flags, prefix):
         run_flags += rf" --args \"{args.args}\""
     run_cmd = f'do wally-run.do {args.config} {args.testsuite} {args.tb} {wkdir} {run_flags}'
     run_cmd = f'cd {sim_dir}; {prefix} vsim {"-c" if not args.gui else ""} -do "{run_cmd}"'
-    return runCmd(run_cmd)
+    return subprocess.run(run_cmd, shell=True).returncode
 
 
 def runVerilator(args):
@@ -288,7 +280,7 @@ def runVerilator(args):
     with compileLock("verilator", f"{args.config}_{args.tb}{'_' + bhash if bhash else ''}"):
         current_mtime = targetMtime(binary)
         if needs_compile and current_mtime == target_mtime:
-            rc = runCmd(compile_cmd)
+            rc = subprocess.run(compile_cmd, shell=True).returncode
             if rc:
                 print(f"Error: Verilator compilation failed for {args.config} {args.tb}", file=sys.stderr)
                 return rc
@@ -303,7 +295,7 @@ def runVerilator(args):
         runtime_args += f" +TEST={args.testsuite}"
     if args.args.strip():
         runtime_args += f" {args.args.strip()}"
-    return runCmd(f"cd {sim_dir} && {binary}{runtime_args}")
+    return subprocess.run(f"cd {sim_dir} && {binary}{runtime_args}", shell=True).returncode
 
 
 def runVCS(args, flags, prefix):
@@ -327,7 +319,7 @@ def runVCS(args, flags, prefix):
         current_mtime = targetMtime(binary)
         if needs_compile and current_mtime == target_mtime:
             compile_cmd = f'cd {sim_dir}; {prefix} ./run_vcs compile {args.config} {args.testsuite} --wkdir {wkdir} {compile_flags}'
-            rc = runCmd(compile_cmd)
+            rc = subprocess.run(compile_cmd, shell=True).returncode
             if rc:
                 print(f"Error: VCS compilation failed for {args.config} {args.tb}", file=sys.stderr)
                 return rc
@@ -339,7 +331,7 @@ def runVCS(args, flags, prefix):
     if args.args.strip():
         run_flags += f' --args "{args.args}"'
     run_cmd = f'cd {sim_dir}; {prefix} ./run_vcs run {args.config} {args.testsuite} --wkdir {wkdir} {run_flags}'
-    return runCmd(run_cmd)
+    return subprocess.run(run_cmd, shell=True).returncode
 
 
 def main(args):
