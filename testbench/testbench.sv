@@ -790,7 +790,7 @@ module testbench;
 
   DCacheFlushFSM #(P) DCacheFlushFSM(.clk, .start(DCacheFlushStart), .done(DCacheFlushDone));
 
-  if(P.ZICSR_SUPPORTED) begin
+  if(P.ZICSR_SUPPORTED & P.ZICNTR_SUPPORTED) begin  // minstret lives in csrc, which exists only with Zicntr
     logic [P.XLEN-1:0] Minstret;
     assign Minstret = testbench.dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2];
     always @(negedge clk) begin

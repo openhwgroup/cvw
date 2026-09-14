@@ -586,6 +586,24 @@ ZALRSC_SUPPORTED    0
 deriv zalrsc_rv64gc rv64gc
 ZAAMO_SUPPORTED     0
 
+# Only mhpmcounter3 and mhpmcounter4 are implemented.  mhpmcounter5-31 and their event
+# selectors must still read as zero rather than trapping, so this covers the upper counter
+# decode that a full 32-counter configuration cannot reach.
+deriv counters5_rv64gc rv64gc
+COUNTERS            12'd5
+
+# No HPM counters
+deriv counters3_rv64gc rv64gc
+ZIHPM_SUPPORTED     0
+COUNTERS            12'd3
+
+# No counters at all.  mcycle, minstret and mhpmcounter3-31 are mandated by the machine ISA even
+# when Zicntr and Zihpm are absent, so they must read as zero rather than trapping.
+deriv nocounters_rv64gc rv64gc
+ZICNTR_SUPPORTED    0
+ZIHPM_SUPPORTED     0
+COUNTERS            12'd0
+
 deriv zba_rv32gc rv32gc
 ZBA_SUPPORTED     1
 ZBB_SUPPORTED     0
