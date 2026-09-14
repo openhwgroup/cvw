@@ -389,8 +389,8 @@ module controller import cvw::*;  #(parameter cvw_t P) (
       CMOpD[3] = (InstrD[31:20] == 12'd4); // cbo.zero
     end
     if ((P.ZICBOM_SUPPORTED) & CMOD) begin
-      CMOpD[2] = (InstrD[31:20] == 12'd2); // cbo.clean
-      CMOpD[1] = (InstrD[31:20] == 12'd1) | ((InstrD[31:20] == 12'd0) & (ENVCFG_CBE[1:0] == 2'b01)); // cbo.flush
+      CMOpD[2] = (InstrD[31:20] == 12'd2) | ((InstrD[31:20] == 12'd0) & (ENVCFG_CBE[1:0] == 2'b01)); // cbo.flush
++      CMOpD[1] = (InstrD[31:20] == 12'd1); // cbo.clean
       CMOpD[0] = (InstrD[31:20] == 12'd0) & (ENVCFG_CBE[1:0] == 2'b11); // cbo.inval
     end
   end
