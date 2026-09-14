@@ -329,7 +329,6 @@ coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmp/pmpchecker -linerange $line-
 set line [GetLineNum ${SRC}/mmu/pmpchecker.sv "EnforcePMP & ExecuteAccessF"]
 coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange $line-$line -item e 1 -fecexprrow 3
 
-
 ## The IFU has ReadAccess = WriteAccess = 0 and ExecuteAccess = 1 hardwired, so exclude alternatives
 set line [GetLineNum ${SRC}/mmu/pmachecker.sv "ReadAccessM \\| WriteAccessM"]
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2 4
@@ -411,10 +410,6 @@ coverage exclude -scope /dut/core/lsu/hptw/hptw -linerange $line-$line -item e 1
 # Never possible to get Access = 0 on a nonleaf PTE with no OtherPageFault (because InvalidRead/Write will be 1 on the nonleaf)
 set line [GetLineNum ${SRC}/mmu/hptw.sv "assign HPTWUpdateDA"]
 coverage exclude -scope /dut/core/lsu/hptw/hptw -linerange $line-$line -item e 1 -fecexprrow 3
-
-# NOTE: the hptw instance is at /dut/core/lsu/hptw/hptw (single lsu).  The four exclusions above use a
-# stale /dut/core/lsu/hptw/hptw path that no longer resolves (silent no-ops) -- left untouched here;
-# the two exclusions below use the correct path.
 
 # UPDATE_PTE never self-loops on a cache-bus stall: the PTE being A/D-updated was just read during the
 # same uninterrupted walk (LSU stalled, line cannot be evicted), so it is resident/writable in the D$ and
