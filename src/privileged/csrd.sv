@@ -44,7 +44,8 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   output logic              DebugMode,
   input logic [P.XLEN-1:0]  NextValidPCE, PCM,
   output logic              IllegalCSRDAccessM,
-  output logic              DebugResume,
+  output logic              DebugResume, DebugHaltFlush, DebugResumeFlush,
+  output logic              DebugUseDPC,
   output [P.XLEN-1:0]       DPC_REGW,
   output logic              DebugHaveReset,
   input logic               DebugHaveResetAck,
@@ -276,7 +277,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   always_comb begin
     case (state)
       RUNNING: begin
-        if (DebugHaltReq) state_n = HALTED;
+        if (DebugHaltReq & InstrValid & ~StallW) state_n = HALTED;
         else if (ebreak) state_n = HALTED;
         else if (step & InstrValid & ~DebugResume & ~StallW) state_n = HALTED;
         else if (ResetHaltReqValid) state_n = HALTED;
@@ -305,6 +306,20 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   end
 
   assign DebugMode = (state == HALTED);
+
+  // Flush before Halt while still running
+  assign DebugHaltFlush = NextHalt;
+  //assign DebugResumeFlush = (state == HALTED) & (state_n == RUNNING);
+  assign DebugUseDPC = DebugHaltFlush | DebugResumeFlush | DebugResume;
+
+  // Flush after halt when running again.
+  always_ff @(posedge clk) begin
+    if (reset) begin
+      DebugResumeFlush <= 0;
+    end else begin
+      DebugResumeFlush <= (state == HALTED) & (state_n == RUNNING);
+    end
+  end
 
   // -----------------------------------------------------------------
   // Priv mode control

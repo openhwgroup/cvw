@@ -199,7 +199,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
     mux2 #(5) rfreadaddrmux (InstrD[19:15], DebugRegAddr[4:0], DebugFPREnable, a1);
     mux2 #(5) rfwriteaddrmux (RdW, DebugRegAddr[4:0], DebugFPREnable, Rd);
     mux2 #(P.FLEN) rfwdatamux (FResultW, DebugRegWDATA, DebugFPREnable, Result);
-    assign RegWrite = DebugMode ? DebugRegWrite & DebugFPREnable : FRegWriteW;
+    assign RegWrite = DebugMode & DebugRegWrite & DebugFPREnable | FRegWriteW;
     assign DebugFRD1D = FRD1D;
   end else begin
     assign DebugFRD1D = '0;

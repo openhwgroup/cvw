@@ -34,7 +34,7 @@ module hazard (
   input  logic  FPUStallD, ExternalStall,
   input  logic  DivBusyE, FDivBusyE,
   input  logic  wfiM, IntPendingM,
-  input  logic  DebugMode, DebugResume,
+  input  logic  DebugMode, DebugResume, DebugHaltFlush, DebugResumeFlush,
   // Stall & flush outputs
   output logic StallF, StallD, StallE, StallM, StallW,
   output logic FlushD, FlushE, FlushM, FlushW
@@ -75,9 +75,9 @@ module hazard (
   //   For example, if a jump instruction completes in the execute stage, it will override DPC setting the Program Counter.
   //   DebugResume will only go high and flush the contents of the D and E stages when DPC has actually been changed, not just on
   //   any resume.
-  assign FlushDCause = TrapM | RetM | CSRWriteFenceM | BPWrongE | DebugResume;
-  assign FlushECause = TrapM | RetM | CSRWriteFenceM |(BPWrongE & ~(DivBusyE | FDivBusyE)) | DebugResume;
-  assign FlushMCause = TrapM | RetM | CSRWriteFenceM | DebugResume;
+  assign FlushDCause = TrapM | RetM | CSRWriteFenceM | BPWrongE | DebugHaltFlush | DebugResumeFlush | DebugResume;
+  assign FlushECause = TrapM | RetM | CSRWriteFenceM | (BPWrongE & ~(DivBusyE | FDivBusyE)) | DebugHaltFlush | DebugResumeFlush | DebugResume;
+  assign FlushMCause = TrapM | RetM | CSRWriteFenceM | DebugHaltFlush | DebugResumeFlush | DebugResume;
   assign FlushWCause = TrapM & ~WFIInterruptedM | DebugResume;
 
   // Stall causes
@@ -91,12 +91,12 @@ module hazard (
   assign StallFCause = 1'b0;
   assign StallDCause = (StructuralStallD | FPUStallD) & ~FlushDCause;
   assign StallECause = (DivBusyE | FDivBusyE) & ~FlushECause;
-  assign StallMCause = WFIStallM & ~FlushMCause;
+  assign StallMCause = WFIStallM & ~FlushMCause | DebugMode;
   // Need to gate IFUStallF when the equivalent FlushFCause = FlushDCause = 1.
   // assign StallWCause = ((IFUStallF & ~FlushDCause) | LSUStallM) & ~FlushWCause;
   // Because FlushWCause is a strict subset of FlushDCause, FlushWCause is factored out.
   // DebugMode is added here to halt the processor upon entering DebugMode.
-  assign StallWCause = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause) | DebugMode | ExternalStall;
+  assign StallWCause = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause) | ExternalStall;
 
   // Stall each stage for cause or if the next stage is stalled
   // coverage off: StallFCause is always 0

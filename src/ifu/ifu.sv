@@ -98,6 +98,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   output logic                 ICacheAccess,                             // Report I$ read to performance counters
   output logic                 ICacheMiss,                               // Report I$ miss to performance counters
   input  logic                 DebugResume,                              //
+  input  logic                 DebugUseDPC,
   output logic [P.XLEN-1:0]    NextValidPCE,
   input  logic [P.XLEN-1:0]    DPC
 );
@@ -330,7 +331,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   mux3 #(P.XLEN) pcmux3(PC2NextF, EPCM, TrapVectorM, {TrapM, RetM}, UnalignedPCNextF);
 
   if (P.DEBUG_SUPPORTED) begin
-    mux2 #(P.XLEN) pcmuxdebug(UnalignedPCNextF, DPC, DebugResume, DebugPCNextF);
+    mux2 #(P.XLEN) pcmuxdebug(UnalignedPCNextF, DPC, DebugUseDPC, DebugPCNextF);
   end else begin
     assign DebugPCNextF = UnalignedPCNextF;
   end
