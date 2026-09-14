@@ -592,17 +592,20 @@ ZAAMO_SUPPORTED     0
 deriv counters5_rv64gc rv64gc
 COUNTERS            12'd5
 
-# No HPM counters
+# All mhpmcounters are read-only zero
 deriv counters3_rv64gc rv64gc
-ZIHPM_SUPPORTED     0
 COUNTERS            12'd3
 
-# No counters at all.  mcycle, minstret and mhpmcounter3-31 are mandated by the machine ISA even
-# when Zicntr and Zihpm are absent, so they must read as zero rather than trapping.
-deriv nocounters_rv64gc rv64gc
-ZICNTR_SUPPORTED    0
+# Only mhpmcounter3-4 are implemented, and are not accessible from user mode
+deriv counters5_nohpm_rv64gc rv64gc
 ZIHPM_SUPPORTED     0
-COUNTERS            12'd0
+COUNTERS            12'd5
+
+# Only mhpmcounter3-4 are implemented, and no coutners or hpms are not accessible from user mode
+deriv counters5_nocntr_rv32gc rv32gc
+ZICNTR_SUPPORTED     0
+ZIHPM_SUPPORTED     0
+COUNTERS            12'd5
 
 deriv zba_rv32gc rv32gc
 ZBA_SUPPORTED     1

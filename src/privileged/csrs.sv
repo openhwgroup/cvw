@@ -67,6 +67,7 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
   localparam STIMECMPH  = 12'h15D;
   localparam SATP       = 12'h180;
   // Constants
+  localparam COUNTER_MASK = (1 << P.COUNTERS) - 1; // only allow writes to the COUNTERS bits of SCOUNTEREN
 
   logic                    WriteSTVECM;
   logic                    WriteSSCRATCHM, WriteSEPCM;
@@ -112,7 +113,9 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
     flopenr #(P.XLEN) SATPreg(clk, reset, WriteSATPM, CSRWriteValM, SATP_REGW);
   else
     assign SATP_REGW = '0; // hardwire to zero if virtual memory not supported
-  flopenr #(32)   SCOUNTERENreg(clk, reset, WriteSCOUNTERENM, CSRWriteValM[31:0], SCOUNTEREN_REGW);
+  if (P.ZICNTR_SUPPORTED) // SCOUNTEREN read-only zero if Zicntr is not supported
+    flopenr #(32)   SCOUNTERENreg(clk, reset, WriteSCOUNTERENM, CSRWriteValM[31:0] & COUNTER_MASK, SCOUNTEREN_REGW);
+  else assign SCOUNTEREN_REGW = '0;
   if (P.SSTC_SUPPORTED) begin : sstc
     if (P.XLEN == 64) begin : sstc64
       flopenr #(P.XLEN) STIMECMPreg(clk, reset, WriteSTIMECMPM, CSRWriteValM, STIMECMP_REGW);

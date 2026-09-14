@@ -104,6 +104,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   // when compressed instructions are supported, there can't be misaligned instructions
   localparam MEDELEG_MASK  = P.ZCA_SUPPORTED ? 16'hB3FE : 16'hB3FF;
   localparam MIDELEG_MASK  = 12'h222; // we choose to not make machine interrupts delegable
+  localparam COUNTER_MASK = (1 << P.COUNTERS) - 1; // only allow writes to the COUNTERS bits of MCOUNTEREN ad MCOUNTHINIBIT
   localparam Gm1 = P.PMP_G > 0 ? P.PMP_G - 1 : 0; // max(G-1, 0)
 
  // There are PMP_ENTRIES = 0, 16, or 64 PMPADDR registers, each of which has its own flop
@@ -178,9 +179,9 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   flopenr #(P.XLEN) MEPCreg(clk, reset, WriteMEPCM, NextEPCM, MEPC_REGW);
   flopenr #(P.XLEN) MCAUSEreg(clk, reset, WriteMCAUSEM, {NextCauseM[5], {(P.XLEN-6){1'b0}}, NextCauseM[4:0]}, MCAUSE_REGW);
   flopenr #(P.XLEN) MTVALreg(clk, reset, WriteMTVALM, NextXtvalM, MTVAL_REGW);
-  flopenr #(32)   MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, {CSRWriteValM[31:2], 1'b0, CSRWriteValM[0]}, MCOUNTINHIBIT_REGW);
-  if (P.U_SUPPORTED) begin : mcounteren // MCOUNTEREN only exists when user mode is supported
-    flopenr #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, CSRWriteValM[31:0], MCOUNTEREN_REGW);
+  flopenr #(32)   MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, {CSRWriteValM[31:2], 1'b0, CSRWriteValM[0]} & COUNTER_MASK, MCOUNTINHIBIT_REGW);
+  if (P.U_SUPPORTED & P.ZICNTR_SUPPORTED) begin : mcounteren // MCOUNTEREN only writable when user mode and Zicntr are supported
+    flopenr #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, CSRWriteValM[31:0] & COUNTER_MASK, MCOUNTEREN_REGW);
   end else assign MCOUNTEREN_REGW = '0;
 
   // MENVCFG register

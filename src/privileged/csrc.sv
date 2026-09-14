@@ -67,6 +67,8 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   localparam MTIMEH           = 12'hB81;               // this is a memory-mapped register; no such CSR exists, and access should fault
   localparam MHPMEVENTBASE    = 12'h323;
   localparam MHPMEVENTLAST    = 12'h33F;
+  // SystemVerilog has no zero-width array, so keep one unused element when no hpmevents exist
+  localparam HPMEVENTTOP      = P.COUNTERS > 3 ? P.COUNTERS - 1 : 3;
   localparam HPMCOUNTERBASE   = 12'hC00;
   localparam HPMCOUNTERHBASE  = 12'hC80;
   localparam TIME             = 12'hC01;
@@ -75,18 +77,18 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   logic [4:0]              CounterNumM;
   logic [P.XLEN-1:0]       HPMCOUNTER_REGW[P.COUNTERS-1:0];
   logic [P.XLEN-1:0]       HPMCOUNTERH_REGW[P.COUNTERS-1:0];
-  logic [P.XLEN-1:0]       MHPMEVENT_REGW[P.COUNTERS-1:3];
+  logic [P.XLEN-1:0]       MHPMEVENT_REGW[HPMEVENTTOP:3];
   logic                    LoadStallE, LoadStallM;
   logic                    StoreStallE, StoreStallM;
   logic [P.COUNTERS-1:0]   WriteHPMCOUNTERM;
   logic [P.COUNTERS-1:0]   WriteHPMCOUNTERHM;
-  logic [P.COUNTERS-1:3]   WriteMHPMEVENTM;
+  logic [HPMEVENTTOP:3]    WriteMHPMEVENTM;
   logic [31:0]             CounterEvent; // keep all events here even if P.COUNTERS < 32
   logic [P.COUNTERS-1:0]   CounterInc;
   logic [63:0]             HPMCOUNTERPlusM[P.COUNTERS-1:0];
   logic [P.XLEN-1:0]       NextHPMCOUNTERHM[P.COUNTERS-1:0];
   logic [P.XLEN-1:0]       NextHPMCOUNTERM[P.COUNTERS-1:0];
-  logic [P.XLEN-1:0]       NextMHPMEVENTM[P.COUNTERS-1:3];
+  logic [P.XLEN-1:0]       NextMHPMEVENTM[HPMEVENTTOP:3];
 
   genvar                   i;
 
@@ -101,7 +103,7 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   assign CounterEvent[0]    = 1'b1;                                                      // MCYCLE always increments
   assign CounterEvent[1]    = 1'b0;                                                      // Counter 1 doesn't exist
   assign CounterEvent[2]    = InstrValidNotFlushedM;                                     // MINSTRET instructions retired
-  if (P.ZIHPM_SUPPORTED) begin : cevent                                                   // User-defined counters
+  if (P.COUNTERS > 3) begin : cevent                                                   // User-defined counters
     // Ideally all events would be counted in the M stage, but the pipelining is costly. The counters may
     // count an event in a previous pipeline stage.
     assign CounterEvent[3]  = IClassM[0] & InstrValidNotFlushedM;                        // branch instruction
@@ -135,7 +137,7 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   end
 
   // Counter update and write logic
-  for (i = 0; $unsigned(i) < P.COUNTERS; i = i+1) begin : cntr
+  for (i = 0; i < P.COUNTERS; i = i+1) begin : cntr
       assign WriteHPMCOUNTERM[i] = CSRMWriteM & (CSRAdrM == MHPMCOUNTERBASE + i); // coverage tag: MTIME traps
       assign NextHPMCOUNTERM[i][P.XLEN-1:0] = WriteHPMCOUNTERM[i] ? CSRWriteValM : HPMCOUNTERPlusM[i][P.XLEN-1:0];
       if (i < 3) assign CounterInc[i] = CounterEvent[i] & ~MCOUNTINHIBIT_REGW[i]; // MCYCLE, CYCLE, and MINSTRET are always incremented if not inhibited
@@ -158,12 +160,18 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   end
 
   // hpmevent update and write logic
-  for (i = 3; $unsigned(i) < P.COUNTERS; i = i+1) begin : mhpmevent
-    assign WriteMHPMEVENTM[i] = CSRMWriteM & (CSRAdrM == MHPMEVENTBASE + i);
-    assign NextMHPMEVENTM[i] = WriteMHPMEVENTM[i] ? CSRWriteValM : MHPMEVENT_REGW[i];
-    always_ff @(posedge clk)
-      if (reset) MHPMEVENT_REGW[i] <= '0;
-      else       MHPMEVENT_REGW[i] <= NextMHPMEVENTM[i];
+  if (P.COUNTERS > 3) begin : mhpmeventgen
+    for (i = 3; i < P.COUNTERS; i = i+1) begin : mhpmevent
+      assign WriteMHPMEVENTM[i] = CSRMWriteM & (CSRAdrM == MHPMEVENTBASE + i);
+      assign NextMHPMEVENTM[i] = WriteMHPMEVENTM[i] ? CSRWriteValM : MHPMEVENT_REGW[i];
+      always_ff @(posedge clk)
+        if (reset) MHPMEVENT_REGW[i] <= '0;
+        else       MHPMEVENT_REGW[i] <= NextMHPMEVENTM[i];
+    end
+  end else begin : mhpmeventgen // no hpmevents exist; drive the placeholder element HPMEVENTTOP reserves
+    assign WriteMHPMEVENTM = '0;
+    assign NextMHPMEVENTM[3] = '0;
+    assign MHPMEVENT_REGW[3] = '0;
   end
 
   // Read Counters, or cause exception if insufficient privilege in light of COUNTEREN flags
@@ -189,8 +197,12 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
                   CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
           else if (CSRAdrM >= MHPMCOUNTERBASE+P.COUNTERS & CSRAdrM < MHPMCOUNTERBASE+32)
                   CSRCReadValM = '0; // unused counters are read-only zero
-          else if (CSRAdrM >= HPMCOUNTERBASE  & CSRAdrM  < HPMCOUNTERBASE+P.COUNTERS & ~CSRWriteM)  // read-only
+          else if (CSRAdrM >= HPMCOUNTERBASE  & CSRAdrM  < HPMCOUNTERBASE+3 & ~CSRWriteM & P.ZICNTR_SUPPORTED)  // read-only
                   CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
+          else if (CSRAdrM >= HPMCOUNTERBASE+3  & CSRAdrM  < HPMCOUNTERBASE+P.COUNTERS & ~CSRWriteM & P.ZIHPM_SUPPORTED)  // read-only
+                  CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
+          else if (CSRAdrM >= HPMCOUNTERBASE+P.COUNTERS  & CSRAdrM  < HPMCOUNTERBASE+32 & ~CSRWriteM & P.ZIHPM_SUPPORTED)  // read-only
+                  CSRCReadValM = '0';
           else IllegalCSRCAccessM = 1'b1;  // requested CSR doesn't exist
         end else begin // 32-bit counter reads
           // Veril ator doesn't realize this only occurs for XLEN=32
@@ -200,14 +212,22 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
                   CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
           else if (CSRAdrM >= MHPMCOUNTERBASE+P.COUNTERS & CSRAdrM < MHPMCOUNTERBASE+32)
                   CSRCReadValM = '0; // unused counters are read-only zero
-          else if (CSRAdrM >= HPMCOUNTERBASE   & CSRAdrM < HPMCOUNTERBASE+P.COUNTERS  & ~CSRWriteM)    // read-only
+          else if (CSRAdrM >= HPMCOUNTERBASE   & CSRAdrM < HPMCOUNTERBASE+3  & ~CSRWriteM & P.ZICNTR_SUPPORTED)    // read-only
                   CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
+          else if (CSRAdrM >= HPMCOUNTERBASE+3   & CSRAdrM < HPMCOUNTERBASE+P.COUNTERS  & ~CSRWriteM & P.ZIHPM_SUPPORTED)    // read-only
+                  CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
+          else if (CSRAdrM >= HPMCOUNTERBASE+P.COUNTERS   & CSRAdrM < HPMCOUNTERBASE+32  & ~CSRWriteM & P.ZIHPM_SUPPORTED)    // read-only
+                  CSRCReadValM = '0; // unused counters are read-only zero
           else if (CSRAdrM >= MHPMCOUNTERHBASE & CSRAdrM < MHPMCOUNTERHBASE+P.COUNTERS & CSRAdrM != MTIMEH)
                   CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
           else if (CSRAdrM >= MHPMCOUNTERHBASE+P.COUNTERS & CSRAdrM < MHPMCOUNTERHBASE+32)
                   CSRCReadValM = '0; // unused counters are read-only zero
-          else if (CSRAdrM >= HPMCOUNTERHBASE  & CSRAdrM < HPMCOUNTERHBASE+P.COUNTERS  & ~CSRWriteM)   // read-only
+          else if (CSRAdrM >= HPMCOUNTERHBASE   & CSRAdrM < HPMCOUNTERHBASE+3  & ~CSRWriteM & P.ZICNTR_SUPPORTED)   // read-only
                   CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
+          else if (CSRAdrM >= HPMCOUNTERHBASE+3 & CSRAdrM < HPMCOUNTERHBASE+P.COUNTERS & ~CSRWriteM & P.ZIHPM_SUPPORTED)   // read-only
+                  CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
+          else if (CSRAdrM >= HPMCOUNTERHBASE+P.COUNTERS & CSRAdrM < HPMCOUNTERHBASE+32 & ~CSRWriteM & P.ZIHPM_SUPPORTED)   // read-only
+                  CSRCReadValM = '0;
           else    IllegalCSRCAccessM = 1'b1; // requested CSR doesn't exist
         end
         /* verilator lint_on WIDTH */
