@@ -142,6 +142,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   logic [31:0]                 ShiftUncachedInstr;
   logic                        ITLBMissF;
   logic                        InstrUpdateAF;                            // ITLB hit needs to update dirty or access bits
+  logic                        IFUFaultF;                                // Fetch failed the PMA or PMP check, so it must not access the cache or bus
 
   assign PCFExt = {2'b00, PCSpillF};
 
@@ -214,6 +215,11 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     assign ITLBMissOrUpdateAF = '0;
   end
 
+  // A fetch that has already failed the PMA or PMP check traps in the Memory stage, so it must not
+  // start a bus transfer or a cache line fill.  Gating the cache as well as the bus keeps a line
+  // that the hart may not execute from being filled into the I$.
+  assign IFUFaultF = InstrAccessFaultF | InstrPageFaultF;
+
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // Memory
   ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -245,8 +251,8 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
       logic                 ICacheBusAck;
       logic [1:0]           CacheBusRW, BusRW, CacheRWF;
 
-      assign BusRW = ~ITLBMissF & ~CacheableF & ~SelIROM ? IFURWF : '0;
-      assign CacheRWF = ~ITLBMissF & CacheableF & ~SelIROM ? IFURWF : '0;
+      assign BusRW = ~ITLBMissF & ~CacheableF & ~SelIROM & ~IFUFaultF ? IFURWF : '0;
+      assign CacheRWF = ~ITLBMissF & CacheableF & ~SelIROM & ~IFUFaultF ? IFURWF : '0;
       cache #(.P(P), .PA_BITS(P.PA_BITS), .LINELEN(P.ICACHE_LINELENINBITS),
               .NUMSETS(P.ICACHE_WAYSIZEINBYTES*8/P.ICACHE_LINELENINBITS),
               .NUMWAYS(P.ICACHE_NUMWAYS), .LOGBWPL(AHBWLOGBWPL), .WORDLEN(32), .MUXINTERVAL(16), .READ_ONLY_CACHE(1))
@@ -281,7 +287,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     end else begin : passthrough
       assign IFUHADDR = PCPF;
       logic [1:0] BusRW;
-      assign BusRW = ~ITLBMissF & ~SelIROM ? IFURWF : 0;
+      assign BusRW = ~ITLBMissF & ~SelIROM & ~IFUFaultF ? IFURWF : 0;
       assign IFUHSIZE = 3'b010;
 
       ahbinterface #(P.XLEN, 1'b0) ahbinterface(.HCLK(clk), .Flush(FlushD), .HRESETn(~reset), .HREADY(IFUHREADY),
