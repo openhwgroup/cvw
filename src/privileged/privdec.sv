@@ -79,7 +79,7 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   assign wfiM =       PrivilegedM & (InstrM[31:20] == 12'b000100000101) & rs1zeroM;
 
   // all of sinval.vma, sfence.w.inval, sfence.inval.ir are treated as sfence.vma
-  assign sfencevmaM = PrivilegedM & P.VIRTMEM_SUPPORTED &
+  assign sfencevmaM = PrivilegedM & P.S_SUPPORTED &
                       ((PrivilegeModeW == P.M_MODE & (vmaM | fenceinvalM)) |
                        (PrivilegeModeW == P.S_MODE & (vmaM & ~STATUS_TVM  | fenceinvalM))); // sfence.w.inval & sfence.inval.ir not affected by TVM
 
