@@ -790,16 +790,14 @@ module testbench;
 
   DCacheFlushFSM #(P) DCacheFlushFSM(.clk, .start(DCacheFlushStart), .done(DCacheFlushDone));
 
-  if(P.ZICSR_SUPPORTED) begin
-    logic [P.XLEN-1:0] Minstret;
-    assign Minstret = testbench.dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2];
-    always @(negedge clk) begin
-      if (INSTR_LIMIT > 0) begin
-        if((Minstret != 0) & (Minstret % 'd100000 == 0)) $display("Reached %d instructions", Minstret);
-        if((Minstret == INSTR_LIMIT) & (INSTR_LIMIT!=0)) begin $finish; end
-      end
+  logic [P.XLEN-1:0] Minstret;
+  assign Minstret = testbench.dut.core.priv.priv.csr.counters.HPMCOUNTER_REGW[2];
+  always @(negedge clk) begin
+    if (INSTR_LIMIT > 0) begin
+      if((Minstret != 0) & (Minstret % 'd100000 == 0)) $display("Reached %d instructions", Minstret);
+      if((Minstret == INSTR_LIMIT) & (INSTR_LIMIT!=0)) begin $finish; end
     end
-end
+  end
 
 // RVVI trace for functional coverage and lockstep
 `ifdef ENABLE_RVVI_TRACE
