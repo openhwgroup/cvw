@@ -50,6 +50,13 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic                     InstrValidM,               // current instruction is valid
   input  logic                     FRegWriteM,                // writes to floating point registers change STATUS.FS
   input  logic [4:0]               SetFflagsM,                // Set floating point flag bits in FCSR
+  input  logic                     VRegWriteM,                // instruction writes a vector register
+  input  logic                     WriteVLVTYPEM,             // vconfig commits new vl/vtype
+  input  logic [P.XLEN-1:0]        NewVLM,                    // new vl value from vset instruction
+  input  logic [7:0]               NewVTYPEM,                 // new vector config from vset instructions
+  input  logic                     NewVILLM,                  // new vtype is illegal
+  input  logic                     SetVXSATM,                 // saturating V op
+  input  logic                     ClearVSTARTM,              // reset vstart after vector instruction completed
   input  logic [1:0]               NextPrivilegeModeM,        // STATUS bits updated based on next privilege mode
   input  logic [1:0]               PrivilegeModeW,            // current privilege mode
   input  logic [4:0]               CauseM,                    // Trap cause
@@ -81,9 +88,14 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   output logic                     STATUS_MIE, STATUS_SIE,
   output logic                     STATUS_MXR, STATUS_SUM, STATUS_MPRV, STATUS_TW,
   output logic [1:0]               STATUS_FS,
+  output logic [1:0]               STATUS_VS,
   output var logic [7:0]           PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0],
   output var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW[P.PMP_ENTRIES-1:0],
   output logic [2:0]               FRM_REGW,
+  output logic [P.XLEN-1:0]        VTYPE_REGW,
+  output logic [P.XLEN-1:0]        VL_REGW,
+  output logic [$clog2(P.VLEN)-1:0] VSTART_REGW,
+  output logic [1:0]               VXRM_REGW,
   output logic [3:0]               ENVCFG_CBE,
   output logic                     ENVCFG_PBMTE,              // Page-based memory type enable
   output logic                     ENVCFG_ADUE,               // HPTW A/D Update enable
@@ -99,7 +111,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   localparam MIP = 12'h344;
   localparam SIP = 12'h144;
 
-  logic [P.XLEN-1:0]       CSRMReadValM, CSRSReadValM, CSRUReadValM, CSRCReadValM;
+  logic [P.XLEN-1:0]       CSRMReadValM, CSRSReadValM, CSRUReadValM, CSRCReadValM, CSRVReadValM;
   logic [P.XLEN-1:0]       CSRReadValM;
   logic [P.XLEN-1:0]       CSRSrcM;
   logic [P.XLEN-1:0]       CSRRWM, CSRRSM, CSRRCM;
@@ -112,10 +124,11 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic                    CSRMWriteM, CSRSWriteM, CSRUWriteM;
   logic                    UngatedCSRMWriteM;
   logic                    WriteFRMM, SetOrWriteFFLAGSM;
+  logic                    ClearOrWriteVSTARTM, WriteVXRMM, SetOrWriteVXSATM;
   logic [P.XLEN-1:0]       UnalignedNextEPCM, NextEPCM, NextMtvalM;
   logic [5:0]              NextCauseM;
   logic [11:0]             CSRAdrM;
-  logic                    IllegalCSRCAccessM, IllegalCSRMAccessM, IllegalCSRSAccessM, IllegalCSRUAccessM;
+  logic                    IllegalCSRCAccessM, IllegalCSRMAccessM, IllegalCSRSAccessM, IllegalCSRUAccessM, IllegalCSRVAccessM;
   logic                    InsufficientCSRPrivilegeM;
   logic                    IllegalCSRMWriteReadonlyM;
   logic [P.XLEN-1:0]       CSRReadVal2M;
@@ -222,12 +235,14 @@ module csr import cvw::*;  #(parameter cvw_t P) (
 
   csrsr #(P) csrsr(.clk, .reset, .StallW,
     .WriteMSTATUSM, .WriteMSTATUSHM, .WriteSSTATUSM,
-    .TrapM, .FRegWriteM, .NextPrivilegeModeM, .PrivilegeModeW,
-    .mretM, .sretM, .WriteFRMM, .SetOrWriteFFLAGSM, .CSRWriteValM, .SelHPTW,
+    .TrapM, .FRegWriteM, .VRegWriteM, .NextPrivilegeModeM, .PrivilegeModeW,
+    .mretM, .sretM, .WriteFRMM, .SetOrWriteFFLAGSM,
+    .WriteVLVTYPEM, .WriteVXRMM, .ClearOrWriteVSTARTM, .SetOrWriteVXSATM,
+    .CSRWriteValM, .SelHPTW,
     .MSTATUS_REGW, .SSTATUS_REGW, .MSTATUSH_REGW,
     .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TW,
     .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TVM,
-    .STATUS_FS, .BigEndianM);
+    .STATUS_FS, .STATUS_VS, .BigEndianM);
 
   csrm #(P) csrm(.clk, .reset,
     .UngatedCSRMWriteM, .CSRMWriteM, .MTrapM, .CSRAdrM,
@@ -278,6 +293,26 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign SetOrWriteFFLAGSM = 1'b0;
   end
 
+  // Vector CSRs in User Mode only needed if vector is supported
+  if (P.V_SUPPORTED) begin : csrv
+    csrv #(P) csrv(.clk, .reset, .InstrValidNotFlushedM,
+      .CSRWriteM, .CSRUWriteM, .CSRAdrM, .CSRWriteValM, .STATUS_VS,
+      .WriteVLVTYPEM, .NewVLM, .NewVTYPEM, .NewVILLM, .SetVXSATM, .ClearVSTARTM,
+      .VTYPE_REGW, .VL_REGW, .VSTART_REGW, .VXRM_REGW,
+      .WriteVXRMM, .SetOrWriteVXSATM, .ClearOrWriteVSTARTM,
+      .CSRVReadValM, .IllegalCSRVAccessM);
+  end else begin : no_csrv
+    assign CSRVReadValM        = '0;
+    assign IllegalCSRVAccessM  = 1'b1;
+    assign VTYPE_REGW          = '0;
+    assign VL_REGW             = '0;
+    assign VSTART_REGW         = '0;
+    assign VXRM_REGW           = '0;
+    assign WriteVXRMM          = 1'b0;
+    assign SetOrWriteVXSATM    = 1'b0;
+    assign ClearOrWriteVSTARTM = 1'b0;
+  end
+
   if (P.ZICNTR_SUPPORTED) begin : counters
     csrc #(P) counters(.clk, .reset, .StallE, .StallM, .FlushM,
       .InstrValidNotFlushedM, .LoadStallD, .StoreStallD, .CSRWriteM, .CSRMWriteM,
@@ -305,13 +340,13 @@ module csr import cvw::*;  #(parameter cvw_t P) (
                                                                        (MENVCFG_REGW[0] & SENVCFG_REGW[0]);
 
   // merge CSR Reads
-  assign CSRReadValM = CSRUReadValM | CSRSReadValM | CSRMReadValM | CSRCReadValM;
+  assign CSRReadValM = CSRUReadValM | CSRSReadValM | CSRMReadValM | CSRCReadValM | CSRVReadValM;
   flopenrc #(P.XLEN) CSRValWReg(clk, reset, FlushW, ~StallW, CSRReadValM, CSRReadValW);
 
   // merge illegal accesses: illegal if none of the CSR addresses is legal or privilege is insufficient
   assign InsufficientCSRPrivilegeM = (CSRAdrM[9:8] == 2'b11 & PrivilegeModeW != P.M_MODE) |
                                      (CSRAdrM[9:8] == 2'b01 & PrivilegeModeW == P.U_MODE);
   assign IllegalCSRAccessM = ((IllegalCSRCAccessM & IllegalCSRMAccessM &
-    IllegalCSRSAccessM & IllegalCSRUAccessM |
+    IllegalCSRSAccessM & IllegalCSRUAccessM & IllegalCSRVAccessM |
     InsufficientCSRPrivilegeM) & CSRReadM) | IllegalCSRMWriteReadonlyM;
 endmodule

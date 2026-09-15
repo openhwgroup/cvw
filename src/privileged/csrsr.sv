@@ -31,10 +31,12 @@
 module csrsr import cvw::*;  #(parameter cvw_t P) (
   input  logic              clk, reset, StallW,
   input  logic              WriteMSTATUSM, WriteMSTATUSHM, WriteSSTATUSM,
-  input  logic              TrapM, FRegWriteM,
+  input  logic              TrapM, FRegWriteM, VRegWriteM,
   input  logic [1:0]        NextPrivilegeModeM, PrivilegeModeW,
   input  logic              mretM, sretM,
   input  logic              WriteFRMM, SetOrWriteFFLAGSM,
+  input  logic              WriteVLVTYPEM, WriteVXRMM,
+  input  logic              ClearOrWriteVSTARTM, SetOrWriteVXSATM,
   input  logic [P.XLEN-1:0] CSRWriteValM,
   input  logic              SelHPTW,
   output logic [P.XLEN-1:0] MSTATUS_REGW, SSTATUS_REGW, MSTATUSH_REGW,
@@ -43,12 +45,12 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
   output logic              STATUS_MIE, STATUS_SIE,
   output logic              STATUS_MXR, STATUS_SUM,
   output logic              STATUS_MPRV, STATUS_TVM,
-  output logic [1:0]        STATUS_FS,
+  output logic [1:0]        STATUS_FS, STATUS_VS,
   output logic              BigEndianM
 );
 
   logic STATUS_SD, STATUS_TW_INT, STATUS_TSR_INT, STATUS_TVM_INT, STATUS_MXR_INT, STATUS_SUM_INT, STATUS_MPRV_INT;
-  logic [1:0] STATUS_SXL, STATUS_UXL, STATUS_XS, STATUS_FS_INT, STATUS_MPP_NEXT;
+  logic [1:0] STATUS_SXL, STATUS_UXL, STATUS_XS, STATUS_FS_INT, STATUS_VS_INT, STATUS_MPP_NEXT;
   logic STATUS_MPIE, STATUS_SPIE, STATUS_UBE, STATUS_SBE, STATUS_MBE;
   logic nextMBE, nextSBE;
 
@@ -58,24 +60,24 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
   if (P.XLEN==64) begin : csrsr64 // RV64
     assign MSTATUS_REGW  = {STATUS_SD, 25'b0, STATUS_MBE, STATUS_SBE, STATUS_SXL, STATUS_UXL, 9'b0,
                            STATUS_TSR, STATUS_TW, STATUS_TVM, STATUS_MXR, STATUS_SUM, STATUS_MPRV,
-                           STATUS_XS, STATUS_FS, STATUS_MPP, 2'b0,
+                           STATUS_XS, STATUS_FS, STATUS_MPP, STATUS_VS,
                            STATUS_SPP, STATUS_MPIE, STATUS_UBE, STATUS_SPIE, 1'b0,
                            STATUS_MIE, 1'b0, STATUS_SIE, 1'b0};
     assign SSTATUS_REGW  = {STATUS_SD, /*27'b0, */ 29'b0, /*STATUS_SXL, */ {STATUS_UXL}, /*9'b0, */ 12'b0,
                           /*STATUS_TSR, STATUS_TW, STATUS_TVM, */STATUS_MXR, STATUS_SUM, /* STATUS_MPRV, */ 1'b0,
-                           STATUS_XS, STATUS_FS, /*STATUS_MPP, 2'b0*/ 4'b0,
+                           STATUS_XS, STATUS_FS, /*STATUS_MPP*/ 2'b0, STATUS_VS,
                            STATUS_SPP, /*STATUS_MPIE*/ 1'b0, STATUS_UBE, STATUS_SPIE,
                           /*1'b0, STATUS_MIE, 1'b0*/ 3'b0, STATUS_SIE, 1'b0};
     assign MSTATUSH_REGW = '0; // does not exist when XLEN=64, and accessing will throw an illegal instruction
   end else begin : csrsr32 // RV32
     assign MSTATUS_REGW  = {STATUS_SD, 8'b0,
                            STATUS_TSR, STATUS_TW, STATUS_TVM, STATUS_MXR, STATUS_SUM, STATUS_MPRV,
-                           STATUS_XS, STATUS_FS, STATUS_MPP, 2'b0,
+                           STATUS_XS, STATUS_FS, STATUS_MPP, STATUS_VS,
                            STATUS_SPP, STATUS_MPIE, STATUS_UBE, STATUS_SPIE, 1'b0, STATUS_MIE, 1'b0, STATUS_SIE, 1'b0};
     assign MSTATUSH_REGW = {26'b0, STATUS_MBE, STATUS_SBE, 4'b0};
     assign SSTATUS_REGW  = {STATUS_SD, 11'b0,
                           /*STATUS_TSR, STATUS_TW, STATUS_TVM, */STATUS_MXR, STATUS_SUM, /* STATUS_MPRV, */ 1'b0,
-                           STATUS_XS, STATUS_FS, /*STATUS_MPP, 2'b0*/ 4'b0,
+                           STATUS_XS, STATUS_FS, /*STATUS_MPP*/ 2'b0, STATUS_VS,
                            STATUS_SPP, /*STATUS_MPIE*/ 1'b0, STATUS_UBE, STATUS_SPIE,
                           /*1'b0, STATUS_MIE, 1'b0*/ 3'b0, STATUS_SIE, 1'b0};
   end
@@ -100,7 +102,8 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
   assign STATUS_SUM  = P.S_SUPPORTED & P.VIRTMEM_SUPPORTED & STATUS_SUM_INT; // override register with 0 if supervisor mode not supported
   assign STATUS_MPRV = P.U_SUPPORTED & STATUS_MPRV_INT; // override with 0 if user mode not supported
   assign STATUS_FS   = P.F_SUPPORTED ? STATUS_FS_INT : 2'b00; // off if no FP
-  assign STATUS_SD   = (STATUS_FS == 2'b11) | (STATUS_XS == 2'b11); // dirty state logic
+  assign STATUS_VS   = P.V_SUPPORTED ? STATUS_VS_INT : 2'b00; // off if no V
+  assign STATUS_SD   = (STATUS_FS == 2'b11) | (STATUS_VS == 2'b11) | (STATUS_XS == 2'b11); // dirty state logic
   assign STATUS_XS   = 2'b00; // No additional user-mode state to be dirty
 
   always_comb
@@ -145,6 +148,7 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
       STATUS_SUM_INT  <= 1'b0;
       STATUS_MPRV_INT <= 1'b0; // Per Priv 3.3
       STATUS_FS_INT   <= 2'b00; // leave floating-point off until activated, even if F_SUPPORTED
+      STATUS_VS_INT   <= 2'b00; // leave vector off until activated, even if V_SUPPORTED
       STATUS_MPP      <= 2'b00;
       STATUS_SPP      <= 1'b0;
       STATUS_MPIE     <= 1'b0;
@@ -187,6 +191,7 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
         STATUS_SUM_INT  <= P.VIRTMEM_SUPPORTED & CSRWriteValM[18];
         STATUS_MPRV_INT <= P.U_SUPPORTED & CSRWriteValM[17];
         STATUS_FS_INT   <= CSRWriteValM[14:13];
+        STATUS_VS_INT   <= CSRWriteValM[10:9];
         STATUS_MPP      <= STATUS_MPP_NEXT;
         STATUS_SPP      <= P.S_SUPPORTED & CSRWriteValM[8];
         STATUS_MPIE     <= CSRWriteValM[7];
@@ -206,10 +211,15 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
         STATUS_MXR_INT  <= P.S_SUPPORTED & CSRWriteValM[19];
         STATUS_SUM_INT  <= P.VIRTMEM_SUPPORTED & CSRWriteValM[18];
         STATUS_FS_INT   <= CSRWriteValM[14:13];
+        STATUS_VS_INT   <= CSRWriteValM[10:9];
         STATUS_SPP      <= P.S_SUPPORTED & CSRWriteValM[8];
         STATUS_SPIE     <= P.S_SUPPORTED & CSRWriteValM[5];
         STATUS_SIE      <= P.S_SUPPORTED & CSRWriteValM[1];
         STATUS_UBE      <= P.U_SUPPORTED & P.BIGENDIAN_SUPPORTED & CSRWriteValM[6];
-      end else if (FRegWriteM | WriteFRMM | SetOrWriteFFLAGSM) STATUS_FS_INT <= 2'b11;
+      end else begin
+        // a vector FP instruction can dirty both FS (fflags) and VS in the same cycle
+        if (FRegWriteM | WriteFRMM | SetOrWriteFFLAGSM) STATUS_FS_INT <= 2'b11;
+        if (VRegWriteM | WriteVLVTYPEM | ClearOrWriteVSTARTM | WriteVXRMM | SetOrWriteVXSATM) STATUS_VS_INT <= 2'b11;
+      end
     end
 endmodule
