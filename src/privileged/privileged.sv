@@ -46,6 +46,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic              PrivilegedM,                                    // privileged instruction
   // processor events for performance counter logging
   input  logic              FRegWriteM,                                     // instruction will write floating-point registers
+  input  logic              VRegWriteM,                                     // instruction writes a vector register
   input  logic              LoadStallD,                                     // load instruction is stalling
   input  logic              StoreStallD,                                    // store instruction is stalling
   input  logic              ICacheStallF,                                   // I cache stalled
@@ -75,6 +76,12 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic              MTimerInt, MExtInt, SExtInt, MSwInt,            // interrupt sources
   input  logic [63:0]       MTIME_CLINT,                                    // timer value from CLINT
   input  logic [4:0]        SetFflagsM,                                     // set FCSR flags from FPU
+  input  logic              WriteVLVTYPEM,                                  // vconfig commits new vl/vtype this cycle
+  input  logic [P.XLEN-1:0] NewVLM,                                         // new vl
+  input  logic [7:0]        NewVTYPEM,                                      // new vtype config
+  input  logic              NewVILLM,                                       // new vill flag
+  input  logic              SetVXSATM,                                      // saturating V op set vxsat
+  input  logic              ClearVSTARTM,                                   // reset vstart when vector instruction completed
   input  logic              SelHPTW,                                        // HPTW in use.  Causes system to use S-mode endianness for accesses
   // CSR outputs
   output logic [P.XLEN-1:0] CSRReadValW,                                    // Value read from CSR
@@ -82,6 +89,11 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   output logic [P.XLEN-1:0] SATP_REGW,                                      // supervisor address translation register
   output logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV,            // status register bits
   output logic [1:0]        STATUS_MPP, STATUS_FS,                          // status register bits
+  output logic [1:0]        STATUS_VS,                                      // vector context status (mstatus.VS)
+  output logic [P.XLEN-1:0] VTYPE_REGW,                                     // vector type
+  output logic [P.XLEN-1:0] VL_REGW,                                        // vector length
+  output logic [$clog2(P.VLEN)-1:0] VSTART_REGW,                            // vector start element index
+  output logic [1:0]        VXRM_REGW,                                      // fixed-point rounding mode
   output var logic [7:0]    PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0],           // PMP configuration entries to MMU
   output var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW [P.PMP_ENTRIES-1:0],  // PMP address entries to MMU
   output logic [2:0]        FRM_REGW,                                       // FPU rounding mode
@@ -137,13 +149,16 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .InstrM, .InstrOrigM, .PCM, .PCSpillM, .SrcAM, .IEUAdrxTvalM,
     .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .InterruptM,
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
-    .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD, .StoreStallD,
+    .MTIME_CLINT, .InstrValidM, .FRegWriteM, .VRegWriteM,
+    .WriteVLVTYPEM, .NewVLM, .NewVTYPEM, .NewVILLM, .SetVXSATM, .ClearVSTARTM,
+    .VTYPE_REGW, .VL_REGW, .VSTART_REGW, .VXRM_REGW,
+    .LoadStallD, .StoreStallD,
     .BPDirWrongM, .BTAWrongM, .RASPredPCWrongM, .BPWrongM,
     .sfencevmaM, .ExceptionM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
     .IClassWrongM, .IClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
     .NextPrivilegeModeM, .PrivilegeModeW, .CauseM, .SelHPTW,
     .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TVM,
-    .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TW, .STATUS_FS,
+    .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TW, .STATUS_FS, .STATUS_VS,
     .MEDELEG_REGW, .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
     .SATP_REGW, .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
     .SetFflagsM, .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE,

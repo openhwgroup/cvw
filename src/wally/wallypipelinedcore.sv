@@ -108,7 +108,16 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          ITLBMissOrUpdateAF;
   logic [P.XLEN-1:0]             SATP_REGW;
   logic                          STATUS_MXR, STATUS_SUM, STATUS_MPRV;
-  logic [1:0]                    STATUS_MPP, STATUS_FS;
+  logic [1:0]                    STATUS_MPP, STATUS_FS, STATUS_VS;
+  // Vector CSR states
+  // TODO: VPU does not drive these CSR updates yet, tied to 0 for now
+  logic [P.XLEN-1:0]             VTYPE_REGW, VL_REGW;
+  logic [$clog2(P.VLEN)-1:0]     VSTART_REGW;
+  logic [1:0]                    VXRM_REGW;
+  logic                          VRegWriteM, WriteVLVTYPEM, NewVILLM, SetVXSATM, ClearVSTARTM;
+  logic [P.XLEN-1:0]             NewVLM;
+  logic [7:0]                    NewVTYPEM;
+  assign {VRegWriteM, WriteVLVTYPEM, NewVLM, NewVTYPEM, NewVILLM, SetVXSATM, ClearVSTARTM} = '0;
   logic [1:0]                    PrivilegeModeW;
   logic [P.XLEN-1:0]             PTE;
   logic [2:0]                    PageType;
@@ -303,7 +312,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .InstrM, .InstrOrigM, .CSRReadValW, .EPCM, .TrapVectorM,
       .RetM, .TrapM, .sfencevmaM, .InvalidateICacheM, .DCacheStallM, .ICacheStallF,
       .InstrValidM, .CommittedM, .CommittedF,
-      .FRegWriteM, .LoadStallD, .StoreStallD,
+      .FRegWriteM, .VRegWriteM, .LoadStallD, .StoreStallD,
       .BPDirWrongM, .BTAWrongM, .BPWrongM,
       .RASPredPCWrongM, .IClassWrongM, .DivBusyE, .FDivBusyE,
       .IClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .PrivilegedM,
@@ -312,18 +321,21 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
       .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
       .MTIME_CLINT, .IEUAdrxTvalM, .SetFflagsM,
+      .WriteVLVTYPEM, .NewVLM, .NewVTYPEM, .NewVILLM, .SetVXSATM, .ClearVSTARTM,
+      .VTYPE_REGW, .VL_REGW, .VSTART_REGW, .VXRM_REGW,
       .InstrAccessFaultF, .HPTWInstrAccessFaultF, .HPTWInstrPageFaultF, .LoadAccessFaultM, .StoreAmoAccessFaultM, .SelHPTW,
       .PrivilegeModeW, .SATP_REGW,
-      .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS,
+      .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS, .STATUS_VS,
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
       .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .wfiM, .IntPendingM, .BigEndianM);
   end else begin
     assign {CSRReadValW, PrivilegeModeW,
-            SATP_REGW, STATUS_MXR, STATUS_SUM, STATUS_MPRV, STATUS_MPP, STATUS_FS, FRM_REGW,
+            SATP_REGW, STATUS_MXR, STATUS_SUM, STATUS_MPRV, STATUS_MPP, STATUS_FS, STATUS_VS, FRM_REGW,
             // PMPCFG_ARRAY_REGW, PMPADDR_ARRAY_REGW,
             ENVCFG_CBE, ENVCFG_PBMTE, ENVCFG_ADUE,
             EPCM, TrapVectorM, RetM, TrapM,
-            sfencevmaM, BigEndianM, wfiM, IntPendingM} = '0;
+            sfencevmaM, BigEndianM, wfiM, IntPendingM,
+            VTYPE_REGW, VL_REGW, VSTART_REGW, VXRM_REGW} = '0;
   end
 
   // multiply/divide unit
