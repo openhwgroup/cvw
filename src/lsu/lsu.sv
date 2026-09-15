@@ -146,10 +146,6 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic                  LSULoadAccessFaultM;                    // Load access fault
   logic                  LSUStoreAmoAccessFaultM;                // Store access fault
   logic                  HPTWFlushW;                             // HPTW needs to flush operation
-  // *** logic                  MemAccessInFlightM;                     // M-stage access started on the D$/bus (or performed and holding) and not yet captured
-  // *** logic                  MemAccessDoneM;                         // M-stage access performed and its result captured; do not re-issue
-  // *** logic                  HoldAccessM;                            // Suppress the M-stage access presented to the D$/bus (already performed)
-  // *** logic [P.LLEN-1:0]     ReadDataHoldM;                          // Captured read data of a performed access awaiting retirement
   logic [P.LLEN-1:0]     ReadDataSelM;                           // Read data to the W stage (live or held)
   logic                  LSUFlushW;                              // HPTW or hazard unit flushes operation
   logic                  SelDTIM;                                // Select DTIM rather than bus or D$
@@ -210,25 +206,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       .LoadPageFaultM, .StoreAmoPageFaultM, .LSULoadPageFaultM, .LSUStoreAmoPageFaultM, .HPTWInstrPageFaultF
 );
 
-    // Memory-access state for walker arbitration (issues #1538, #1766).
-    // An M-stage access the D$/bus has started (fetch, writeback, or bus data phase) or has performed and is
-    // holding (D$ ADDRESS_SETUP, bus MEM3) must not be pre-empted by a page table walk: it can be neither
-    // aborted nor replayed.  Once performed while the pipeline is stalled, capture its result and hold it
-    // until the pipeline advances; the walker may then use the D$/bus, and the access is not re-issued.
-    // *** Rose Thompson: ^^ this ordering should not be allowed to happen.  The whole purpose of the changes to the hptw are to ensure
-    // the hptw always handles the ITLB and/or DTLB misses before performing the M-stage CPU memory access.  The hptw should
-    // prevent the LSU from issuing the M-stage CPU request before any HPTW requests. This includes the case of Dcache miss, ITLB miss, but
-    // the first HPTW entry hits in the dcache.  That ITLB miss should prevent the M-stage CPU request Dcache miss from issuing, making all this MemAccessInFlightM and MemAccessDoneM logic unnecessary.
-    // The hptw already asserts HPTWFlushW to clear out the requests to the cache, dtim, and bus when it accepts the request.
-/* -----\/----- EXCLUDED -----\/-----
-    logic MemAccessPerformedM;
-    assign MemAccessPerformedM = (DCacheCommittedM | BusCommittedM) & ~DCacheBusStallM & ~SpillStallM & ~SelHPTW;
-    assign MemAccessInFlightM  = (DCacheCommittedM | BusCommittedM) & ~MemAccessDoneM;
-    always_ff @(posedge clk)
-      if (reset | FlushW | ~StallW) MemAccessDoneM <= 1'b0;
-      else if (MemAccessPerformedM) MemAccessDoneM <= 1'b1;
- -----/\----- EXCLUDED -----/\----- */
-    //flopenr #(P.LLEN) ReadDataHoldReg(clk, reset, MemAccessPerformedM & ~MemAccessDoneM, ReadDataM, ReadDataHoldM);
+    // hptw ensures requests are ordered DTLB miss, ITLB miss, CPU M-stage access.
   end else begin // No HPTW, so signals are not multiplexed
     assign PreLSURWM = MemRWM;
     assign IHAdrM = IEUAdrExtM;
@@ -251,8 +229,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   // CommittedM is 1 after the first cycle and until the last cycle.  Partially completed memory
   // operations delay interrupts until the next instruction by suppressing pending interrupts in
   // the trap module.
-  assign CommittedM = SelHPTW | DCacheCommittedM | BusCommittedM; // *** memaccessdonem is unnecessary here
-  //assign HoldAccessM = MemAccessDoneM & ~SelHPTW; // performed access awaiting retirement: don't re-issue it (walker accesses pass)  // *** this should not be include.  CPU request is handled last.
+  assign CommittedM = SelHPTW | DCacheCommittedM | BusCommittedM;
   assign GatedStallW = StallW & ~SelHPTW;
   assign DCacheBusStallM = DCacheStallM | LSUBusStallM;
   assign CacheBusHPWTStall = DCacheBusStallM | HPTWStall;
@@ -344,7 +321,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
 
       if(P.ZICBOZ_SUPPORTED) begin
         assign BusCMOZero = LSUCMOpM[3] & ~CacheableM;
-        assign CacheCMOpM = (CacheableM & ~SelHPTW) ? CMOpM : '0; // *** factor SelHPTW out for critical path performance
+        assign CacheCMOpM = (CacheableM & ~SelHPTW) ? CMOpM : '0;
         assign BusAtomic = AtomicM[1] & ~CacheableM;
       end else begin
         assign BusCMOZero = 1'b0;
