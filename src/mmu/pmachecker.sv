@@ -64,7 +64,7 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
 
   // Nonidemdempotent means access could have side effect and must not be done speculatively or redundantly
   // I/O is nonidempotent.  PBMT can override PMA; NC is idempotent and IO is non-idempotent
-  assign IdempotentRegion = SelRegions[1] | SelRegions[2] | SelRegions[3] | SelRegions[4] | SelRegions[5]; // exclusion-tag: unused-idempotent
+  assign IdempotentRegion = SelRegions[1] | SelRegions[2] | SelRegions[3] | SelRegions[4] | SelRegions[5];
   assign Idempotent = (PBMemoryType == 2'b00) ? IdempotentRegion : (PBMemoryType == 2'b01);
 
   // Atomic operations are only allowed on RAM
