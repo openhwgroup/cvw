@@ -327,7 +327,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
 
       // Each datapath is gated on the extension that needs it: cbo.zero to uncached memory on Zicboz,
       // the cache CMO port on either CBO extension, and uncached AMOs on Zaamo
-      if(P.ZICBOZ_SUPPORTED) BusCMOZero = LSUCMOpM[3] & ~CacheableM;
+      if(P.ZICBOZ_SUPPORTED) assign BusCMOZero = LSUCMOpM[3] & ~CacheableM;
       else                   assign BusCMOZero = 1'b0;
       if(P.ZICBOM_SUPPORTED | P.ZICBOZ_SUPPORTED) assign CacheCMOpM = (CacheableM & ~SelHPTW) ? CMOpM : '0;
       else                                        assign CacheCMOpM = '0;
