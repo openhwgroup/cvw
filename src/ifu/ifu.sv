@@ -149,6 +149,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   logic                        IFUFaultF;                                // Fetch failed the PMA or PMP check, so it must not access the cache or bus
   logic                        ITLBMissOrUpdateRawF;                     // ITLB miss or A update needed, before masking by a held walk fault
   logic                        ITLBWalkFaultF;                           // The walk for the current fetch faulted (held or this cycle)
+  logic                        InstrPageFaultRawF, InstrAccessFaultRawF; // Faults on the half of the fetch currently being translated
 
   assign PCFExt = {2'b00, PCSpillF};
 
@@ -160,9 +161,14 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     logic [P.XLEN-1:0] PCSpillD, PCSpillE;
     logic [P.XLEN-1:0] PCIncrM;
     logic              SelSpillF, SelSpillD, SelSpillE, SelSpillM;
+    logic              FirstHalfFaultF;
     spill #(P) spill(.clk, .reset, .StallF, .FlushD, .PCF, .PCPlus4F, .PCNextF, .InstrRawF,  .CacheableF,
-      .IFUCacheBusStallF, .ITLBMissOrUpdateAF(ITLBMissOrUpdateRawF), .PCSpillNextF, .PCSpillF, .SelSpillNextF, .SelSpillF, .PostSpillInstrRawF, .CompressedF);
-    flopenr #(1) SpillDReg(clk, reset, ~StallD, SelSpillF, SelSpillD);
+      .InstrPageFaultF(InstrPageFaultRawF), .InstrAccessFaultF(InstrAccessFaultRawF),
+      .IFUCacheBusStallF, .ITLBMissOrUpdateAF(ITLBMissOrUpdateRawF), .PCSpillNextF, .PCSpillF, .SelSpillNextF, .SelSpillF,
+      .InstrPageFaultSpillF(InstrPageFaultF), .InstrAccessFaultSpillF(InstrAccessFaultF), .FirstHalfFaultF,
+      .PostSpillInstrRawF, .CompressedF);
+    // A fault on the first half is reported at PCM, not PCM+2, so clear the spill flag that adds the +2 in xtval
+    flopenr #(1) SpillDReg(clk, reset, ~StallD, SelSpillF & ~FirstHalfFaultF, SelSpillD);
     flopenr #(1) SpillEReg(clk, reset, ~StallE, SelSpillD, SelSpillE);
     flopenr #(1) SpillMReg(clk, reset, ~StallM, SelSpillE, SelSpillM);
     assign PCIncrM = PCM + 'd2;
@@ -174,6 +180,8 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     assign PostSpillInstrRawF = InstrRawF;
     assign {SelSpillNextF, CompressedF} = '0;
     assign PCSpillM = PCM;
+    assign InstrPageFaultF = InstrPageFaultRawF;
+    assign InstrAccessFaultF = InstrAccessFaultRawF;
   end
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -205,8 +213,8 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
          .PhysicalAddress(PCPF),
          .TLBMiss(ITLBMissF),
          .Cacheable(CacheableF), .Idempotent(), .SelTIM(SelIROM),
-         .InstrAccessFaultF, .LoadAccessFaultM(), .StoreAmoAccessFaultM(),
-         .InstrPageFaultF, .LoadPageFaultM(), .StoreAmoPageFaultM(),
+         .InstrAccessFaultF(InstrAccessFaultRawF), .LoadAccessFaultM(), .StoreAmoAccessFaultM(),
+         .InstrPageFaultF(InstrPageFaultRawF), .LoadPageFaultM(), .StoreAmoPageFaultM(),
          .LoadMisalignedFaultM(), .StoreAmoMisalignedFaultM(),
          .UpdateDA(InstrUpdateAF), .CMOpM(4'b0),
          .AtomicAccessM(1'b0),.ExecuteAccessF(1'b1), .WriteAccessM(1'b0), .ReadAccessM(1'b0),
@@ -228,7 +236,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     assign ITLBWalkFaultF = HPTWInstrAccessFaultHeldF | HPTWInstrPageFaultHeldF;
     assign ITLBMissOrUpdateAF = ITLBMissOrUpdateRawF & ~ITLBWalkFaultF;
   end else begin
-    assign {ITLBMissF, InstrAccessFaultF, InstrPageFaultF, InstrUpdateAF} = '0;
+    assign {ITLBMissF, InstrAccessFaultRawF, InstrPageFaultRawF, InstrUpdateAF} = '0;
     assign PCPF = PCFExt[P.PA_BITS-1:0];
     assign CacheableF = 1'b1;
     assign SelIROM = '0;
@@ -296,7 +304,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
       ahbcacheinterface(.HCLK(clk), .HRESETn(~reset),
             .HRDATA,
             .Flush(FlushD), .CacheBusRW, .BusCMOZero(1'b0), .HSIZE(IFUHSIZE), .HBURST(IFUHBURST), .HTRANS(IFUHTRANS), .HWSTRB(),
-            .Funct3(3'b010), .HADDR(IFUHADDR), .HREADY(IFUHREADY), .HWRITE(IFUHWRITE), .CacheBusAdr(ICacheBusAdr),
+            .Size(3'b010), .HADDR(IFUHADDR), .HREADY(IFUHREADY), .HWRITE(IFUHWRITE), .CacheBusAdr(ICacheBusAdr),
             .BeatCount(), .Cacheable(CacheableF), .SelBusBeat(), .WriteDataM('0), .BusAtomic('0),
             .CacheBusAck(ICacheBusAck), .HWDATA(), .CacheableOrFlushCacheM(1'b0), .CacheReadDataWordM('0),
             .FetchBuffer, .PAdr(PCPF),
