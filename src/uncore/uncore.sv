@@ -75,7 +75,8 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   logic [P.XLEN-1:0]           HREADBootRom;
   logic                        HSELBootRom, HSELBootRomD, HRESPBootRom, HREADYBootRom, HREADYSDC;
   logic                        HSELNoneD;
-  logic                        UARTIntr,GPIOIntr, SPIIntr, PWMIntr;
+  logic                        UARTIntr,GPIOIntr, SPIIntr;
+  logic [3:0]                  PWMIntr;                     // one PLIC source per PWM comparator, as in the FU540
   logic                        SDCIntM;
 
   logic                        PCLK, PRESETn, PWRITE, PENABLE;
@@ -182,7 +183,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
       .PREADY(PREADY[6]), .PRDATA(PRDATA[6]),
       .PWMIntr, .PWMGPIO);
   end else begin : pwm
-    assign PWMIntr = 1'b0; assign PWMGPIO = '0;
+    assign PWMIntr = '0; assign PWMGPIO = '0;
   end
 
   // AHB Read Multiplexer

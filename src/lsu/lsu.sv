@@ -41,7 +41,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   input  logic [6:0]              Funct7M,                              // Atomic memory operation function
   input  logic [1:0]              AtomicM,                              // Atomic memory operation
   input  logic                    FlushDCacheM,                         // Flush D cache to next level of memory
-  input  logic [3:0]              CMOpM,                                // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
+  input  logic [3:0]              CMOpM,                                // 1: cbo.inval; 2: cbo.clean; 4: cbo.flush; 8: cbo.zero
   input  logic                    LSUPrefetchM,                         // Prefetch; presently unused
   output logic                    CommittedM,                           // Delay interrupts while memory operation in flight
   output logic                    SquashSCW,                            // Store conditional failed disable write to GPR
@@ -106,6 +106,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic [1:0]            PreLSURWM;                              // IEU or HPTW Read/Write signal
   logic [1:0]            LSURWM;                                 // IEU or HPTW Read/Write signal gated by LR/SC
   logic [2:0]            LSUFunct3M;                             // IEU or HPTW memory operation size
+  logic [2:0]            LSUSizeM;                               // Memory operation size as an AHB HSIZE
   logic [6:0]            LSUFunct7M;                             // AMO function gated by HPTW
   logic [1:0]            LSUAtomicM;                             // AMO signal gated by HPTW
   logic [3:0]            LSUCMOpM;                               // CMOpM gated by HPTW
@@ -230,6 +231,11 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   assign CacheBusHPWTStall = DCacheBusStallM | HPTWStall;
   assign LSUStallM = CacheBusHPWTStall | SpillStallM;
 
+  // AHB defines HSIZE 100/101/110 as 128/256/512-bit transfers, but funct3 uses those codes for the
+  // unsigned integer loads lbu/lhu/lwu, which are byte/halfword/word accesses.  Clear the unsigned bit
+  // for integer accesses; FP accesses use funct3 as the true width (including 100 for a 128-bit flq).
+  assign LSUSizeM = FpLoadStoreM ? LSUFunct3M : {1'b0, LSUFunct3M[1:0]};
+
   /////////////////////////////////////////////////////////////////////////////////////////////
   // MMU and misalignment fault logic required if privileged unit exists
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -314,15 +320,14 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       logic [3:0]              CacheCMOpM;
       logic                    BusAtomic;
 
-      if(P.ZICBOZ_SUPPORTED) begin
-        assign BusCMOZero = LSUCMOpM[3] & ~CacheableM;
-        assign CacheCMOpM = (CacheableM & ~SelHPTW) ? CMOpM : '0;
-        assign BusAtomic = AtomicM[1] & ~CacheableM;
-      end else begin
-        assign BusCMOZero = 1'b0;
-        assign CacheCMOpM = '0;
-        assign BusAtomic = 1'b0;
-      end
+      // Each datapath is gated on the extension that needs it: cbo.zero to uncached memory on Zicboz,
+      // the cache CMO port on either CBO extension, and uncached AMOs on Zaamo
+      if(P.ZICBOZ_SUPPORTED) assign BusCMOZero = LSUCMOpM[3] & ~CacheableM;
+      else                   assign BusCMOZero = 1'b0;
+      if(P.ZICBOM_SUPPORTED | P.ZICBOZ_SUPPORTED) assign CacheCMOpM = (CacheableM & ~SelHPTW) ? CMOpM : '0;
+      else                                        assign CacheCMOpM = '0;
+      if(P.ZAAMO_SUPPORTED) assign BusAtomic = AtomicM[1] & ~CacheableM;
+      else                  assign BusAtomic = 1'b0;
       assign BusRW = (~CacheableM & ~SelDTIM )? LSURWM : '0;
       assign CacheableOrFlushCacheM = CacheableM | FlushDCacheM;
       assign CacheRWM = (CacheableM & ~SelDTIM) ? LSURWM : '0;
@@ -346,7 +351,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
         .HRDATA, .HWDATA(LSUHWDATA), .HWSTRB(LSUHWSTRB),
         .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HREADY(LSUHREADY),
         .BeatCount, .SelBusBeat, .CacheReadDataWordM(DCacheReadDataWordM[P.LLEN-1:0]), .WriteDataM(LSUWriteDataM),
-        .Funct3(LSUFunct3M), .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheBusRW, .BusAtomic, .BusCMOZero, .CacheableOrFlushCacheM,
+        .Size(LSUSizeM), .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheBusRW, .BusAtomic, .BusCMOZero, .CacheableOrFlushCacheM,
         .CacheBusAck(DCacheBusAck), .FetchBuffer, .PAdr(PAdrM),
         .Cacheable(CacheableOrFlushCacheM), .BusRW, .Stall(GatedStallW),
         .BusStall(LSUBusStallM), .BusCommitted(BusCommittedM));
@@ -360,7 +365,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       assign BusRW = ~SelDTIM ? LSURWM : 0;
 
       assign LSUHADDR = PAdrM;
-      assign LSUHSIZE = LSUFunct3M;
+      assign LSUHSIZE = LSUSizeM;
 
       ahbinterface #(P.XLEN, 1'b1) ahbinterface(.HCLK(clk), .HRESETn(~reset), .Flush(LSUFlushW), .HREADY(LSUHREADY),
         .HRDATA(HRDATA), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HWDATA(LSUHWDATA),

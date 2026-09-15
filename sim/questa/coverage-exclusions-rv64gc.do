@@ -274,9 +274,6 @@ coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$lin
 set line [GetLineNum ${SRC}/mmu/pmachecker.sv "exclusion-tag: unused-cacheable"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2
-set line [GetLineNum ${SRC}/mmu/pmachecker.sv "exclusion-tag: unused-idempotent"]
-coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4,6
-coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4,6,8
 
 # Excluding so far un-used instruction sources for the ifu
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/bootromdec

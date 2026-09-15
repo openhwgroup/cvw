@@ -93,16 +93,17 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
                            (P.SV39_SUPPORTED & CSRWriteValM[63:60] == P.SV39) |
                            (P.SV48_SUPPORTED & CSRWriteValM[63:60] == P.SV48) |
                            (P.SV57_SUPPORTED & CSRWriteValM[63:60] == P.SV57); // Only change Satp if the mode is supported
-    assign WriteSATPM     = CSRSWriteM & (CSRAdrM == SATP) & (PrivilegeModeW == P.M_MODE | ~STATUS_TVM) & LegalSatpModeM & P.SV39_SUPPORTED;
+    assign WriteSATPM     = CSRSWriteM & (CSRAdrM == SATP) & (PrivilegeModeW == P.M_MODE | ~STATUS_TVM) & LegalSatpModeM;
   end else  // RV32
-    assign WriteSATPM     = CSRSWriteM & (CSRAdrM == SATP) & (PrivilegeModeW == P.M_MODE | ~STATUS_TVM) & P.SV32_SUPPORTED;
+    assign WriteSATPM     = CSRSWriteM & (CSRAdrM == SATP) & (PrivilegeModeW == P.M_MODE | ~STATUS_TVM);
   assign WriteSCOUNTERENM = CSRSWriteM & (CSRAdrM == SCOUNTEREN);
   assign WriteSENVCFGM    = CSRSWriteM & (CSRAdrM == SENVCFG);
   assign WriteSTIMECMPM   = CSRSWriteM & (CSRAdrM == STIMECMP) & STCE;
   assign WriteSTIMECMPHM  = CSRSWriteM & (CSRAdrM == STIMECMPH) & STCE & (P.XLEN == 32);
 
   // CSRs
-  assign TVECWriteValM = CSRWriteValM[0] ? {CSRWriteValM[P.XLEN-1:6], 6'b000001} : {CSRWriteValM[P.XLEN-1:2], 2'b00}; // could share this with MTVEC, but reduces to 4-bit AND to mask bits [5:2]
+  // MODE is WARL; a hart that does not vector must not read back Vectored, so only accept MODE=1 when vectoring is supported
+  assign TVECWriteValM = (CSRWriteValM[0] & P.VECTORED_INTERRUPTS_SUPPORTED) ? {CSRWriteValM[P.XLEN-1:6], 6'b000001} : {CSRWriteValM[P.XLEN-1:2], 2'b00}; // could share this with MTVEC, but reduces to 4-bit AND to mask bits [5:2]
   flopenr #(P.XLEN) STVECreg(clk, reset, WriteSTVECM, TVECWriteValM, STVEC_REGW);
   flopenr #(P.XLEN) SSCRATCHreg(clk, reset, WriteSSCRATCHM, CSRWriteValM, SSCRATCH_REGW);
   flopenr #(P.XLEN) SEPCreg(clk, reset, WriteSEPCM, NextEPCM, SEPC_REGW);
@@ -155,7 +156,7 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
       SEPC:      CSRSReadValM = SEPC_REGW;
       SCAUSE:    CSRSReadValM = SCAUSE_REGW;
       STVAL:     CSRSReadValM = STVAL_REGW;
-      SATP:      if (P.VIRTMEM_SUPPORTED & (PrivilegeModeW == P.M_MODE | ~STATUS_TVM)) CSRSReadValM = SATP_REGW;
+      SATP:      if (PrivilegeModeW == P.M_MODE | ~STATUS_TVM) CSRSReadValM = SATP_REGW;
                  else IllegalCSRSAccessM = 1'b1;
       SCOUNTEREN:CSRSReadValM = {{(P.XLEN-32){1'b0}}, SCOUNTEREN_REGW};
       SENVCFG:   CSRSReadValM = SENVCFG_REGW;

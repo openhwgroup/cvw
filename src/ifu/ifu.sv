@@ -222,6 +222,11 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     assign ITLBMissOrUpdateAF = '0;
   end
 
+  // A fetch that has already failed the PMA or PMP check traps in the Memory stage, so it must not
+  // start a bus transfer or a cache line fill.  Gating the cache as well as the bus keeps a line
+  // that the hart may not execute from being filled into the I$.
+  assign IFUFaultF = InstrAccessFaultF | InstrPageFaultF;
+
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // Memory
   ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -253,8 +258,8 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
       logic                 ICacheBusAck;
       logic [1:0]           CacheBusRW, BusRW, CacheRWF;
 
-      assign BusRW = ~ITLBMissF & ~CacheableF & ~SelIROM ? IFURWF : '0;
-      assign CacheRWF = ~ITLBMissF & CacheableF & ~SelIROM ? IFURWF : '0;
+      assign BusRW = ~ITLBMissF & ~CacheableF & ~SelIROM & ~IFUFaultF ? IFURWF : '0;
+      assign CacheRWF = ~ITLBMissF & CacheableF & ~SelIROM & ~IFUFaultF ? IFURWF : '0;
       cache #(.P(P), .PA_BITS(P.PA_BITS), .LINELEN(P.ICACHE_LINELENINBITS),
               .NUMSETS(P.ICACHE_WAYSIZEINBYTES*8/P.ICACHE_LINELENINBITS),
               .NUMWAYS(P.ICACHE_NUMWAYS), .LOGBWPL(AHBWLOGBWPL), .WORDLEN(32), .MUXINTERVAL(16), .READ_ONLY_CACHE(1))
@@ -277,7 +282,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
       ahbcacheinterface(.HCLK(clk), .HRESETn(~reset),
             .HRDATA,
             .Flush(FlushD), .CacheBusRW, .BusCMOZero(1'b0), .HSIZE(IFUHSIZE), .HBURST(IFUHBURST), .HTRANS(IFUHTRANS), .HWSTRB(),
-            .Funct3(3'b010), .HADDR(IFUHADDR), .HREADY(IFUHREADY), .HWRITE(IFUHWRITE), .CacheBusAdr(ICacheBusAdr),
+            .Size(3'b010), .HADDR(IFUHADDR), .HREADY(IFUHREADY), .HWRITE(IFUHWRITE), .CacheBusAdr(ICacheBusAdr),
             .BeatCount(), .Cacheable(CacheableF), .SelBusBeat(), .WriteDataM('0), .BusAtomic('0),
             .CacheBusAck(ICacheBusAck), .HWDATA(), .CacheableOrFlushCacheM(1'b0), .CacheReadDataWordM('0),
             .FetchBuffer, .PAdr(PCPF),
@@ -289,7 +294,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     end else begin : passthrough
       assign IFUHADDR = PCPF;
       logic [1:0] BusRW;
-      assign BusRW = ~ITLBMissF & ~SelIROM ? IFURWF : 0;
+      assign BusRW = ~ITLBMissF & ~SelIROM & ~IFUFaultF ? IFURWF : 0;
       assign IFUHSIZE = 3'b010;
 
       ahbinterface #(P.XLEN, 1'b0) ahbinterface(.HCLK(clk), .Flush(FlushD), .HRESETn(~reset), .HREADY(IFUHREADY),
@@ -411,7 +416,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   // Spec 3.1.14
   // Traps: Can’t happen.  The bottom two bits of MTVEC are ignored so the trap always is to a multiple of 4.  See 3.1.7 of the privileged spec.
   assign InstrMisalignedFaultE = (IEUAdrE[1] & ~P.ZCA_SUPPORTED) & PCSrcE;
-  flopenr #(1) InstrMisalignedReg(clk, reset, ~StallM, InstrMisalignedFaultE, InstrMisalignedFaultM);
+  flopenrc #(1) InstrMisalignedReg(clk, reset, FlushM, ~StallM, InstrMisalignedFaultE, InstrMisalignedFaultM);
 
   // Instruction and PC pipeline registers flush to NOP, not zero
   mux2    #(32)     FlushInstrEMux(InstrD, nop, FlushE, NextInstrD);
