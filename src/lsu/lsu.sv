@@ -146,10 +146,10 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic                  LSULoadAccessFaultM;                    // Load access fault
   logic                  LSUStoreAmoAccessFaultM;                // Store access fault
   logic                  HPTWFlushW;                             // HPTW needs to flush operation
-  logic                  MemAccessInFlightM;                     // M-stage access started on the D$/bus (or performed and holding) and not yet captured
-  logic                  MemAccessDoneM;                         // M-stage access performed and its result captured; do not re-issue
-  logic                  HoldAccessM;                            // Suppress the M-stage access presented to the D$/bus (already performed)
-  logic [P.LLEN-1:0]     ReadDataHoldM;                          // Captured read data of a performed access awaiting retirement
+  // *** logic                  MemAccessInFlightM;                     // M-stage access started on the D$/bus (or performed and holding) and not yet captured
+  // *** logic                  MemAccessDoneM;                         // M-stage access performed and its result captured; do not re-issue
+  // *** logic                  HoldAccessM;                            // Suppress the M-stage access presented to the D$/bus (already performed)
+  // *** logic [P.LLEN-1:0]     ReadDataHoldM;                          // Captured read data of a performed access awaiting retirement
   logic [P.LLEN-1:0]     ReadDataSelM;                           // Read data to the W stage (live or held)
   logic                  LSUFlushW;                              // HPTW or hazard unit flushes operation
   logic                  SelDTIM;                                // Select DTIM rather than bus or D$
@@ -199,7 +199,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   if(P.VIRTMEM_SUPPORTED) begin : hptw
     hptw #(P) hptw(.clk, .reset, .MemRWM, .AtomicM, .ITLBMissOrUpdateAF, .ITLBWriteF,
       .DTLBMissOrUpdateDAM, .DTLBWriteM,
-      .FlushW, .DCacheBusStallM, .MemAccessInFlightM, .MemAccessDoneM, .SATP_REGW, .PCSpillF,
+      .FlushW, .DCacheBusStallM, .SATP_REGW, .PCSpillF,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_ADUE, .PrivilegeModeW,
       .ReadDataM(ReadDataM[P.XLEN-1:0]), // ReadDataM is LLEN, but HPTW only needs XLEN
       .WriteDataM(WriteDataZM), .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M,
@@ -215,13 +215,20 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     // holding (D$ ADDRESS_SETUP, bus MEM3) must not be pre-empted by a page table walk: it can be neither
     // aborted nor replayed.  Once performed while the pipeline is stalled, capture its result and hold it
     // until the pipeline advances; the walker may then use the D$/bus, and the access is not re-issued.
+    // *** Rose Thompson: ^^ this ordering should not be allowed to happen.  The whole purpose of the changes to the hptw are to ensure
+    // the hptw always handles the ITLB and/or DTLB misses before performing the M-stage CPU memory access.  The hptw should
+    // prevent the LSU from issuing the M-stage CPU request before any HPTW requests. This includes the case of Dcache miss, ITLB miss, but
+    // the first HPTW entry hits in the dcache.  That ITLB miss should prevent the M-stage CPU request Dcache miss from issuing, making all this MemAccessInFlightM and MemAccessDoneM logic unnecessary.
+    // The hptw already asserts HPTWFlushW to clear out the requests to the cache, dtim, and bus when it accepts the request.
+/* -----\/----- EXCLUDED -----\/-----
     logic MemAccessPerformedM;
     assign MemAccessPerformedM = (DCacheCommittedM | BusCommittedM) & ~DCacheBusStallM & ~SpillStallM & ~SelHPTW;
     assign MemAccessInFlightM  = (DCacheCommittedM | BusCommittedM) & ~MemAccessDoneM;
     always_ff @(posedge clk)
       if (reset | FlushW | ~StallW) MemAccessDoneM <= 1'b0;
       else if (MemAccessPerformedM) MemAccessDoneM <= 1'b1;
-    flopenr #(P.LLEN) ReadDataHoldReg(clk, reset, MemAccessPerformedM & ~MemAccessDoneM, ReadDataM, ReadDataHoldM);
+ -----/\----- EXCLUDED -----/\----- */
+    //flopenr #(P.LLEN) ReadDataHoldReg(clk, reset, MemAccessPerformedM & ~MemAccessDoneM, ReadDataM, ReadDataHoldM);
   end else begin // No HPTW, so signals are not multiplexed
     assign PreLSURWM = MemRWM;
     assign IHAdrM = IEUAdrExtM;
@@ -235,8 +242,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     assign LoadPageFaultM = LSULoadPageFaultM;
     assign StoreAmoPageFaultM = LSUStoreAmoPageFaultM;
     assign {HPTWStall, SelHPTW, PTE, PageType, DTLBWriteM, ITLBWriteF, HPTWFlushW} = '0;
-    assign {MemAccessInFlightM, MemAccessDoneM} = '0;
-    assign ReadDataHoldM = '0;
+    //assign {MemAccessInFlightM, MemAccessDoneM} = '0;
+    //assign ReadDataHoldM = '0;
     assign {HPTWInstrAccessFaultF, HPTWInstrPageFaultF} = '0;
    end
 
@@ -244,8 +251,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   // CommittedM is 1 after the first cycle and until the last cycle.  Partially completed memory
   // operations delay interrupts until the next instruction by suppressing pending interrupts in
   // the trap module.
-  assign CommittedM = SelHPTW | DCacheCommittedM | BusCommittedM | MemAccessDoneM;
-  assign HoldAccessM = MemAccessDoneM & ~SelHPTW; // performed access awaiting retirement: don't re-issue it (walker accesses pass)
+  assign CommittedM = SelHPTW | DCacheCommittedM | BusCommittedM; // *** memaccessdonem is unnecessary here
+  //assign HoldAccessM = MemAccessDoneM & ~SelHPTW; // performed access awaiting retirement: don't re-issue it (walker accesses pass)  // *** this should not be include.  CPU request is handled last.
   assign GatedStallW = StallW & ~SelHPTW;
   assign DCacheBusStallM = DCacheStallM | LSUBusStallM;
   assign CacheBusHPWTStall = DCacheBusStallM | HPTWStall;
@@ -336,17 +343,17 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       logic                    BusAtomic;
 
       if(P.ZICBOZ_SUPPORTED) begin
-        assign BusCMOZero = LSUCMOpM[3] & ~CacheableM & ~HoldAccessM;
-        assign CacheCMOpM = (CacheableM & ~SelHPTW & ~HoldAccessM) ? CMOpM : '0;
+        assign BusCMOZero = LSUCMOpM[3] & ~CacheableM;
+        assign CacheCMOpM = (CacheableM & ~SelHPTW) ? CMOpM : '0; // *** factor SelHPTW out for critical path performance
         assign BusAtomic = AtomicM[1] & ~CacheableM;
       end else begin
         assign BusCMOZero = 1'b0;
         assign CacheCMOpM = '0;
         assign BusAtomic = 1'b0;
       end
-      assign BusRW = (~CacheableM & ~SelDTIM & ~HoldAccessM) ? LSURWM : '0;
+      assign BusRW = (~CacheableM & ~SelDTIM) ? LSURWM : '0;
       assign CacheableOrFlushCacheM = CacheableM | FlushDCacheM;
-      assign CacheRWM = (CacheableM & ~SelDTIM & ~HoldAccessM) ? LSURWM : '0;
+      assign CacheRWM = (CacheableM & ~SelDTIM) ? LSURWM : '0;
       assign FlushDCache = FlushDCacheM & ~SelHPTW;                          // exclusion-tag: lsu FlushDCacheSelHPTW
 
       cache #(.P(P), .PA_BITS(P.PA_BITS), .LINELEN(P.DCACHE_LINELENINBITS), .NUMSETS(P.DCACHE_WAYSIZEINBYTES*8/LINELEN),
@@ -378,7 +385,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     end else begin : passthrough // No Cache, use simple ahbinterface instead of ahbcacheinterface
       logic [1:0] BusRW;                    // Non-DTIM memory access, ignore cacheableM
       logic [P.XLEN-1:0] FetchBuffer;
-      assign BusRW = (~SelDTIM & ~HoldAccessM) ? LSURWM : 0;
+      assign BusRW = (~SelDTIM) ? LSURWM : 0;
 
       assign LSUHADDR = PAdrM;
       assign LSUHSIZE = LSUFunct3M;
@@ -441,8 +448,9 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   // A performed access whose result was captured while the pipeline was stalled retires from the hold register
-  mux2 #(P.LLEN) readdataselmux(ReadDataM, ReadDataHoldM, MemAccessDoneM, ReadDataSelM);
-  flopen #(P.LLEN) ReadDataMWReg(clk, ~StallW, ReadDataSelM, ReadDataW);
+  //mux2 #(P.LLEN) readdataselmux(ReadDataM, ReadDataHoldM, MemAccessDoneM, ReadDataSelM);
+  //flopen #(P.LLEN) ReadDataMWReg(clk, ~StallW, ReadDataSelM, ReadDataW);
+  flopen #(P.LLEN) ReadDataMWReg(clk, ~StallW, ReadDataM, ReadDataW);
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Big Endian Byte Swapper
