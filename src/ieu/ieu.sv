@@ -109,13 +109,13 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   logic       BranchSignedE;                                 // Branch does signed comparison on operands
   logic       BMUActiveE;                                    // Bit manipulation instruction being executed
   logic [1:0] CZeroE;                                        // {czero.nez, czero.eqz} instructions active
-  logic       CASStallD;                                     // amocas borrows the rs2 port for a cycle
+  logic       CASReadD;                                      // amocas borrows the rs2 port for a cycle
   logic       AMOCASPairW;                                   // pair amocas in Writeback
 
   controller #(P) c(
     .clk, .reset, .StallD, .FlushD, .InstrD, .STATUS_FS, .ENVCFG_CBE, .ImmSrcD,
     .IllegalIEUFPUInstrD, .IllegalBaseInstrD,
-    .StructuralStallD, .LoadStallD, .StoreStallD, .Rs1D, .Rs2D,  .Rs2E, .CASStallD, .AMOCASPairM, .AMOCASPairW,
+    .StructuralStallD, .LoadStallD, .StoreStallD, .Rs1D, .Rs2D,  .Rs2E, .CASReadD, .AMOCASPairM, .AMOCASPairW,
     .StallE, .FlushE, .FlagsE, .FWriteIntE,
     .PCSrcE, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE,
     .Funct3E, .Funct7E, .IntDivE, .W64E, .UW64E, .SubArithE, .BranchD, .BranchE, .JumpD, .JumpE,
@@ -127,7 +127,7 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
     .RdW, .RdE, .RdM);
 
   datapath #(P) dp(
-    .clk, .reset, .ImmSrcD, .InstrD, .Rs1D, .Rs2D, .Rs2E, .CASStallD, .AMOCASPairW, .ComparePairM, .SwapHighM, .StallE, .FlushE, .ForwardAE, .ForwardBE, .W64E, .UW64E, .SubArithE,
+    .clk, .reset, .ImmSrcD, .InstrD, .Rs1D, .Rs2D, .Rs2E, .CASReadD, .AMOCASPairW, .ComparePairM, .SwapHighM, .StallE, .FlushE, .ForwardAE, .ForwardBE, .W64E, .UW64E, .SubArithE,
     .Funct3E, .Funct7E, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE, .JumpE, .BranchSignedE,
     .PCE, .PCLinkE, .FlagsE, .IEUAdrE, .ForwardedSrcAE, .ForwardedSrcBE, .BSelectE, .ZBBSelectE, .BALUControlE, .BMUActiveE, .CZeroE,
     .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataM, .FCvtIntW,

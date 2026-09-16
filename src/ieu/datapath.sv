@@ -34,7 +34,7 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   input  logic [2:0]        ImmSrcD,                 // Selects type of immediate extension
   input  logic [31:0]       InstrD,                  // Instruction in Decode stage
   input  logic [4:0]        Rs1D, Rs2D, Rs2E,             // Source registers
-  input  logic              CASStallD,               // amocas is borrowing the rs2 port to read its compare operand
+  input  logic              CASReadD,                // amocas is borrowing the rs2 port to read its compare operand
   input  logic              AMOCASPairW,             // pair amocas writes rd and rd+1
   output logic [P.XLEN*2-1:0] ComparePairM,          // amocas compare operand (pair forms use both halves)
   output logic [P.XLEN-1:0] SwapHighM,               // amocas swap value for rd+1; the low half is WriteDataM
@@ -107,7 +107,7 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
 
   // Decode stage
   // amocas borrows the rs2 read port for one cycle to read its compare operand from rd
-  assign A2D = CASStallD ? InstrD[11:7] : Rs2D;
+  assign A2D = CASReadD ? InstrD[11:7] : Rs2D;
   // A pair amocas writes both halves: rd takes the low word of the loaded pair, rd+1 the high word
   regfile #(P.XLEN, P.E_SUPPORTED, P.ZACAS_SUPPORTED) regf(clk, reset, RegWriteW, RegWriteW & AMOCASPairW,
     Rs1D, A2D, RdW, ResultW, ReadDataHighW, R1D, R2D, R2PD);
@@ -119,7 +119,7 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   // Capture the compare value in the borrowed cycle and hold it until Execute, so one register does
   // the work of two.  The next amocas only reaches Decode after this one has left, so it cannot
   // overwrite it.  R2D supplies the low half because a scalar amocas may name an odd rd.
-  flopenr #(P.XLEN*2) ComparePairEReg(clk, reset, CASStallD, {R2PD[P.XLEN*2-1:P.XLEN], R2D}, ComparePairE);
+  flopenr #(P.XLEN*2) ComparePairEReg(clk, reset, CASReadD, {R2PD[P.XLEN*2-1:P.XLEN], R2D}, ComparePairE);
   flopenrc #(P.XLEN*2) ComparePairMReg(clk, reset, FlushM, ~StallM, ComparePairE, ComparePairM);
   extend #(P)        ext(.InstrD(InstrD[31:7]), .ImmSrcD, .ImmExtD);
 

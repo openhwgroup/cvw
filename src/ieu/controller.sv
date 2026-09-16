@@ -79,7 +79,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   output logic [1:0]  AtomicM,                 // Atomic (AMO) instruction
   output logic        AMOCASPairM,             // amocas on a register pair, twice XLEN wide
   output logic        AMOCASPairW,             // pair amocas in Writeback, writes rd and rd+1
-  output logic        CASStallD,               // amocas is reading its compare operand through the rs2 port
+  output logic        CASReadD,                // amocas is reading its compare operand through the rs2 port
   output logic [2:0]  Funct3M,                 // Instruction's funct3 field
   output logic        InvalidateICacheM, FlushDCacheM, // Invalidate I$, flush D$
   output logic        InstrValidD, InstrValidE, InstrValidM, // Instruction is valid
@@ -155,6 +155,9 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic        AMOCASD;                        // instruction is an amocas (opcode included)
   logic        AMOCASPairD, AMOCASPairE;       // instruction is a register-pair amocas (opcode included)
   logic        CASCapturedD;                   // the borrowed rs2 read has happened, so stop stalling
+  logic        CASStallD;                      // hold amocas in Decode for the borrowed read or a hazard
+  logic        CASHazardD;                     // an older instruction still owes amocas one of its operands
+  logic        CASMatchE, CASMatchM;           // that instruction is in Execute / Memory
   logic        RWFunctD, MWFunctD;             // detect RW/MW instructions
   logic        PFunctD, CSRFunctD;             // detect privileged / CSR instruction
   logic        FenceM;                         // Fence.I or sfence.VMA instruction in memory stage
@@ -451,10 +454,20 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   // rs2 port to read rd, capturing the result in the datapath.
   assign AMOCASD = (OpD == 7'b0101111) & CASFunctD;
   assign AMOCASPairD = AMOCASD & CASPairSizeD; // the opcode matters: funct3 alone also names lbu
-  assign CASStallD = AMOCASD & ~CASCapturedD;
+
+  // amocas reads rd, and for the pair forms rd+1 and rs2+1, straight from the register file with no
+  // forwarding, so wait for an older instruction that writes any of them to reach writeback, where
+  // the negedge register file write makes the value visible to this Decode read.
+  assign CASMatchE = (RdE != 5'b0) & RegWriteE &
+                     ((RdD == RdE) | (AMOCASPairD & (((RdD | 5'b1) == RdE) | ((Rs2D | 5'b1) == RdE))));
+  assign CASMatchM = (RdM != 5'b0) & RegWriteM &
+                     ((RdD == RdM) | (AMOCASPairD & (((RdD | 5'b1) == RdM) | ((Rs2D | 5'b1) == RdM))));
+  assign CASHazardD = AMOCASD & (CASMatchE | CASMatchM);
+  assign CASReadD   = AMOCASD & ~CASCapturedD & ~CASHazardD; // operands are ready, so borrow the port
+  assign CASStallD  = CASReadD | CASHazardD;
   always_ff @(posedge clk)
     if (reset | FlushD)  CASCapturedD <= 1'b0;
-    else if (CASStallD)  CASCapturedD <= 1'b1; // compare operand captured; release the stall
+    else if (CASReadD)   CASCapturedD <= 1'b1; // compare operand captured; release the stall
     else if (~StallD)    CASCapturedD <= 1'b0; // instruction has left Decode
 
   // Decode stage pipeline control register
