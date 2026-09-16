@@ -78,6 +78,8 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   output logic        CSRReadM, CSRWriteM, PrivilegedM, // CSR read, write, or privileged instruction
   output logic [1:0]  AtomicM,                 // Atomic (AMO) instruction
   output logic        AMOCASM,                 // amocas: compare the loaded value before swapping
+  output logic        AMOCASPairM,             // amocas on a register pair, twice XLEN wide
+  output logic        AMOCASPairW,             // pair amocas in Writeback, writes rd and rd+1
   output logic        CASStallD,               // amocas is reading its compare operand through the rs2 port
   output logic [2:0]  Funct3M,                 // Instruction's funct3 field
   output logic        InvalidateICacheM, FlushDCacheM, // Invalidate I$, flush D$
@@ -150,6 +152,9 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic        AFunctD, AMOFunctD;             // Detect atomic instructions
   logic        A3264FunctD;                    // Detect valid 32/64-bit atomics (lr/sc/amo)
   logic        AMOCASFunctD;                   // Detect a legal amocas encoding
+  logic        AMOCASWidthD;                   // amocas width is supported
+  logic        AMOCASPairWidthD;               // funct3 selects a pair width (not yet qualified by opcode)
+  logic        AMOCASPairD, AMOCASPairE;       // amocas names a register pair (twice XLEN wide)
   logic        AMOCASD, AMOCASE;               // amocas in Decode and Execute
   logic        CASCapturedD;                   // amocas compare operand has been captured
   logic        RWFunctD, MWFunctD;             // detect RW/MW instructions
@@ -205,13 +210,18 @@ module controller import cvw::*;  #(parameter cvw_t P) (
                                (P.ZICBOM_SUPPORTED & (((InstrD[31:20] == 12'd0) & (ENVCFG_CBE[1:0] == 2'b01 | ENVCFG_CBE[1:0] == 2'b11)) |
                                                       ((InstrD[31:20] == 12'd1 | InstrD[31:20] == 12'd2) & ENVCFG_CBE[2]))));
     assign A3264FunctD      = (Funct3D == 3'b010) | (P.XLEN == 64 & Funct3D == 3'b011);
-    // Zabha adds byte and halfword AMOs, but not byte and halfword lr/sc
-    assign AFunctD          = A3264FunctD | (P.ZABHA_SUPPORTED & (Funct3D == 3'b000 | Funct3D == 3'b001));
-    // amocas is funct5 00101.  Word always, doubleword when XLEN is 64, byte and halfword with Zabha.
-    // The pair forms (amocas.d on RV32, amocas.q) are not implemented, so they remain reserved.
-    assign AMOCASFunctD     = P.ZACAS_SUPPORTED & (InstrD[31:27] == 5'b00101) &
-                              ((Funct3D == 3'b010) | ((Funct3D == 3'b011) & (P.XLEN == 64)) |
-                               (P.ZABHA_SUPPORTED & ((Funct3D == 3'b000) | (Funct3D == 3'b001))));
+    // Zabha adds byte and halfword AMOs, but not byte and halfword lr/sc.  The amocas pair forms
+    // are wider than any other atomic, so they need their own term here.
+    assign AFunctD          = A3264FunctD | (P.ZABHA_SUPPORTED & (Funct3D == 3'b000 | Funct3D == 3'b001)) | AMOCASFunctD;
+    // amocas is funct5 00101.  Word always, doubleword, byte and halfword with Zabha, and quadword
+    // on RV64.  The forms twice XLEN wide (amocas.d on RV32, amocas.q on RV64) name register pairs;
+    // encodings with an odd rd or rs2 are reserved.
+    assign AMOCASPairWidthD = P.ZACAS_SUPPORTED & (Funct3D == (P.XLEN == 64 ? 3'b100 : 3'b011));
+    assign AMOCASWidthD     = (Funct3D == 3'b010) | ((Funct3D == 3'b011) & (P.XLEN == 64)) |
+                              (P.ZABHA_SUPPORTED & ((Funct3D == 3'b000) | (Funct3D == 3'b001))) |
+                              AMOCASPairWidthD;
+    assign AMOCASFunctD     = P.ZACAS_SUPPORTED & (InstrD[31:27] == 5'b00101) & AMOCASWidthD &
+                              ~(AMOCASPairWidthD & (RdD[0] | Rs2D[0])); // odd register pairs are reserved
     assign AMOFunctD        = (InstrD[31:27] == 5'b00001) |
                               (InstrD[31:27] == 5'b00000) |
                               (InstrD[31:27] == 5'b00100) |
@@ -245,6 +255,8 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     assign AFunctD = 1'b1; // don't bother to check fields for atomics
     assign A3264FunctD = 1'b1; // don't bother to check fields for lr/sc and amos
     assign AMOCASFunctD = P.ZACAS_SUPPORTED & (InstrD[31:27] == 5'b00101); // don't bother to check width
+    assign AMOCASPairWidthD = P.ZACAS_SUPPORTED & (Funct3D == (P.XLEN == 64 ? 3'b100 : 3'b011));
+    assign AMOCASWidthD = 1'b1;
     assign AMOFunctD = 1'b1; // don't bother to check Funct7 for AMO operations
     assign RWFunctD = 1'b1; // don't bother to check fields for RW instructions
     assign MWFunctD = 1'b1; // don't bother to check fields for MW instructions
@@ -443,6 +455,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   // compare value.  Rather than add a third read port, stall one cycle in Decode and borrow the
   // rs2 port to read rd, capturing the result in the datapath.
   assign AMOCASD = (OpD == 7'b0101111) & AMOCASFunctD;
+  assign AMOCASPairD = AMOCASD & AMOCASPairWidthD; // qualified: funct3 alone also names lbu
   assign CASStallD = AMOCASD & ~CASCapturedD;
   always_ff @(posedge clk)
     if (reset | FlushD)  CASCapturedD <= 1'b0;
@@ -453,9 +466,9 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   flopenrc #(1)  controlregD(clk, reset, FlushD, ~StallD, 1'b1, InstrValidD);
 
   // Execute stage pipeline control register and logic
-  flopenrc #(46) controlregE(clk, reset, FlushE, ~StallE,
-                           {ALUSelectD, RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, Funct7D, W64D, BUW64D, SubArithD, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, FenceD, CMOpD, IFUPrefetchD, LSUPrefetchD, CZeroD, InstrValidD, AMOCASD},
-                           {ALUSelectE, IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, Funct7E, W64E, UW64E, SubArithE, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, CMOpE, IFUPrefetchE, LSUPrefetchE, CZeroE, InstrValidE, AMOCASE});
+  flopenrc #(47) controlregE(clk, reset, FlushE, ~StallE,
+                           {ALUSelectD, RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, Funct7D, W64D, BUW64D, SubArithD, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, FenceD, CMOpD, IFUPrefetchD, LSUPrefetchD, CZeroD, InstrValidD, AMOCASD, AMOCASPairD},
+                           {ALUSelectE, IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, Funct7E, W64E, UW64E, SubArithE, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, CMOpE, IFUPrefetchE, LSUPrefetchE, CZeroE, InstrValidE, AMOCASE, AMOCASPairE});
   flopenrc #(5)  Rs1EReg(clk, reset, FlushE, ~StallE, Rs1D, Rs1E);
   flopenrc #(5)  Rs2EReg(clk, reset, FlushE, ~StallE, Rs2D, Rs2E);
   flopenrc #(5)  RdEReg(clk, reset, FlushE, ~StallE, RdD, RdE);
@@ -477,15 +490,15 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   assign IntDivE = MDUE & Funct3E[2]; // Integer division operation
 
   // Memory stage pipeline control register
-  flopenrc #(26) controlregM(clk, reset, FlushM, ~StallM,
-                         {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, FWriteIntE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE, IntDivE, CMOpE, LSUPrefetchE, AMOCASE},
-                         {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, FWriteIntM, AtomicM, InvalidateICacheM, FlushDCacheM, FenceM, InstrValidM, IntDivM, CMOpM, LSUPrefetchM, AMOCASM});
+  flopenrc #(27) controlregM(clk, reset, FlushM, ~StallM,
+                         {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, FWriteIntE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE, IntDivE, CMOpE, LSUPrefetchE, AMOCASE, AMOCASPairE},
+                         {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, FWriteIntM, AtomicM, InvalidateICacheM, FlushDCacheM, FenceM, InstrValidM, IntDivM, CMOpM, LSUPrefetchM, AMOCASM, AMOCASPairM});
   flopenrc #(5)  RdMReg(clk, reset, FlushM, ~StallM, RdE, RdM);
 
   // Writeback stage pipeline control register
-  flopenrc #(5) controlregW(clk, reset, FlushW, ~StallW,
-                         {RegWriteM, ResultSrcM, IntDivM},
-                         {RegWriteW, ResultSrcW, IntDivW});
+  flopenrc #(6) controlregW(clk, reset, FlushW, ~StallW,
+                         {RegWriteM, ResultSrcM, IntDivM, AMOCASPairM},
+                         {RegWriteW, ResultSrcW, IntDivW, AMOCASPairW});
   flopenrc #(5) RdWReg(clk, reset, FlushW, ~StallW, RdM, RdW);
 
   // Flush F, D, and E stages on a CSR write or Fence.I or SFence.VMA

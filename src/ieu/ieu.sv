@@ -71,12 +71,15 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   input  logic              FCvtIntW,                        // FPU converts float to int
   output logic [4:0]        RdW,                             // Destination register
   input  logic [P.XLEN-1:0] ReadDataW,                       // LSU's read data
+  input  logic [P.XLEN-1:0] ReadDataHighW,                   // High half of a loaded pair
   // Hazard unit signals
   input  logic              StallD, StallE, StallM, StallW,  // Stall signals from hazard unit
   input  logic              FlushD, FlushE, FlushM, FlushW,  // Flush signals
   output logic              StructuralStallD,                // IEU detects structural hazard in Decode stage
-  output logic [P.XLEN-1:0] CompareDataM,                    // amocas compare operand for the LSU
+  output logic [P.XLEN*2-1:0] ComparePairM,                  // amocas compare operand for the LSU
+  output logic [P.XLEN*2-1:0] SwapPairM,                     // amocas swap value for the LSU
   output logic              AMOCASM,                         // amocas instruction
+  output logic              AMOCASPairM,                     // amocas on a register pair
   output logic              LoadStallD,                      // Structural stalls for load, sent to performance counters
   output logic              StoreStallD,                     // load after store hazard
   output logic              CSRReadM, CSRWriteM, PrivilegedM,// CSR read, CSR write, is privileged instruction
@@ -108,11 +111,12 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   logic       BMUActiveE;                                    // Bit manipulation instruction being executed
   logic [1:0] CZeroE;                                        // {czero.nez, czero.eqz} instructions active
   logic       CASStallD;                                     // amocas borrows the rs2 port for a cycle
+  logic       AMOCASPairW;                                   // pair amocas in Writeback
 
   controller #(P) c(
     .clk, .reset, .StallD, .FlushD, .InstrD, .STATUS_FS, .ENVCFG_CBE, .ImmSrcD,
     .IllegalIEUFPUInstrD, .IllegalBaseInstrD,
-    .StructuralStallD, .LoadStallD, .StoreStallD, .Rs1D, .Rs2D,  .Rs2E, .CASStallD, .AMOCASM,
+    .StructuralStallD, .LoadStallD, .StoreStallD, .Rs1D, .Rs2D,  .Rs2E, .CASStallD, .AMOCASM, .AMOCASPairM, .AMOCASPairW,
     .StallE, .FlushE, .FlagsE, .FWriteIntE,
     .PCSrcE, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE,
     .Funct3E, .Funct7E, .IntDivE, .W64E, .UW64E, .SubArithE, .BranchD, .BranchE, .JumpD, .JumpE,
@@ -124,10 +128,10 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
     .RdW, .RdE, .RdM);
 
   datapath #(P) dp(
-    .clk, .reset, .ImmSrcD, .InstrD, .Rs1D, .Rs2D, .Rs2E, .CASStallD, .CompareDataM, .StallE, .FlushE, .ForwardAE, .ForwardBE, .W64E, .UW64E, .SubArithE,
+    .clk, .reset, .ImmSrcD, .InstrD, .Rs1D, .Rs2D, .Rs2E, .CASStallD, .AMOCASPairW, .ComparePairM, .SwapPairM, .StallE, .FlushE, .ForwardAE, .ForwardBE, .W64E, .UW64E, .SubArithE,
     .Funct3E, .Funct7E, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE, .JumpE, .BranchSignedE,
     .PCE, .PCLinkE, .FlagsE, .IEUAdrE, .ForwardedSrcAE, .ForwardedSrcBE, .BSelectE, .ZBBSelectE, .BALUControlE, .BMUActiveE, .CZeroE,
     .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataM, .FCvtIntW,
-    .StallW, .FlushW, .RegWriteW, .IntDivW, .SquashSCW, .ResultSrcW, .ReadDataW, .FCvtIntResW,
+    .StallW, .FlushW, .RegWriteW, .IntDivW, .SquashSCW, .ResultSrcW, .ReadDataW, .ReadDataHighW, .FCvtIntResW,
     .CSRReadValW, .MDUResultW, .FIntDivResultW, .RdW);
 endmodule

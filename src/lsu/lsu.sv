@@ -38,8 +38,10 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   input  logic [1:0]              MemRWE,                               // Read/Write control
   input  logic [1:0]              MemRWM,                               // Read/Write control
   input  logic [2:0]              Funct3M,                              // Size of memory operation
-  input  logic [P.XLEN-1:0]       CompareDataM,                         // amocas compare operand
+  input  logic [P.XLEN*2-1:0]     ComparePairM,                         // amocas compare operand
+  input  logic [P.XLEN*2-1:0]     SwapPairM,                            // amocas swap value
   input  logic                    AMOCASM,                              // amocas instruction
+  input  logic                    AMOCASPairM,                          // amocas on a register pair
   input  logic [6:0]              Funct7M,                              // Atomic memory operation function
   input  logic [1:0]              AtomicM,                              // Atomic memory operation
   input  logic                    FlushDCacheM,                         // Flush D cache to next level of memory
@@ -416,7 +418,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   if (P.ZAAMO_SUPPORTED | P.ZALRSC_SUPPORTED) begin : atomic
-    atomic #(P) atomic(.clk, .reset, .StallW, .ReadDataM(ReadDataM[P.XLEN-1:0]), .IHWriteDataM, .PAdrM, .CompareDataM, .AMOCASM,
+    atomic #(P) atomic(.clk, .reset, .StallW, .ReadDataM(ReadDataM[P.XLEN-1:0]), .IHWriteDataM, .PAdrM, .CompareDataM(ComparePairM[P.XLEN-1:0]), .AMOCASM,
       .LSUFunct7M, .LSUFunct3M, .LSUAtomicM, .PreLSURWM, .LSUFlushW,
       .IMAWriteDataM, .SquashSCW, .LSURWM);
   end else begin : lrsc
@@ -425,18 +427,31 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     assign IMAWriteDataM = IHWriteDataM;
   end
 
-  // Zero extend both sources to LLEN; LLEN can exceed both XLEN and FLEN when amocas.q needs a wide path
+  // Zero extend both sources to LLEN; LLEN can exceed both XLEN and FLEN when an amocas pair needs
+  // a wide path.  A pair amocas compares and selects across both halves at once.
+  logic [P.LLEN-1:0] IMAFWriteDataPreM;
   if (P.F_SUPPORTED)
     mux2 #(P.LLEN) datamux({{(P.LLEN-P.XLEN){1'b0}}, IMAWriteDataM},
-                           {{(P.LLEN-P.FLEN){1'b0}}, FWriteDataM}, FpLoadStoreM, IMAFWriteDataM);
-  else assign IMAFWriteDataM = {{(P.LLEN-P.XLEN){1'b0}}, IMAWriteDataM};
+                           {{(P.LLEN-P.FLEN){1'b0}}, FWriteDataM}, FpLoadStoreM, IMAFWriteDataPreM);
+  else assign IMAFWriteDataPreM = {{(P.LLEN-P.XLEN){1'b0}}, IMAWriteDataM};
+
+  if (P.ZACAS_SUPPORTED) begin : caspair
+    logic CASPairMatchM;
+    logic [P.XLEN*2-1:0] CASPairResultM;
+
+    assign CASPairMatchM  = (ReadDataM[P.XLEN*2-1:0] == ComparePairM);
+    assign CASPairResultM = CASPairMatchM ? SwapPairM : ReadDataM[P.XLEN*2-1:0];
+    assign IMAFWriteDataM = AMOCASPairM ? {{(P.LLEN-P.XLEN*2){1'b0}}, CASPairResultM} : IMAFWriteDataPreM;
+  end else begin : caspair
+    assign IMAFWriteDataM = IMAFWriteDataPreM;
+  end
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Subword Accesses
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   subwordread #(P) subwordread(.ReadDataWordMuxM(LittleEndianReadDataWordM), .PAdrM(PAdrM[3:0]), .BigEndianM,
-    .FpLoadStoreM, .Funct3M(LSUFunct3M), .ReadDataM);
+    .FpLoadStoreM, .WideAccessM(FpLoadStoreM | AMOCASPairM), .Funct3M(LSUFunct3M), .ReadDataM);
   subwordwrite #(P.LLEN) subwordwrite(.LSUFunct3M, .IMAFWriteDataM, .LittleEndianWriteDataM);
 
   // Compute byte masks
