@@ -32,6 +32,7 @@ module unpack import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.FMTBITS-1:0]    Fmt,                  // format signal 00 - single 01 - double 11 - quad 10 - half
   input  logic                    XEn, YEn, ZEn,        // input enables
   input  logic                    FPUActive,            // Kill inputs when FPU is not active
+  input  logic                    Bf16Src,              // Zfbfmin: X holds a BF16 value (fcvt.s.bf16)
   output logic                    Xs, Ys, Zs,           // sign bits of XYZ
   output logic [P.NE-1:0]         Xe, Ye, Ze,           // exponents of XYZ (converted to largest supported precision)
   output logic [P.NF:0]           Xm, Ym, Zm,           // mantissas of XYZ (converted to largest supported precision)
@@ -47,8 +48,17 @@ module unpack import cvw::*;  #(parameter cvw_t P) (
 );
 
   logic YExpMax, ZExpMax;                               // is the exponent all 1s
+  logic [P.FLEN-1:0] XIn;                               // X, with a BF16 source widened to single
 
-  unpackinput #(P) unpackinputX (.A(X), .Fmt, .Sgn(Xs), .Exp(Xe), .Man(Xm), .En(XEn), .FPUActive,
+  // A BF16 value is bit-identical to the top half of a single, so widening it lets the single
+  // precision path unpack it unchanged.  An improperly boxed source reads as the canonical NaN.
+  if (P.ZFBFMIN_SUPPORTED) begin : bf16src
+    logic [31:0] Bf16Wide;
+    assign Bf16Wide = &X[P.FLEN-1:16] ? {X[15:0], 16'b0} : 32'h7FC00000;
+    assign XIn = Bf16Src ? {{P.FLEN-32{1'b1}}, Bf16Wide} : X;
+  end else assign XIn = X;
+
+  unpackinput #(P) unpackinputX (.A(XIn), .Fmt, .Sgn(Xs), .Exp(Xe), .Man(Xm), .En(XEn), .FPUActive,
                           .NaN(XNaN), .SNaN(XSNaN),
                           .Zero(XZero), .Inf(XInf), .ExpMax(XExpMax),
                           .Subnorm(XSubnorm), .PostBox(XPostBox));

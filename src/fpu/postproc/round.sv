@@ -29,6 +29,7 @@
 
 module round import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.FMTBITS-1:0]     OutFmt,             // output format
+  input  logic                     Bf16Dst,            // Zfbfmin: round the fraction to BF16
   input  logic [2:0]               Frm,                // rounding mode
   input  logic [1:0]               PostProcSel,        // select the postprocessor output
   input  logic                     Ms,                 // normalized sign
@@ -69,6 +70,8 @@ module round import cvw::*;  #(parameter cvw_t P) (
   logic                            CalcPlus1;          // calculated plus1
   logic                            FpPlus1;            // do you add one to the fp result
   logic [P.FLEN:0]                 RoundAdd;           // how much to add to the result
+  logic [P.FLEN:0]                 Bf16RoundAdd;       // RoundAdd for a BF16 result
+  logic                            Bf16Sticky;         // sticky bit for a BF16 result
   logic                            CvtToInt;           // Convert to integer operation
 
 // what position is XLEN in?
@@ -183,7 +186,18 @@ module round import cvw::*;  #(parameter cvw_t P) (
 
   // only add the Addend sticky if doing an FMA operation
   //      - the shifter shifts too far left when there's an underflow (shifting out all possible sticky bits)
-  assign Sticky = FmaASticky&FmaOp | NormSticky | CvtResUf&CvtOp | FmaMe[P.NE+1]&FmaOp | DivSticky&DivOp;
+  // BF16 overrides replace the format-generic values at their only use, here and for
+  // Guard/LsbRes/Round and RoundAdd below.  A single source reaches Mf with at most S_NF+1
+  // significand bits, plus BF16_NF of denormalization, so the sticky window is that narrow.
+  localparam BF16STICKYLSB = P.NORMSHIFTSZ - (P.S_NF+1) - P.BF16_NF - 1;
+  if (P.ZFBFMIN_SUPPORTED) begin : bf16round
+    assign Bf16Sticky  = |Mf[P.NORMSHIFTSZ-P.BF16_NF-2:BF16STICKYLSB];
+    assign Bf16RoundAdd = {(P.NE+1+P.BF16_NF)'(0), FpPlus1, (P.NF-P.BF16_NF)'(0)};
+  end else begin
+    assign Bf16Sticky   = 1'b0;
+    assign Bf16RoundAdd = '0;
+  end
+  assign Sticky = FmaASticky&FmaOp | (Bf16Dst ? Bf16Sticky : NormSticky) | CvtResUf&CvtOp | FmaMe[P.NE+1]&FmaOp | DivSticky&DivOp;
 
   // determine round and LSB of the rounded value
   //      - underflow round bit is used to determint the underflow flag
@@ -247,9 +261,9 @@ module round import cvw::*;  #(parameter cvw_t P) (
           endcase
   end
 
-  assign Guard  = CvtToInt ? Mf[P.NORMSHIFTSZ-P.XLEN-1] : FpGuard;
-  assign LsbRes = CvtToInt ? Mf[P.NORMSHIFTSZ-P.XLEN] : FpLsbRes;
-  assign Round  = CvtToInt ? Mf[P.NORMSHIFTSZ-P.XLEN-2] : FpRound;
+  assign Guard  = CvtToInt ? Mf[P.NORMSHIFTSZ-P.XLEN-1] : Bf16Dst ? Mf[P.NORMSHIFTSZ-P.BF16_NF-1] : FpGuard;
+  assign LsbRes = CvtToInt ? Mf[P.NORMSHIFTSZ-P.XLEN]   : Bf16Dst ? Mf[P.NORMSHIFTSZ-P.BF16_NF]   : FpLsbRes;
+  assign Round  = CvtToInt ? Mf[P.NORMSHIFTSZ-P.XLEN-2] : Bf16Dst ? Mf[P.NORMSHIFTSZ-P.BF16_NF-2] : FpRound;
 
   always_comb begin
       // Determine if you add 1
@@ -312,7 +326,7 @@ module round import cvw::*;  #(parameter cvw_t P) (
 
   // round the result
   //      - if the fraction overflows one should be added to the exponent
-  assign {FullRe, Rf} = {Me, RoundFrac} + RoundAdd;
+  assign {FullRe, Rf} = {Me, RoundFrac} + (Bf16Dst ? Bf16RoundAdd : RoundAdd);
   assign Re           = FullRe[P.NE-1:0];
 
 endmodule
