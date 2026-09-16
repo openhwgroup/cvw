@@ -38,6 +38,7 @@ module amoalu import cvw::*;  #(parameter cvw_t P) (
 
   logic [P.XLEN-1:0] a, b, y;
   logic               lt, cmp, sngd, sngd32, eq32, lt32, w64;
+  logic [31:0]        acmp, bcmp; // comparands narrowed to the access width
 
   // Rename inputs
   assign a = ReadDataM;
@@ -45,10 +46,24 @@ module amoalu import cvw::*;  #(parameter cvw_t P) (
 
   // Share hardware among the four amomin/amomax comparators
   assign sngd = ~LSUFunct7M[5]; // Funct7[5] = 0 for signed amomin/max
-  assign w64 = (LSUFunct3M[1:0] == 2'b10); // operate on bottom 32 bits
+  assign w64 = (LSUFunct3M[1:0] != 2'b11); // compare in the bottom 32 bits for byte, halfword, and word operations
   assign sngd32 = sngd & (P.XLEN == 32 | w64); // flip sign in lower 32 bits on 32-bit comparisons only
 
-  comparator #(32) cmp32(a[31:0], b[31:0], sngd32, {eq32, lt32});
+  // Zabha compares byte and halfword operands, so extend them to 32 bits to share the word comparator.
+  // ReadDataM arrives sign-extended, so re-extend both operands from the raw low bits to get the unsigned cases right.
+  always_comb
+    if (P.ZABHA_SUPPORTED & (LSUFunct3M[1:0] == 2'b00)) begin
+      acmp = {{24{sngd & a[7]}}, a[7:0]};
+      bcmp = {{24{sngd & b[7]}}, b[7:0]};
+    end else if (P.ZABHA_SUPPORTED & (LSUFunct3M[1:0] == 2'b01)) begin
+      acmp = {{16{sngd & a[15]}}, a[15:0]};
+      bcmp = {{16{sngd & b[15]}}, b[15:0]};
+    end else begin
+      acmp = a[31:0];
+      bcmp = b[31:0];
+    end
+
+  comparator #(32) cmp32(acmp, bcmp, sngd32, {eq32, lt32});
   if (P.XLEN == 32) begin
     assign lt = lt32;
   end else begin
