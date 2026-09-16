@@ -41,7 +41,7 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   input  logic [1:0] CacheRW,           // [1] Read, [0] Write
   input  logic       FlushCache,        // Flush all dirty lines back to memory
   input  logic       InvalidateCache,   // Clear all valid bits
-  input  logic [3:0] CMOpM,             // 0001: cbo.inval; 0010: cbo.flush; 0100: cbo.clean; 1000: cbo.zero
+  input  logic [3:0] CMOpM,             // 0001: cbo.inval; 0010: cbo.clean; 0100: cbo.flush; 1000: cbo.zero
   // Bus controls
   input  logic       CacheBusAck,       // Bus operation completed
   output logic [1:0] CacheBusRW,        // [1] Read (cache line fetch) or [0] write bus (cache line writeback)

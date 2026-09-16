@@ -50,7 +50,8 @@ module plic_apb import cvw::*;  #(parameter cvw_t P) (
   input  logic                PENABLE,
   output logic [P.XLEN-1:0]   PRDATA,
   output logic                PREADY,
-  input  logic                UARTIntr,GPIOIntr, SPIIntr, SDCIntr, PWMIntr,
+  input  logic                UARTIntr,GPIOIntr, SPIIntr, SDCIntr,
+  input  logic [3:0]          PWMIntr,                        // one source per PWM comparator
   output logic                MExtInt, SExtInt
 );
 
@@ -179,7 +180,9 @@ module plic_apb import cvw::*;  #(parameter cvw_t P) (
     if(P.PLIC_UART_ID != 0) requests[P.PLIC_UART_ID] = UARTIntr;
     if(P.PLIC_SPI_ID != 0)  requests[P.PLIC_SPI_ID]  = SPIIntr;
     if(P.PLIC_SDC_ID !=0)   requests[P.PLIC_SDC_ID]  = SDCIntr;
-    if(P.PLIC_PWM_ID != 0)  requests[P.PLIC_PWM_ID]  = PWMIntr;
+    // the four PWM comparators occupy a contiguous block starting at PLIC_PWM_ID
+    if(P.PLIC_PWM_ID != 0)
+      for(int i=0; i<4; i++) requests[P.PLIC_PWM_ID+i] = PWMIntr[i];
   end
 
   // pending interrupt request
