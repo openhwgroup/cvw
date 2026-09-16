@@ -74,7 +74,8 @@ module amoalu import cvw::*;  #(parameter cvw_t P) (
     assign lt64  = (sngd & (a[63] ^ b[63])) ? a[63] : ltu64;
   end
 
-  // Pick the compare matching the access width
+  // Pick the compare matching the access width.  Without Zabha the byte and halfword cases are
+  // don't-cares; lt32 is chosen there as a synthesis optimization so lt8 and lt16 are trimmed.
   always_comb
     case (LSUFunct3M[1:0])
       2'b00:   lt = P.ZABHA_SUPPORTED ? lt8  : lt32; // amo*.b
