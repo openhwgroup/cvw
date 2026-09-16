@@ -162,7 +162,7 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   // hpmevent update and write logic
   if (P.COUNTERS > 3) begin : mhpmeventgen
     for (i = 3; i < P.COUNTERS; i = i+1) begin : mhpmevent
-      assign WriteMHPMEVENTM[i] = CSRMWriteM & (CSRAdrM == MHPMEVENTBASE + i);
+      assign WriteMHPMEVENTM[i] = CSRMWriteM & (CSRAdrM == MHPMEVENTBASE + i - 3);
       assign NextMHPMEVENTM[i] = WriteMHPMEVENTM[i] ? CSRWriteValM : MHPMEVENT_REGW[i];
       always_ff @(posedge clk)
         if (reset) MHPMEVENT_REGW[i] <= '0;
