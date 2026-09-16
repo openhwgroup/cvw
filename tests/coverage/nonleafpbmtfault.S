@@ -8,7 +8,7 @@
 // load or store/amo page fault based on the original access type.
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
-// https://github.com/openhwgroup/cvw
+// https://github.com/openhwfoundation/cvw
 //
 // Copyright (C) 2021-24 Harvey Mudd College & Oklahoma State University
 //

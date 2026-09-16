@@ -7,7 +7,7 @@
 ## Purpose: Dockerfile for Wally docker container creation
 ##
 ## A component of the CORE-V-WALLY configurable RISC-V project.
-## https://github.com/openhwgroup/cvw
+## https://github.com/openhwfoundation/cvw
 ##
 ## Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 ##
@@ -110,7 +110,7 @@ RUN eval $(opam config env) && \
 
 # Buildroot
 WORKDIR /opt/riscv
-RUN git clone --recurse-submodules https://github.com/openhwgroup/cvw.git
+RUN git clone --recurse-submodules https://github.com/openhwfoundation/cvw.git
 ENV export WALLY=/opt/riscv/riscv-wally
 RUN git clone https://github.com/buildroot/buildroot.git && \
   cd buildroot && \

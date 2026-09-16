@@ -9,7 +9,7 @@
 ## Purpose: Open source tool chain installation script
 ##
 ## A component of the CORE-V-WALLY configurable RISC-V project.
-## https://github.com/openhwgroup/cvw
+## https://github.com/openhwfoundation/cvw
 ##
 ## Copyright (C) 2021-24 Harvey Mudd College & Oklahoma State University
 ##
@@ -133,8 +133,8 @@ section_header "Downloading Site Setup Script"
 STATUS="site-setup_scripts"
 cd "$RISCV"
 if [ ! -e "${RISCV}"/site-setup.sh ]; then
-    wget -nv --retry-connrefused $retry_on_host_error https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.sh
-    wget -nv --retry-connrefused $retry_on_host_error https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.csh
+    wget -nv --retry-connrefused $retry_on_host_error https://raw.githubusercontent.com/openhwfoundation/cvw/main/site-setup.sh
+    wget -nv --retry-connrefused $retry_on_host_error https://raw.githubusercontent.com/openhwfoundation/cvw/main/site-setup.csh
     echo -e "${SUCCESS_COLOR}Site setup script successfully downloaded!${ENDC}"
     echo -e "${WARNING_COLOR}Make sure to edit the environment variables in $RISCV/site-setup.sh (or .csh) to point to your installation of EDA tools and license files.${ENDC}"
 else

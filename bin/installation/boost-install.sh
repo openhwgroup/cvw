@@ -9,7 +9,7 @@
 ## Purpose: Boost library installation script
 ##
 ## A component of the CORE-V-WALLY configurable RISC-V project.
-## https://github.com/openhwgroup/cvw
+## https://github.com/openhwfoundation/cvw
 ##
 ## Copyright (C) 2021-26 Harvey Mudd College & Oklahoma State University
 ##
