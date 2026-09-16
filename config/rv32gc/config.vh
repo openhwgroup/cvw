@@ -98,6 +98,7 @@ localparam logic SSTC_SUPPORTED = 1; // Supervisor-mode timer interrupts
 localparam logic SMSTATEEN_SUPPORTED = 1; // Machine-level state enable registers
 localparam logic SSSTATEEN_SUPPORTED = 1; // Supervisor-level state enable registers
 localparam logic SMP1P13_SUPPORTED = 0; // Privileged Spec 1.13 state controlled by mstateen0.P1P13
+localparam logic SMCTR_SUPPORTED = 0; // Control transfer records
 localparam logic SSCSRIND_SUPPORTED = 0; // Indirect CSR access (siselect/sireg*)
 localparam logic SSAIA_SUPPORTED = 0; // Advanced Interrupt Architecture
 localparam logic SDTRIG_SUPPORTED = 0; // Debug triggers (scontext)

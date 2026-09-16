@@ -56,6 +56,7 @@ typedef struct packed {
   logic         SMSTATEEN_SUPPORTED;
   logic         SSSTATEEN_SUPPORTED;
   logic         SMP1P13_SUPPORTED;
+  logic         SMCTR_SUPPORTED;
   logic         SSCSRIND_SUPPORTED;
   logic         SSAIA_SUPPORTED;
   logic         SDTRIG_SUPPORTED;

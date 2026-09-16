@@ -254,10 +254,10 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
       MSTATEEN0_PreWriteValM[57] & P.SDTRIG_SUPPORTED,   // CONTEXT: access to scontext
       MSTATEEN0_PreWriteValM[56] & P.SMP1P13_SUPPORTED,  // P1P13: access to hedelegh
       MSTATEEN0_PreWriteValM[55] & P.SSQOSID_SUPPORTED,  // SRMCFG: access to srmcfg
-      1'b0,                                              // 54: CTR, Smctr not supported
+      MSTATEEN0_PreWriteValM[54] & P.SMCTR_SUPPORTED,    // CTR: access to control transfer records
       51'b0,                                             // 53:3 reserved
       MSTATEEN0_PreWriteValM[2] & P.ZCMT_SUPPORTED,      // JVT: access to jvt
-      MSTATEEN0_PreWriteValM[1] & P.ZFINX_SUPPORTED,     // FCSR: access to fcsr when floating point uses x registers; read-only zero when misa.F = 1, which holds because F and Zfinx are mutually exclusive
+      MSTATEEN0_PreWriteValM[1] & P.ZFINX_SUPPORTED,     // FCSR: access to fcsr when floating point uses x registers
       1'b0                                               // C: Wally has no custom state
     };
     if (P.XLEN == 64) begin
