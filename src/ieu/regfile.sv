@@ -43,7 +43,7 @@ module regfile #(parameter XLEN, E_SUPPORTED, ZACAS_SUPPORTED) (
     // Zacas needs register pairs, so hold the registers as pairs.  It also needs a third operand
     // (rd, the compare value), which the controller obtains by stalling a cycle and reusing a2.
     logic [XLEN*2-1:0] rf[NUMREGS/2-1:0]; // organize as pairs, with half as many entries
-    logic [XLEN*2-1:0] rd1p;              // pair holding rs1
+    logic [XLEN*2-1:0] rd1p, rd2p_raw;    // the two pairs read, before x0 masking and half selection
     logic [3:0]        a1p, a2p, a3p; // pair addresses
     integer i;
 
@@ -56,8 +56,11 @@ module regfile #(parameter XLEN, E_SUPPORTED, ZACAS_SUPPORTED) (
     assign a2p = a2[4:1];
     assign a3p = a3[4:1];
 
+    // Two read ports: one pair is read for a1 and one for a2, and everything else is selection.
+    // The pair forms require an even register, so dropping a2's low bit names the intended pair.
     assign rd1p = rf[a1p];
-    assign rd2p = (a2 == 0) ? '0 : rf[a2p]; // a source pair starting at x0 reads as all zeros
+    assign rd2p_raw = rf[a2p];
+    assign rd2p = (a2 == 0) ? '0 : rd2p_raw; // a source pair starting at x0 reads as all zeros
 
     // Write the whole pair for a pair write, otherwise only the addressed half
     always_ff @(negedge clk)
@@ -69,7 +72,7 @@ module regfile #(parameter XLEN, E_SUPPORTED, ZACAS_SUPPORTED) (
 
     // Select the half the register number names, forcing x0 to read as zero
     assign rd1 = (a1 == 0) ? '0 : (a1[0] ? rd1p[XLEN*2-1:XLEN] : rd1p[XLEN-1:0]);
-    assign rd2 = (a2 == 0) ? '0 : (a2[0] ? rf[a2p][XLEN*2-1:XLEN] : rf[a2p][XLEN-1:0]);
+    assign rd2 = (a2 == 0) ? '0 : (a2[0] ? rd2p_raw[XLEN*2-1:XLEN] : rd2p_raw[XLEN-1:0]);
   end else begin : simplerf
     logic [XLEN-1:0] rf[NUMREGS-1:1];
     integer i;
