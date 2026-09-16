@@ -171,7 +171,8 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   assign IllegalCSRMWriteReadonlyM = UngatedCSRMWriteM & (CSRAdrM == MVENDORID | CSRAdrM == MARCHID | CSRAdrM == MIMPID | CSRAdrM == MHARTID | CSRAdrM == MCONFIGPTR);
 
   // CSRs
-  assign TVECWriteValM = CSRWriteValM[0] ? {CSRWriteValM[P.XLEN-1:6], 6'b000001} : {CSRWriteValM[P.XLEN-1:2], 2'b00};
+  // MODE is WARL; a hart that does not vector must not read back Vectored, so only accept MODE=1 when vectoring is supported
+  assign TVECWriteValM = (CSRWriteValM[0] & P.VECTORED_INTERRUPTS_SUPPORTED) ? {CSRWriteValM[P.XLEN-1:6], 6'b000001} : {CSRWriteValM[P.XLEN-1:2], 2'b00};
   flopenr #(P.XLEN) MTVECreg(clk, reset, WriteMTVECM, TVECWriteValM, MTVEC_REGW);
   if (P.S_SUPPORTED) begin : deleg // DELEG registers should exist
     flopenr #(16) MEDELEGreg(clk, reset, WriteMEDELEGM, CSRWriteValM[15:0] & MEDELEG_MASK, MEDELEG_REGW);
@@ -271,7 +272,8 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
       MEPC:          CSRMReadValM = MEPC_REGW;
       MCAUSE:        CSRMReadValM = MCAUSE_REGW;
       MTVAL:         CSRMReadValM = MTVAL_REGW;
-      MCOUNTEREN:    CSRMReadValM = {{(P.XLEN-32){1'b0}}, MCOUNTEREN_REGW};
+      MCOUNTEREN:    if (P.U_SUPPORTED) CSRMReadValM = {{(P.XLEN-32){1'b0}}, MCOUNTEREN_REGW};
+                     else IllegalCSRMAccessM = 1'b1;
       MENVCFG:       if (P.U_SUPPORTED) CSRMReadValM = MENVCFG_REGW[P.XLEN-1:0];
                      else IllegalCSRMAccessM = 1'b1;
       MENVCFGH:      if (P.U_SUPPORTED & P.XLEN==32) CSRMReadValM = MENVCFGH_REGW;
