@@ -85,7 +85,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          ENVCFG_ADUE;                     // HPTW A/D Update enable
   logic                          ENVCFG_PBMTE;                    // Page-based memory type enable
   logic [3:0]                    ENVCFG_CBE;                      // Cache Block operation enables
-  logic [3:0]                    CMOpM;                           // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
+  logic [3:0]                    CMOpM;                           // 1: cbo.inval; 2: cbo.clean; 4: cbo.flush; 8: cbo.zero
   logic                          IFUPrefetchE, LSUPrefetchM;      // instruction / data prefetch hints
 
   // floating point unit signals
@@ -156,6 +156,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          IClassWrongM;
   logic [3:0]                    IClassM;
   logic                          InstrAccessFaultF, HPTWInstrAccessFaultF, HPTWInstrPageFaultF;
+  logic                          HPTWInstrAccessFaultHeldF, HPTWInstrPageFaultHeldF;
   logic [2:0]                    LSUHSIZE;
   logic [2:0]                    LSUHBURST;
   logic [1:0]                    LSUHTRANS;
@@ -191,6 +192,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     // mmu management
     .PrivilegeModeW, .PTE, .PageType, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV,
     .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_ADUE, .ITLBWriteF, .sfencevmaM, .sfencevmaAllM, .ITLBMissOrUpdateAF,
+    .HPTWInstrAccessFaultF, .HPTWInstrPageFaultF, .HPTWInstrAccessFaultHeldF, .HPTWInstrPageFaultHeldF,
     // pmp/pma (inside mmu) signals.
     .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW, .InstrAccessFaultF);
 
@@ -302,7 +304,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
       .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
       .MTIME_CLINT, .IEUAdrxTvalM, .SetFflagsM,
-      .InstrAccessFaultF, .HPTWInstrAccessFaultF, .HPTWInstrPageFaultF, .LoadAccessFaultM, .StoreAmoAccessFaultM, .SelHPTW,
+      .InstrAccessFaultF, .HPTWInstrAccessFaultF(HPTWInstrAccessFaultHeldF), .HPTWInstrPageFaultF(HPTWInstrPageFaultHeldF), .LoadAccessFaultM, .StoreAmoAccessFaultM, .SelHPTW,
       .PrivilegeModeW, .SATP_REGW,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS,
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,

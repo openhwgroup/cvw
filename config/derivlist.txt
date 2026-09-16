@@ -586,6 +586,20 @@ ZALRSC_SUPPORTED    0
 deriv zalrsc_rv64gc rv64gc
 ZAAMO_SUPPORTED     0
 
+# Zicbom and Zicboz are independent extensions, so cover each one without the other.
+# zicbom_* also covers Zaamo without Zicboz, because ZAAMO_SUPPORTED stays on.
+deriv zicbom_rv32gc rv32gc
+ZICBOZ_SUPPORTED    0
+
+deriv zicboz_rv32gc rv32gc
+ZICBOM_SUPPORTED    0
+
+deriv zicbom_rv64gc rv64gc
+ZICBOZ_SUPPORTED    0
+
+deriv zicboz_rv64gc rv64gc
+ZICBOM_SUPPORTED    0
+
 deriv zba_rv32gc rv32gc
 ZBA_SUPPORTED     1
 ZBB_SUPPORTED     0
