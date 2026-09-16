@@ -104,7 +104,8 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   // when compressed instructions are supported, there can't be misaligned instructions
   localparam MEDELEG_MASK  = P.ZCA_SUPPORTED ? 16'hB3FE : 16'hB3FF;
   localparam MIDELEG_MASK  = 12'h222; // we choose to not make machine interrupts delegable
-  localparam COUNTERINHIBIT_MASK = ((1 << P.COUNTERS) - 1); // only nonzero counters can be inhibited
+  // only nonzero counters can be inhibited; TM (bit 1) is read-only 0 because the time counter lives in the CLINT
+  localparam COUNTERINHIBIT_MASK = ((1 << P.COUNTERS) - 1) & 32'hFFFFFFFD;
   // mcounteren can only be written for counters that are supported by Zicntr or Zihpm and are nonzero
   localparam COUNTEREN_MASK = (P.ZICNTR_SUPPORTED ? 32'h00000007 : 32'h0) |
                               (P.ZIHPM_SUPPORTED  ? (((1 << P.COUNTERS) - 1)) : 32'h0);
@@ -183,7 +184,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   flopenr #(P.XLEN) MEPCreg(clk, reset, WriteMEPCM, NextEPCM, MEPC_REGW);
   flopenr #(P.XLEN) MCAUSEreg(clk, reset, WriteMCAUSEM, {NextCauseM[5], {(P.XLEN-6){1'b0}}, NextCauseM[4:0]}, MCAUSE_REGW);
   flopenr #(P.XLEN) MTVALreg(clk, reset, WriteMTVALM, NextXtvalM, MTVAL_REGW);
-  flopenr #(32)     MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, {CSRWriteValM[31:2], 1'b0, CSRWriteValM[0]} & COUNTERINHIBIT_MASK, MCOUNTINHIBIT_REGW);
+  flopenr #(32)     MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, CSRWriteValM[31:0] & COUNTERINHIBIT_MASK, MCOUNTINHIBIT_REGW);
   if (P.U_SUPPORTED & P.ZICNTR_SUPPORTED) begin : mcounteren // MCOUNTEREN only writable when user mode and Zicntr are supported
     flopenr #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, CSRWriteValM[31:0] & COUNTEREN_MASK, MCOUNTEREN_REGW);
   end else assign MCOUNTEREN_REGW = '0;
