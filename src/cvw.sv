@@ -75,6 +75,7 @@ typedef struct packed {
   logic         ZAAMO_SUPPORTED;
   logic         ZALRSC_SUPPORTED;
   logic         ZABHA_SUPPORTED;
+  logic         ZACAS_SUPPORTED;
 
   // Microarchitectural Features
   logic         BUS_SUPPORTED;
