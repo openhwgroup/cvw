@@ -146,6 +146,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic        FenceFunctD;                    // Detect fence instruction
   logic        CMOFunctD;                      // Detect CMO instruction
   logic        AFunctD, AMOFunctD;             // Detect atomic instructions
+  logic        A3264FunctD;                    // Detect valid 32/64-bit atomics (lr/sc/amo)
   logic        RWFunctD, MWFunctD;             // detect RW/MW instructions
   logic        PFunctD, CSRFunctD;             // detect privileged / CSR instruction
   logic        FenceM;                         // Fence.I or sfence.VMA instruction in memory stage
@@ -198,7 +199,9 @@ module controller import cvw::*;  #(parameter cvw_t P) (
                               ((P.ZICBOZ_SUPPORTED & (InstrD[31:20] == 12'd4) & ENVCFG_CBE[3]) |
                                (P.ZICBOM_SUPPORTED & (((InstrD[31:20] == 12'd0) & (ENVCFG_CBE[1:0] == 2'b01 | ENVCFG_CBE[1:0] == 2'b11)) |
                                                       ((InstrD[31:20] == 12'd1 | InstrD[31:20] == 12'd2) & ENVCFG_CBE[2]))));
-    assign AFunctD          = (Funct3D == 3'b010) | (P.XLEN == 64 & Funct3D == 3'b011);
+    assign A3264FunctD      = (Funct3D == 3'b010) | (P.XLEN == 64 & Funct3D == 3'b011);
+    // Zabha adds byte and halfword AMOs, but not byte and halfword lr/sc
+    assign AFunctD          = A3264FunctD | (P.ZABHA_SUPPORTED & (Funct3D == 3'b000 | Funct3D == 3'b001));
     assign AMOFunctD        = (InstrD[31:27] == 5'b00001) |
                               (InstrD[31:27] == 5'b00000) |
                               (InstrD[31:27] == 5'b00100) |
@@ -230,6 +233,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     assign FenceFunctD = 1'b1; // don't bother to check fields for fences
     assign CMOFunctD = 1'b1; // don't bother to check fields for CMO instructions
     assign AFunctD = 1'b1; // don't bother to check fields for atomics
+    assign A3264FunctD = 1'b1; // don't bother to check fields for lr/sc and amos
     assign AMOFunctD = 1'b1; // don't bother to check Funct7 for AMO operations
     assign RWFunctD = 1'b1; // don't bother to check fields for RW instructions
     assign MWFunctD = 1'b1; // don't bother to check fields for MW instructions
@@ -270,9 +274,9 @@ module controller import cvw::*;  #(parameter cvw_t P) (
       7'b0100111: if (FLSFunctD)
                       ControlsD = `CTRLW'b0_001_01_01_000_0_0_0_0_0_0_0_0_0_00_0_1; // fsw - only legal if FP supported
       7'b0101111: if (AFunctD) begin
-                    if (P.ZALRSC_SUPPORTED & InstrD[31:27] == 5'b00010 & Rs2D == 5'b0)
+                    if (P.ZALRSC_SUPPORTED & A3264FunctD & InstrD[31:27] == 5'b00010 & Rs2D == 5'b0)
                       ControlsD = `CTRLW'b1_000_00_10_001_0_0_0_0_0_0_0_0_0_01_0_0; // lr
-                    else if (P.ZALRSC_SUPPORTED & InstrD[31:27] == 5'b00011)
+                    else if (P.ZALRSC_SUPPORTED & A3264FunctD & InstrD[31:27] == 5'b00011)
                       ControlsD = `CTRLW'b1_101_01_01_100_0_0_0_0_0_0_0_0_0_01_0_0; // sc
                     else if (P.ZAAMO_SUPPORTED & AMOFunctD)
                       ControlsD = `CTRLW'b1_101_01_11_001_0_0_0_0_0_0_0_0_0_10_0_0; // amo
