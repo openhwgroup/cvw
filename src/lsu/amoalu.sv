@@ -33,6 +33,8 @@ module amoalu import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0] IHWriteDataM, // LSU's WriteData
   input  logic [6:0]        LSUFunct7M,   // ALU Operation
   input  logic [2:0]        LSUFunct3M,   // Memoy access width
+  input  logic [P.XLEN-1:0] CompareDataM, // amocas compare operand (read from rd)
+  input  logic              AMOCASM,      // amocas: swap only when the loaded value matches
   output logic [P.XLEN-1:0] AMOResultM    // ALU output
 );
 
@@ -41,6 +43,7 @@ module amoalu import cvw::*;  #(parameter cvw_t P) (
   logic               eqB0, ltB0, eqB1, ltB1, eqH1, ltH1; // per-lane compares, always unsigned
   logic               ltu16, ltu32;                       // unsigned compares assembled from the lanes
   logic               lt8, lt16, lt32, lt64;              // compare at each access width
+  logic               CASMatchM;                          // amocas comparison succeeded
 
   // Rename inputs
   assign a = ReadDataM;
@@ -86,8 +89,20 @@ module amoalu import cvw::*;  #(parameter cvw_t P) (
 
   assign cmp = lt ^ LSUFunct7M[4]; // flip sense of comparison for maximums
 
+  // amocas swaps in rs2 only when the loaded value matches the compare operand.  On a mismatch it
+  // writes the loaded value back, which the spec permits and which keeps the ordinary AMO store path.
+  always_comb
+    case (LSUFunct3M[1:0])
+      2'b00:   CASMatchM = (a[7:0]  == CompareDataM[7:0]);   // amocas.b
+      2'b01:   CASMatchM = (a[15:0] == CompareDataM[15:0]);  // amocas.h
+      2'b10:   CASMatchM = (a[31:0] == CompareDataM[31:0]);  // amocas.w
+      default: CASMatchM = (a == CompareDataM);              // amocas.d
+    endcase
+
   // AMO ALU
   always_comb
+    if (AMOCASM) y = CASMatchM ? b : a;
+    else
     case (LSUFunct7M[6:2])
       5'b00001: y = b;           // amoswap
       5'b00000: y = a + b;       // amoadd

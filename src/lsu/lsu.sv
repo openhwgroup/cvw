@@ -38,6 +38,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   input  logic [1:0]              MemRWE,                               // Read/Write control
   input  logic [1:0]              MemRWM,                               // Read/Write control
   input  logic [2:0]              Funct3M,                              // Size of memory operation
+  input  logic [P.XLEN-1:0]       CompareDataM,                         // amocas compare operand
+  input  logic                    AMOCASM,                              // amocas instruction
   input  logic [6:0]              Funct7M,                              // Atomic memory operation function
   input  logic [1:0]              AtomicM,                              // Atomic memory operation
   input  logic                    FlushDCacheM,                         // Flush D cache to next level of memory
@@ -414,7 +416,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   if (P.ZAAMO_SUPPORTED | P.ZALRSC_SUPPORTED) begin : atomic
-    atomic #(P) atomic(.clk, .reset, .StallW, .ReadDataM(ReadDataM[P.XLEN-1:0]), .IHWriteDataM, .PAdrM,
+    atomic #(P) atomic(.clk, .reset, .StallW, .ReadDataM(ReadDataM[P.XLEN-1:0]), .IHWriteDataM, .PAdrM, .CompareDataM, .AMOCASM,
       .LSUFunct7M, .LSUFunct3M, .LSUAtomicM, .PreLSURWM, .LSUFlushW,
       .IMAWriteDataM, .SquashSCW, .LSURWM);
   end else begin : lrsc
@@ -423,13 +425,11 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     assign IMAWriteDataM = IHWriteDataM;
   end
 
+  // Zero extend both sources to LLEN; LLEN can exceed both XLEN and FLEN when amocas.q needs a wide path
   if (P.F_SUPPORTED)
-    if (P.FLEN >= P.XLEN)
-      mux2 #(P.LLEN) datamux({{{P.LLEN-P.XLEN}{1'b0}}, IMAWriteDataM}, FWriteDataM, FpLoadStoreM, IMAFWriteDataM);
-    else
-      mux2 #(P.LLEN) datamux(IMAWriteDataM, {{{P.XLEN-P.FLEN}{1'b0}}, FWriteDataM}, FpLoadStoreM, IMAFWriteDataM);
-
-  else assign IMAFWriteDataM = IMAWriteDataM;
+    mux2 #(P.LLEN) datamux({{(P.LLEN-P.XLEN){1'b0}}, IMAWriteDataM},
+                           {{(P.LLEN-P.FLEN){1'b0}}, FWriteDataM}, FpLoadStoreM, IMAFWriteDataM);
+  else assign IMAFWriteDataM = {{(P.LLEN-P.XLEN){1'b0}}, IMAWriteDataM};
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Subword Accesses

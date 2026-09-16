@@ -78,6 +78,8 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          CSRWriteFenceM;
   logic                          DivBusyE;
   logic                          StructuralStallD;
+  logic [P.XLEN-1:0]             CompareDataM;                  // amocas compare operand
+  logic                          AMOCASM;                       // amocas instruction
   logic                          LoadStallD;
   logic                          StoreStallD;
   logic                          SquashSCW;
@@ -218,13 +220,13 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
      .InstrValidM, .InstrValidE, .InstrValidD, .FCvtIntResW, .FCvtIntW,
      // hazards
      .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
-     .StructuralStallD, .LoadStallD, .StoreStallD, .PCSrcE,
+     .StructuralStallD, .LoadStallD, .StoreStallD, .PCSrcE, .CompareDataM, .AMOCASM,
      .CSRReadM, .CSRWriteM, .PrivilegedM, .CSRWriteFenceM, .InvalidateICacheM);
 
   lsu #(P) lsu(
     .clk, .reset, .StallM, .FlushM, .StallW, .FlushW,
     // CPU interface
-    .MemRWE, .MemRWM, .Funct3M, .Funct7M(InstrM[31:25]), .AtomicM,
+    .MemRWE, .MemRWM, .Funct3M, .Funct7M(InstrM[31:25]), .AtomicM, .CompareDataM, .AMOCASM,
     .CommittedM, .DCacheMiss, .DCacheAccess, .SquashSCW,
     .FpLoadStoreM, .FWriteDataM, .IEUAdrE, .IEUAdrM, .WriteDataM,
     .ReadDataW, .FlushDCacheM, .CMOpM, .LSUPrefetchM,

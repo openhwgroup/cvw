@@ -77,6 +77,8 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   output logic [1:0]  MemRWM,                  // Mem read/write: MemRWM[1] = 1 for read, MemRWM[0] = 1 for write
   output logic        CSRReadM, CSRWriteM, PrivilegedM, // CSR read, write, or privileged instruction
   output logic [1:0]  AtomicM,                 // Atomic (AMO) instruction
+  output logic        AMOCASM,                 // amocas: compare the loaded value before swapping
+  output logic        CASStallD,               // amocas is reading its compare operand through the rs2 port
   output logic [2:0]  Funct3M,                 // Instruction's funct3 field
   output logic        InvalidateICacheM, FlushDCacheM, // Invalidate I$, flush D$
   output logic        InstrValidD, InstrValidE, InstrValidM, // Instruction is valid
@@ -147,6 +149,9 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic        CMOFunctD;                      // Detect CMO instruction
   logic        AFunctD, AMOFunctD;             // Detect atomic instructions
   logic        A3264FunctD;                    // Detect valid 32/64-bit atomics (lr/sc/amo)
+  logic        AMOCASFunctD;                   // Detect a legal amocas encoding
+  logic        AMOCASD, AMOCASE;               // amocas in Decode and Execute
+  logic        CASCapturedD;                   // amocas compare operand has been captured
   logic        RWFunctD, MWFunctD;             // detect RW/MW instructions
   logic        PFunctD, CSRFunctD;             // detect privileged / CSR instruction
   logic        FenceM;                         // Fence.I or sfence.VMA instruction in memory stage
@@ -202,6 +207,11 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     assign A3264FunctD      = (Funct3D == 3'b010) | (P.XLEN == 64 & Funct3D == 3'b011);
     // Zabha adds byte and halfword AMOs, but not byte and halfword lr/sc
     assign AFunctD          = A3264FunctD | (P.ZABHA_SUPPORTED & (Funct3D == 3'b000 | Funct3D == 3'b001));
+    // amocas is funct5 00101.  Word always, doubleword when XLEN is 64, byte and halfword with Zabha.
+    // The pair forms (amocas.d on RV32, amocas.q) are not implemented, so they remain reserved.
+    assign AMOCASFunctD     = P.ZACAS_SUPPORTED & (InstrD[31:27] == 5'b00101) &
+                              ((Funct3D == 3'b010) | ((Funct3D == 3'b011) & (P.XLEN == 64)) |
+                               (P.ZABHA_SUPPORTED & ((Funct3D == 3'b000) | (Funct3D == 3'b001))));
     assign AMOFunctD        = (InstrD[31:27] == 5'b00001) |
                               (InstrD[31:27] == 5'b00000) |
                               (InstrD[31:27] == 5'b00100) |
@@ -234,6 +244,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     assign CMOFunctD = 1'b1; // don't bother to check fields for CMO instructions
     assign AFunctD = 1'b1; // don't bother to check fields for atomics
     assign A3264FunctD = 1'b1; // don't bother to check fields for lr/sc and amos
+    assign AMOCASFunctD = P.ZACAS_SUPPORTED & (InstrD[31:27] == 5'b00101); // don't bother to check width
     assign AMOFunctD = 1'b1; // don't bother to check Funct7 for AMO operations
     assign RWFunctD = 1'b1; // don't bother to check fields for RW instructions
     assign MWFunctD = 1'b1; // don't bother to check fields for MW instructions
@@ -280,6 +291,8 @@ module controller import cvw::*;  #(parameter cvw_t P) (
                       ControlsD = `CTRLW'b1_101_01_01_100_0_0_0_0_0_0_0_0_0_01_0_0; // sc
                     else if (P.ZAAMO_SUPPORTED & AMOFunctD)
                       ControlsD = `CTRLW'b1_101_01_11_001_0_0_0_0_0_0_0_0_0_10_0_0; // amo
+                    else if (AMOCASFunctD)
+                      ControlsD = `CTRLW'b1_101_01_11_001_0_0_0_0_0_0_0_0_0_10_0_0; // amocas reuses the amo controls
                  end
       7'b0110011: if (RFunctD)
                       ControlsD = `CTRLW'b1_000_00_00_000_0_1_0_0_0_0_0_0_0_00_0_0; // R-type
@@ -426,13 +439,23 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     end
   end
 
+  // amocas reads three registers: rs1 for the address, rs2 for the swap value, and rd for the
+  // compare value.  Rather than add a third read port, stall one cycle in Decode and borrow the
+  // rs2 port to read rd, capturing the result in the datapath.
+  assign AMOCASD = (OpD == 7'b0101111) & AMOCASFunctD;
+  assign CASStallD = AMOCASD & ~CASCapturedD;
+  always_ff @(posedge clk)
+    if (reset | FlushD)  CASCapturedD <= 1'b0;
+    else if (CASStallD)  CASCapturedD <= 1'b1; // compare operand captured; release the stall
+    else if (~StallD)    CASCapturedD <= 1'b0; // instruction has left Decode
+
   // Decode stage pipeline control register
   flopenrc #(1)  controlregD(clk, reset, FlushD, ~StallD, 1'b1, InstrValidD);
 
   // Execute stage pipeline control register and logic
-  flopenrc #(45) controlregE(clk, reset, FlushE, ~StallE,
-                           {ALUSelectD, RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, Funct7D, W64D, BUW64D, SubArithD, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, FenceD, CMOpD, IFUPrefetchD, LSUPrefetchD, CZeroD, InstrValidD},
-                           {ALUSelectE, IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, Funct7E, W64E, UW64E, SubArithE, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, CMOpE, IFUPrefetchE, LSUPrefetchE, CZeroE, InstrValidE});
+  flopenrc #(46) controlregE(clk, reset, FlushE, ~StallE,
+                           {ALUSelectD, RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, Funct7D, W64D, BUW64D, SubArithD, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, FenceD, CMOpD, IFUPrefetchD, LSUPrefetchD, CZeroD, InstrValidD, AMOCASD},
+                           {ALUSelectE, IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, Funct7E, W64E, UW64E, SubArithE, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, CMOpE, IFUPrefetchE, LSUPrefetchE, CZeroE, InstrValidE, AMOCASE});
   flopenrc #(5)  Rs1EReg(clk, reset, FlushE, ~StallE, Rs1D, Rs1E);
   flopenrc #(5)  Rs2EReg(clk, reset, FlushE, ~StallE, Rs2D, Rs2E);
   flopenrc #(5)  RdEReg(clk, reset, FlushE, ~StallE, RdD, RdE);
@@ -454,9 +477,9 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   assign IntDivE = MDUE & Funct3E[2]; // Integer division operation
 
   // Memory stage pipeline control register
-  flopenrc #(25) controlregM(clk, reset, FlushM, ~StallM,
-                         {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, FWriteIntE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE, IntDivE, CMOpE, LSUPrefetchE},
-                         {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, FWriteIntM, AtomicM, InvalidateICacheM, FlushDCacheM, FenceM, InstrValidM, IntDivM, CMOpM, LSUPrefetchM});
+  flopenrc #(26) controlregM(clk, reset, FlushM, ~StallM,
+                         {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, FWriteIntE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE, IntDivE, CMOpE, LSUPrefetchE, AMOCASE},
+                         {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, FWriteIntM, AtomicM, InvalidateICacheM, FlushDCacheM, FenceM, InstrValidM, IntDivM, CMOpM, LSUPrefetchM, AMOCASM});
   flopenrc #(5)  RdMReg(clk, reset, FlushM, ~StallM, RdE, RdM);
 
   // Writeback stage pipeline control register
@@ -489,5 +512,5 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   assign CSRRdStallD = CSRReadE & MatchDE;
   assign MDUStallD = MDUE & MatchDE; // Int mult/div is at least two cycle latency, even when coming from the FDIV
   assign FCvtIntStallD = FCvtIntE & MatchDE; // FPU to Integer transfers have single-cycle latency except fcvt
-  assign StructuralStallD = LoadStallD | StoreStallD | CSRRdStallD | MDUStallD | FCvtIntStallD;
+  assign StructuralStallD = LoadStallD | StoreStallD | CSRRdStallD | MDUStallD | FCvtIntStallD | CASStallD;
 endmodule

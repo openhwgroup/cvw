@@ -34,6 +34,8 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   input  logic [2:0]        ImmSrcD,                 // Selects type of immediate extension
   input  logic [31:0]       InstrD,                  // Instruction in Decode stage
   input  logic [4:0]        Rs1D, Rs2D, Rs2E,             // Source registers
+  input  logic              CASStallD,               // amocas is borrowing the rs2 port to read its compare operand
+  output logic [P.XLEN-1:0] CompareDataM,            // amocas compare operand, read from rd
   // Execute stage signals
   input  logic [P.XLEN-1:0] PCE,                     // PC in Execute stage
   input  logic [P.XLEN-1:0] PCLinkE,                 // PC + 4 (of instruction in Execute stage)
@@ -85,7 +87,9 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0] ImmExtE;                        // Extended immediate in Execute stage
   logic [P.XLEN-1:0] SrcAE, SrcBE;                   // ALU operands
   logic [P.XLEN-1:0] ALUResultE, AltResultE, IEUResultE; // ALU result, Alternative result (ImmExtE or PC+4), result of execution stage
-  logic [P.XLEN*2-1:0] R2PD, RDPD;                   // Zacas register pairs for rs2 and the compare operand
+  logic [P.XLEN*2-1:0] R2PD;                        // Zacas register pair read through the rs2 port
+  logic [4:0]          A2D;                         // rs2 port address, borrowed by amocas to read rd
+  logic [P.XLEN-1:0]   CompareDataD, CompareDataE;  // amocas compare operand on its way to the LSU
   logic [P.XLEN-1:0] IEUAdrRawE;                     // ALU sum before clearing bit 0 of a jump target
   // Memory stage signals
   logic [P.XLEN-1:0] IEUResultM;                     // Result from execution stage
@@ -98,9 +102,14 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0] MulDivResultW;                  // Multiply always comes from MDU.  Divide could come from MDU or FPU (when using fdivsqrt for integer division)
 
   // Decode stage
-  // Zacas pair reads and pair writes are unused until amocas is decoded
+  // amocas borrows the rs2 read port for one cycle to read its compare operand from rd
+  assign A2D = CASStallD ? InstrD[11:7] : Rs2D;
   regfile #(P.XLEN, P.E_SUPPORTED, P.ZACAS_SUPPORTED) regf(clk, reset, RegWriteW, 1'b0,
-    Rs1D, Rs2D, RdW, InstrD[11:7], ResultW, '0, R1D, R2D, R2PD, RDPD);
+    Rs1D, A2D, RdW, ResultW, '0, R1D, R2D, R2PD);
+  // Capture the compare operand during the borrowed cycle and carry it to the Memory stage
+  flopenr #(P.XLEN) CompareDataDReg(clk, reset, CASStallD, R2D, CompareDataD);
+  flopenrc #(P.XLEN) CompareDataEReg(clk, reset, FlushE, ~StallE, CompareDataD, CompareDataE);
+  flopenrc #(P.XLEN) CompareDataMReg(clk, reset, FlushM, ~StallM, CompareDataE, CompareDataM);
   extend #(P)        ext(.InstrD(InstrD[31:7]), .ImmSrcD, .ImmExtD);
 
   // Execute stage pipeline register and logic

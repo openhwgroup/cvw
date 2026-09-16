@@ -288,10 +288,16 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
     end
   end
 
-  // Integer register file
+  // Integer register file.  Zacas holds the registers as pairs, so reach into the matching half.
   assign rf[0] = 0;
-  for(genvar index = 1; index < NUM_REGS; index += 1)
-    assign rf[index] = testbench.dut.core.ieu.dp.regf.rf[index];
+  if (P.ZACAS_SUPPORTED) begin : tracerf
+    for(genvar index = 1; index < NUM_REGS; index += 1)
+      assign rf[index] = index[0] ? testbench.dut.core.ieu.dp.regf.pairedrf.rf[index/2][P.XLEN*2-1:P.XLEN]
+                                  : testbench.dut.core.ieu.dp.regf.pairedrf.rf[index/2][P.XLEN-1:0];
+  end else begin : tracerf
+    for(genvar index = 1; index < NUM_REGS; index += 1)
+      assign rf[index] = testbench.dut.core.ieu.dp.regf.simplerf.rf[index];
+  end
 
   assign rf_a3  = testbench.dut.core.ieu.dp.regf.a3;
   assign rf_we3 = testbench.dut.core.ieu.dp.regf.we3;

@@ -31,23 +31,23 @@
 module regfile #(parameter XLEN, E_SUPPORTED, ZACAS_SUPPORTED) (
   input  logic             clk, reset,
   input  logic             we3, we3p,           // Write enable for normal and pair
-  input  logic [4:0]       a1, a2, a3, a4,      // Read a1, a2, and a4 (Zacas compare operand); write a3
+  input  logic [4:0]       a1, a2, a3,          // Read a1 and a2 (amocas borrows a2 for its compare operand); write a3
   input  logic [XLEN-1:0]  wd3,                 // Write data for port 3
   input  logic [XLEN-1:0]  wd3h,                // Upper half write data for port 3 pair
   output logic [XLEN-1:0]  rd1, rd2,            // Read data for ports 1, 2
-  output logic [XLEN*2-1:0] rd2p, rd4p          // Pair read data for the rs2 and compare-operand ports
+  output logic [XLEN*2-1:0] rd2p                // Pair read through the a2 port, for Zacas pair operands
 );
   localparam NUMREGS = E_SUPPORTED ? 16 : 32;   // only 16 registers in E mode
 
   if (ZACAS_SUPPORTED) begin : pairedrf
-    // Zacas reads three registers at once (rs1, rs2, and rd as the compare operand) and reads
-    // register pairs, so hold the registers as pairs and add a third read port.
+    // Zacas needs register pairs, so hold the registers as pairs.  It also needs a third operand
+    // (rd, the compare value), which the controller obtains by stalling a cycle and reusing a2.
     logic [XLEN*2-1:0] rf[NUMREGS/2-1:0]; // organize as pairs, with half as many entries
     logic [XLEN*2-1:0] rd1p;              // pair holding rs1
-    logic [3:0]        a1p, a2p, a3p, a4p; // pair addresses
+    logic [3:0]        a1p, a2p, a3p; // pair addresses
     integer i;
 
-    // Read three ports combinationally (a1/rd1, a2/rd2, a4/rd4p), write one port (a3) on the
+    // Read two ports combinationally (a1/rd1, a2/rd2 with its pair), write one port (a3) on the
     // falling edge of the clock.  Register 0 is hardwired to 0.
     // reset is intended for simulation only, not synthesis
 
@@ -55,11 +55,9 @@ module regfile #(parameter XLEN, E_SUPPORTED, ZACAS_SUPPORTED) (
     assign a1p = a1[4:1];
     assign a2p = a2[4:1];
     assign a3p = a3[4:1];
-    assign a4p = a4[4:1];
 
     assign rd1p = rf[a1p];
     assign rd2p = (a2 == 0) ? '0 : rf[a2p]; // a source pair starting at x0 reads as all zeros
-    assign rd4p = (a4 == 0) ? '0 : rf[a4p]; // a compare pair starting at x0 reads as all zeros
 
     // Write the whole pair for a pair write, otherwise only the addressed half
     always_ff @(negedge clk)
@@ -91,6 +89,6 @@ module regfile #(parameter XLEN, E_SUPPORTED, ZACAS_SUPPORTED) (
 
     assign rd1 = (a1 != 0) ? rf[a1] : 0;
     assign rd2 = (a2 != 0) ? rf[a2] : 0;
-    assign rd2p = '0; assign rd4p = '0; // not used without Zacas
+    assign rd2p = '0; // not used without Zacas
   end
 endmodule

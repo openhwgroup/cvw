@@ -117,7 +117,9 @@ localparam INTDIVb        = INTFPDUR*RK - LOGR;
 // largest length in IEU/FPU
 localparam BASECVTLEN = `max(XLEN, NF); // convert length excluding Zfa fcvtmod.w.d
 localparam CVTLEN = (ZFA_SUPPORTED & D_SUPPORTED) ? `max(BASECVTLEN, 32'd84) : BASECVTLEN; // fcvtmod.w.d needs at least 32+52 because a double with 52 fractional bits might be into upper bits of 32 bit word
-localparam LLEN = `max($unsigned(FLEN), $unsigned(XLEN));
+// amocas.q reads and writes 128 bits, so it needs the same wide load/store path as quad floats
+localparam CASLEN = (ZACAS_SUPPORTED & (XLEN == 64)) ? 128 : XLEN;
+localparam LLEN = `max(`max($unsigned(FLEN), $unsigned(XLEN)), $unsigned(CASLEN));
 localparam LOGCVTLEN = $unsigned($clog2(CVTLEN+1));
 
 // size of FMA output in U(NF+4).(3NF+2) format
