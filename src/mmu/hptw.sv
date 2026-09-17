@@ -381,8 +381,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   // In the last cycle of a walk (TLB write or FAULT) switch back to the original data virtual address so the
   // data cache reads the tag/data/valid/dirty/LRU state of the M-stage access's set (the set index lies within
   // the page offset) and the access resumes at IDLE with a valid hit/miss decision.
-  //assign SelHPTWAdr = SelHPTW & ~(DTLBWriteM | ITLBWriteF | (WalkerState == FAULT));
-  assign SelHPTWAdr = SelHPTW & ~(((DTLBWalkPending & ~ITLBWalkPending & DTLBWriteM) | (ITLBWalkPending &ITLBWriteF)) | (WalkerState == FAULT));
+  assign SelHPTWAdr = SelHPTW & ~(DTLBWriteM | ITLBWriteF | (WalkerState == FAULT));
 
   // multiplex the outputs to LSU
   if (P.XLEN == 64) assign HPTWAdrExt = {{(P.XLEN+2-P.PA_BITS){1'b0}}, HPTWAdr}; // Extend to 66 bits
