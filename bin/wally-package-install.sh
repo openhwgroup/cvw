@@ -85,11 +85,9 @@ case "$FAMILY" in
             PYTHON_VERSION=python3.13
         elif (( DEBIAN_VERSION >= 12 )); then
             PYTHON_VERSION=python3.11
-        elif (( DEBIAN_VERSION >= 11 )); then
-            PYTHON_VERSION=python3.9
         fi
         # Mold not available in older distros for Verilator, will download binary instead
-        if (( UBUNTU_VERSION != 20 && DEBIAN_VERSION != 11 )); then
+        if (( UBUNTU_VERSION != 20 )); then
             VERILATOR_PACKAGES+=(mold)
         fi
         PACKAGE_MANAGER="DEBIAN_FRONTEND=noninteractive apt-get -y"
