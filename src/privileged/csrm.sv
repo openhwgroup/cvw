@@ -245,7 +245,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
     assign WriteMSTATEEN0M = CSRMWriteM & (CSRAdrM == MSTATEEN0);
     // MSTATEEN0 is always 64 bits even for RV32
     assign MSTATEEN0_WriteValM = {
-      MSTATEEN0_PreWriteValM[63],                        // SE0: access to sstateen0
+      MSTATEEN0_PreWriteValM[63] & P.SSSTATEEN_SUPPORTED, // SE0: access to sstateen0
       MSTATEEN0_PreWriteValM[62],                        // ENVCFG: access to senvcfg; senvcfg always exists because Wally is Sm1p12 compatible
       1'b0,                                              // 61: reserved
       MSTATEEN0_PreWriteValM[60] & P.SSCSRIND_SUPPORTED, // CSRIND: access to siselect and sireg*
@@ -257,7 +257,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
       MSTATEEN0_PreWriteValM[54] & P.SMCTR_SUPPORTED,    // CTR: access to control transfer records
       51'b0,                                             // 53:3 reserved
       MSTATEEN0_PreWriteValM[2] & P.ZCMT_SUPPORTED,      // JVT: access to jvt
-      MSTATEEN0_PreWriteValM[1] & P.ZFINX_SUPPORTED,     // FCSR: access to fcsr when floating point uses x registers
+      MSTATEEN0_PreWriteValM[1] & ~MISA_26[5],           // FCSR: access to fcsr when floating point uses x registers (Zfinx); read-only zero whenever misa.F = 1
       1'b0                                               // C: Wally has no custom state
     };
     if (P.XLEN == 64) begin
