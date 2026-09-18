@@ -257,7 +257,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
       MSTATEEN0_PreWriteValM[54] & P.SMCTR_SUPPORTED,    // CTR: access to control transfer records
       51'b0,                                             // 53:3 reserved
       MSTATEEN0_PreWriteValM[2] & P.ZCMT_SUPPORTED,      // JVT: access to jvt
-      MSTATEEN0_PreWriteValM[1] & ~MISA_26[5],           // FCSR: access to fcsr when floating point uses x registers (Zfinx); read-only zero whenever misa.F = 1
+      MSTATEEN0_PreWriteValM[1] & P.ZFINX_SUPPORTED & ~MISA_26[5], // FCSR: access to fcsr when floating point uses x registers; read-only zero without Zfinx to control, and whenever misa.F = 1
       1'b0                                               // C: Wally has no custom state
     };
     if (P.XLEN == 64) begin

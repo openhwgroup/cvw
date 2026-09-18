@@ -162,7 +162,7 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
     assign SSTATEEN0_WriteValM = {
       {(P.XLEN-3){1'b0}},
       CSRWriteValM[2] & P.ZCMT_SUPPORTED  & SSTATEEN0_MASK[2], // JVT
-      CSRWriteValM[1] & SSTATEEN0_MASK[1],                     // FCSR: read-only zero when mstateen0.FCSR is, which covers misa.F = 1
+      CSRWriteValM[1] & P.ZFINX_SUPPORTED & SSTATEEN0_MASK[1], // FCSR
       1'b0                                                     // C: Wally has no custom state
     };
     flopenr #(P.XLEN) SSTATEEN0reg(clk, reset, WriteSSTATEEN0M, SSTATEEN0_WriteValM, SSTATEEN0_REGW);
