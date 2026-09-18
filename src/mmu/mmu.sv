@@ -156,10 +156,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   // handled in hardware and either the access is atomic (never handled in hardware; see privileged spec 3.6.3.3)
   // or the region is non-idempotent, where the spec recommends an access fault so software does not emulate the
   // access with multiple smaller accesses that could have side effects
-  // Zama16b makes a misaligned atomic to cacheable memory atomic when the LSU can do it in one cache
-  // access, so it proceeds down the misaligned path instead of faulting.  Wally's granule is the cache
-  // line; riscvassertions_wally requires a line of at least 128 bits, so it always covers the 16 bytes
-  // Zama16b guarantees.  An access that crosses a line still faults, since align.sv splits it in two.
+  // Zama16b excuses a misaligned atomic that the LSU can do in one cache access
   assign MisalignedCausesAccessFaultM = DataMisalignedM & P.ZICCLSM_SUPPORTED &
                                         ((AtomicAccessM & Cacheable & ~(P.ZAMA16B_SUPPORTED & ~CrossesLineM)) | ~Idempotent);
 
