@@ -118,6 +118,11 @@ localparam INTDIVb        = INTFPDUR*RK - LOGR;
 localparam BASECVTLEN = `max(XLEN, NF); // convert length excluding Zfa fcvtmod.w.d
 localparam CVTLEN = (ZFA_SUPPORTED & D_SUPPORTED) ? `max(BASECVTLEN, 32'd84) : BASECVTLEN; // fcvtmod.w.d needs at least 32+52 because a double with 52 fractional bits might be into upper bits of 32 bit word
 localparam LLEN = `max($unsigned(FLEN), $unsigned(XLEN));
+
+// One counter serves wfi, wrs.nto, and wrs.sto, so it must reach the largest threshold in use
+localparam WAIT_TIMEOUT_BIT = ZAWRS_SUPPORTED ?
+                              `max(WFI_TIMEOUT_BIT, `max(WRSNTO_TIMEOUT_BIT, WRSSTO_TIMEOUT_BIT)) :
+                              WFI_TIMEOUT_BIT;
 localparam LOGCVTLEN = $unsigned($clog2(CVTLEN+1));
 
 // size of FMA output in U(NF+4).(3NF+2) format

@@ -150,7 +150,9 @@ localparam PMP_G = 32'b0; // grain of 4 bytes is supported for uncached RV32
 localparam logic [63:0] RESET_VECTOR = 64'h80000000;
 
 // WFI Timeout Wait
-localparam WFI_TIMEOUT_BIT = 32'd16;
+localparam WFI_TIMEOUT_BIT = 32'd14;
+localparam WRSNTO_TIMEOUT_BIT = 32'd13; // Zawrs wrs.nto wait
+localparam WRSSTO_TIMEOUT_BIT = 32'd12; // Zawrs wrs.sto wait
 
 // Peripheral Physical Addresses
 // Peripheral memory space extends from BASE to BASE+RANGE

@@ -82,10 +82,7 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   assign ecallM =     PrivilegedM & (InstrM[31:20] == 12'b000000000000) & rs1zeroM;
   assign ebreakM =    PrivilegedM & (InstrM[31:20] == 12'b000000000001) & rs1zeroM;
   assign wfiInstrM =  PrivilegedM & (InstrM[31:20] == 12'b000100000101) & rs1zeroM;
-  // Zawrs: wrs.nto and wrs.sto wait on the reservation set.  Wally has a single hart, so nothing but
-  // an interrupt or the timeout can end the wait, making them behave like wfi.  They share the wfiM
-  // stall path, the wfiW interrupt delay, and the timeout counter.  wrs completes when the timeout
-  // expires; wfi keeps waiting for an interrupt.
+  // Zawrs: with a single hart only an interrupt or the timeout ends the wait, so wrs shares the wfi stall path but completes when it times out
   assign wrsntoM =    P.ZAWRS_SUPPORTED & PrivilegedM & (InstrM[31:20] == 12'b000000001101) & rs1zeroM;
   assign wrsstoM =    P.ZAWRS_SUPPORTED & PrivilegedM & (InstrM[31:20] == 12'b000000011101) & rs1zeroM;
   assign wrsM =       wrsntoM | wrsstoM;
@@ -104,15 +101,19 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   ///////////////////////////////////////////
 
   if (P.U_SUPPORTED | P.ZAWRS_SUPPORTED) begin : wfi
-    logic [P.WFI_TIMEOUT_BIT:0] WFICount, WFICountPlus1;
-    logic                       WFICountEn, WFICountRst;
+    logic [P.WAIT_TIMEOUT_BIT:0] WFICount, WFICountPlus1;
+    logic                        WFICountEn, WFICountRst;
     // Clear counter when reset, when trap is taken, or when no wfi or wrs is waiting
     assign WFICountRst = reset | TrapM | ~(wfiInstrM | wrsM);
     // Stop incrementing the counter once reach the timeout limit
     assign WFICountEn = ~WaitTimeoutM;
     assign WFICountPlus1 = WFICount + 1; // Count while wfi or wrs waits
-    flopenr #(P.WFI_TIMEOUT_BIT+1) wficountreg(clk, WFICountRst, WFICountEn, WFICountPlus1, WFICount);
-    assign WaitTimeoutM = WFICount[P.WFI_TIMEOUT_BIT];
+    flopenr #(P.WAIT_TIMEOUT_BIT+1) wficountreg(clk, WFICountRst, WFICountEn, WFICountPlus1, WFICount);
+    // One counter, but each waiting instruction taps its own timeout threshold.  With Zawrs
+    // disabled the wrs terms are constant zero and this collapses to the wfi bit.
+    assign WaitTimeoutM = wrsntoM ? WFICount[P.WRSNTO_TIMEOUT_BIT] :
+                          wrsstoM ? WFICount[P.WRSSTO_TIMEOUT_BIT] :
+                                    WFICount[P.WFI_TIMEOUT_BIT];
   end else assign WaitTimeoutM = 1'b0;
 
   // coverage off -item e 1 -fecexprrow 1
