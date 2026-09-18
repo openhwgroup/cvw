@@ -57,7 +57,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   output logic                 FPUActiveE,                         // FP instruction being executed
   output logic                 ZfaE, ZfaM,                         // Zfa variants of instructions (fli, fminm, fmaxm, fround, froundnx, fleq, fltq, fmvh, fmvp, fcvtmod)
   output logic                 ZfaFRoundNXE,                       // Zfa froundnx instruction
-  output logic                 Bf16SrcE, Bf16SrcM,                 // Zfbfmin source is BF16 (fcvt.s.bf16)
+  output logic                 Bf16SrcE,                           // Zfbfmin source is BF16 (fcvt.s.bf16), used in Execute
   output logic                 Bf16DstE, Bf16DstM,                 // Zfbfmin destination is BF16 (fcvt.bf16.s)
   // register control signals
   output logic                 FRegWriteE, FRegWriteM, FRegWriteW, // FP register write enable
@@ -103,7 +103,9 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
 
   // decode the instruction
   // FRegWrite_FWriteInt_FResSel_PostProcSel_FOpCtrl_FDivStart_IllegalFPUInstr_FCvtInt_Zfa_FroundNX
-  always_comb
+  always_comb begin
+    Bf16SrcD = 1'b0;                                    // Zfbfmin converts set these in their decode below
+    Bf16DstD = 1'b0;
     if (STATUS_FS == 2'b00) // FPU instructions are illegal when FPU is disabled
       ControlsD = `FCTRLW'b0_0_00_00_000_0_1_0_0_0;
     else if (OpD != 7'b0000111 & OpD != 7'b0100111 & (~SupportedFmt | ~SupportedRM))
@@ -169,10 +171,11 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
                                                 ControlsD = `FCTRLW'b1_0_00_00_011_0_0_0_0_0; // fmv.w/d/h.x  int to fp reg (double only in RV64)
                                   end else if (P.ZFA_SUPPORTED & Funct3D == 3'b000 & Rs2D == 5'b00001)
                                                 ControlsD = `FCTRLW'b1_0_00_00_111_0_0_0_1_0; // fli  (Zfa)
-                      7'b0100000: if (Rs2D[4:2] == 3'b000 & SupportedFmt2 & Rs2D[1:0] != 2'b00)
-                                                ControlsD = `FCTRLW'b1_0_01_00_000_0_0_0_0_0; // fcvt.s.(d/q/h)
-                                  else if (Rs2D == 5'b00110 & P.ZFBFMIN_SUPPORTED)
-                                                ControlsD = `FCTRLW'b1_0_01_00_000_0_0_0_0_0; // fcvt.s.bf16  (Zfbfmin)
+                      7'b0100000: if ((Rs2D[4:2] == 3'b000 & SupportedFmt2 & Rs2D[1:0] != 2'b00) |
+                                      (Rs2D == 5'b00110 & P.ZFBFMIN_SUPPORTED)) begin
+                                                ControlsD = `FCTRLW'b1_0_01_00_000_0_0_0_0_0; // fcvt.s.(d/q/h/bf16)
+                                                Bf16SrcD  = (Rs2D == 5'b00110);              // fcvt.s.bf16  (Zfbfmin)
+                                              end
                                   else if (Rs2D == 5'b00100 & P.ZFA_SUPPORTED)
                                                 ControlsD = `FCTRLW'b1_0_00_00_100_0_0_0_1_0; // fround.s  (Zfa)
                                   else if (Rs2D == 5'b00101 & P.ZFA_SUPPORTED)
@@ -185,8 +188,10 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
                                                 ControlsD = `FCTRLW'b1_0_00_00_100_0_0_0_1_1; // froundnx.d  (Zfa)
                       7'b0100010: if (Rs2D[4:2] == 3'b000 & SupportedFmt2 & Rs2D[1:0] != 2'b10)
                                                 ControlsD = `FCTRLW'b1_0_01_00_010_0_0_0_0_0; // fcvt.h.(s/d/q)
-                                  else if (Rs2D == 5'b01000 & P.ZFBFMIN_SUPPORTED)
+                                  else if (Rs2D == 5'b01000 & P.ZFBFMIN_SUPPORTED) begin
                                                 ControlsD = `FCTRLW'b1_0_01_00_000_0_0_0_0_0; // fcvt.bf16.s  (Zfbfmin)
+                                                Bf16DstD  = 1'b1;
+                                              end
                                   else if (Rs2D == 5'b00100 & P.ZFA_SUPPORTED)
                                                 ControlsD = `FCTRLW'b1_0_00_00_100_0_0_0_1_0; // fround.h  (Zfa)
                                   else if (Rs2D == 5'b00101 & P.ZFA_SUPPORTED)
@@ -263,6 +268,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
       endcase
     end
     /* verilator lint_on CASEINCOMPLETE */
+  end
 
   // unswizzle control bits
   assign {FRegWriteD, FWriteIntD, FResSelD, PostProcSelD, OpCtrlD, FDivStartD, IllegalFPUInstrD, FCvtIntD, ZfaD, ZfaFRoundNXD} = ControlsD;
@@ -360,11 +366,6 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   //        01 - negate sign
   //        10 - xor sign
 
-  // BF16 shares single's exponent field and bias, so both converts run down the single
-  // precision path and these signals only swap the fraction width at each end
-  assign Bf16DstD = P.ZFBFMIN_SUPPORTED & (OpD == 7'b1010011) & (Funct7D == 7'b0100010) & (Rs2D == 5'b01000);
-  assign Bf16SrcD = P.ZFBFMIN_SUPPORTED & (OpD == 7'b1010011) & (Funct7D == 7'b0100000) & (Rs2D == 5'b00110);
-
   // rename input addresses for readability
   assign Adr1D = InstrD[19:15];
   assign Adr2D = InstrD[24:20];
@@ -383,9 +384,9 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   else                               assign IDivStartE = 1'b0;
 
   // E/M pipeline register
-  flopenrc #(16+int'(P.FMTBITS)) EMCtrlReg (clk, reset, FlushM, ~StallM,
-              {FRegWriteE, FResSelE, PostProcSelE, FrmE, FmtE, OpCtrlE, FWriteIntE, FCvtIntE, ZfaE, Bf16SrcE, Bf16DstE},
-              {FRegWriteM, FResSelM, PostProcSelM, FrmM, FmtM, OpCtrlM, FWriteIntM, FCvtIntM, ZfaM, Bf16SrcM, Bf16DstM});
+  flopenrc #(15+int'(P.FMTBITS)) EMCtrlReg (clk, reset, FlushM, ~StallM,
+              {FRegWriteE, FResSelE, PostProcSelE, FrmE, FmtE, OpCtrlE, FWriteIntE, FCvtIntE, ZfaE, Bf16DstE},
+              {FRegWriteM, FResSelM, PostProcSelM, FrmM, FmtM, OpCtrlM, FWriteIntM, FCvtIntM, ZfaM, Bf16DstM});
 
   // renameing for readability
   assign FpLoadStoreM = FResSelM[1];

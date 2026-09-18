@@ -50,13 +50,12 @@ module unpack import cvw::*;  #(parameter cvw_t P) (
   logic YExpMax, ZExpMax;                               // is the exponent all 1s
   logic [P.FLEN-1:0] XIn;                               // X, with a BF16 source widened to single
 
+  localparam BF16LEN = 1 + P.S_NE + P.BF16_NF;          // BF16 is single precision with a 7 bit fraction
+
   // A BF16 value is bit-identical to the top half of a single, so widening it lets the single
-  // precision path unpack it unchanged.  An improperly boxed source reads as the canonical NaN.
-  if (P.ZFBFMIN_SUPPORTED) begin : bf16src
-    logic [31:0] Bf16Wide;
-    assign Bf16Wide = &X[P.FLEN-1:16] ? {X[15:0], 16'b0} : 32'h7FC00000;
-    assign XIn = Bf16Src ? {{P.FLEN-32{1'b1}}, Bf16Wide} : X;
-  end else assign XIn = X;
+  // precision path unpack it unchanged.  unpackinput cannot check the box itself because single
+  // is the widest format when FLEN is 32, so an improperly boxed source becomes the canonical NaN here.
+  assign XIn = Bf16Src ? {{P.FLEN-P.S_LEN{1'b1}}, (&X[P.FLEN-1:BF16LEN] ? {X[BF16LEN-1:0], {P.S_LEN-BF16LEN{1'b0}}} : 32'h7FC00000)} : X;
 
   unpackinput #(P) unpackinputX (.A(XIn), .Fmt, .Sgn(Xs), .Exp(Xe), .Man(Xm), .En(XEn), .FPUActive,
                           .NaN(XNaN), .SNaN(XSNaN),

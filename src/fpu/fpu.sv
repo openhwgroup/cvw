@@ -72,7 +72,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   logic                        FRegWriteW;                         // FP register write enable
   logic [2:0]                  FrmE, FrmM;                         // FP rounding mode
   logic [P.FMTBITS-1:0]        FmtE, FmtM;                         // FP precision 0-single 1-double
-  logic                        Bf16SrcE, Bf16SrcM, Bf16DstE, Bf16DstM; // Zfbfmin conversion direction
+  logic                        Bf16SrcE, Bf16DstE, Bf16DstM;       // Zfbfmin conversion direction
   logic                        FDivStartE, IDivStartE;             // Start division or squareroot
   logic                        FWriteIntM;                         // Write to integer register
   logic [1:0]                  ForwardXE, ForwardYE, ForwardZE;    // forwarding mux control signals
@@ -182,7 +182,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
               .FDivStartE, .IDivStartE, .FWriteIntE, .FCvtIntE, .FWriteIntM, .OpCtrlE, .OpCtrlM, .FpLoadStoreM,
               .IllegalFPUInstrD, .XEnD, .YEnD, .ZEnD, .XEnE, .YEnE, .ZEnE,
               .FResSelE, .FResSelM, .FResSelW, .FPUActiveE, .PostProcSelE, .PostProcSelM, .FCvtIntW,
-              .Bf16SrcE, .Bf16SrcM, .Bf16DstE, .Bf16DstM,
+              .Bf16SrcE, .Bf16DstE, .Bf16DstM,
               .Adr1D, .Adr2D, .Adr3D, .Adr1E, .Adr2E, .Adr3E);
 
   // FP register file
