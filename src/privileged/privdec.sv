@@ -38,6 +38,7 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   input  logic [1:0]   PrivilegeModeW,                      // current privilege level
   input  logic         STATUS_TSR, STATUS_TVM, STATUS_TW,   // status bits
   input  logic         TrapM,                               // Trap is occurring
+  input  logic         ReservationValidW,                   // a reservation is held; Zawrs wrs only waits while this is set
   output logic         IllegalInstrFaultM,                  // Illegal instruction
   output logic         EcallFaultM, BreakpointFaultM,       // Ecall or breakpoint; must retire, so don't flush it when the trap occurs
   output logic         sretM, mretM, RetM,                  // return instructions
@@ -49,6 +50,7 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   logic                IllegalPrivilegedInstrM;             // privileged instruction isn't a legal one or in legal mode
   logic                wfiInstrM;                           // wfi instruction
   logic                wrsntoM, wrsstoM, wrsM;              // Zawrs wrs.nto / wrs.sto instructions
+  logic                wrsWaitM;                            // wrs is waiting: reservation still valid and not yet timed out
   logic                WaitTimeoutM;                        // wfi or wrs has waited long enough to reach the timeout threshold
   logic                WFITimeoutM;                         // WFI reaches timeout threshold
   logic                WRSTimeoutM;                         // wrs.nto reaches timeout threshold with mstatus.TW set
@@ -86,7 +88,11 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   assign wrsntoM =    P.ZAWRS_SUPPORTED & PrivilegedM & (InstrM[31:20] == 12'b000000001101) & rs1zeroM;
   assign wrsstoM =    P.ZAWRS_SUPPORTED & PrivilegedM & (InstrM[31:20] == 12'b000000011101) & rs1zeroM;
   assign wrsM =       wrsntoM | wrsstoM;
-  assign wfiM =       wfiInstrM | (wrsM & ~WaitTimeoutM);
+  // wrs may only wait while the reservation set is valid.  ReservationValidW is the committed
+  // reservation: the lr that set it is in W when the wrs reaches M, and it holds during the wait
+  // because a wrs in M is not a memory operation and a wait stall does not disable its flop.
+  assign wrsWaitM =   wrsM & ReservationValidW & ~WaitTimeoutM;
+  assign wfiM =       wfiInstrM | wrsWaitM;
 
   // all of sinval.vma, sfence.w.inval, sfence.inval.ir are treated as sfence.vma
   assign sfencevmaM = PrivilegedM & P.VIRTMEM_SUPPORTED &
