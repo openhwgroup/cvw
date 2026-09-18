@@ -136,10 +136,6 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   assign ReadNoAmoAccessM  = ReadAccessM & ~WriteAccessM;// AMO causes StoreAmo rather than Load fault
 
   // Misaligned faults
-  // CrossesLineM says the access runs off the end of its cache line, which is exactly when align.sv
-  // splits it into two cache accesses and it can no longer be atomic.  Everything within a line is a
-  // single cache access, so the atomicity granule is the line, wider than the 16 bytes Zama16b asks
-  // for.  This shares the decoder that already computes DataMisalignedM.
   localparam LINEOFFBITS = $clog2(P.DCACHE_LINELENINBITS/8); // bits of address within a cache line
   always_comb // exclusion-tag: immu-wordaccess
     case(Size)
