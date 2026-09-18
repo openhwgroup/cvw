@@ -381,7 +381,7 @@
             "amo": "AccessFault",
             "lrsc": "AccessFault"
           },
-          "atomic_support": "AMOCASD",
+          "atomic_support": "AMOArithmetic",
           "misaligned_atomicity_granule_size_exp": 0,
           "vector_misaligned_atomicity_granule_size_exp": 0,
           "reservability": "RsrvEventual",

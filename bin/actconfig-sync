@@ -116,6 +116,11 @@ def checkSail(cfg, actDir):
     for ext in sorted(e for e, on in supported.items() if on and e not in governed and e not in IMPLIED_EXTENSIONS):
         print(f"{bcolors.FAIL}{cfg}: sail.json enables {ext}, which no config.vh parameter governs{bcolors.ENDC}")
         errors += 1
+    # A memory region may only advertise compare-and-swap atomics when Zacas is implemented
+    if not supported.get("Zacas", False):
+        for amocas in sorted(set(re.findall(r'"atomic_support":\s*"(AMOCAS\w*)"', sailJson.read_text()))):
+            print(f"{bcolors.FAIL}{cfg}: sail.json has a memory region with atomic_support {amocas}, which requires Zacas{bcolors.ENDC}")
+            errors += 1
     return errors
 
 
