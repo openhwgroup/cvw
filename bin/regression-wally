@@ -434,7 +434,9 @@ def buildTests(configs, periph=True, coverage=False):
                     print(f"{c}: ACT configuration changed since the last build; regenerating its ELFs", flush=True)
                     shutil.rmtree(elfDir)
         configFiles = " ".join(actConfigFile(c) for c in sorted(set(configs)))
-        cmd = f'make -C {archVerifDir} EXTENSIONS= CONFIG_FILES="{configFiles}"'
+        # ACT is its own uv project: drop the VIRTUAL_ENV that `uv run` set for this script so ACT's
+        # uv uses ACT's environment without warning about the mismatch
+        cmd = f'env -u VIRTUAL_ENV make -C {archVerifDir} EXTENSIONS= CONFIG_FILES="{configFiles}"'
         print(f"Building ACT tests: {cmd}", flush=True)
         if os.system(cmd):
             print(f"{bcolors.FAIL}Error: ACT test build failed{bcolors.ENDC}")
