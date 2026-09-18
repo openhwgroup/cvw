@@ -153,7 +153,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   assign StoreAmoMisalignedFaultM = DataMisalignedM & WriteAccessM & MisalignedFaultAllowedM; // Store and AMO both assert WriteAccess
 
   // A misaligned access causes an access fault rather than a misaligned fault when a misaligned load/store is
-  // handled in hardware and either the access is atomic (never handled in hardware; see privileged spec 3.6.3.3)
+  // handled in hardware and either the access is atomic (not handled in hardware without Zama16b; see privileged spec 3.6.3.3)
   // or the region is non-idempotent, where the spec recommends an access fault so software does not emulate the
   // access with multiple smaller accesses that could have side effects
   // Zama16b excuses a misaligned atomic that the LSU can do in one cache access
