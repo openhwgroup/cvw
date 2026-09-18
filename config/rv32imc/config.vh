@@ -42,8 +42,6 @@ localparam logic ZIFENCEI_SUPPORTED = 0; // Instruction-Fetch fence
 localparam logic ZICSR_SUPPORTED    = 1; // CSR Instructions
 localparam logic ZICCLSM_SUPPORTED  = 0; // Misaligned loads/stores
 localparam logic ZICOND_SUPPORTED   = 0; // Integer conditional operations
-localparam logic ZIMOP_SUPPORTED    = 0; // May-be-operations
-localparam logic ZCMOP_SUPPORTED    = 0; // Compressed may-be-operations
 
 // Multiplication & division extensions
 // M implies (and in the configuration file requires) Zmmul

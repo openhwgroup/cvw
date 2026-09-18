@@ -152,7 +152,6 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic [2:0]  PreALUSelectD;                  // ALU Output selection mux control (before possible Zicond logic)
   logic [2:0]  ALUSelectD;                     // ALU Output selection mux control
   logic        IWValidFunct3D;                 // Detects if Funct3 is valid for IW instructions
-  logic        MOPFunctD;                      // Detects Zimop mop.r.n / mop.rr.n encodings
   logic [3:0]  CMOpD, CMOpE;                   // which CMO instruction 1: cbo.inval; 2: cbo.clean; 4: cbo.flush; 8: cbo.zero
   logic        IFUPrefetchD;                   // instruction prefetch
   logic        LSUPrefetchD, LSUPrefetchE;     // data prefetch
@@ -217,9 +216,6 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     assign JRFunctD         = Funct3D == 3'b000;
     assign PFunctD          = Funct3D == 3'b000 & RdD == 5'b0;
     assign CSRFunctD        = Funct3D[1:0] != 2'b00;
-    // Zimop: mop.r.n is 1_n[4]_00_n[3:2]_0111_n[1:0], mop.rr.n is 1_n[2]_00_n[1:0]_1_rs2, both with funct3 = 100
-    assign MOPFunctD        = (Funct3D == 3'b100) & InstrD[31] & (InstrD[29:28] == 2'b00) &
-                              (InstrD[25] | (InstrD[24:22] == 3'b111));
     assign IWValidFunct3D   = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b101;
   end else begin : legalcheck2
     assign IFunctD = 1'b1; // Don't bother to separate out shift decoding
@@ -238,7 +234,6 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     assign JRFunctD = 1'b1; // don't bother to check Funct3 for jalrs
     assign PFunctD = 1'b1; // don't bother to check fields for privileged instructions
     assign CSRFunctD = 1'b1; // don't bother to check Funct3 for CSR operations
-    assign MOPFunctD = Funct3D == 3'b100; // funct3 is the only MOP field worth checking; it cannot be a CSR or privileged op
     assign IWValidFunct3D = 1'b1;
   end
 
@@ -291,9 +286,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
       7'b1100111: if (JRFunctD)
                       ControlsD = `CTRLW'b1_000_01_00_000_0_0_1_1_0_0_0_0_0_00_0_0; // jalr
       7'b1101111:     ControlsD = `CTRLW'b1_011_11_00_000_0_0_1_1_0_0_0_0_0_00_0_0; // jal
-      7'b1110011: if (P.ZIMOP_SUPPORTED & MOPFunctD)
-                      ControlsD = `CTRLW'b1_101_00_00_000_0_0_0_1_0_0_0_0_0_00_0_0; // mop.r.n, mop.rr.n write zero to rd
-                  else if (P.ZICSR_SUPPORTED) begin
+      7'b1110011: if (P.ZICSR_SUPPORTED) begin
                    if (PFunctD)
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_1_0_0_00_0_0; // privileged; decoded further in privdec modules
                    else if (CSRFunctD)
