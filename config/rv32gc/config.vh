@@ -55,6 +55,7 @@ localparam logic ZMMUL_SUPPORTED = 1;
 localparam logic ZAAMO_SUPPORTED  = 1;
 localparam logic ZALRSC_SUPPORTED = 1;
 localparam logic ZABHA_SUPPORTED  = 1; // Byte and halfword AMOs
+localparam logic ZAWRS_SUPPORTED  = 0; // Wait on reservation set
 
 // Bit manipulation extensions
 // B extension is Zba + Zbb + Zbs
