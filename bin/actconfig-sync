@@ -13,7 +13,7 @@
 #
 # This script checks two things for every config/*/act directory:
 #   1. the extensions the UDB yaml declares agree with the *_SUPPORTED parameters in config.vh
-#   2. the extensions sail.json enables for the reference model agree with config.vh
+#   2. the extensions sail.json and imperas.ic enable for the reference models agree with config.vh
 #   3. if ACT has a copy of the configuration, it is identical to cvw's
 # and with --push copies cvw's configurations into the ACT tree (to be committed there).
 #
@@ -133,6 +133,28 @@ def shortPath(path):
         return path
 
 
+def checkImperas(cfg, actDir):
+    """ImperasDV must model exactly the extensions config.vh enables.  When it does not, lockstep
+    reports mismatches that are reference-model configuration drift rather than DUT bugs; return the
+    number of mismatches.  imperas.ic lists only some extensions, so only those are checked."""
+    imperasIc = actDir.parent / "imperas.ic"
+    if not imperasIc.is_file():
+        return 0
+    params = readParams(actDir.parent / "config.vh")
+    text = imperasIc.read_text()
+    errors = 0
+    for param, ext in sorted(PARAM_TO_EXTENSION.items()):
+        m = re.search(rf"^--override cpu/{ext}=([TF])\s*$", text, re.M)
+        if m is None:
+            continue
+        enabled = bool(params.get(param, 0))
+        if enabled != (m.group(1) == "T"):
+            have = f"{param}={params[param]} in config.vh" if param in params else f"no {param} in config.vh"
+            print(f"{bcolors.FAIL}{cfg}: {have} but imperas.ic sets cpu/{ext}={m.group(1)}{bcolors.ENDC}")
+            errors += 1
+    return errors
+
+
 def udbYamlFor(actDir):
     """The UDB yaml is the file named by udb_config in test_config.yaml."""
     m = re.search(r"^udb_config:\s*(\S+)", (actDir / "test_config.yaml").read_text(), re.M)
@@ -230,6 +252,7 @@ def main():
     for cfg, actDir in actDirs.items():
         errors += checkExtensions(cfg, actDir)
         errors += checkSail(cfg, actDir)
+        errors += checkImperas(cfg, actDir)
         if args.push:
             push(cfg, actDir)
         else:
