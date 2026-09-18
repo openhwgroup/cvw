@@ -98,7 +98,8 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic              InvalidateICacheM,                              // fence instruction
   output logic              BigEndianM,                                     // Use big endian in current privilege mode
   // Fault outputs
-  output logic              wfiM, IntPendingM                               // Stall in Memory stage for WFI until interrupt pending or timeout
+  input  logic              ReservationValidW,                              // a reservation is held; Zawrs wrs only waits while this is set
+  output logic              wfiM, IntPendingM                               // Stall in Memory stage for WFI or Zawrs wrs until interrupt pending or timeout
 );
 
   logic [4:0]               CauseM;                                         // trap cause
@@ -131,7 +132,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   privdec #(P) pmd(.clk, .reset, .StallW, .FlushW, .InstrM(InstrM[31:7]),
     .PrivilegedM, .IllegalIEUFPUInstrM, .IllegalCSRAccessM,
     .PrivilegeModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_TW, .TrapM, .IllegalInstrFaultM,
-    .EcallFaultM, .BreakpointFaultM, .sretM, .mretM, .RetM, .wfiM, .wfiW, .sfencevmaM, .sfencevmaAllM);
+    .EcallFaultM, .BreakpointFaultM, .sretM, .mretM, .RetM, .ReservationValidW, .wfiM, .wfiW, .sfencevmaM, .sfencevmaAllM);
 
   // Control and Status Registers
   csr #(P) csr(.clk, .reset, .FlushM, .FlushW, .StallE, .StallM, .StallW,
