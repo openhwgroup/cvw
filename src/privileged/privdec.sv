@@ -46,7 +46,7 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   output logic         sfencevmaAllM                        // sfence.vma with rs2=x0: flush all TLB entries including global
 );
 
-  logic                rs1zeroM, rdzeroM;                   // rs1 / rd field = 0
+  logic                rs1zeroM;                            // rs1 field = 0
   logic                IllegalPrivilegedInstrM;             // privileged instruction isn't a legal one or in legal mode
   logic                wfiInstrM;                           // wfi instruction
   logic                wrsntoM, wrsstoM, wrsM;              // Zawrs wrs.nto / wrs.sto instructions
@@ -65,15 +65,16 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   // Decode privileged instructions
   ///////////////////////////////////////////
 
+  // PrivilegedM already requires funct3 = 0 and rd = 0: privdec exists only when Zicsr is supported,
+  // which is what selects the controller's exact decode of the privileged fields.
   assign rs1zeroM =    InstrM[19:15] == 5'b0;
-  assign rdzeroM  =    InstrM[11:7]  == 5'b0;
 
   // svinval instructions
   // any svinval instruction is treated as sfence.vma on Wally
-  assign sinvalvmaM     = (InstrM[31:25] ==  7'b0001011)                 & rdzeroM;
-  assign sfencewinvalM  = (InstrM[31:20] == 12'b000110000000) & rs1zeroM & rdzeroM;
-  assign sfenceinvalirM = (InstrM[31:20] == 12'b000110000001) & rs1zeroM & rdzeroM;
-  assign presfencevmaM  = (InstrM[31:25] ==  7'b0001001)                 & rdzeroM;
+  assign sinvalvmaM     = (InstrM[31:25] ==  7'b0001011);
+  assign sfencewinvalM  = (InstrM[31:20] == 12'b000110000000) & rs1zeroM;
+  assign sfenceinvalirM = (InstrM[31:20] == 12'b000110000001) & rs1zeroM;
+  assign presfencevmaM  = (InstrM[31:25] ==  7'b0001001);
   assign vmaM           =  presfencevmaM | (sinvalvmaM & P.SVINVAL_SUPPORTED);      // sfence.vma or sinval.vma
   assign fenceinvalM    = (sfencewinvalM | sfenceinvalirM) & P.SVINVAL_SUPPORTED;   // sfence.w.inval or sfence.inval.ir
 
