@@ -35,9 +35,9 @@
 --override cpu/Zfh=T
 --override cpu/Zfa=T
 --override cpu/Zcb=T
---override cpu/Zimop=T
---override cpu/Zcmop=T
---override cpu/Zabha=T
+--override cpu/Zimop=F
+--override cpu/Zcmop=F
+--override cpu/Zabha=F
 --override cpu/Sstc=T
 
 # mcause and scause have 5 lsbs of code and 1 msb of interrupt flag
