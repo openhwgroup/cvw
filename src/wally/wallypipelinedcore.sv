@@ -78,6 +78,10 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          CSRWriteFenceM;
   logic                          DivBusyE;
   logic                          StructuralStallD;
+  logic [P.XLEN*2-1:0]           ComparePairM;                  // amocas compare operand
+  logic [P.XLEN-1:0]             SwapHighM;                     // amocas swap value for rd+1
+  logic [P.XLEN-1:0]             ReadDataHighW;                 // high half of a loaded pair, for rd+1
+  logic                          AMOCASPairM;                   // register-pair amocas
   logic                          LoadStallD;
   logic                          StoreStallD;
   logic                          SquashSCW;
@@ -214,17 +218,21 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
      .RdE, .RdM, .FIntResM, .FlushDCacheM,
      .BranchD, .BranchE, .JumpD, .JumpE,
      // Writeback stage
-     .CSRReadValW, .MDUResultW, .FIntDivResultW, .RdW, .ReadDataW(ReadDataW[P.XLEN-1:0]),
+     .CSRReadValW, .MDUResultW, .FIntDivResultW, .RdW, .ReadDataW(ReadDataW[P.XLEN-1:0]), .ReadDataHighW,
      .InstrValidM, .InstrValidE, .InstrValidD, .FCvtIntResW, .FCvtIntW,
      // hazards
      .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
-     .StructuralStallD, .LoadStallD, .StoreStallD, .PCSrcE,
+     .StructuralStallD, .LoadStallD, .StoreStallD, .PCSrcE, .ComparePairM, .SwapHighM, .AMOCASPairM,
      .CSRReadM, .CSRWriteM, .PrivilegedM, .CSRWriteFenceM, .InvalidateICacheM);
+
+  // A pair amocas loads 2*XLEN bits; the high half goes to rd+1
+  if (P.LLEN >= P.XLEN*2) assign ReadDataHighW = ReadDataW[P.XLEN*2-1:P.XLEN];
+  else                    assign ReadDataHighW = '0;
 
   lsu #(P) lsu(
     .clk, .reset, .StallM, .FlushM, .StallW, .FlushW,
     // CPU interface
-    .MemRWE, .MemRWM, .Funct3M, .Funct7M(InstrM[31:25]), .AtomicM,
+    .MemRWE, .MemRWM, .Funct3M, .Funct7M(InstrM[31:25]), .AtomicM, .ComparePairM, .SwapHighM, .AMOCASPairM,
     .CommittedM, .DCacheMiss, .DCacheAccess, .SquashSCW,
     .FpLoadStoreM, .FWriteDataM, .IEUAdrE, .IEUAdrM, .WriteDataM,
     .ReadDataW, .FlushDCacheM, .CMOpM, .LSUPrefetchM,

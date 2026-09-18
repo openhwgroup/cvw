@@ -62,6 +62,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   logic [NUM_REGS-1:0]   rf_wb;
   logic [4:0]            rf_a3;
   logic                  rf_we3;
+  logic                  rf_we3p;
   logic [P.FLEN-1:0]     frf[32];
   logic [31:0]           frf_wb;
   logic [4:0]            frf_a4;
@@ -288,18 +289,29 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
     end
   end
 
-  // Integer register file
+  // Integer register file.  Zacas holds the registers as pairs, so reach into the matching half.
   assign rf[0] = 0;
-  for(genvar index = 1; index < NUM_REGS; index += 1)
-    assign rf[index] = testbench.dut.core.ieu.dp.regf.rf[index];
+  if (P.ZACAS_SUPPORTED) begin : tracerf
+    for(genvar index = 1; index < NUM_REGS; index += 1)
+      assign rf[index] = index[0] ? testbench.dut.core.ieu.dp.regf.pairedrf.rf[index/2][P.XLEN*2-1:P.XLEN]
+                                  : testbench.dut.core.ieu.dp.regf.pairedrf.rf[index/2][P.XLEN-1:0];
+  end else begin : tracerf
+    for(genvar index = 1; index < NUM_REGS; index += 1)
+      assign rf[index] = testbench.dut.core.ieu.dp.regf.simplerf.rf[index];
+  end
 
   assign rf_a3  = testbench.dut.core.ieu.dp.regf.a3;
   assign rf_we3 = testbench.dut.core.ieu.dp.regf.we3;
+  // A pair amocas writes rd and rd+1 through the same address port, so report both
+  if (P.ZACAS_SUPPORTED) assign rf_we3p = testbench.dut.core.ieu.dp.regf.we3p;
+  else                   assign rf_we3p = 1'b0;
 
   always_comb begin
     rf_wb <= 0;
-    if(rf_we3)
+    if(rf_we3) begin
       rf_wb[rf_a3] <= 1'b1;
+      if (rf_we3p) rf_wb[rf_a3 | 5'b1] <= 1'b1; // the pair's odd register
+    end
   end
 
   // Floating-point register file

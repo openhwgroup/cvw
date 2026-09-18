@@ -37,6 +37,7 @@ module atomic import cvw::*;  #(parameter cvw_t P) (
   input logic [P.PA_BITS-1:0] PAdrM,          // Physical memory address
   input logic [6:0]           LSUFunct7M,     // AMO alu operation gated by HPTW
   input logic [2:0]           LSUFunct3M,     // IEU or HPTW memory operation size
+  input logic                 CASMatchM,      // amocas comparison succeeded
   input logic [1:0]           LSUAtomicM,     // 10: AMO operation, select AMOResultM as the writedata output, 01: LR/SC operation
   input logic [1:0]           PreLSURWM,      // IEU or HPTW Read/Write signal
   input logic                 LSUFlushW,  // On FlushM or TLB miss ignore memory operation
@@ -50,7 +51,7 @@ module atomic import cvw::*;  #(parameter cvw_t P) (
 
   // AMO ALU
   if (P.ZAAMO_SUPPORTED) begin
-    amoalu #(P) amoalu(.ReadDataM, .IHWriteDataM, .LSUFunct7M, .LSUFunct3M, .AMOResultM);
+    amoalu #(P) amoalu(.ReadDataM, .IHWriteDataM, .LSUFunct7M, .LSUFunct3M, .CASMatchM, .AMOResultM);
     mux2 #(P.XLEN) wdmux(IHWriteDataM, AMOResultM, LSUAtomicM[1], IMAWriteDataM);
   end else
     assign IMAWriteDataM = IHWriteDataM;

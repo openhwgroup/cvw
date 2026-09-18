@@ -33,6 +33,7 @@ module amoalu import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0] IHWriteDataM, // LSU's WriteData
   input  logic [6:0]        LSUFunct7M,   // ALU Operation
   input  logic [2:0]        LSUFunct3M,   // Memoy access width
+  input  logic              CASMatchM,    // amocas comparison succeeded (sized in the LSU)
   output logic [P.XLEN-1:0] AMOResultM    // ALU output
 );
 
@@ -41,6 +42,7 @@ module amoalu import cvw::*;  #(parameter cvw_t P) (
   logic               eqB0, ltB0, eqB1, ltB1, eqH1, ltH1; // per-lane compares, always unsigned
   logic               ltu16, ltu32;                       // unsigned compares assembled from the lanes
   logic               lt8, lt16, lt32, lt64;              // compare at each access width
+  logic               SelA;                               // result is a (the loaded value) rather than b (rs2)
 
   // Rename inputs
   assign a = ReadDataM;
@@ -86,6 +88,12 @@ module amoalu import cvw::*;  #(parameter cvw_t P) (
 
   assign cmp = lt ^ LSUFunct7M[4]; // flip sense of comparison for maximums
 
+  // One a/b mux serves every comparing operation: amomin/amomax keep the loaded value when the
+  // comparison says so, and amocas keeps it when the compare operand did not match.  An unmatched
+  // amocas therefore writes the loaded value back, which the spec permits and which leaves the
+  // ordinary AMO store path untouched.
+  assign SelA = (LSUFunct7M[6:2] == 5'b00101) ? ~CASMatchM : cmp;
+
   // AMO ALU
   always_comb
     case (LSUFunct7M[6:2])
@@ -94,10 +102,11 @@ module amoalu import cvw::*;  #(parameter cvw_t P) (
       5'b00100: y = a ^ b;       // amoxor
       5'b01100: y = a & b;       // amoand
       5'b01000: y = a | b;       // amoor
-      5'b10000: y = cmp ? a : b; // amomin
-      5'b10100: y = cmp ? a : b; // amomax
-      5'b11000: y = cmp ? a : b; // amominu
-      5'b11100: y = cmp ? a : b; // amomaxu
+      5'b00101,                  // amocas
+      5'b10000,                  // amomin
+      5'b10100,                  // amomax
+      5'b11000,                  // amominu
+      5'b11100: y = SelA ? a : b; // amomaxu
       default:  y = 'x;          // undefined
     endcase
 

@@ -40,7 +40,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   input  logic [1:0]           PrivilegeModeW,     // Current privilege level of the processeor
   input  logic                 DisableTranslation, // virtual address translation disabled during D$ flush and HPTW walk that use physical addresses
   input  logic [P.XLEN+1:0]    VAdr,               // virtual/physical address from IEU or physical address from HPTW
-  input  logic [1:0]           Size,               // access size: 00 = 8 bits, 01 = 16 bits, 10 = 32 bits , 11 = 64 bits
+  input  logic [2:0]           Size,               // access size: 000 = 8 bits, 001 = 16 bits, 010 = 32 bits, 011 = 64 bits, 100 = 128 bits
   input  logic [P.XLEN-1:0]    PTE,                // page table entry
   input  logic [2:0]           PageTypeWriteVal,   // page type
   input  logic                 TLBWrite,           // write TLB entry
@@ -137,10 +137,12 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   // Misaligned faults
   always_comb // exclusion-tag: immu-wordaccess
     case(Size)
-      2'b00:  DataMisalignedM = 1'b0;              // lb, sb, lbu
-      2'b01:  DataMisalignedM = VAdr[0];           // lh, sh, lhu
-      2'b10:  DataMisalignedM = VAdr[1] | VAdr[0]; // lw, sw, flw, fsw, lwu
-      2'b11:  DataMisalignedM = |VAdr[2:0];        // ld, sd, fld, fsd
+      3'b000:  DataMisalignedM = 1'b0;              // lb, sb, lbu
+      3'b001:  DataMisalignedM = VAdr[0];           // lh, sh, lhu
+      3'b010:  DataMisalignedM = VAdr[1] | VAdr[0]; // lw, sw, flw, fsw, lwu
+      3'b011:  DataMisalignedM = |VAdr[2:0];        // ld, sd, fld, fsd
+      3'b100:  DataMisalignedM = |VAdr[3:0];        // flq, fsq, amocas.q
+      default: DataMisalignedM = 1'b0;              // no other sizes exist
     endcase
 
   // When ZICCLSM_SUPPORTED, misaligned cacheable loads and stores are handled in hardware so they do not throw a misaligned fault
