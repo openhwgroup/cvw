@@ -82,13 +82,16 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
   logic                SelOfRes;   // should the overflow result be selected (excluding convert)
   logic                SelCvtOfRes; // select overflow result for convert instruction
 
+  // number of single precision lsbs dropped when a result is reboxed to BF16
+  localparam BF16LSB = P.S_NF - P.BF16_NF;
+
+  // A BF16 result is packed for single precision below and reboxed at the end of the module.  That
+  // works for every result but underflow, whose one nonzero bit sits at single's lsb and would be
+  // reboxed away, so give it its own result with that bit at the BF16 lsb.
+  assign Bf16UfRes = {{P.FLEN-P.S_LEN{1'b1}}, Rs, (P.S_LEN-2-BF16LSB)'(0), Plus1&Frm[1]&~(DivOp&YInf), (BF16LSB)'(0)};
+
   // does the overflow result output the maximum normalized floating point number
   //                output infinity if the input is infinity
-  // the underflow result's one nonzero bit is the single precision LSB, which the rebox below
-  // would drop, so place it at the BF16 LSB instead
-  if (P.ZFBFMIN_SUPPORTED) assign Bf16UfRes = {{P.FLEN-32{1'b1}}, Rs, 14'b0, Plus1&Frm[1]&~(DivOp&YInf), 16'b0};
-  else                     assign Bf16UfRes = '0;
-
   assign OfResMax = (~InfIn|(IntToFp&CvtOp))&~DivByZero&((Frm[1:0]==2'b01) | (Frm[1:0]==2'b10&~Rs) | (Frm[1:0]==2'b11&Rs));
 
   // select correct outputs for special cases
@@ -377,6 +380,6 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
 
   // BF16 shares single's exponent field and the fraction was rounded to BF16 precision, so a BF16
   // result is the top half of the single precision one
-  assign PostProcRes = Bf16Dst ? {{P.FLEN-16{1'b1}}, PostProcResPreBox[31:16]} : PostProcResPreBox;
+  assign PostProcRes = Bf16Dst ? {{P.FLEN-P.S_LEN+BF16LSB{1'b1}}, PostProcResPreBox[P.S_LEN-1:BF16LSB]} : PostProcResPreBox;
 
 endmodule

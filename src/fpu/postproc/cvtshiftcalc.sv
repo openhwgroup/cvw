@@ -42,6 +42,7 @@ module cvtshiftcalc import cvw::*;  #(parameter cvw_t P) (
 );
 
   logic [$clog2(P.NF):0]           ResNegNF;           // the result's fraction length negated (-NF)
+  logic [$clog2(P.NF):0]           DstNegNF;           // ResNegNF, or BF16's for a BF16 destination
 
   ///////////////////////////////////////////////////////////////////////////
   // shifter
@@ -97,11 +98,12 @@ module cvtshiftcalc import cvw::*;  #(parameter cvw_t P) (
           endcase
   end
 
+  // a BF16 result has its own fraction length, which is not one of the formats above
+  assign DstNegNF = Bf16Dst ? -($clog2(P.NF)+1)'(P.BF16_NF) : ResNegNF;
+
   // determine if the result underflows ??? -> fp
   //      - if the first 1 is shifted out of the result then the result underflows
   //      - can't underflow an integer to fp conversions
-  // a BF16 result underflows at its own narrower fraction width
-  assign CvtResUf = ($signed(CvtCe) < $signed({{P.NE-$clog2(P.NF){1'b1}},
-                    (Bf16Dst ? -($clog2(P.NF)+1)'(P.BF16_NF) : ResNegNF)}))&~XZero&~IntToFp;
+  assign CvtResUf = ($signed(CvtCe) < $signed({{P.NE-$clog2(P.NF){1'b1}}, DstNegNF}))&~XZero&~IntToFp;
 
 endmodule
