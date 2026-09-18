@@ -76,7 +76,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   logic                        ReadNoAmoAccessM;         // Read that is not part of atomic operation causes Load faults.  Otherwise StoreAmo faults
   logic [1:0]                  PBMemoryType;             // PBMT field of PTE during TLB hit, or 00 otherwise
   logic                        MisalignedCausesAccessFaultM; // Misaligned access throws an access fault instead of a misaligned fault
-  logic                        CrossesGranuleM;          // Access crosses a naturally aligned 16 byte granule, so Zama16b does not make it atomic
+  logic                        CrossesLineM;             // Access crosses a cache line, so the LSU splits it and it cannot be atomic
   logic [1:0]                  EffectivePrivilegeModeW;  // Effective privilege mode accounting for MPRV
   logic                        MisalignedFaultAllowedM;  // System can throw misaligned if ZICCLSM is not supported, or access is uncachable, idempotent, and TLB has found the entry.
 
@@ -136,15 +136,17 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   assign ReadNoAmoAccessM  = ReadAccessM & ~WriteAccessM;// AMO causes StoreAmo rather than Load fault
 
   // Misaligned faults
-  // CrossesGranuleM says the access runs past the end of its naturally aligned 16 byte granule.  It
-  // shares this decoder with DataMisalignedM and is only used when ZAMA16B_SUPPORTED, so it costs a
-  // few gates beside the misaligned check rather than anything on the address path.
+  // CrossesLineM says the access runs off the end of its cache line, which is exactly when align.sv
+  // splits it into two cache accesses and it can no longer be atomic.  Everything within a line is a
+  // single cache access, so the atomicity granule is the line, wider than the 16 bytes Zama16b asks
+  // for.  This shares the decoder that already computes DataMisalignedM.
+  localparam LINEOFFBITS = $clog2(P.DCACHE_LINELENINBITS/8); // bits of address within a cache line
   always_comb // exclusion-tag: immu-wordaccess
     case(Size)
-      2'b00:  begin DataMisalignedM = 1'b0;              CrossesGranuleM = 1'b0;                             end // lb, sb, lbu
-      2'b01:  begin DataMisalignedM = VAdr[0];           CrossesGranuleM = &VAdr[3:0];                       end // lh, sh, lhu
-      2'b10:  begin DataMisalignedM = VAdr[1] | VAdr[0]; CrossesGranuleM = &VAdr[3:2] & (VAdr[1] | VAdr[0]); end // lw, sw, flw, fsw, lwu
-      2'b11:  begin DataMisalignedM = |VAdr[2:0];        CrossesGranuleM = VAdr[3] & |VAdr[2:0];             end // ld, sd, fld, fsd
+      2'b00:  begin DataMisalignedM = 1'b0;              CrossesLineM = 1'b0;                     end // lb, sb, lbu
+      2'b01:  begin DataMisalignedM = VAdr[0];           CrossesLineM = &VAdr[LINEOFFBITS-1:1];   end // lh, sh, lhu
+      2'b10:  begin DataMisalignedM = VAdr[1] | VAdr[0]; CrossesLineM = &VAdr[LINEOFFBITS-1:2];   end // lw, sw, flw, fsw, lwu
+      2'b11:  begin DataMisalignedM = |VAdr[2:0];        CrossesLineM = &VAdr[LINEOFFBITS-1:3];   end // ld, sd, fld, fsd
     endcase
 
   // When ZICCLSM_SUPPORTED, misaligned cacheable loads and stores are handled in hardware so they do not throw a misaligned fault
@@ -158,11 +160,12 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   // handled in hardware and either the access is atomic (never handled in hardware; see privileged spec 3.6.3.3)
   // or the region is non-idempotent, where the spec recommends an access fault so software does not emulate the
   // access with multiple smaller accesses that could have side effects
-  // Zama16b makes a misaligned atomic to cacheable memory that stays within one naturally aligned 16 byte
-  // granule atomic in hardware, so it proceeds down the misaligned path instead of faulting.  A granule
-  // never spans two cache lines, which riscvassertions_wally checks by requiring a 128 bit line.
+  // Zama16b makes a misaligned atomic to cacheable memory atomic when the LSU can do it in one cache
+  // access, so it proceeds down the misaligned path instead of faulting.  Wally's granule is the cache
+  // line; riscvassertions_wally requires a line of at least 128 bits, so it always covers the 16 bytes
+  // Zama16b guarantees.  An access that crosses a line still faults, since align.sv splits it in two.
   assign MisalignedCausesAccessFaultM = DataMisalignedM & P.ZICCLSM_SUPPORTED &
-                                        ((AtomicAccessM & Cacheable & ~(P.ZAMA16B_SUPPORTED & ~CrossesGranuleM)) | ~Idempotent);
+                                        ((AtomicAccessM & Cacheable & ~(P.ZAMA16B_SUPPORTED & ~CrossesLineM)) | ~Idempotent);
 
   // Access faults
   // If TLB miss and translating we want to not have faults from the PMA and PMP checkers.
