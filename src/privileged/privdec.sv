@@ -84,14 +84,16 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   assign ecallM =     PrivilegedM & (InstrM[31:20] == 12'b000000000000) & rs1zeroM;
   assign ebreakM =    PrivilegedM & (InstrM[31:20] == 12'b000000000001) & rs1zeroM;
   assign wfiInstrM =  PrivilegedM & (InstrM[31:20] == 12'b000100000101) & rs1zeroM;
-  // Zawrs: with a single hart only an interrupt or the timeout ends the wait, so wrs shares the wfi stall path but completes when it times out
+  // Zawrs: with a single hart only an interrupt, an invalid reservation, or a timeout ends the wait, so wrs shares the wfi stall path
   assign wrsntoM =    P.ZAWRS_SUPPORTED & PrivilegedM & (InstrM[31:20] == 12'b000000001101) & rs1zeroM;
   assign wrsstoM =    P.ZAWRS_SUPPORTED & PrivilegedM & (InstrM[31:20] == 12'b000000011101) & rs1zeroM;
   assign wrsM =       wrsntoM | wrsstoM;
   // wrs may only wait while the reservation set is valid.  ReservationValidW is the committed
   // reservation: the lr that set it is in W when the wrs reaches M, and it holds during the wait
   // because a wrs in M is not a memory operation and a wait stall does not disable its flop.
-  assign wrsWaitM =   wrsM & ReservationValidW & ~WaitTimeoutM;
+  // wrs.nto has no timeout, so like wfi it waits for an interrupt; below M mode with mstatus.TW set
+  // its time limit raises an illegal instruction rather than completing.  wrs.sto completes instead.
+  assign wrsWaitM =   ReservationValidW & (wrsntoM | (wrsstoM & ~WaitTimeoutM));
   assign wfiM =       wfiInstrM | wrsWaitM;
 
   // all of sinval.vma, sfence.w.inval, sfence.inval.ir are treated as sfence.vma
