@@ -7,7 +7,7 @@
 #//          For example, signals hardwired to 0 should not be checked for toggle coverage
 #//
 #// A component of the CORE-V-WALLY configurable RISC-V project.
-#// https://github.com/openhwgroup/cvw
+#// https://github.com/openhwfoundation/cvw
 #//
 #// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 #//
@@ -594,6 +594,6 @@ for {set i 1} {$i < 8} {incr i} {
 # FlushDCache = FlushDCacheM & ~SelHPTW : the SelHPTW=1 input-term (Row 4) is unreachable.  fence.i is the
 # only asserter of FlushDCacheM, and while fence.i is in M it pins the front end to an already-translated
 # page (NextValidPCE=PCE), so no ITLB walk can begin while FlushDCacheM=1; a walk that starts earlier stalls
-# fence.i out of M.  See https://github.com/openhwgroup/cvw/issues/1788.
+# fence.i out of M.  See https://github.com/openhwfoundation/cvw/issues/1788.
 set line [GetLineNum ${SRC}/lsu/lsu.sv "exclusion-tag: lsu FlushDCacheSelHPTW"]
 coverage exclude -scope /dut/core/lsu/bus/dcache -linerange $line-$line -item e 1 -fecexprrow 4
