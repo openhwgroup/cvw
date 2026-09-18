@@ -278,11 +278,37 @@ testfloatdivconfigs = [
     "f_div_4_2_rv64gc", "f_div_4_4_rv32gc", "f_div_4_4_rv64gc",
 ]
 
-# list of tests not supported by ImperasDV yet that should be waived during lockstep testing
+# Tests that pass their own self-check but cannot be compared against ImperasDV instruction by
+# instruction, because the reference model cannot be configured to match what Wally implements.
+# Each entry is the ELF file name, or the <directory>_<file> name used for the log.
 lockstepwaivers = [
     "WALLY-q-01.S_ref.elf",     # Q extension is not supported by ImperasDV
     "WALLY-cbom-01.S_ref.elf", #,  # cbom extension is not supported by ImperasDV because there is no cache model in ImperasDV
     "Zicbom-cbo.inval-00.elf", # ImperasDV lacks cache model to match CVW on invalidation
+
+    # Wally implements writable mhpmevent bits; ImperasDV models them as read-only zero and offers no
+    # parameter to change that, so every test that walks or writes mhpmevent disagrees.  This is the
+    # same limitation that makes riscv-arch-test exclude Sm by default ("Insufficient WARL
+    # configuration options").  The tests themselves pass without lockstep.
+    "Sm_mcsr_access-00.elf",
+    "Sm_mcsr_walk-02.elf",
+    "Sm_mcsr_walk-03.elf",
+    "Sm_mcsr_walk-04.elf",
+    "Sm_mcsr_walk-05.elf",
+    "Sm_mcsr_walk-06.elf",
+    "Sm_mcsr_walk-07.elf",
+    "Sm_mcsr_walk-08.elf",
+    "Sm_mcsr_walk-09.elf",
+    "Sm_mcsr_walk-10.elf",
+    "SsstrictSm_CSR-08.elf",   # writes mhpmevent3 (CSR 0x323); same mhpmevent limitation as above
+
+    "WALLY-pwm-01.elf",        # ImperasDV has no PWM model, so the interrupt behavior cannot match
+
+    # TODO: remove once the submodule points at a riscv-arch-test containing
+    # https://github.com/riscv/riscv-arch-test/pull/2416.  The test stores a return instruction over
+    # its own trampoline and then executes it without a fence.i, so whether the fetch sees the store
+    # is unspecified; a cacheless reference model and Wally's split caches legitimately differ.
+    "PMPSm_cfg_A_tor_bot-00.elf",
 ]
 
 # tests for cache simulations on a rv64gc derived config - cache_rv64gc
