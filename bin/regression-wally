@@ -394,6 +394,7 @@ def addTestsByDir(testDir, config, sim, coverStr, configs, lockstepMode=0, breke
         gs = "# trek: info: summary: Test PASSED"
     else:
         gs = "All tests ran without failures"
+    reused = []
     for dirpath, _, filenames in sorted(os.walk(os.path.abspath(testDir))):
         elfs = sorted(f for f in filenames if f.endswith(".elf"))
         if not elfs:
@@ -405,6 +406,9 @@ def addTestsByDir(testDir, config, sim, coverStr, configs, lockstepMode=0, breke
                 if shortelf in lockstepwaivers or file in lockstepwaivers: # skip tests that itch bugs in ImperasDV
                     print(f"{bcolors.WARNING}Skipping waived test {shortelf}{bcolors.ENDC}")
                     continue
+                if coverageUpToDate(config, f"{leaf}_{file[:-4]}", f"{dirpath}/{file}"):
+                    reused.append(shortelf)
+                    continue
                 sim_log = f"{sim_logdir}{config}_{shortelf}.log"
                 configs.append(TestCase(name=file, variant=config, cmd=f"{cmdPrefix} {dirpath}/{file} > {sim_log}",
                                         grepstr=gs, grepfile=sim_log))
@@ -413,6 +417,8 @@ def addTestsByDir(testDir, config, sim, coverStr, configs, lockstepMode=0, breke
             sim_log = f"{sim_logdir}{config}_{name}.log"
             configs.append(TestCase(name=name, variant=config, cmd=f"{cmdPrefix} {dirpath} > {sim_log}",
                                     grepstr=gs, grepfile=sim_log))
+    if reused:
+        print(f"{bcolors.OKCYAN}{config}: reusing coverage for {len(reused)} up-to-date tests in {os.path.basename(testDir)}{bcolors.ENDC}")
 
 
 def addTestGroup(name, testDir, tests, config, sim, coverStr, configs, flags=""):
@@ -423,6 +429,37 @@ def addTestGroup(name, testDir, tests, config, sim, coverStr, configs, flags="")
     configs.append(TestCase(name=name, variant=config,
                             cmd=f"wsim --sim {sim} {coverStr} {flags} {config} {elfs} --name {name} > {sim_log}",
                             grepstr="All tests ran without failures", grepfile=sim_log))
+
+
+# Coverage is collected one .ucdb per test and merged at the end, so a test whose .ucdb is already
+# newer than both its ELF and every design source does not need to run again.  Set by process_args.
+reuseCoverage = False
+_designMtime = None
+
+
+def designMtime():
+    """Newest mtime among design and testbench sources; coverage collected before an RTL change
+    cannot be reused."""
+    global _designMtime
+    if _designMtime is None:
+        _designMtime = 0
+        for d in ("src", "testbench", "config"):
+            for root, _, files in os.walk(f"{WALLY}/{d}"):
+                for f in files:
+                    if f.endswith((".sv", ".v", ".svh", ".vh")):
+                        _designMtime = max(_designMtime, os.path.getmtime(os.path.join(root, f)))
+    return _designMtime
+
+
+def coverageUpToDate(config, name, elf):
+    """True if <config>_<name>.ucdb is newer than the ELF and than every design source."""
+    if not reuseCoverage:
+        return False
+    ucdb = f"{regressionDir}/questa/ucdb/{config}_{name}.ucdb"
+    if not os.path.isfile(ucdb):
+        return False
+    mtime = os.path.getmtime(ucdb)
+    return mtime > designMtime() and (not os.path.isfile(elf) or mtime > os.path.getmtime(elf))
 
 
 def actConfigFile(config):
@@ -448,15 +485,18 @@ def buildTests(configs, periph=True, coverage=False):
     """Build the ACT ELFs for the given cvw configurations, plus the periph and coverage tests.
     Each build is incremental, so this returns quickly when nothing has changed."""
     if configs:
+        # ACT's incremental build never deletes outputs, so ELFs for an extension that was removed
+        # from the configuration would linger and still be run.  When the configuration changed since
+        # the last build, discard its ELFs so ACT regenerates exactly the current set.  The stamp is
+        # written here after a successful build; ACT's own extensions.txt cannot be used because the
+        # build deliberately preserves it, which would make every run look stale.
         for c in sorted(set(configs)):
-            # ACT's incremental build never deletes outputs, so ELFs for an extension that was removed
-            # from the configuration would linger and still be run.  When the configuration changed
-            # since the last build, discard its ELFs so ACT regenerates exactly the current set.
             elfDir = actElfDir(c)
-            built = f"{os.path.dirname(elfDir)}/extensions.txt"
+            stamp = f"{os.path.dirname(elfDir)}/.cvw_config_stamp"
             actDir = os.path.dirname(actConfigFile(c))
-            if os.path.isdir(elfDir) and os.path.isfile(built):
-                if any(os.stat(f"{actDir}/{f}").st_mtime > os.path.getmtime(built) for f in os.listdir(actDir)):
+            if os.path.isdir(elfDir):
+                if not os.path.isfile(stamp) or any(
+                        os.stat(f"{actDir}/{f}").st_mtime > os.path.getmtime(stamp) for f in os.listdir(actDir)):
                     print(f"{c}: ACT configuration changed since the last build; regenerating its ELFs", flush=True)
                     shutil.rmtree(elfDir)
         configFiles = " ".join(actConfigFile(c) for c in sorted(set(configs)))
@@ -467,6 +507,10 @@ def buildTests(configs, periph=True, coverage=False):
         if os.system(cmd):
             print(f"{bcolors.FAIL}Error: ACT test build failed{bcolors.ENDC}")
             sys.exit(1)
+        for c in sorted(set(configs)):  # record which configuration these ELFs were built from
+            stampDir = os.path.dirname(actElfDir(c))
+            if os.path.isdir(stampDir):
+                open(f"{stampDir}/.cvw_config_stamp", "w").close()
     targets = (["periph"] if periph else []) + (["coverage"] if coverage else [])
     if targets and os.system(f"make -C {WALLY} {' '.join(targets)}"):
         print(f"{bcolors.FAIL}Error: building {' '.join(targets)} tests failed{bcolors.ENDC}")
@@ -548,6 +592,7 @@ def run_test_case(config, dryrun: bool = False):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--ccov", help="Code Coverage", action="store_true")
+    parser.add_argument("--clean", help="With --ccov, discard existing coverage and rerun every test", action="store_true")
     parser.add_argument("--fcov", help="Functional Coverage", action="store_true")
     parser.add_argument("--nightly", help="Run large nightly regression", action="store_true")
     parser.add_argument("--buildroot", help="Include Buildroot Linux boot test (takes many hours, done along with --nightly)", action="store_true")
@@ -568,8 +613,13 @@ def process_args(args):
         sims = [coveragesim]
         coverStr = "--ccov"
         TIMEOUT_DUR = 20*60 # seconds
+        # Coverage is per test, so an unchanged test's .ucdb is still valid: keep the directory and
+        # rerun only what is out of date.  --clean discards it all and starts over.
+        global reuseCoverage
+        reuseCoverage = not args.clean
         for d in ["ucdb", "cov"]:
-            shutil.rmtree(f"{regressionDir}/questa/{d}", ignore_errors=True)
+            if args.clean:
+                shutil.rmtree(f"{regressionDir}/questa/{d}", ignore_errors=True)
             os.makedirs(f"{regressionDir}/questa/{d}", exist_ok=True)
     elif args.fcov or args.breker:
         sims = [coveragesim]
