@@ -13,7 +13,6 @@ implemented_extensions:
   - { name: D, version: "= 2.2.0" }
   - { name: C, version: "= 2.0" }
   - { name: B, version: "= 1.0.0" }
-  - { name: Zcmop, version: "= 1.0.0" }
   - { name: Zic64b, version: "= 1.0.0" }
   - { name: Zicbom, version: "= 1.0.0" }
   - { name: Zicbop, version: "= 1.0.0" }
@@ -29,12 +28,9 @@ implemented_extensions:
   - { name: Zihintntl, version: "= 1.0.0" }
   - { name: Zihintpause, version: "= 2.0.0" }
   - { name: Zihpm, version: "= 2.0.0" }
-  - { name: Zimop, version: "= 1.0.0" }
   - { name: Zmmul, version: "= 1.0.0" }
   - { name: Zaamo, version: "= 1.0.0" }
-  - { name: Zabha, version: "= 1.0.0" }
   - { name: Zalrsc, version: "= 1.0.0" }
-  - { name: Zawrs, version: "= 1.0.0" }
   - { name: Za64rs, version: "= 1.0.0" }
   - { name: Za128rs, version: "= 1.0.0" }
   - { name: Zfa, version: "= 1.0.0" }
@@ -315,5 +311,3 @@ params:
       true,
       true,
     ]
-  # Zawrs params
-  ZAWRS_NTO_IS_NOP: false

@@ -698,7 +698,8 @@ module testbench;
   DCacheFlushFSM #(P) DCacheFlushFSM(.clk, .start(DCacheFlushStart), .done(DCacheFlushDone));
 
   logic [P.XLEN-1:0] Minstret;
-  assign Minstret = testbench.dut.core.priv.priv.csr.counters.HPMCOUNTER_REGW[2];
+  if (P.ZICSR_SUPPORTED) assign Minstret = testbench.dut.core.priv.priv.csr.counters.HPMCOUNTER_REGW[2];
+  else                   assign Minstret = '0; // no CSRs, so no counters: INSTR_LIMIT is unavailable
   always @(negedge clk) begin
     if (INSTR_LIMIT > 0) begin
       if((Minstret != 0) & (Minstret % 'd100000 == 0)) $display("Reached %d instructions", Minstret);

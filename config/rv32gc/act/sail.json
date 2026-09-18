@@ -642,7 +642,7 @@
       "supported": true
     },
     "Zimop": {
-      "supported": true
+      "supported": false
     },
     "Zmmul": {
       "supported": true
@@ -651,10 +651,10 @@
       "supported": true
     },
     "Zabha": {
-      "supported": true
+      "supported": false
     },
     "Zacas": {
-      "supported": true
+      "supported": false
     },
     "Zalrsc": {
       "supported": true
@@ -711,7 +711,7 @@
       "supported": true
     },
     "Zcmop": {
-      "supported": true
+      "supported": false
     },
     "Zba": {
       "supported": true

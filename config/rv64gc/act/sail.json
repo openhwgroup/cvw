@@ -642,7 +642,7 @@
       "supported": true
     },
     "Zimop": {
-      "supported": true
+      "supported": false
     },
     "Zmmul": {
       "supported": true
@@ -651,10 +651,10 @@
       "supported": true
     },
     "Zabha": {
-      "supported": true
+      "supported": false
     },
     "Zacas": {
-      "supported": true
+      "supported": false
     },
     "Zalrsc": {
       "supported": true
@@ -668,7 +668,7 @@
       "supported": false
     },
     "Zawrs": {
-      "supported": true,
+      "supported": false,
       // Whether `WRS.NTO` and `WRS.STO` behave as NOPS.  If they do
       // not, see above note for `platform.max_time_to_wait`.  If
       // Zawrs is not supported, these `is_nop` fields need to be
@@ -711,7 +711,7 @@
       "supported": true
     },
     "Zcmop": {
-      "supported": true
+      "supported": false
     },
     "Zba": {
       "supported": true
