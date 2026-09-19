@@ -249,6 +249,16 @@ for {set i 0} {$i < $numcacheways} {incr i} {
 }
 # D$ writeback, flush, write_line, or flush_writeback states can't be cancelled by a flush
 coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -ftrans CurrState STATE_WRITEBACK->STATE_ACCESS STATE_FLUSH->STATE_ACCESS STATE_WRITE_LINE->STATE_ACCESS STATE_FLUSH_WRITEBACK->STATE_ACCESS
+# D$ FETCH->ACCESS: the case statement leaves STATE_FETCH only for STATE_WRITE_LINE; the transition Questa
+# infers comes from the synchronous reset term (reset | FlushStage).  FlushStage (LSUFlushW) cannot fire
+# mid-fetch: FlushW needs a trap, and interrupts are masked while the cache is committed while the owning
+# instruction's exceptions were resolved before its access issued; HPTWFlushW is only asserted before the
+# walker has a bus transaction (hptw.sv).  The transition is seen only when the testbench resets between
+# back-to-back ELFs in one session.
+coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -ftrans CurrState STATE_FETCH->STATE_ACCESS
+# D$ CacheMiss (STATE_ADDRESS_SETUP & ~Stall & ~FlushStage), FlushStage_1 row: same argument, the cache is
+# committed in STATE_ADDRESS_SETUP so no flush can arrive there.
+coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "assign CacheMiss"] -item e 1 -fecexprrow 4
 
 ####################
 # Unused / illegal peripheral accesses
@@ -286,6 +296,16 @@ set line [GetLineNum ${SRC}/mmu/pmachecker.sv "assign IdempotentRegion"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4,6
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4,6
 
+# MisalignedFaultAllowedM (~Cacheable & ~TLBMiss & Idempotent), TLBMiss_1 row: unreachable.  PBMemoryType is
+# the PTE's PBMT field only on a TLB hit and 00 otherwise, and with PBMemoryType = 00 pmachecker drives
+# Cacheable = SelRegions[3]|[4]|[5] and Idempotent = SelRegions[1]|[2]|[3]|[4]|[5].  rv64gc has no DTIM, no
+# IROM and no external memory, so SelRegions 1, 2 and 3 are tied low and the two are the same signal: while
+# the TLB misses, Idempotent & ~Cacheable cannot hold.  A non-cacheable idempotent region only exists through
+# PBMT = NC, which requires the TLB hit that this row needs to be absent.
+set line [GetLineNum ${SRC}/mmu/mmu.sv "assign MisalignedFaultAllowedM"]
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu -linerange $line-$line -item e 1 -fecexprrow 4
+coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 4
+
 # The instruction side ties AtomicAccessM low, so every row that needs an atomic access is
 # unreachable in the instruction MMU.
 set line [GetLineNum ${SRC}/mmu/mmu.sv "assign MisalignedCausesAccessFaultM"]
@@ -304,6 +324,14 @@ coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/uartdec -line
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/plicdec -linerange $line-$line -item e 1 -fecexprrow 3
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/spidec -linerange $line-$line -item e 1 -fecexprrow 3
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/pwmdec -linerange $line-$line -item e 1 -fecexprrow 3
+
+# LSU MemAccessDoneM clear (reset | FlushW | ~StallW), FlushW_1 row (FlushW while StallW): the two cannot
+# coincide in this testbench.  FlushW is LatestUnstalledW, which requires ~StallW, or FlushWCause = TrapM &
+# ~WFIInterruptedM.  StallW is (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause) | ExternalStall;
+# FlushDCause includes TrapM and the LSU term is gated by ~FlushWCause, so both drop when FlushWCause is set,
+# and ExternalStall is the RVVI backpressure, tied low unless the synthesizable RVVI testbench is built.
+set line [GetLineNum ${SRC}/lsu/lsu.sv "reset \\| FlushW \\| ~StallW"]
+coverage exclude -scope /dut/core/lsu -linerange $line-$line -item c 1 -feccondrow 6
 
 #Excluding signals in lsu: clintdec and uncoreram accept all sizes so 'SizeValid' will never be 0
 set line [GetLineNum ${SRC}/mmu/adrdec.sv "& SizeValid"]
@@ -506,6 +534,14 @@ set line [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREAD
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 1
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 3
 
+# D$ AHBBuscachefsm HTRANS and HBURST (CacheAccess & |BeatCount), CacheAccess_0 rows: BeatCount is nonzero only
+# inside a CACHE_FETCH or CACHE_WRITEBACK burst, where CacheAccess is 1.  It could be seen outside one only if
+# Flush (LSUFlushW) landed mid-burst and left the counter stale in ADR_PHASE, and neither source of LSUFlushW can:
+# FlushW needs a trap, which cannot fire while the cache is committed, and HPTWFlushW is only asserted before the
+# walker has a bus transaction (hptw.sv).
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "CacheAccess & \\|BeatCount\\) ?"] -item c 1 -feccondrow 1
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ${SRC}/ebu/buscachefsm.sv "assign HBURST"] -item c 1 -feccondrow 5
+
 set line [GetLineNum ${SRC}/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY5"]
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 1
 
@@ -605,6 +641,15 @@ coverage exclude -scope /dut/core/priv/priv/csr/counters -linerange [GetLineNum 
 #   CSRAdrM >= HPMCOUNTERBASE+COUNTERS & CSRAdrM < HPMCOUNTERBASE+32 is 0xC20 <= x < 0xC20, empty.
 coverage exclude -scope /dut/core/priv/priv/csr/counters -linerange [GetLineNum ${SRC}/privileged/csrc.sv "CSRAdrM >= HPMCOUNTERBASE\\+P.COUNTERS"] -item c 1
 coverage exclude -scope /dut/core/priv/priv/csr/counters -linerange [GetLineNum ${SRC}/privileged/csrc.sv "CSRAdrM >= HPMCOUNTERBASE\\+P.COUNTERS"] -item b 1
+#   The read-only-zero fallbacks those three checks guard are dead for the same reason: the else after the
+#   mhpmevent range check and the two CSRCReadValM = '0 assignments for absent counters only run for an
+#   address inside one of those empty ranges.
+set line [GetLineNum ${SRC}/privileged/csrc.sv "unused event selectors are read-only zero"]
+coverage exclude -scope /dut/core/priv/priv/csr/counters -linerange $line-$line -item bs 1
+set line [GetLineNum ${SRC}/privileged/csrc.sv "unused counters are read-only zero"]
+coverage exclude -scope /dut/core/priv/priv/csr/counters -linerange $line-$line -item s 1
+set line [expr [GetLineNum ${SRC}/privileged/csrc.sv "CSRAdrM >= HPMCOUNTERBASE\\+P.COUNTERS"] + 1]
+coverage exclude -scope /dut/core/priv/priv/csr/counters -linerange $line-$line -item s 1
 
 # attempting to write stimecmp with STCE=0 traps, causing CSRSWriteM to go low
 coverage exclude -scope /dut/core/priv/priv/csr/csrs/csrs -linerange [GetLineNum ${SRC}/privileged/csrs.sv "assign WriteSTIMECMPM"] -item e 1 -fecexprrow 5
