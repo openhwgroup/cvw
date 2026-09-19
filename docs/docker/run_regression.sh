@@ -49,7 +49,7 @@ export QUESTAPATH=/cad/mentor/questa_sim-xxxx.x_x/questasim/bin
 cd ${CVW_HOME}
 # build it only if BUILD_RISCOF is defined with empty string
 if [[ "${BUILD_RISCOF}" -eq 1 ]]; then
-    make install && make riscof && make testfloat
+    make install && make act && make testfloat
 fi
 
 if [[ "${RUN_QUESTA}" -eq 1 ]] ; then
