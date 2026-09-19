@@ -878,6 +878,9 @@ module testbench;
     if (P.SPI_SUPPORTED) begin
       void'(rvviRefMemorySetVolatile(P.SPI_BASE, (P.SPI_BASE + P.SPI_RANGE)));
     end
+    if (P.PWM_SUPPORTED) begin
+      void'(rvviRefMemorySetVolatile(P.PWM_BASE, (P.PWM_BASE + P.PWM_RANGE)));
+    end
   end
 
   if (P.ZICSR_SUPPORTED) begin
