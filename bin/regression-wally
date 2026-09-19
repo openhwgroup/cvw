@@ -14,6 +14,7 @@
 #
 ##################################
 import argparse
+import glob
 import multiprocessing
 import os
 import shutil
@@ -438,8 +439,9 @@ _designMtime = None
 
 
 def designMtime():
-    """Newest mtime among design and testbench sources; coverage collected before an RTL change
-    cannot be reused."""
+    """Newest mtime among the design and testbench sources and the coverage exclusions, since
+    coverage collected before either changed cannot be reused.  Exclusions matter because they are
+    applied when each test saves its .ucdb, not when the results are merged."""
     global _designMtime
     if _designMtime is None:
         _designMtime = 0
@@ -448,6 +450,8 @@ def designMtime():
                 for f in files:
                     if f.endswith((".sv", ".v", ".svh", ".vh")):
                         _designMtime = max(_designMtime, os.path.getmtime(os.path.join(root, f)))
+        for f in glob.glob(f"{regressionDir}/questa/coverage-exclusions-*.do"):
+            _designMtime = max(_designMtime, os.path.getmtime(f))
     return _designMtime
 
 
