@@ -309,7 +309,9 @@ coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1
 # The instruction side ties AtomicAccessM low, so every row that needs an atomic access is
 # unreachable in the instruction MMU.
 set line [GetLineNum ${SRC}/mmu/mmu.sv "assign MisalignedCausesAccessFaultM"]
-coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 4,5,6
+coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 4
+set line [GetLineNum ${SRC}/mmu/mmu.sv "assign MisalignedFaultAllowedM"]
+coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 8
 
 # Excluding so far un-used instruction sources for the ifu
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/bootromdec

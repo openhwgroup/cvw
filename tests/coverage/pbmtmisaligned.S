@@ -3,9 +3,9 @@
 //
 // Written: David_Harris@hmc.edu 19 September 2026
 //
-// Purpose: Test coverage for accesses through Svpbmt non-cacheable (NC) pages: misaligned loads
-//          and stores to an NC data page, and instruction fetch from an NC code page while the
-//          ITLB misses and the pipeline is stalled by data cache misses and stores.
+// Purpose: Test coverage for accesses through Svpbmt non-cacheable (NC) pages: misaligned loads,
+//          stores and AMOs to an NC data page, and instruction fetch from an NC code page while
+//          the ITLB misses and the pipeline is stalled by data cache misses and stores.
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 ///////////////////////////////////////////
@@ -74,8 +74,9 @@ build_l0:
     ecall                       # supervisor mode
 
     // Misaligned accesses through the NC page, each after an sfence.vma so the DTLB misses while
-    // the access is outstanding.  The page is idempotent but not cacheable, so misaligned accesses
-    // are not handled in hardware and raise address-misaligned exceptions, which the handler skips.
+    // the access is outstanding.  The page is idempotent but not cacheable, so misaligned loads and
+    // stores are not handled in hardware and raise address-misaligned exceptions; misaligned AMOs
+    // raise access faults.  The handler skips them all.
     la a1, nc_data
     sfence.vma
     lw t1, 1(a1)
@@ -87,6 +88,13 @@ build_l0:
     sd t1, 2(a1)
     sfence.vma
     ld t1, 4(a1)
+    addi a2, a1, 2
+    sfence.vma
+    amoadd.w t1, zero, (a2)     # misaligned AMOs to the NC page take an access fault
+    sfence.vma
+    amoadd.d t1, zero, (a2)
+    sfence.vma
+    amoswap.w t1, zero, (a2)
     lw t1, 0(a1)                # aligned accesses to the same page
     sw t1, 0(a1)
     amoadd.w t1, zero, (a1)
