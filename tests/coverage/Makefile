@@ -30,7 +30,7 @@ all: $(OBJDUMPS) $(MEMFILES)
 	riscv64-unknown-elf-as -g -o $@ -march=rv64gqc_zcb_zfa_zba_zbb_zbc_zbs_zfh_zicboz_zicbop_zicbom_zbkb_zbkx_zknd_zkne_zknh_svinval -mabi=lp64 $<
 
 # Preprocess assembly files
-%.$(AEXT): %.$(SRCEXT) WALLY-init-lib.h
+%.$(AEXT): %.$(SRCEXT) WALLY-init-lib.h WALLY-TEST-LIB-64.h $(wildcard riscof-env/*.h)
 	riscv64-unknown-elf-gcc -E -g -o $@ $<
 
 sim: %.$(EXEEXT)
