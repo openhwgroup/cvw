@@ -134,6 +134,23 @@ main:
     // Read the counter that was recording the interrupts.
     csrr t1, mhpmcounter22
 
+    // Take one more interrupt with counter 22 inhibited.  Event 22 is the interrupt event itself,
+    // so this is the only way to drive its CounterInc expression with the event asserted, the
+    // event selector nonzero, and the counter inhibited at the same time.
+    la t0, vectored_trap_vector
+    ori t0, t0, 1           # MODE = 1, vectored
+    csrw mtvec, t0
+    li t0, 1
+    slli t0, t0, 22
+    csrw mcountinhibit, t0  # inhibit counter 22 only
+    li t0, MIP_SSIP
+    csrw mie, t0
+    csrsi mstatus, 0x8      # mstatus.MIE
+    csrs mip, t0
+    nop
+    nop
+    csrw mcountinhibit, zero
+
     // Restore the library's direct trap vector before terminating, because done uses an ecall.
     csrci mstatus, 0x8      # mstatus.MIE off
     csrw mie, zero
