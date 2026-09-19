@@ -26,6 +26,6 @@
   url = https://github.com/ucb-bar/berkeley-testfloat-3
   ignore = untracked
 [submodule "addins/riscv-arch-test"]
-	path = addins/riscv-arch-test
-	url = https://github.com/riscv/riscv-arch-test
-	branch = act4
+  path = addins/riscv-arch-test
+  url = https://github.com/riscv/riscv-arch-test
+  branch = act4
