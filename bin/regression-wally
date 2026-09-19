@@ -303,7 +303,6 @@ lockstepwaivers = [
     "Sm_mcsr_walk-10.elf",
     "SsstrictSm_CSR-08.elf",   # writes mhpmevent3 (CSR 0x323); same mhpmevent limitation as above
 
-    "WALLY-pwm-01.elf",        # ImperasDV has no PWM model, so the interrupt behavior cannot match
 
     # TODO: remove once the submodule points at a riscv-arch-test containing
     # https://github.com/riscv/riscv-arch-test/pull/2416.  The test stores a return instruction over
