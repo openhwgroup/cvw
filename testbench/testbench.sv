@@ -713,8 +713,15 @@ module testbench;
   wallyTracer #(P) wallyTracer(rvvi);
 `endif
 
-// Functional coverage: cvw-arch-verif has been retired.  The riscv-arch-test covergroups will
-// sample the rvvi trace here once the fcov flow is rebuilt on ACT (see regression-wally --fcov).
+// Functional coverage.  riscv_arch_test comes from riscv-arch-test and samples the generated
+// covergroups off the RVVI trace; wally-compile.do supplies it and its include paths with --fcov.
+`ifdef FCOV
+  // wallyTracer drives every RVVI signal the covergroups read except these, which belong to
+  // extensions rv64gc does not implement, so tie them off rather than sampling X.
+  assign rvvi.mode_virt[0][0]  = 1'b0; // no hypervisor
+  assign rvvi.debug_mode[0][0] = 1'b0; // no debug module
+  riscv_arch_test riscv_arch_test(rvvi);
+`endif
 
   ////////////////////////////////////////////////////////////////////////////////
   // ImperasDV Co-simulator hooks
