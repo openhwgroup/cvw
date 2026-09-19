@@ -275,6 +275,22 @@ set line [GetLineNum ${SRC}/mmu/pmachecker.sv "exclusion-tag: unused-cacheable"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2
 
+# The instruction side drives the MMU with ReadAccessM and WriteAccessM tied low (see the mmu
+# instantiation in ifu.sv), so AccessRW is constant zero there and any region decoder qualified by
+# AccessRW can never select.  pwmdec is one of those, alongside the peripherals excluded below.
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/pwmdec
+
+# rv64gc has no DTIM, no IROM and no external memory, so SelRegions 1, 2 and 3 are tied low and the
+# rows that need them asserted cannot be reached.
+set line [GetLineNum ${SRC}/mmu/pmachecker.sv "assign IdempotentRegion"]
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4,6
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4,6
+
+# The instruction side ties AtomicAccessM low, so every row that needs an atomic access is
+# unreachable in the instruction MMU.
+set line [GetLineNum ${SRC}/mmu/mmu.sv "assign MisalignedCausesAccessFaultM"]
+coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 4,5,6
+
 # Excluding so far un-used instruction sources for the ifu
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/bootromdec
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/uncoreramdec
