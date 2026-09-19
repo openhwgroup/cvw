@@ -196,12 +196,11 @@ jobs:
             rm -rf $RISCV/buildroot/ || sudo rm -rf $RISCV/buildroot/
             rm -rf $RISCV/logs || sudo rm -rf $RISCV/logs
             df -h
-      # Make only the self-checking coverage tests, plus zsbl and derivative configs; the standard
-      # regression builds its ACT tests itself
+      # Make riscof and zsbl only as that is the only testsuite used by standard regression
       - name: make tests
         run: |
               source setup.sh
-              make zsbl deriv coverage --jobs $(nproc --ignore 1)
+              make riscof zsbl deriv coverage --jobs $(nproc --ignore 1)
       # Run standard regression, skipping distros that are known to be broken with Verilator
       # - name: Regression
       #   if: ${{ matrix.regressionFail != true }}
@@ -214,7 +213,7 @@ jobs:
               source setup.sh
               mkdir -p $WALLY/sim/verilator/logs/
               lint-wally
-              wsim rv64gc $WALLY/tests/coverage/csrwrites.elf --sim verilator | tee $WALLY/sim/verilator/logs/rv64gc_csrwrites.log
+              wsim rv32i arch32i --sim verilator | tee $WALLY/sim/verilator/logs/rv32i_arch32i.log
       # Upload regression logs for debugging
       - name: Upload regression logs
         uses: actions/upload-artifact@v7
