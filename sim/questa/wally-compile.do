@@ -33,7 +33,7 @@ set WALLY $::env(WALLY)
 set CONFIG ${WALLY}/config
 set SRC ${WALLY}/src
 set TB ${WALLY}/testbench
-set FCRVVI ${WALLY}/addins/cvw-arch-verif/fcov
+set FCRVVI ${WALLY}/addins/riscv-arch-test/coverpoints ;# TODO: functional coverage is being rebuilt on the ACT covergroups
 
 # Shift off the first three arguments (config, testbench, wkdir)
 shift
@@ -55,7 +55,7 @@ if {[lcheck lst "--ccov"]} {
 
 set FCvlog ""
 if {[lcheck lst "--fcov"]} {
-    set FCvlog "-f ${FCRVVI}/cvw-arch-verif.f"
+    set FCvlog "-f ${FCRVVI}/cvw-arch-verif.f" ;# TODO: no such filelist yet; replace with the ACT covergroup sources when fcov is rebuilt
 }
 
 set lockstepvlog ""

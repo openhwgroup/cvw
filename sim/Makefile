@@ -5,19 +5,9 @@
 SIM = ${WALLY}/sim
 TESTS = ${WALLY}/tests
 
-.PHONY: all riscoftests wallyriscoftests coveragetests deriv clean wally-riscv-arch-test benchmarks
+.PHONY: all coveragetests deriv clean benchmarks
 
-all: riscoftests coveragetests deriv
-
-wally-riscv-arch-test: wallyriscoftests
-
-riscoftests:
-# 	Builds riscv-arch-test 64 and 32-bit versions and builds wally-riscv-arch-test 64 and 32-bit versions
-	$(MAKE) -C ${TESTS}/riscof
-
-wallyriscoftests:
-# 	Builds wally-riscv-arch-test 64 and 32-bit versions
-	$(MAKE) -C ${TESTS}/riscof wally-riscv-arch-test
+all: coveragetests deriv
 
 coveragetests:
 	$(MAKE) -C ${TESTS}/coverage
@@ -120,5 +110,3 @@ benchmarks:
 	$(MAKE) -C ${WALLY}/benchmarks/coremark
 
 clean:
-	$(MAKE) clean -C ${TESTS}/riscof
-#   $(MAKE) clean -C ${TESTS}/wally-riscv-arch-test
