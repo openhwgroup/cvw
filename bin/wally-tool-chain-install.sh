@@ -88,11 +88,11 @@ source "$WALLY"/bin/installation/spike-install.sh
 
 # Whisper (https://github.com/tenstorrent/whisper)
 # Whisper is a RISC-V instruction set simulator (ISS) developed by Tenstorrent.
-# The boost libraries (needed for Whisper) do not compile correctly on Debian 11 or Ubuntu 20.04
-if (( DEBIAN_VERSION != 11 )) && (( UBUNTU_VERSION != 20 )); then
+# The boost libraries (needed for Whisper) do not compile correctly on Ubuntu 20.04
+if (( UBUNTU_VERSION != 20 )); then
     source "$WALLY"/bin/installation/whisper-install.sh
 else
-    echo -e "${WARNING_COLOR}Skipping Whisper installation due to incompatible Boost libraries on Debian 11 or Ubuntu 20.04.${ENDC}"
+    echo -e "${WARNING_COLOR}Skipping Whisper installation due to incompatible Boost libraries on Ubuntu 20.04.${ENDC}"
 fi
 
 
