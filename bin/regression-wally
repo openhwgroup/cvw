@@ -281,6 +281,7 @@ testfloatdivconfigs = [
 
 # Tests that pass their own self-check but cannot be compared against ImperasDV instruction by
 # instruction, because the reference model cannot be configured to match what Wally implements.
+# In lockstep runs they are simulated without lockstep instead, so their coverage still counts.
 # Each entry is the ELF file name, or the <directory>_<file> name used for the log.
 lockstepwaivers = [
     "WALLY-q-01.S_ref.elf",     # Q extension is not supported by ImperasDV
@@ -381,7 +382,9 @@ def addTestsByDir(testDir, config, sim, coverStr, configs, lockstepMode=0, breke
 
     Each leaf directory becomes one test case: wsim runs all of its ELFs back-to-back in a single
     simulation session, so the design compiles once and the simulator starts once per directory.
-    Lockstep and Breker need a fresh reference model per ELF, so they run one simulation per ELF."""
+    Lockstep and Breker need a fresh reference model per ELF, so they run one simulation per ELF.
+    ELFs in lockstepwaivers cannot be compared against ImperasDV but still check themselves, so in
+    lockstep mode they run without lockstep rather than being left out."""
     if not os.path.isdir(testDir):
         print(f"Error: Directory not found: {testDir}")
         sys.exit(1)
@@ -403,15 +406,21 @@ def addTestsByDir(testDir, config, sim, coverStr, configs, lockstepMode=0, breke
         if lockstepMode or brekerMode:
             for file in elfs:
                 shortelf = f"{leaf}_{file}"
-                if shortelf in lockstepwaivers or file in lockstepwaivers: # skip tests that itch bugs in ImperasDV
+                waived = shortelf in lockstepwaivers or file in lockstepwaivers
+                if waived and brekerMode:
                     print(f"{bcolors.WARNING}Skipping waived test {shortelf}{bcolors.ENDC}")
                     continue
                 if coverageUpToDate(config, f"{leaf}_{file[:-4]}", f"{dirpath}/{file}"):
                     reused.append(shortelf)
                     continue
                 sim_log = f"{sim_logdir}{config}_{shortelf}.log"
-                configs.append(TestCase(name=file, variant=config, cmd=f"{cmdPrefix} {dirpath}/{file} > {sim_log}",
-                                        grepstr=gs, grepfile=sim_log))
+                if waived:
+                    cmd = f"wsim --sim {sim} {coverStr} {flags} {config} {dirpath}/{file} > {sim_log}"
+                    grepstr = "All tests ran without failures"
+                else:
+                    cmd = f"{cmdPrefix} {dirpath}/{file} > {sim_log}"
+                    grepstr = gs
+                configs.append(TestCase(name=file, variant=config, cmd=cmd, grepstr=grepstr, grepfile=sim_log))
         else:
             name = f"{parent}_{leaf}" # matches the name wsim derives for a directory
             sim_log = f"{sim_logdir}{config}_{name}.log"
