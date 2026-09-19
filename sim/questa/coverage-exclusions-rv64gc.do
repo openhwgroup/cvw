@@ -303,6 +303,7 @@ coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/gpiodec -line
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/uartdec -linerange $line-$line -item e 1 -fecexprrow 3
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/plicdec -linerange $line-$line -item e 1 -fecexprrow 3
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/spidec -linerange $line-$line -item e 1 -fecexprrow 3
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/pwmdec -linerange $line-$line -item e 1 -fecexprrow 3
 
 #Excluding signals in lsu: clintdec and uncoreram accept all sizes so 'SizeValid' will never be 0
 set line [GetLineNum ${SRC}/mmu/adrdec.sv "& SizeValid"]
