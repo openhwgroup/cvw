@@ -178,9 +178,9 @@ def prepSim(args, elfs):
         paramsList.append("DEBUG=1")
     if args.ccov:
         flagsList.append("--ccov")
-    # if args.fcov:
-    #     flagsList.append("--fcov")
-    #     defineList.append("+define+FCOV")
+    if args.fcov:
+        flagsList.append("--fcov")
+        defineList.append("+define+FCOV")
     if args.gui:
         flagsList.append("--gui")
     if args.lockstep or args.lockstepverbose:
