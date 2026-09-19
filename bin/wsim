@@ -34,6 +34,8 @@ SPECIAL_MODES = SPECIAL_TESTS + ("coremark", "embench")
 
 # Directories holding design and testbench sources; used to decide whether to recompile
 DESIGN_DIRS = ("src", "testbench", "config", "addins/verilog-ethernet")
+# The riscv-arch-test covergroups are compiled into the design only with --fcov
+FCOV_DIRS = ("addins/riscv-arch-test/coverpoints", "addins/riscv-arch-test/framework/src/act/fcov")
 
 # Symbols the testbench needs from each ELF: where the test reports its result, and (embench) its signature
 ELF_SYMBOLS = ("tohost", "begin_signature")
@@ -245,13 +247,13 @@ def compileLock(sim_dir, lockname):
     return _Lock()
 
 
-def isDesignUpToDate(target):
+def isDesignUpToDate(target, extra_dirs=()):
     """Check if a compiled design target is newer than all source/config files.
     Returns True if the target exists and is newer than all dependencies."""
     if not target.exists():
         return False
     target_mtime = target.stat().st_mtime
-    for d in DESIGN_DIRS:
+    for d in DESIGN_DIRS + tuple(extra_dirs):
         for ext in ("*.sv", "*.v", "*.svh", "*.vh"):
             for dep in (WALLY / d).rglob(ext):
                 if dep.stat().st_mtime > target_mtime:
@@ -293,7 +295,7 @@ def runQuesta(args, flags, prefix):
     wkdir_path = WALLY / "sim" / "questa" / wkdir
     target = wkdir_path / "testbenchopt"
     target_mtime = targetMtime(target)
-    needs_compile = target_mtime is None or not isDesignUpToDate(target)
+    needs_compile = target_mtime is None or not isDesignUpToDate(target, FCOV_DIRS if args.fcov else ())
     with compileLock("questa", f"{args.config}_{args.tb}{'_' + bhash if bhash else ''}"):
         current_mtime = targetMtime(target)
         if needs_compile and current_mtime == target_mtime:
