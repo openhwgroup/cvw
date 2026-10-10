@@ -152,7 +152,7 @@ def main():
         lines.append("")
 
         # 4. HPM event cross-checks (counter events vs the monitor's own measurements)
-        def tot(k):
+        def tot(k, rs=rs):
             return sum(int(r[k]) for r in rs)
         checks = [("hpm0 (mcycle) = cycles", tot("hpm0"), cycles),
                   ("hpm2 (minstret) = retired", tot("hpm2"), instret),
