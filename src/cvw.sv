@@ -181,6 +181,9 @@ typedef struct packed {
   int                  RAS_SIZE;
   logic                INSTR_CLASS_PRED; // is class predictor enabled
 
+// FMA normalization
+  logic         FMA_LZA;  // 1: leading zero anticipator, 0: leading zero counter
+
 // FPU division architecture
   int           RADIX;
   int           DIVCOPIES;

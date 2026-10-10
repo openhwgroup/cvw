@@ -89,6 +89,13 @@ module fma import cvw::*;  #(parameter cvw_t P) (
 
   fmaadd #(P) add(.Am, .Pm, .Ze, .Pe, .Ps, .KillProd, .ASticky, .AmInv, .PmKilled, .InvA, .Sm, .Se, .Ss);
 
-  fmalza #(P.FMALEN, P.NF) lza(.A(AmInv), .Pm(PmKilled), .Cin(InvA & (~ASticky | KillProd)), .sub(InvA), .SCnt);
+  // Normalization shift count.  The leading zero anticipator works in parallel with the adder, but may count one too many,
+  // which shiftcorrection fixes; a leading zero counter on the sum is smaller but adds its delay after the adder.  The extra
+  // leading 0 matches the anticipator's count: the sum's leading one belongs one place below the top of the shifted result.
+  if (P.FMA_LZA) begin : lza
+    fmalza #(P.FMALEN, P.NF) fmalza(.A(AmInv), .Pm(PmKilled), .Cin(InvA & (~ASticky | KillProd)), .sub(InvA), .SCnt);
+  end else begin : lzc
+    lzc #(P.FMALEN+1) sumlzc(.num({1'b0, Sm}), .ZeroCnt(SCnt));
+  end
 
 endmodule
