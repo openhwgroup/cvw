@@ -549,13 +549,13 @@ def actElfDir(config):
 builtTargets = set()
 
 
-def buildTests(periph=True, coverage=False, deriv=False):
+def buildTests(periph=True, coverage=False, deriv=False, testfloat=False):
     """Build the tests with the root Makefile, which rebuilds only what is out of date: the ACT ELFs
     for every configuration with an ACT configuration, the boot image a 64-bit IROM (rv64i) is
-    preloaded from (zsbl), and optionally the peripheral and coverage tests and the derivative
-    configurations (config/deriv)."""
+    preloaded from (zsbl), and optionally the peripheral and coverage tests, the derivative
+    configurations (config/deriv) and the testfloat vectors."""
     targets = [t for t in ["act", "zsbl"] + (["periph"] if periph else []) + (["coverage"] if coverage else [])
-               + (["deriv"] if deriv else []) if t not in builtTargets]
+               + (["deriv"] if deriv else []) + (["testfloat"] if testfloat else []) if t not in builtTargets]
     if not targets:
         return
     # ACT is its own uv project: drop the VIRTUAL_ENV that `uv run` set for this script so ACT's
@@ -720,7 +720,7 @@ def process_args(args):
         TIMEOUT_DUR = 60*3600 # 2.5 days
     elif args.testfloat:
         sims = [testfloatsim]
-        TIMEOUT_DUR = 30*60 # seconds
+        TIMEOUT_DUR = 60*60 # seconds; the fma tests of the largest FPUs take more than half an hour
     elif args.branch or args.cache:
         TIMEOUT_DUR = 120*60 # seconds
     elif args.nightly or args.benchmark:
@@ -797,6 +797,7 @@ def selectTests(args, sims, coverStr):
         # addTests(bpredtests, defaultsim) # This is currently broken in regression due to something related to the new wsim script.
     # testfloat tests
     if (args.testfloat or args.nightly): # for nightly, run testfloat along with others
+        buildTests(periph=False, deriv=True, testfloat=True)
         testfloatconfigs = ["fdqh_rv64gc", "fdq_rv64gc", "fdh_rv64gc", "fd_rv64gc", "fh_rv64gc", "f_rv64gc", "fdqh_rv32gc", "f_rv32gc"]
         for config in testfloatconfigs + testfloatdivconfigs:
             tests = ["div", "sqrt", "cvtint", "cvtfp"]
