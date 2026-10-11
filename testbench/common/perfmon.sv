@@ -373,8 +373,9 @@ module perfmon import cvw::*; #(parameter cvw_t P) (
           AnomPrinted[1]++;
         end
       end
-      // Bubbles created by structural stalls that had no true integer dependency
-      if (FlushE & ~StallE & StallD & ~TrueDepD &
+      // Bubbles created by structural stalls that had no true integer dependency and no other true stall cause
+      // (an FP-register dependency on an FP load, or a store followed by a load, stalls in the same cycle anyway)
+      if (FlushE & ~StallE & StallD & ~TrueDepD & ~FPUStallD & ~StoreStallD &
           (LoadStallD | CSRRdStallD | MDUStallD | FCvtIntStallD) & ~(TrapM | RetM | CSRWriteFenceM | BPWrongE)) begin
         FalseDep[dStallCause()]++;
         if (~RegWriteE) FalseDepNoIntWrite++;
