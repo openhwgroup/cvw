@@ -331,7 +331,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     privileged #(P) priv(
       .clk, .reset,
       .FlushD, .FlushE, .FlushM, .FlushW, .StallD, .StallE, .StallM, .StallW,
-      .CSRReadM, .CSRWriteM, .SrcAM, .NextValidPCE, .PCM, .PCSpillM,
+      .CSRReadM, .CSRWriteM, .PCSrcE, .SrcAM, .NextValidPCE, .IEUAdrM, .PCM, .PCSpillM,
       .InstrM, .InstrOrigM, .CSRReadValM, .CSRReadValW, .EPCM, .TrapVectorM,
       .RetM, .TrapM, .sfencevmaM, .sfencevmaAllM, .InvalidateICacheM, .DCacheStallM, .ICacheStallF,
       .InstrValidM, .InstrValidE, .CommittedM, .CommittedF,
@@ -345,15 +345,14 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
       .MTIME_CLINT, .IEUAdrxTvalM, .SetFflagsM,
       .InstrAccessFaultF, .HPTWInstrAccessFaultF(HPTWInstrAccessFaultHeldF), .HPTWInstrPageFaultF(HPTWInstrPageFaultHeldF), .LoadAccessFaultM, .StoreAmoAccessFaultM, .SelHPTW,
+      .DebugCSREnable, .DebugRegWDATA(DebugRegWDATA[P.XLEN-1:0]), .DebugRegAddr, .DebugRegWrite,
+      .DebugHaltReq, .DebugResumeReq, .DebugResetHaltReq, .DebugHaveResetAck,
       .PrivilegeModeW, .SATP_REGW,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS,
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
       .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .wfiM, .IntPendingM, .BigEndianM,
-      .DebugMode, .DebugHaltReq, .DebugResumeReq, .DebugCSREnable,
-      .DebugRegWDATA(DebugRegWDATA[P.XLEN-1:0]), .DebugRegAddr, .DebugRegWrite,
       .DebugHaltFlush, .DebugResumeFlush, .DebugUseDPC, .DPC,
-      .DebugHaveReset, .DebugHaveResetAck, .DebugResetHaltReq,
-      .IEUAdrM, .PCSrcE, .IllegalDebugCSRAccess);
+      .DebugHaveReset, .IllegalDebugCSRAccess, .DebugMode);
 
   end else begin
     assign {CSRReadValW, PrivilegeModeW,

@@ -93,6 +93,14 @@ module debugmode import cvw::*;  #(parameter cvw_t P)(
   end
 
   // Halted State Variables
+
+  // Depending on whether appendix A.1 or appendix A.2 is implemented,
+  // the pipeline is not necessarily halted when the hart is in Debug
+  // Mode. Also, we must present the bits Halted, Running, and
+  // HaveReset to the Debug Module. DebugHalted implies that the hart
+  // is in DebugMode, but in Appendix A.2 the pipeline is still
+  // moving and executing the park loop. This is where those
+  // concerns should be separated.
   assign DebugHalted  = (state == HALTED);
   assign DebugRunning = (state == RUNNING);
   assign DebugMode = DebugHalted;

@@ -34,11 +34,13 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic              FlushD, FlushE, FlushM, FlushW,
   // CSR Reads and Writes, and values needed for traps
   input  logic              CSRReadM, CSRWriteM,                            // Read or write CSRs
+  input  logic              PCSrcE,
   input  logic [P.XLEN-1:0] SrcAM,                                          // GPR register to write
   input  logic [31:0]       InstrM,                                         // Instruction
   input  logic [31:0]       InstrOrigM,                                     // Original compressed or uncompressed instruction in Memory stage for Illegal Instruction XTVAL
   input  logic [P.XLEN-1:0] IEUAdrxTvalM,                                   // address from IEU
   input  logic [P.XLEN-1:0] NextValidPCE,
+  input  logic [P.XLEN-1:0] IEUAdrM,
   input  logic [P.XLEN-1:0] PCM,                                            // program counter
   input  logic [P.XLEN-1:0] PCSpillM,                                       // program counter
   // control signals
@@ -78,6 +80,14 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic [63:0]       MTIME_CLINT,                                    // timer value from CLINT
   input  logic [4:0]        SetFflagsM,                                     // set FCSR flags from FPU
   input  logic              SelHPTW,                                        // HPTW in use.  Causes system to use S-mode endianness for accesses
+  // Debug Inputs
+  input  logic              DebugCSREnable,
+  input  logic [P.XLEN-1:0] DebugRegWDATA,
+  input  logic [11:0]       DebugRegAddr,
+  input  logic              DebugRegWrite,
+  input  logic              DebugHaltReq, DebugResumeReq,
+  input  logic              DebugResetHaltReq,
+  input  logic              DebugHaveResetAck,
   // CSR outputs
   output logic [P.XLEN-1:0] CSRReadValM,
   output logic [P.XLEN-1:0] CSRReadValW,                                    // Value read from CSR
@@ -102,23 +112,14 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   output logic              BigEndianM,                                     // Use big endian in current privilege mode
   // Fault outputs
   output logic              wfiM, IntPendingM,                              // Stall in Memory stage for WFI until interrupt pending or timeout
-  // Debug Mode
-  output logic              DebugMode,
-  input  logic              DebugHaltReq, DebugResumeReq,
-  input  logic              DebugCSREnable,
-  input  logic [P.XLEN-1:0] DebugRegWDATA,
-  input  logic [11:0]       DebugRegAddr,
-  input  logic              DebugRegWrite,
+  // Debug outputs
   output logic              DebugHaltFlush,
   output logic              DebugResumeFlush,
   output logic              DebugUseDPC,
   output logic [P.XLEN-1:0] DPC,
   output logic              DebugHaveReset,
-  input  logic              DebugHaveResetAck,
-  input  logic              DebugResetHaltReq,
-  input  logic [P.XLEN-1:0] IEUAdrM,
-  input  logic              PCSrcE,
-  output logic              IllegalDebugCSRAccess
+  output logic              IllegalDebugCSRAccess,
+  output logic              DebugMode
 );
 
   logic [4:0]               CauseM;                                         // trap cause
