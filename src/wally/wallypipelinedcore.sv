@@ -48,13 +48,6 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
    input  logic                  ExternalStall,
    output logic                  DebugMode,
    input  logic                  DebugHaltReq, DebugResumeReq,
-   // input  logic                  DebugGPREnable, // REPLACE WITH APB
-   // input  logic                  DebugCSREnable, // REPLACE WITH APB
-   // input  logic                  DebugFPREnable, // REPLACE WITH APB
-   // output logic [P.LLEN-1:0]     DebugRegRDATA,  // REPLACE WITH APB
-   // input  logic [P.LLEN-1:0]     DebugRegWDATA,  // REPLACE WITH APB
-   // input  logic [11:0]           DebugRegAddr,   // REPLACE WITH APB
-   // input  logic                  DebugRegWrite,  // REPLACE WITH APB
    output logic                  DebugHaveReset,
    input  logic                  DebugHaveResetAck,
    input  logic                  DebugResetHaltReq,

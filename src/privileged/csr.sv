@@ -98,18 +98,18 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   output logic                     IllegalCSRAccessM,         // Illegal CSR access: CSR doesn't exist or is inaccessible at this privilege level
   output logic                     BigEndianM,                // memory access is big-endian based on privilege mode and STATUS register endian fields
   // Debug Signals
-  output logic                     DebugMode,
+  input  logic                     DebugMode,
   input  logic                     DebugHaltReq, DebugResumeReq,
   input  logic                     DebugCSREnable,
   // output logic [P.XLEN-1:0]     DebugCSRRDATA,
   input  logic [P.XLEN-1:0]        DebugRegWDATA,
   input  logic [11:0]              DebugRegAddr,
   input  logic                     DebugRegWrite,
-  output logic                     DebugHaltFlush, DebugResumeFlush,
-  output logic                     DebugUseDPC,
+  //output logic                     DebugHaltFlush, DebugResumeFlush,
+  // output logic                     DebugUseDPC,
   output logic [P.XLEN-1:0]        DPC,
-  output logic                     DebugHaveReset,
-  input  logic                     DebugHaveResetAck,
+  // input  logic                     DebugHaveReset,
+  //input  logic                     DebugHaveResetAck,
   input  logic                     DebugResetHaltReq,
   input  logic                     BreakpointFaultM,
   output logic                     DebugEBreakM, DebugEBreakS, DebugEBreakU,
@@ -119,7 +119,11 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   output logic                     DebugStep,
   output logic [1:0]               DebugPrivilegeMode,
   output logic                     DebugSetPrivMode,
-  output logic                     IllegalDebugCSRAccess
+  input  logic [2:0]               NextHaltCause,
+  output logic                     IllegalDebugCSRAccess,
+  input  logic                     NextHalt, NextResume,
+  input  logic                     DebugHalted, DebugRunning,
+  input  logic                     DebugEBreak
 );
 
   localparam MIP = 12'h344;
@@ -325,23 +329,26 @@ module csr import cvw::*;  #(parameter cvw_t P) (
 
   if (P.DEBUG_SUPPORTED) begin : debug
     csrd #(P) csrd(.clk, .reset, .DebugHaltReq, .DebugResumeReq,
-      .CSRDWriteM, .CSRWriteValM, .CSRAdrM, .InstrValid(InstrValidM), .InstrValidE, .CSRDReadValM, .PrivilegeModeW,
-      .DebugMode, .NextValidPCE, .PCM, .IllegalCSRDAccessM, .DebugHaltFlush, .DebugResumeFlush,
-      .DebugUseDPC, .DPC_REGW(DPC),
-      .DebugHaveReset, .DebugHaveResetAck, .DebugResetHaltReq, .BreakpointFaultM,
+      .CSRDWriteM, .CSRAdrM, .CSRWriteValM, .InstrValid(InstrValidM), .InstrValidE, .PrivilegeModeW,
+      .DebugMode, .DebugResetHaltReq, .BreakpointFaultM,
+      .PCSrcE, .FlushM, .StallM, .NextValidPCE, .PCM, .IEUAdrM,
+      .NextHaltCause, .NextHalt, .NextResume,
+      .DebugHalted, .DebugRunning, .DebugEBreak,
+      .CSRDReadValM, .IllegalCSRDAccessM,
+      .DPC_REGW(DPC),
       .DebugEBreakM, .DebugEBreakS, .DebugEBreakU,
-      .IEUAdrM, .PCSrcE, .FlushM, .StallM, .StallW, .DebugStepIE, .DebugStep,
+      .DebugStepIE, .DebugStep,
       .DebugPrivilegeMode, .DebugSetPrivMode, .DebugStopCounters
-      );
+    );
   end else begin
-    assign DebugMode = 1'b0;
+    // assign DebugMode = 1'b0;
     assign CSRDReadValM = '0;
     assign IllegalCSRDAccessM = 1'b1;
-    assign DebugHaltFlush = 1'b0;
-    assign DebugResumeFlush = 1'b0;
-    assign DebugUseDPC = 1'b0;
+    // assign DebugHaltFlush = 1'b0;
+    // assign DebugResumeFlush = 1'b0;
+    //assign DebugUseDPC = 1'b0;
     assign DPC = 0;
-    assign DebugHaveReset = 1'b0;
+    //assign DebugHaveReset = 1'b0;
     assign DebugEBreakM = 0;
     assign DebugEBreakS = 0;
     assign DebugEBreakU = 0;

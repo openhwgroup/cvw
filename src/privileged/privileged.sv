@@ -145,12 +145,34 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   logic                     DebugStep;
   logic [1:0]               DebugPrivilegeMode;
   logic                     DebugSetPrivMode;
+  logic                     NextHalt, NextResume;
+  logic [2:0]               NextHaltCause;
+  logic                     DebugEBreak;
+
+  // Lift these signals up
+  logic                     DebugHalted, DebugRunning;
 
   logic                     wfiW;
 
   // track the current privilege level
   privmode #(P) privmode(.clk, .reset, .StallW, .TrapM, .mretM, .sretM, .DelegateM,
     .STATUS_MPP, .STATUS_SPP, .DebugPrivilegeMode, .DebugSetPrivMode, .NextPrivilegeModeM, .PrivilegeModeW);
+
+  // CREATE DebugEBReak
+  // NextHalt and DebugHaltFlush are the same signal. Consolidate?
+  if (P.DEBUG_SUPPORTED) begin : debugmode
+    debugmode #(P) debugmode(.clk, .reset, .StallW, .InstrValidM, .InstrValidE,
+      .DebugHaltReq, .DebugResumeReq, .DebugResetHaltReq,
+      .DebugStep, .DebugEBreakM, .DebugEBreakS, .DebugEBreakU, .BreakpointFaultM, .PrivilegeModeW,
+      .DebugHaveResetAck,
+      .DebugMode, .DebugHalted, .DebugRunning, .DebugHaveReset,
+      .NextHalt, .NextResume, .DebugEBreak, .NextHaltCause, .DebugUseDPC, .DebugHaltFlush, .DebugResumeFlush
+    );
+  end else begin
+    assign {DebugMode, DebugHalted, DebugRunning, DebugHaveReset,
+            NextHalt, NextResume, DebugEBreak, NextHaltCause, DebugUseDPC,
+            DebugHaltFlush, DebugResumeFlush} = '0;
+  end
 
   // decode privileged instructions
   privdec #(P) pmd(.clk, .reset, .StallW, .FlushW, .InstrM(InstrM[31:7]),
@@ -176,12 +198,13 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .EPCM, .TrapVectorM,
     .CSRReadValM, .CSRReadValW, .IllegalCSRAccessM, .BigEndianM,
     .DebugMode, .DebugHaltReq, .DebugResumeReq, .DebugCSREnable, .DebugRegWDATA,
-    .DebugRegAddr, .DebugRegWrite, .DebugHaltFlush, .DebugResumeFlush,
-    .DebugUseDPC, .DPC,
-    .DebugHaveReset, .DebugHaveResetAck, .DebugResetHaltReq, .BreakpointFaultM,
+    .DebugRegAddr, .DebugRegWrite, //.DebugHaltFlush, .DebugResumeFlush,
+    .DPC,
+    .DebugResetHaltReq, .BreakpointFaultM,
     .DebugEBreakM, .DebugEBreakS, .DebugEBreakU,
     .IEUAdrM, .PCSrcE, .DebugStepIE, .DebugStep,
-    .DebugPrivilegeMode, .DebugSetPrivMode, .IllegalDebugCSRAccess
+    .DebugPrivilegeMode, .DebugSetPrivMode, .NextHaltCause, .IllegalDebugCSRAccess, .NextHalt, .NextResume,
+    .DebugHalted, .DebugRunning, .DebugEBreak
     );
 
   // pipeline early-arriving trap sources

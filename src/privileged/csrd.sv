@@ -31,34 +31,29 @@
 //////////////////////////////////////////////////////////////////////
 
 module csrd import cvw::*;  #(parameter cvw_t P) (
-  input logic               clk, reset,
-  input logic               DebugHaltReq, DebugResumeReq,
-  input logic               CSRDWriteM,
-  input logic [P.XLEN-1:0]  CSRWriteValM,
-  input logic [11:0]        CSRAdrM,
-  input logic               InstrValid,
-  input logic               InstrValidE,
+  input  logic              clk, reset,
+  input  logic              DebugHaltReq, DebugResumeReq,
+  input  logic              CSRDWriteM,
+  input  logic [11:0]       CSRAdrM,
+  input  logic [P.XLEN-1:0] CSRWriteValM,
+  input  logic              InstrValid,
+  input  logic              InstrValidE,
+  input  logic [1:0]        PrivilegeModeW,
+  input  logic              DebugMode,
+  input  logic              DebugResetHaltReq,
+  input  logic              BreakpointFaultM,
+  input  logic              PCSrcE, FlushM, StallM,
+  input  logic [P.XLEN-1:0] NextValidPCE, PCM,
+  input  logic [P.XLEN-1:0] IEUAdrM,
+  input  logic [2:0]        NextHaltCause,
+  input  logic              NextHalt, NextResume,
+  input  logic              DebugHalted, DebugRunning, DebugEBreak,
   output logic [P.XLEN-1:0] CSRDReadValM,
-  input logic [1:0]         PrivilegeModeW,
-
-  output logic              DebugMode,
-  input logic [P.XLEN-1:0]  NextValidPCE, PCM,
   output logic              IllegalCSRDAccessM,
-  output logic              DebugHaltFlush, DebugResumeFlush,
-  output logic              DebugUseDPC,
-  output [P.XLEN-1:0]       DPC_REGW,
-  output logic              DebugHaveReset,
-  input logic               DebugHaveResetAck,
-  input logic               DebugResetHaltReq,
-  input logic               BreakpointFaultM,
+  output logic [P.XLEN-1:0] DPC_REGW,
   output logic              DebugEBreakM,
   output logic              DebugEBreakS,
   output logic              DebugEBreakU,
-  input logic [P.XLEN-1:0]  IEUAdrM,
-  input logic               PCSrcE,
-  input logic               FlushM,
-  input logic               StallM,
-  input logic               StallW,
   output logic              DebugStepIE,
   output logic              DebugStep,
   output logic [1:0]        DebugPrivilegeMode,
@@ -71,22 +66,12 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   localparam                DSCRATCH0 = 12'h7B2;
   localparam                DSCRATCH1 = 12'h7B3;
 
-  typedef enum logic {RUNNING, HALTED} dbg_state_e;
-  dbg_state_e state, state_n;
-
-  // ResumeAck state definitions
-  typedef enum logic [1:0] {RESACKLOW, RESACKCLEAR, RESACKHIGH} resack_state_e;
-  resack_state_e resack_state, next_resack_state;
-
-  logic                     NextHalt;
-
   // Write Enables
   logic                     WriteDCSR;
   logic                     WriteDPC;
   logic                     WriteCause;
 
   // Need this for resuming
-  logic                     DPCset;
   logic                     PCSrcM;
 
   // EBreak
@@ -141,14 +126,11 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   // enable signal for the halting state machine
   logic Stepping;
 
-  //
+  // Detect writes to Priv Mode for the purpose of changing the
+  // privileged mode upon resume
   logic PrivModeSet;
 
   // Ebreak handling signals
-  assign BreakpointM = BreakpointFaultM & ebreakm & PrivilegeModeW == P.M_MODE;
-  assign BreakpointS = BreakpointFaultM & ebreaks & PrivilegeModeW == P.S_MODE;
-  assign BreakpointU = BreakpointFaultM & ebreaku & PrivilegeModeW == P.U_MODE;
-  assign ebreak = BreakpointM | BreakpointS | BreakpointU;
   assign DebugEBreakM = ebreakm;
   assign DebugEBreakS = ebreaks;
   assign DebugEBreakU = ebreaku;
@@ -166,7 +148,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   assign mprven = 1;
   assign nmip = 0;
 
-  assign NextHalt = (state_n == HALTED & state == RUNNING);
+  // Write enables for each register.
   assign WriteDCSR = CSRDWriteM & (CSRAdrM == DCSR) | NextHalt;
   assign WriteDPC = CSRDWriteM & (CSRAdrM == DPC) | NextHalt;
 
@@ -177,13 +159,13 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   assign DCSRWriteValM = CSRDWriteM & ~NextHalt ?
                          {CSRWriteValM[15], CSRWriteValM[13], CSRWriteValM[12], CSRWriteValM[11], CSRWriteValM[10],
                           CSRWriteValM[8:6], CSRWriteValM[2], CSRWriteValM[1:0]} :
-                         {ebreakm, ebreaks, ebreaku, stepie, stopcount, NextCause, step, PrivilegeModeW};
+                         {ebreakm, ebreaks, ebreaku, stepie, stopcount, NextHaltCause, step, PrivilegeModeW};
 
   // DPC Mux. Selects the correct DPC based on program execution.
   always_comb begin
     if (CSRDWriteM & DebugMode) begin
       DPCWriteValM = CSRWriteValM;
-    end else if (DebugHaltReq & NextHalt | ebreak) begin
+    end else if (DebugHaltReq & NextHalt | DebugEBreak) begin
       DPCWriteValM = PCM;
     end else if (step & NextHalt) begin
       if (PCSrcM) begin
@@ -257,136 +239,17 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   end
   // verilator lint_on WIDTH
 
-  ////////////////////////////////////////////////////////////////////
-  // Halt FSM
-  ////////////////////////////////////////////////////////////////////
-
-  always_ff @(posedge clk) begin
-    if (reset) begin
-      state <= RUNNING;
-    end else if (DebugHaltReq | DebugResumeReq | Stepping | ebreak | ResetHaltReqEnable) begin // Using the requests as enables
-      state <= state_n;
-    end else begin
-      state <= state;
-    end
-  end
-
-  // StallW must be allowed to go low before halting. When stepping
-  // into a stalled instruction, including StallW in the cases below
-  // ensures that the correct instruction reaches the WriteBack stage.
-  always_comb begin
-    case (state)
-      RUNNING: begin
-        if (DebugHaltReq & InstrValid & ~StallW) state_n = HALTED;
-        else if (ebreak) state_n = HALTED;
-        else if (step & InstrValid & ~DebugResumeFlush & ~StallW) state_n = HALTED;
-        else if (ResetHaltReqValid) state_n = HALTED;
-        else state_n = RUNNING;
-        end
-      HALTED: begin
-        if (DebugResumeReq) state_n = RUNNING;
-        else state_n = HALTED;
-        end
-      default: state_n = RUNNING;
-    endcase
-  end
-
-  always_ff @(posedge clk) begin
-    if (reset) begin
-      Stepping <= 1'b0;
-    end else if (step & DebugResumeReq) begin
-      Stepping <= 1'b1;
-    end else if (InstrValid & ~StallW) begin
-      // StallW must be low before we can reset Stepping. This
-      // waits for anything stalling the pipeline to finish so that
-      // the instruction in the Memory stage proceeds to the
-      // Writeback.
-      Stepping <= 1'b0;
-    end
-  end
-
-  assign DebugMode = (state == HALTED);
-
-  // Flush before Halt while still running
-  assign DebugHaltFlush = NextHalt;
-  //assign DebugResumeFlush = (state == HALTED) & (state_n == RUNNING);
-  assign DebugUseDPC = DebugHaltFlush | DebugResumeFlush;
-
-  // Flush after halt when running again.
-  always_ff @(posedge clk) begin
-    if (reset) begin
-      DebugResumeFlush <= 0;
-    end else begin
-      DebugResumeFlush <= (state == HALTED) & (state_n == RUNNING);
-    end
-  end
-
-  // -----------------------------------------------------------------
-  // Priv mode control
-  // -----------------------------------------------------------------
-
   always_ff @(posedge clk) begin
     if (reset) begin
       PrivModeSet <= 1'b0;
-    end else if (state_n != HALTED) begin
+    end else if (NextResume) begin
       PrivModeSet <= 1'b0;
-    end else if ((state == HALTED) & CSRDWriteM
+    end else if (DebugMode & CSRDWriteM
                  & (CSRWriteValM[1:0] != prv) & (CSRAdrM == DCSR)) begin
       PrivModeSet <= 1'b1;
     end
   end
 
-  assign DebugSetPrivMode = PrivModeSet & (state_n == RUNNING & state == HALTED);
-
-  // -----------------------------------------------------------------
-  // Reset Halt Request management
-  // -----------------------------------------------------------------
-
-  assign ResetHaltReqCondition = DebugResetHaltReq & DebugHaveReset;
-  assign ResetHaltReqValid = ResetHaltReqCondition & InstrValidE;
-  assign ResetHaltReqEnable = ResetHaltReqCondition & NextHalt;
-
-   // -----------------------------------------------------------------------------
-   // Halt cause: latch on entry into HALTED.
-   // (This avoids combinational ambiguity and “wrong cause” when multiple signals
-   //  overlap.)
-   // -----------------------------------------------------------------------------
-
-   // See Section 4.9 of Debug Specification 1.0 (Access: R)
-   // 000: No cause - Reset
-   // 001: ebreak
-   // 010: trigger
-   // 011: haltreg
-   // 100: step
-   // 101: resethaltreq
-   // 110: group (no groups implemented)
-   // 111: other (refer to extcause)
-
-   always_comb begin
-      NextCause = '0;
-    if (DebugHaltReq) begin
-      NextCause = 3'd3;
-    end else if (ebreak) begin
-      NextCause = 3'd1;
-    end else if (step & InstrValid) begin
-      NextCause = 3'd4;
-    end else if (ResetHaltReqEnable) begin
-      NextCause = 3'd5;
-    end else begin
-      NextCause = '0;
-    end
-  end
-
-  // -----------------------------------------------------------------------------
-  // DebugHaveReset
-  // -----------------------------------------------------------------------------
-
-  always_ff @(posedge clk) begin
-    if (reset) begin
-      DebugHaveReset <= 1'b1;
-    end else if (DebugHaveResetAck) begin
-      DebugHaveReset <= 1'b0;
-    end
-  end
+  assign DebugSetPrivMode = PrivModeSet & NextResume;
 
 endmodule

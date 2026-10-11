@@ -237,12 +237,11 @@ module debug import cvw::*; #(parameter cvw_t P) (
         end
 
         DMCONTROL: begin
-          DMIRSPDATA[31] <= 1'b0;
+          DMIRSPDATA[31] <= 1'b0; // Always should read haltrequest as zero
           DMIRSPDATA[30:0] <= DMControl[30:0];
         end
 
         DMSTATUS: begin
-          // Might need a separate always_comb for every register.
           DMIRSPDATA <= {NDMResetPending,
                          DMStatus[30:20],
                          DebugHaveReset, DebugHaveReset,
@@ -277,7 +276,10 @@ module debug import cvw::*; #(parameter cvw_t P) (
     end else if (WriteRequest & (DMIADDR == DMCONTROL)) begin
       DMControl <= DMControl;
       if (DebugHaltReq) begin
-        DMControl <= {DMIDATA[31], 1'b0, DMIDATA[29:28], 24'b0, DMIDATA[3:0]};
+        DMControl[31]    <= DMIDATA[31];
+        DMControl[29:28] <= DMIDATA[29:28];
+        DMControl[3:0]   <= DMIDATA[3:0];
+        // DMControl <= {DMIDATA[31], 1'b0, DMIDATA[29:28], 24'b0, DMIDATA[3:0]};
       end else begin
         DMControl <= {DMIDATA[31:28], 24'b0, DMIDATA[3:0]};
       end
@@ -294,7 +296,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
       // we're writing to ResumeReq p. 28. There will
       // always be at least 1 cycle of latency after
       // receving the ResumeReq
-      if (DMIDATA[30]) DMStatus <= {DMStatus[31:18], 2'b0, DMStatus[15:0]};
+      if (DMIDATA[30]) DMStatus[17:16] <= 2'b0;
     end
   end
 
@@ -347,12 +349,10 @@ module debug import cvw::*; #(parameter cvw_t P) (
       // Number of data registers
       AbstractCS <= P.LLEN > 32 ? 32'h0000_0002 : 32'h000_0001;
     end else if (WriteRequest & (DMIADDR == ABSTRACTCS)) begin
-      AbstractCS <= {AbstractCS[31:12],
-                     DMIDATA[11], // RelaxedPriv
-                     DMIDATA[8] == 1'b1 ? 3'b0 : AbstractCS[10:8], // CMDErr -> R/W1C
-                     AbstractCS[7:0]}; // Only RelaxedPriv and CMDErr are writeable
+      AbstractCS[11] <= DMIDATA[11]; // RelaxedPriv
+      AbstractCS[10:8] <= DMIDATA[8] == 1'b1 ? 3'b0 : AbstractCS[10:8];
     end else if (WriteRequest & (DMIADDR == COMMAND)) begin
-      AbstractCS <= {AbstractCS[31:11], AbstractCS[10:8] == 3'b0 ? CMDErr : AbstractCS[10:8], AbstractCS[7:0]};
+      AbstractCS[10:8] <= AbstractCS[10:8] == 3'b0 ? CMDErr : AbstractCS[10:8];
     end else if (StartCommand & PREADY) begin
       AbstractCS[10:8] <= CMDErr;
     end
@@ -370,6 +370,10 @@ module debug import cvw::*; #(parameter cvw_t P) (
     end
   end
 
+  // TODO: This is wrong. Resume Request is a W1 field, meaning only a
+  // write of 1 should have any effect. This means that this should be
+  // cleared when the HART is running not upon DMControl[30] being
+  // given a 0.
   always_comb begin
     case(CurrResumeReq)
       RESUMEREQIDLE: begin
