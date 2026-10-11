@@ -415,12 +415,12 @@ coverage exclude -scope /core/ifu/immu/immu/tlb/tlb/tlbcontrol -fecexprrow $line
 set line [GetLineNum ${SRC}/mmu/tlb/tlbcontrol.sv "~CAMHit & TLBAccess"]
 coverage exclude -scope /core/ifu/immu/immu/tlb/tlb/tlbcontrol -fecexprrow $line 3
 
-# IMMU only makes word-sized accesses (Size = 2'b10), so the byte, halfword and doubleword arms of the
-# misalignment case never run, and the fetch address bit 0 is always 0 (row 4, VAdr[0]_1, of the word arm).
-foreach arm {"2'b00:  DataMisalignedM" "2'b01:  DataMisalignedM" "2'b11:  DataMisalignedM"} {
+# IMMU only makes word-sized accesses (Size = 3'b010), so the other arms of the misalignment case never
+# run, and the fetch address bit 0 is always 0 (row 4, VAdr[0]_1, of the word arm).
+foreach arm {"3'b000:  DataMisalignedM" "3'b001:  DataMisalignedM" "3'b011:  DataMisalignedM" "3'b100:  DataMisalignedM" "default: DataMisalignedM"} {
   coverage exclude -scope /core/ifu/immu/immu -linerange [GetLineNum ${SRC}/mmu/mmu.sv $arm] -item bs 1
 }
-coverage exclude -scope /core/ifu/immu/immu -fecexprrow [GetLineNum ${SRC}/mmu/mmu.sv "2'b10:  DataMisalignedM"] 4
+coverage exclude -scope /core/ifu/immu/immu -fecexprrow [GetLineNum ${SRC}/mmu/mmu.sv "3'b010:  DataMisalignedM"] 4
 
 # IMMU never disables translations (DisableTranslation_1).
 coverage exclude -scope /core/ifu/immu/immu/tlb/tlb/tlbcontrol -fecexprrow [GetLineNum ${SRC}/mmu/tlb/tlbcontrol.sv "assign Translate"] 2
