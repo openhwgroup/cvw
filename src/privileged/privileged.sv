@@ -182,12 +182,15 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
 
   // Control and Status Registers
   csr #(P) csr(.clk, .reset, .FlushM, .FlushW, .StallE, .StallM, .StallW,
-    .InstrM, .InstrOrigM, .NextValidPCE, .PCM, .PCSpillM, .SrcAM, .IEUAdrxTvalM,
+    .InstrM, .InstrOrigM, .PCSrcE, .NextValidPCE, .IEUAdrM, .PCM, .PCSpillM, .SrcAM, .IEUAdrxTvalM,
     .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .InterruptM,
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
-    .MTIME_CLINT, .InstrValidM, .InstrValidE, .FRegWriteM, .LoadStallD, .StoreStallD,
+    .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD, .StoreStallD,
     .BPDirWrongM, .BTAWrongM, .RASPredPCWrongM, .BPWrongM,
     .sfencevmaM, .ExceptionM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
+    .DebugCSREnable, .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite,
+    .DebugMode, .DebugHaltReq, .DebugResumeReq, .DebugResetHaltReq,
+    .BreakpointFaultM, .NextHalt, .NextResume, .DebugHalted, .DebugRunning, .NextHaltCause, .DebugEBreak,
     .IClassWrongM, .IClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
     .NextPrivilegeModeM, .PrivilegeModeW, .CauseM, .SelHPTW,
     .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TVM,
@@ -197,14 +200,8 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .SetFflagsM, .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE,
     .EPCM, .TrapVectorM,
     .CSRReadValM, .CSRReadValW, .IllegalCSRAccessM, .BigEndianM,
-    .DebugMode, .DebugHaltReq, .DebugResumeReq, .DebugCSREnable, .DebugRegWDATA,
-    .DebugRegAddr, .DebugRegWrite, //.DebugHaltFlush, .DebugResumeFlush,
-    .DPC,
-    .DebugResetHaltReq, .BreakpointFaultM,
-    .DebugEBreakM, .DebugEBreakS, .DebugEBreakU,
-    .IEUAdrM, .PCSrcE, .DebugStepIE, .DebugStep,
-    .DebugPrivilegeMode, .DebugSetPrivMode, .NextHaltCause, .IllegalDebugCSRAccess, .NextHalt, .NextResume,
-    .DebugHalted, .DebugRunning, .DebugEBreak
+    .DPC, .DebugEBreakM, .DebugEBreakS, .DebugEBreakU,
+    .DebugStepIE, .DebugStep, .DebugSetPrivMode, .DebugPrivilegeMode, .IllegalDebugCSRAccess
     );
 
   // pipeline early-arriving trap sources

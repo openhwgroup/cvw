@@ -32,22 +32,21 @@
 
 module csrd import cvw::*;  #(parameter cvw_t P) (
   input  logic              clk, reset,
-  input  logic              DebugHaltReq, DebugResumeReq,
   input  logic              CSRDWriteM,
   input  logic [11:0]       CSRAdrM,
   input  logic [P.XLEN-1:0] CSRWriteValM,
-  input  logic              InstrValid,
-  input  logic              InstrValidE,
+  input  logic              PCSrcE, FlushM, StallM,
+  input  logic [P.XLEN-1:0] NextValidPCE,
+  input  logic [P.XLEN-1:0] IEUAdrM, PCM,
   input  logic [1:0]        PrivilegeModeW,
   input  logic              DebugMode,
+  input  logic              DebugHaltReq, DebugResumeReq,
   input  logic              DebugResetHaltReq,
   input  logic              BreakpointFaultM,
-  input  logic              PCSrcE, FlushM, StallM,
-  input  logic [P.XLEN-1:0] NextValidPCE, PCM,
-  input  logic [P.XLEN-1:0] IEUAdrM,
-  input  logic [2:0]        NextHaltCause,
   input  logic              NextHalt, NextResume,
-  input  logic              DebugHalted, DebugRunning, DebugEBreak,
+  input  logic              DebugHalted, DebugRunning,
+  input  logic [2:0]        NextHaltCause,
+  input  logic              DebugEBreak,
   output logic [P.XLEN-1:0] CSRDReadValM,
   output logic              IllegalCSRDAccessM,
   output logic [P.XLEN-1:0] DPC_REGW,
@@ -65,11 +64,6 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   localparam                DPC = 12'h7B1;
   localparam                DSCRATCH0 = 12'h7B2;
   localparam                DSCRATCH1 = 12'h7B3;
-
-  // Write Enables
-  logic                     WriteDCSR;
-  logic                     WriteDPC;
-  logic                     WriteCause;
 
   // Need this for resuming
   logic                     PCSrcM;
@@ -107,24 +101,18 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   // privileged modes, I'm setting this to 1 temporarily, implying
   // that the privilege mode always takes effect.
 
-  logic                     ResetHaltReqCondition;
-  logic                     ResetHaltReqEnable;
-  logic                     ResetHaltReqValid;
-
-   // debug specification 4.9.1, 0x7b0
+  // debug specification 4.9.1, 0x7b0
   localparam dcsrwidth = ($bits(ebreakm) + $bits(ebreaks) + $bits(ebreaku) +
     $bits(stepie) + $bits(stopcount) + $bits(cause) + $bits(step) + $bits(prv));
 
+  // Write enables
+  logic                     WriteDCSR;
+  logic                     WriteDPC;
+
+  // Register values
   logic [dcsrwidth-1:0]     DCSRWriteValM;
   logic [dcsrwidth-1:0]     DCSR_REGW;
-
   logic [P.XLEN-1:0]        DPCWriteValM;
-
-  logic [2:0]               NextCause;  // Cause of halt
-
-  // This signal indicates we are in the middle of a step. Used as an
-  // enable signal for the halting state machine
-  logic Stepping;
 
   // Detect writes to Priv Mode for the purpose of changing the
   // privileged mode upon resume
@@ -148,13 +136,16 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   assign mprven = 1;
   assign nmip = 0;
 
-  // Write enables for each register.
-  assign WriteDCSR = CSRDWriteM & (CSRAdrM == DCSR) | NextHalt;
-  assign WriteDPC = CSRDWriteM & (CSRAdrM == DPC) | NextHalt;
-
+  ////////////////////////////////////////////////////////////////////
+  // CSR Writes
+  ////////////////////////////////////////////////////////////////////
   // Need to revisit this, as there is already a PCSrcM register in
   // the branch predictor.
   flopenrc #(1) PCSrcMReg (clk, reset, FlushM, ~StallM, PCSrcE, PCSrcM);
+
+  // Write enables for each register.
+  assign WriteDCSR = CSRDWriteM & (CSRAdrM == DCSR) | NextHalt;
+  assign WriteDPC  = CSRDWriteM & (CSRAdrM == DPC) | NextHalt;
 
   assign DCSRWriteValM = CSRDWriteM & ~NextHalt ?
                          {CSRWriteValM[15], CSRWriteValM[13], CSRWriteValM[12], CSRWriteValM[11], CSRWriteValM[10],
@@ -183,12 +174,12 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
     end
   end
 
+  flopenr #(dcsrwidth) DCSRreg(clk, reset, WriteDCSR, DCSRWriteValM, DCSR_REGW);
+  flopenr #(P.XLEN) DPCreg(clk, reset, WriteDPC, DPCWriteValM, DPC_REGW);
+
   ////////////////////////////////////////////////////////////////////
   // CSRs
   ////////////////////////////////////////////////////////////////////
-
-  flopenr #(dcsrwidth) DCSRreg(clk, reset, WriteDCSR, DCSRWriteValM, DCSR_REGW);
-  flopenr #(P.XLEN) DPCreg(clk, reset, WriteDPC, DPCWriteValM, DPC_REGW);
 
   assign ebreakm = DCSR_REGW[dcsrwidth-1];
   assign ebreaks = DCSR_REGW[dcsrwidth-2];
@@ -239,6 +230,10 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   end
   // verilator lint_on WIDTH
 
+  ////////////////////////////////////////////////////////////////////
+  // Using prv to override the current privileged mode from the
+  // debugger.
+  ////////////////////////////////////////////////////////////////////
   always_ff @(posedge clk) begin
     if (reset) begin
       PrivModeSet <= 1'b0;

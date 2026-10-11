@@ -35,7 +35,9 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic                     StallE, StallM, StallW,
   input  logic [31:0]              InstrM,                    // current instruction
   input  logic [31:0]              InstrOrigM,                // Original compressed or uncompressed instruction in Memory stage for Illegal Instruction MTVAL
-  input  logic [P.XLEN-1:0]        NextValidPCE,
+  input  logic                     PCSrcE,                    // For DPC. Registered into PCSrcM to choose the correct next PC.
+  input  logic [P.XLEN-1:0]        NextValidPCE,              // For DPC. If the fallthrough address is not in the memory stage, this is the PC of the next instruction.
+  input  logic [P.XLEN-1:0]        IEUAdrM,                   // For DPC. DPC should be set to this upon jumps or branches.
   input  logic [P.XLEN-1:0]        PCM,                       // program counter, next PC going to trap/return logic
   input  logic [P.XLEN-1:0]        PCSpillM,                  // program counter, next PC going to trap/return logic aligned after an instruction spill
   input  logic [P.XLEN-1:0]        SrcAM, IEUAdrxTvalM,       // SrcA and memory address from IEU
@@ -49,7 +51,6 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic                     MSwInt,                    // software interrupt
   input  logic [63:0]              MTIME_CLINT,               // TIME value from CLINT
   input  logic                     InstrValidM,               // current instruction is valid
-  input  logic                     InstrValidE,               // Valid instruction in execute stage (for halt on reset)
   input  logic                     FRegWriteM,                // writes to floating point registers change STATUS.FS
   input  logic [4:0]               SetFflagsM,                // Set floating point flag bits in FCSR
   input  logic [1:0]               NextPrivilegeModeM,        // STATUS bits updated based on next privilege mode
@@ -74,6 +75,19 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic                     InvalidateICacheM,
   input  logic                     DivBusyE,                  // integer divide busy
   input  logic                     FDivBusyE,                 // floating point divide busy
+  // Debug Inputs
+  input  logic                     DebugCSREnable,
+  input  logic [P.XLEN-1:0]        DebugRegWDATA,
+  input  logic [11:0]              DebugRegAddr,
+  input  logic                     DebugRegWrite,
+  input  logic                     DebugMode,
+  input  logic                     DebugHaltReq, DebugResumeReq,
+  input  logic                     DebugResetHaltReq,
+  input  logic                     BreakpointFaultM,
+  input  logic                     NextHalt, NextResume,
+  input  logic                     DebugHalted, DebugRunning,
+  input  logic [2:0]               NextHaltCause,
+  input  logic                     DebugEBreak,
   // outputs from CSRs
   output logic [1:0]               STATUS_MPP,
   output logic                     STATUS_SPP, STATUS_TSR, STATUS_TVM,
@@ -93,37 +107,20 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   output logic [P.XLEN-1:0]        EPCM,                      // Exception Program counter to IFU PC logic
   output logic [P.XLEN-1:0]        TrapVectorM,               // Trap vector, to IFU PC logic
   //
-  output logic [P.XLEN-1:0]        CSRReadValM,
+  output logic [P.XLEN-1:0]        CSRReadValM,               // For Debug. Debugger gets read directly from M stage logic after pipeline is flushed.
   output logic [P.XLEN-1:0]        CSRReadValW,               // value read from CSR
   output logic                     IllegalCSRAccessM,         // Illegal CSR access: CSR doesn't exist or is inaccessible at this privilege level
   output logic                     BigEndianM,                // memory access is big-endian based on privilege mode and STATUS register endian fields
-  // Debug Signals
-  input  logic                     DebugMode,
-  input  logic                     DebugHaltReq, DebugResumeReq,
-  input  logic                     DebugCSREnable,
-  // output logic [P.XLEN-1:0]     DebugCSRRDATA,
-  input  logic [P.XLEN-1:0]        DebugRegWDATA,
-  input  logic [11:0]              DebugRegAddr,
-  input  logic                     DebugRegWrite,
-  //output logic                     DebugHaltFlush, DebugResumeFlush,
-  // output logic                     DebugUseDPC,
-  output logic [P.XLEN-1:0]        DPC,
-  // input  logic                     DebugHaveReset,
-  //input  logic                     DebugHaveResetAck,
-  input  logic                     DebugResetHaltReq,
-  input  logic                     BreakpointFaultM,
-  output logic                     DebugEBreakM, DebugEBreakS, DebugEBreakU,
-  input  logic [P.XLEN-1:0]        IEUAdrM,
-  input  logic                     PCSrcE,
+  // Debug ouptuts
+  output logic [P.XLEN-1:0]        DPC,                       // Sets the program counter upon stepping and resuming.
+  output logic                     DebugEBreakM,
+  output logic                     DebugEBreakS,
+  output logic                     DebugEBreakU,
   output logic                     DebugStepIE,
   output logic                     DebugStep,
+  output logic                     DebugSetPrivMode,          // Sets Privileged mode when the Debugger writes to prv in DCSR.
   output logic [1:0]               DebugPrivilegeMode,
-  output logic                     DebugSetPrivMode,
-  input  logic [2:0]               NextHaltCause,
-  output logic                     IllegalDebugCSRAccess,
-  input  logic                     NextHalt, NextResume,
-  input  logic                     DebugHalted, DebugRunning,
-  input  logic                     DebugEBreak
+  output logic                     IllegalDebugCSRAccess      // For Debug. Asserts if the Debugger reads a non-existent CSR.
 );
 
   localparam MIP = 12'h344;
@@ -328,12 +325,13 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     .MTIME_CLINT,  .CSRCReadValM, .IllegalCSRCAccessM, .DebugStopCounters);
 
   if (P.DEBUG_SUPPORTED) begin : debug
-    csrd #(P) csrd(.clk, .reset, .DebugHaltReq, .DebugResumeReq,
-      .CSRDWriteM, .CSRAdrM, .CSRWriteValM, .InstrValid(InstrValidM), .InstrValidE, .PrivilegeModeW,
-      .DebugMode, .DebugResetHaltReq, .BreakpointFaultM,
-      .PCSrcE, .FlushM, .StallM, .NextValidPCE, .PCM, .IEUAdrM,
-      .NextHaltCause, .NextHalt, .NextResume,
-      .DebugHalted, .DebugRunning, .DebugEBreak,
+    csrd #(P) csrd(.clk, .reset,
+      .CSRDWriteM, .CSRAdrM, .CSRWriteValM,
+      .PCSrcE, .FlushM, .StallM, .NextValidPCE, .IEUAdrM, .PCM,
+      .PrivilegeModeW,
+      .DebugMode, .DebugHaltReq, .DebugResumeReq, .DebugResetHaltReq, .BreakpointFaultM,
+      .NextHalt, .NextResume,
+      .DebugHalted, .DebugRunning, .NextHaltCause, .DebugEBreak,
       .CSRDReadValM, .IllegalCSRDAccessM,
       .DPC_REGW(DPC),
       .DebugEBreakM, .DebugEBreakS, .DebugEBreakU,
@@ -341,14 +339,9 @@ module csr import cvw::*;  #(parameter cvw_t P) (
       .DebugPrivilegeMode, .DebugSetPrivMode, .DebugStopCounters
     );
   end else begin
-    // assign DebugMode = 1'b0;
     assign CSRDReadValM = '0;
     assign IllegalCSRDAccessM = 1'b1;
-    // assign DebugHaltFlush = 1'b0;
-    // assign DebugResumeFlush = 1'b0;
-    //assign DebugUseDPC = 1'b0;
     assign DPC = 0;
-    //assign DebugHaveReset = 1'b0;
     assign DebugEBreakM = 0;
     assign DebugEBreakS = 0;
     assign DebugEBreakU = 0;

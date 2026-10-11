@@ -39,6 +39,7 @@ module debugmode import cvw::*;  #(parameter cvw_t P)(
   typedef enum logic [1:0] {RESACKLOW, RESACKCLEAR, RESACKHIGH} resack_state_e;
   resack_state_e resack_state, next_resack_state;
 
+  // Reset halt request signals. Conditions must be right for a reset halt request.
   assign ResetHaltReqCondition = DebugResetHaltReq & DebugHaveReset;
   assign ResetHaltReqValid = ResetHaltReqCondition & InstrValidE;
   assign ResetHaltReqEnable = ResetHaltReqCondition & NextHalt;
