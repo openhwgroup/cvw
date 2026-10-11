@@ -27,6 +27,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
+`define INSTR_CLASS_PRED 1
 `include "BranchPredictorType.vh"
 
 module bpred import cvw::*; #(parameter cvw_t P) (
@@ -68,7 +69,6 @@ module bpred import cvw::*; #(parameter cvw_t P) (
   output logic              IClassWrongM                    // Instruction class prediction was wrong
 );
 
-  localparam INSTR_CLASS_PRED = 1; // 1: BTB predicts the instruction class; 0: partially decode it in Fetch
 
   logic [1:0]              BPDirF;
 
@@ -154,7 +154,7 @@ module bpred import cvw::*; #(parameter cvw_t P) (
       .IClassM({CallM, ReturnM, JumpM, BranchM}),
       .IClassW({CallW, ReturnW, JumpW, BranchW}));
 
-  icpred #(P, INSTR_CLASS_PRED) icpred(.clk, .reset, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM,
+  icpred #(P, `INSTR_CLASS_PRED) icpred(.clk, .reset, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM,
     .PostSpillInstrRawF, .InstrD, .BranchD, .BranchE, .JumpD, .JumpE, .BranchM, .BranchW, .JumpM, .JumpW,
     .CallD, .CallE, .CallM, .CallW, .ReturnD, .ReturnE, .ReturnM, .ReturnW, .BTBCallF, .BTBReturnF, .BTBJumpF,
     .BTBBranchF, .BPCallF, .BPReturnF, .BPJumpF, .BPBranchF, .IClassWrongM, .BPReturnWrongD);
@@ -186,7 +186,7 @@ module bpred import cvw::*; #(parameter cvw_t P) (
 
   // If the fence/csrw was predicted as a taken branch then we select PCF, rather than PCE.
   // Effectively this is PCM+4 or the non-existent PCLinkM
-  if (INSTR_CLASS_PRED) mux2 #(P.XLEN) pcmuxBPWrongInvalidateFlush(PCE, PCF, BPWrongM, NextValidPCE);
+  if (`INSTR_CLASS_PRED) mux2 #(P.XLEN) pcmuxBPWrongInvalidateFlush(PCE, PCF, BPWrongM, NextValidPCE);
   else assign NextValidPCE = PCE;
 
   if (P.ZIHPM_SUPPORTED) begin
