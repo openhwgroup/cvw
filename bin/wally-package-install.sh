@@ -99,7 +99,7 @@ case "$FAMILY" in
         SAIL_PACKAGES+=(ninja-build libgmp-dev)
         VERILATOR_PACKAGES+=(libfl2 libfl-dev zlib1g-dev libunwind-dev libgoogle-perftools-dev perl-doc)
         BUILDROOT_PACKAGES+=(ncurses-base ncurses-bin libncurses-dev gfortran) # gfortran is only needed for compiling spec benchmarks on buildroot linux
-        VIVADO_PACKAGES+=(libncurses*) # Vivado hangs on the third stage of installation without this
+        VIVADO_PACKAGES+=(libncursesada-dev) # Vivado hangs on the third stage of installation without this
         ;;
     suse)
         if ((SUSE_VERSION >= 160)); then
