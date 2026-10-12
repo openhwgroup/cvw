@@ -15,7 +15,7 @@ Wally is a 5-stage pipelined processor configurable to support up through the RV
 - Sv39, Sv48, and Sv57 virtual memory with Svpbmt, Svnapot, Svinval, and Svadu
 - 16 PMP entries
 
-Other configurations range down to a minimal RV32E core, and derivative configurations add the Q extension. Wally provides optional caches, branch prediction, and standard RISC-V peripherals (CLINT, PLIC, UART, GPIO).   Wally is written in SystemVerilog.  It passes the [RISC-V Arch Tests](https://github.com/riscv-non-isa/riscv-arch-test) and boots Linux on an FPGA.  Wally is part of the OpenHWGroup family of robust open RISC-V cores.
+Other configurations range down to a minimal RV32E core, and derivative configurations add the Q extension. Wally provides optional caches, branch prediction, and standard RISC-V peripherals (CLINT, PLIC, UART, GPIO).   Wally is written in SystemVerilog.  It passes the [RISC-V Arch Tests](https://github.com/riscv/riscv-arch-test) and boots Linux on an FPGA.  Wally is part of the OpenHW Foundation family of robust open RISC-V cores.
 
 ![Wally block diagram](wallyriscvTopAll.png)
 
