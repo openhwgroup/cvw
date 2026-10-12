@@ -140,9 +140,9 @@ module csrh import cvw::*;  #(parameter cvw_t P) (
 
   // hedeleg bit 0 is writable only when IALIGN=32. Compressed support implies IALIGN=16,
   // so mirror the existing medeleg handling and clear bit 0 when Zca/compressed is enabled.
-  // Bits 18 and 19 are read-only zero per the H-spec delegation table.
-  localparam [63:0] HEDELEG_MASK = P.ZCA_SUPPORTED ? 64'h0000_0000_0000_B1FE
-                                                   : 64'h0000_0000_0000_B1FF;
+  // Bits 18 and 19 are writable per the H-spec delegation table.
+  localparam [63:0] HEDELEG_MASK = P.ZCA_SUPPORTED ? 64'h0000_0000_000C_B1FE
+                                                   : 64'h0000_0000_000C_B1FF;
   // HIDELEG: only VS-level interrupts (VSSIP/VSTIP/VSEIP) are writable.
   localparam [15:0] HIDELEG_MASK = 16'h0444;
   localparam [11:0] HVIP_MASK    = 12'h444; // Only VSSIP[2], VSTIP[6], VSEIP[10] are writable (spec 7.4.4)
