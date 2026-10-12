@@ -162,14 +162,15 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     logic [P.XLEN-1:0] PCSpillD, PCSpillE;
     logic [P.XLEN-1:0] PCIncrM;
     logic              SelSpillF, SelSpillD, SelSpillE, SelSpillM;
-    logic              FirstHalfFaultF;
     spill #(P) spill(.clk, .reset, .StallF, .FlushD, .PCF, .PCPlus4F, .PCNextF, .InstrRawF,  .CacheableF,
       .InstrPageFaultF(InstrPageFaultRawF), .InstrAccessFaultF(InstrAccessFaultRawF),
       .IFUCacheBusStallF, .ITLBMissOrUpdateAF(ITLBMissOrUpdateRawF), .PCSpillNextF, .PCSpillF, .SelSpillNextF, .SelSpillF,
-      .InstrPageFaultSpillF(InstrPageFaultF), .InstrAccessFaultSpillF(InstrAccessFaultF), .FirstHalfFaultF,
       .PostSpillInstrRawF, .CompressedF);
-    // A fault on the first half is reported at PCM, not PCM+2, so clear the spill flag that adds the +2 in xtval
-    flopenr #(1) SpillDReg(clk, reset, ~StallD, SelSpillF & ~FirstHalfFaultF, SelSpillD);
+    // A spill is taken only when the first half fetches cleanly, so a fault during a spill belongs to the
+    // second half and is reported at PCM+2.
+    assign InstrPageFaultF = InstrPageFaultRawF;
+    assign InstrAccessFaultF = InstrAccessFaultRawF;
+    flopenr #(1) SpillDReg(clk, reset, ~StallD, SelSpillF, SelSpillD);
     flopenr #(1) SpillEReg(clk, reset, ~StallE, SelSpillD, SelSpillE);
     flopenr #(1) SpillMReg(clk, reset, ~StallM, SelSpillE, SelSpillM);
     assign PCIncrM = PCM + 'd2;
