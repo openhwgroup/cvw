@@ -34,7 +34,7 @@ General Overview of Implemented Features:
 - [x] Halting and Resuming
 - [x] Abstract GPR read and write access.
 - [x] Abstract CSR read and write access.
-- [ ] Stepping
+- [x] Stepping
 - [x] Resetting from Debug Module
 - [x] Halt on Reset
 - [ ] Trigger Modules 🔶
@@ -82,12 +82,12 @@ Debug Module
   - [x] anyhalted
   - [ ] authenticated 🔶
   - [ ] authbusy 🔶
-  - [ ] hasresethaltreq
+  - [x] hasresethaltreq
   - [ ] confstrptrvalid :-:
   - [x] version
 - [x] Command
 - [x] AbstractCS
-  - [ ] progbufsize 🔶
+  - [x] progbufsize 🔶
   - [ ] busy
     - For clarification, abstract access are near immediate currently, so there are no busy cycles. This is subject to change.
   - [ ] relaxedpriv 🔶
@@ -105,20 +105,20 @@ Debug Extension
   - [x] Resuming
   - [x] Version field
   - [x] Halt cause updating
-  - [ ] Stepping
-  - [ ] Stepie 🔶
+  - [x] Stepping
+  - [x] Stepie 🔶
     - This is for enabling interrupts during stepping. Not as important as implementing stepping itself for now.
-  - [ ] Ebreak to Debug mode in all modes
-  - [ ] Stop counters 🔶
+  - [x] Ebreak to Debug mode in all modes
+  - [x] Stop counters 🔶
   - [ ] Stop time 🔶
   - [ ] extcause :-:
     - Can just be set to 0 for not being implemented and also stays 0 even if cetrig is implemented which is partly what it's needed for. All other values are reserved for future version of the RISCV debug spec.
   - [ ] nmip 🔶
-  - [ ] prv
+  - [x] prv
   - [ ] mprven
   - [ ] v 🔶  
 - [x] DPC
   - [x] Grabs PC + 4 on Halt
-  - [ ] Resumes at DPC value on Resume
+  - [x] Resumes at DPC value on Resume
 
 - [ ] Sdtrig 🔶
