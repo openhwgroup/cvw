@@ -414,7 +414,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
             FWriteDataM, FCvtIntResW, FIntDivResultW, FDivBusyE} = '0;
   end
 
-  if (P.DEBUG_SUPPORTED) begin : debug_apb
+  if (P.SDEXT_SUPPORTED) begin : debug_apb
     debug_apb_completer #(P) debug_apb(.PCLK, .PRESETn,
       .PENABLE, .PSELRegister, .PWRITE, .PWDATA, .PADDR,
       .PREADY, .PRDATA, .PSLVERR,

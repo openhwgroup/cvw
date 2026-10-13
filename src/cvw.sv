@@ -311,6 +311,7 @@ typedef struct packed {
 
   // Debug Specification Variables
   logic DEBUG_SUPPORTED;
+  logic SDEXT_SUPPORTED;
   logic [31:0] JEDEC;
   logic [5:0] ABITS;
   int         DTM_INSTR_WIDTH;

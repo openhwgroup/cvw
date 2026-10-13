@@ -161,7 +161,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
 
   // CREATE DebugEBReak
   // NextHalt and DebugHaltFlush are the same signal. Consolidate?
-  if (P.DEBUG_SUPPORTED) begin : debugmode
+  if (P.SDEXT_SUPPORTED) begin : debugmode
     debugmode #(P) debugmode(.clk, .reset, .StallW, .InstrValidM, .InstrValidE,
       .DebugHaltReq, .DebugResumeReq, .DebugResetHaltReq,
       .DebugStep, .DebugEBreakM, .DebugEBreakS, .DebugEBreakU, .BreakpointFaultM, .PrivilegeModeW,

@@ -108,7 +108,7 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0] Result;
 
   // Debug Spec muxing of regfile inputs
-  if (P.DEBUG_SUPPORTED) begin
+  if (P.SDEXT_SUPPORTED) begin
     mux2 #(5) rfreadaddrmux (Rs1D, DebugRegAddr[4:0], DebugGPREnable, Rs1);
     mux2 #(5) rfwriteaddrmux (RdW, DebugRegAddr[4:0], DebugGPREnable, Rd);
     mux2 #(P.XLEN) rfwdatamux (ResultW, DebugRegWDATA, DebugGPREnable, Result);

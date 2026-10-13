@@ -195,7 +195,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
               .FResSelE, .FResSelM, .FResSelW, .FPUActiveE, .PostProcSelE, .PostProcSelM, .FCvtIntW,
               .Adr1D, .Adr2D, .Adr3D, .Adr1E, .Adr2E, .Adr3E);
 
-  if (P.DEBUG_SUPPORTED) begin
+  if (P.SDEXT_SUPPORTED) begin
     mux2 #(5) rfreadaddrmux (InstrD[19:15], DebugRegAddr[4:0], DebugFPREnable, a1);
     mux2 #(5) rfwriteaddrmux (RdW, DebugRegAddr[4:0], DebugFPREnable, Rd);
     mux2 #(P.FLEN) rfwdatamux (FResultW, DebugRegWDATA, DebugFPREnable, Result);

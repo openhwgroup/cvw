@@ -369,7 +369,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
 
   mux3 #(P.XLEN) pcmux3(PC2NextF, EPCM, TrapVectorM, {TrapM, RetM}, UnalignedPCNextF);
 
-  if (P.DEBUG_SUPPORTED) begin
+  if (P.SDEXT_SUPPORTED) begin
     mux2 #(P.XLEN) pcmuxdebug(UnalignedPCNextF, DPC, DebugUseDPC, DebugPCNextF);
   end else begin
     assign DebugPCNextF = UnalignedPCNextF;
