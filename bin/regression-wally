@@ -297,6 +297,12 @@ testfloatdivconfigs = [
 lockstepwaivers = [
     "Zicbom-cbo.inval-00.elf", # ImperasDV lacks cache model to match CVW on invalidation
 
+    # Zama16b: Wally performs a misaligned AMO that stays within one cache line and faults one that
+    # crosses a line.  ImperasDV has no Zama16b parameter; its only control, Zam, either faults every
+    # misaligned AMO (Zam=F, the default) or performs every one, including those that cross a line
+    # (Zam=T), so neither setting matches.
+    "zama16b.elf",
+
     # Wally implements writable mhpmevent bits; ImperasDV models them as read-only zero and offers no
     # parameter to change that, so every test that walks or writes mhpmevent disagrees.  The tests
     # themselves pass without lockstep.
