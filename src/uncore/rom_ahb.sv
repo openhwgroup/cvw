@@ -38,7 +38,7 @@ module rom_ahb import cvw::*;  #(parameter cvw_t P,
   output logic                 HRESPRom, HREADYRom
 );
 
-  localparam ADDR_WIDTH = $clog2(RANGE/8);
+  localparam ADDR_WIDTH = $clog2((RANGE+1)/64'(P.XLEN/8)); // RANGE is a mask (size-1); depth is in XLEN-bit words
   localparam OFFSET     = $clog2(P.XLEN/8);
 
   // Never stalls
