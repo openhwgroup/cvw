@@ -29,7 +29,7 @@ add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/Lo
 add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/StoreAmoPageFaultM
 add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/InterruptM
 add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/HPTWInstrAccessFaultM
-add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/pmd/wfiTimeoutM
+add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/pmd/TWTimeoutM
 add wave -noupdate -group HDU -group Flush -color Yellow /testbench/dut/core/FlushD
 add wave -noupdate -group HDU -group Flush -color Yellow /testbench/dut/core/FlushE
 add wave -noupdate -group HDU -group Flush -color Yellow /testbench/dut/core/FlushM
@@ -42,7 +42,7 @@ add wave -noupdate -group HDU -group Stall -color Orange /testbench/dut/core/Sta
 add wave -noupdate -group HDU -group interrupts /testbench/dut/core/priv/priv/trap/PendingIntsM
 add wave -noupdate -group HDU -group interrupts /testbench/dut/core/priv/priv/trap/InstrValidM
 add wave -noupdate -group HDU -group interrupts /testbench/dut/core/priv/priv/trap/ValidIntsM
-add wave -noupdate -group HDU -group interrupts /testbench/dut/core/hzu/wfiWaitM
+add wave -noupdate -group HDU -group interrupts /testbench/dut/core/hzu/WaitM
 add wave -noupdate -group {instruction pipeline} /testbench/InstrFName
 add wave -noupdate -group {instruction pipeline} /testbench/dut/core/ifu/PostSpillInstrRawF
 add wave -noupdate -group {instruction pipeline} /testbench/dut/core/ifu/InstrD
@@ -657,9 +657,9 @@ add wave -noupdate -group FPU /testbench/dut/core/fpu/fpu/unpack/Z
 add wave -noupdate -group FPU /testbench/dut/core/fpu/fpu/fregfile/rf
 add wave -noupdate -group wfi /testbench/dut/core/priv/priv/pmd/STATUS_TW
 add wave -noupdate -group wfi /testbench/dut/core/priv/priv/pmd/PrivilegeModeW
-add wave -noupdate -group wfi /testbench/dut/core/priv/priv/pmd/wficnt/WFICount
-add wave -noupdate -group wfi /testbench/dut/core/priv/priv/pmd/wfiWaitedM
-add wave -noupdate -group wfi /testbench/dut/core/priv/priv/pmd/wfiTimeoutM
+add wave -noupdate -group wfi /testbench/dut/core/priv/priv/pmd/waitcnt/WaitCount
+add wave -noupdate -group wfi /testbench/dut/core/priv/priv/pmd/WaitedM
+add wave -noupdate -group wfi /testbench/dut/core/priv/priv/pmd/TWTimeoutM
 add wave -noupdate -group testbench /testbench/DCacheFlushStart
 add wave -noupdate /testbench/dut/core/lsu/hptw/hptw/HPTWLoadPageFault
 add wave -noupdate /testbench/dut/core/lsu/hptw/hptw/HPTWLoadPageFaultDelay

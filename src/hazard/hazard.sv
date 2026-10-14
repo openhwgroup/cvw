@@ -33,7 +33,7 @@ module hazard (
   input  logic  LSUStallM, IFUStallF,
   input  logic  FPUStallD, ExternalStall,
   input  logic  DivBusyE, FDivBusyE,
-  input  logic  wfiWaitM,              // wfi in M is waiting for an interrupt
+  input  logic  WaitM,                 // wfi in M is waiting for an interrupt
   // Stall & flush outputs
   output logic StallF, StallD, StallE, StallM, StallW,
   output logic FlushD, FlushE, FlushM, FlushW
@@ -75,7 +75,7 @@ module hazard (
   //  The IFU and LSU stall the entire pipeline on a cache miss, bus access, or other long operation.
   //    The IFU stalls the entire pipeline rather than just Fetch to avoid complications with instructions later in the pipeline causing Exceptions
   //    A trap could be asserted at the start of a IFU/LSU stall, and should flush the memory operation
-  //  A waiting wfi in M (wfiWaitM) stalls the entire pipeline in the same way, so the instruction in W keeps forwarding
+  //  A waiting wfi in M (WaitM) stalls the entire pipeline in the same way, so the instruction in W keeps forwarding
   assign StallFCause = 1'b0;
   assign StallDCause = (StructuralStallD | FPUStallD) & ~FlushDCause;
   assign StallECause = (DivBusyE | FDivBusyE) & ~FlushECause;
@@ -83,7 +83,7 @@ module hazard (
   // Need to gate IFUStallF when the equivalent FlushFCause = FlushDCause = 1.
   // assign StallWCause = ((IFUStallF & ~FlushDCause) | LSUStallM) & ~FlushWCause;
   // Because FlushWCause is a strict subset of FlushDCause, FlushWCause is factored out.
-  assign StallWCause = (IFUStallF & ~FlushDCause) | ((LSUStallM | wfiWaitM) & ~FlushWCause) | ExternalStall;
+  assign StallWCause = (IFUStallF & ~FlushDCause) | ((LSUStallM | WaitM) & ~FlushWCause) | ExternalStall;
 
   // Stall each stage for cause or if the next stage is stalled
   // coverage off: StallFCause is always 0
