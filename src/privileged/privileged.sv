@@ -35,6 +35,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   // CSR Reads and Writes, and values needed for traps
   input  logic              CSRReadM, CSRWriteM,                            // Read or write CSRs
   input  logic              PCSrcE,
+  input  logic              PCSrcM,
   input  logic [P.XLEN-1:0] SrcAM,                                          // GPR register to write
   input  logic [31:0]       InstrM,                                         // Instruction
   input  logic [31:0]       InstrOrigM,                                     // Original compressed or uncompressed instruction in Memory stage for Illegal Instruction XTVAL
@@ -183,7 +184,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
 
   // Control and Status Registers
   csr #(P) csr(.clk, .reset, .FlushM, .FlushW, .StallE, .StallM, .StallW,
-    .InstrM, .InstrOrigM, .PCSrcE, .NextValidPCE, .IEUAdrM, .PCM, .PCSpillM, .SrcAM, .IEUAdrxTvalM,
+    .InstrM, .InstrOrigM, .PCSrcM, .NextValidPCE, .IEUAdrM, .PCM, .PCSpillM, .SrcAM, .IEUAdrxTvalM,
     .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .InterruptM,
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
     .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD, .StoreStallD,

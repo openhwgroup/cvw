@@ -65,6 +65,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   output logic [31:0]          InstrOrigM,                               // Original compressed or uncompressed instruction in Memory stage for Illegal Instruction XTVAL
   output logic [P.XLEN-1:0]    PCM,                                      // Memory stage instruction address
   output logic [P.XLEN-1:0]    PCSpillM,                                 // Memory stage instruction address
+  output logic                 PCSrcM,                                   // Execution stage branch is taken
   // branch predictor
   output logic [3:0]           IClassM,                              // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
   output logic                 BPDirWrongM,                          // Prediction direction is wrong
@@ -402,7 +403,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
                 .StallF, .StallD, .StallE, .StallM, .StallW,
                 .FlushD, .FlushE, .FlushM, .FlushW, .InstrValidD, .InstrValidE,
                 .BranchD, .BranchE, .JumpD, .JumpE,
-                .InstrD, .PCNextF, .PCPlus2or4F, .PC1NextF, .PCE, .PCM, .PCSrcE, .IEUAdrE, .IEUAdrM, .PCF, .NextValidPCE,
+                .InstrD, .PCNextF, .PCPlus2or4F, .PC1NextF, .PCE, .PCM, .PCSrcE, .PCSrcM, .IEUAdrE, .IEUAdrM, .PCF, .NextValidPCE,
                 .PCD, .PCLinkE, .IClassM, .BPWrongE, .PostSpillInstrRawF, .BPWrongM,
                 .BPDirWrongM, .BTAWrongM, .RASPredPCWrongM, .IClassWrongM);
 
@@ -424,6 +425,12 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     assign BTAWrongM = BPWrongM;
     assign IClassM = {CallM, ReturnM, JumpM, BranchM};
     assign NextValidPCE = PCE;
+  end
+
+  if (P.BPRED_SUPPORTED | P.DEBUG_SUPPORTED) begin
+    flopenrc #(1) PCSrcMReg (clk, reset, FlushM, ~StallM, PCSrcE, PCSrcM);
+  end else begin
+    assign PCSrcM = 1'b0;
   end
 
   ////////////////////////////////////////////////////////////////////////////////////////////////

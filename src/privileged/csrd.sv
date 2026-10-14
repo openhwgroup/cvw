@@ -35,7 +35,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   input  logic              CSRDWriteM,
   input  logic [11:0]       CSRAdrM,
   input  logic [P.XLEN-1:0] CSRWriteValM,
-  input  logic              PCSrcE, FlushM, StallM,
+  input  logic              PCSrcM, FlushM, StallM,
   input  logic [P.XLEN-1:0] NextValidPCE,
   input  logic [P.XLEN-1:0] IEUAdrM, PCM,
   input  logic [1:0]        PrivilegeModeW,
@@ -64,9 +64,6 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   localparam                DPC = 12'h7B1;
   localparam                DSCRATCH0 = 12'h7B2;
   localparam                DSCRATCH1 = 12'h7B3;
-
-  // Need this for resuming
-  logic                     PCSrcM;
 
   // EBreak
   logic                     ebreak;
@@ -141,7 +138,6 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   ////////////////////////////////////////////////////////////////////
   // Need to revisit this, as there is already a PCSrcM register in
   // the branch predictor.
-  flopenrc #(1) PCSrcMReg (clk, reset, FlushM, ~StallM, PCSrcE, PCSrcM);
 
   // Write enables for each register.
   assign WriteDCSR = CSRDWriteM & (CSRAdrM == DCSR) | NextHalt;

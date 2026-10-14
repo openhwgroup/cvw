@@ -18,19 +18,17 @@ module debugmode import cvw::*;  #(parameter cvw_t P)(
   output logic       DebugUseDPC, DebugHaltFlush, DebugResumeFlush
 );
 
-  logic HaltCondition;
+  logic  HaltCondition;
 
-  logic                     ResetHaltReqCondition;
-  logic                     ResetHaltReqEnable;
-  logic                     ResetHaltReqValid;
+  logic  ResetHaltReqCondition;
+  logic  ResetHaltReqEnable;
+  logic  ResetHaltReqValid;
 
-  // logic                     DebugEBreak;
-  logic                     BreakpointM;
-  logic                     BreakpointS;
-  logic                     BreakpointU;
+  logic  BreakpointM;
+  logic  BreakpointS;
+  logic  BreakpointU;
 
-  logic                     Stepping;
-  // logic                     DebugUseDPC;
+  logic  Stepping;
 
   typedef enum logic {RUNNING, HALTED} dbg_state_e;
   dbg_state_e state, state_n;

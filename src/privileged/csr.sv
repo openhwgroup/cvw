@@ -35,7 +35,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic                     StallE, StallM, StallW,
   input  logic [31:0]              InstrM,                    // current instruction
   input  logic [31:0]              InstrOrigM,                // Original compressed or uncompressed instruction in Memory stage for Illegal Instruction MTVAL
-  input  logic                     PCSrcE,                    // For DPC. Registered into PCSrcM to choose the correct next PC.
+  input  logic                     PCSrcM,                    // For DPC. Registered into PCSrcM to choose the correct next PC.
   input  logic [P.XLEN-1:0]        NextValidPCE,              // For DPC. If the fallthrough address is not in the memory stage, this is the PC of the next instruction.
   input  logic [P.XLEN-1:0]        IEUAdrM,                   // For DPC. DPC should be set to this upon jumps or branches.
   input  logic [P.XLEN-1:0]        PCM,                       // program counter, next PC going to trap/return logic
@@ -327,7 +327,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   if (P.SDEXT_SUPPORTED) begin : debug
     csrd #(P) csrd(.clk, .reset,
       .CSRDWriteM, .CSRAdrM, .CSRWriteValM,
-      .PCSrcE, .FlushM, .StallM, .NextValidPCE, .IEUAdrM, .PCM,
+      .PCSrcM, .FlushM, .StallM, .NextValidPCE, .IEUAdrM, .PCM,
       .PrivilegeModeW,
       .DebugMode, .DebugHaltReq, .DebugResumeReq, .DebugResetHaltReq, .BreakpointFaultM,
       .NextHalt, .NextResume,
