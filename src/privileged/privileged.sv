@@ -99,7 +99,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   output logic              BigEndianM,                                     // Use big endian in current privilege mode
   // Fault outputs
   input  logic              ReservationValidW,                              // a reservation is held; Zawrs wrs only waits while this is set
-  output logic              WaitM                                           // a wait instruction is waiting: stall the pipeline
+  output logic              WaitM                                           // wfi or wrs is waiting: stall the pipeline
 );
 
   logic [4:0]               CauseM;                                         // trap cause
@@ -123,7 +123,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   logic                     BreakpointFaultM, EcallFaultM;                  // breakpoint and Ecall traps; they do not retire
 
   logic                     IntPendingM;                                    // a locally enabled interrupt is pending
-  logic                     WaitedM;                                        // wait instruction in M has waited
+  logic                     WaitedM;                                        // wfi or wrs in M has waited
 
   // track the current privilege level
   privmode #(P) privmode(.clk, .reset, .StallW, .TrapM, .mretM, .sretM, .DelegateM,

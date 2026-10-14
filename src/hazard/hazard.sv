@@ -33,13 +33,13 @@ module hazard (
   input  logic  LSUStallM, IFUStallF,
   input  logic  FPUStallD, ExternalStall,
   input  logic  DivBusyE, FDivBusyE,
-  input  logic  WaitM,                 // a wait instruction in M is waiting
+  input  logic  WaitM,                 // wfi or wrs in M is waiting
   // Stall & flush outputs
   output logic StallF, StallD, StallE, StallM, StallW,
   output logic FlushD, FlushE, FlushM, FlushW
 );
 
-  logic                                       StallFCause, StallDCause, StallECause, StallWCause;
+  logic                                       StallFCause, StallDCause, StallECause, StallMCause, StallWCause;
   logic                                       LatestUnstalledD, LatestUnstalledE, LatestUnstalledM;
   logic                                       FlushDCause, FlushECause, FlushMCause, FlushWCause;
 
@@ -75,10 +75,11 @@ module hazard (
   //  The IFU and LSU stall the entire pipeline on a cache miss, bus access, or other long operation.
   //    The IFU stalls the entire pipeline rather than just Fetch to avoid complications with instructions later in the pipeline causing Exceptions
   //    A trap could be asserted at the start of a IFU/LSU stall, and should flush the memory operation
-  //  A waiting instruction in M (WaitM) stalls the entire pipeline in the same way, so the instruction in W keeps forwarding
+  //  A waiting wfi or wrs in M (WaitM) stalls the entire pipeline in the same way, so the instruction in W keeps forwarding
   assign StallFCause = 1'b0;
   assign StallDCause = (StructuralStallD | FPUStallD) & ~FlushDCause;
   assign StallECause = (DivBusyE | FDivBusyE) & ~FlushECause;
+  assign StallMCause = 1'b0;
   // Need to gate IFUStallF when the equivalent FlushFCause = FlushDCause = 1.
   // assign StallWCause = ((IFUStallF & ~FlushDCause) | LSUStallM) & ~FlushWCause;
   // Because FlushWCause is a strict subset of FlushDCause, FlushWCause is factored out.
@@ -90,7 +91,9 @@ module hazard (
   // coverage on
   assign StallD = StallDCause | StallE;
   assign StallE = StallECause | StallM;
-  assign StallM = StallW;
+  // coverage off: StallMCause is always 0
+  assign StallM = StallMCause | StallW;
+  // coverage on
   assign StallW = StallWCause;
 
   // detect the first stage that is not stalled

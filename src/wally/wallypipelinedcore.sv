@@ -175,7 +175,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          CommittedF;
   logic                          BranchD, BranchE, JumpD, JumpE;
   logic                          DCacheStallM, ICacheStallF;
-  logic                          WaitM;                           // a wait instruction is waiting
+  logic                          WaitM;                           // wfi or wrs is waiting
 
   // instruction fetch unit: PC, branch prediction, instruction cache
   ifu #(P) ifu(.clk, .reset,
