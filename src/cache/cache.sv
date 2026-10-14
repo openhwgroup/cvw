@@ -131,7 +131,7 @@ module cache import cvw::*; #(parameter cvw_t P,
 
   assign Hit = |HitWay;
   assign LineDirty = |DirtyWay;
-  assign HitLineDirty = |HitDirtyWay;
+  assign HitLineDirty = |(HitDirtyWay & HitWay);
 
   // ReadDataLineWay is a 2d array of cache line len by number of ways.
   // Need to OR together each way in a bitwise manner.
