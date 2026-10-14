@@ -98,7 +98,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic              InvalidateICacheM,                              // fence instruction
   output logic              BigEndianM,                                     // Use big endian in current privilege mode
   // Fault outputs
-  output logic              WaitM                                           // a wait instruction is waiting: stall the pipeline
+  output logic              wfiWaitM                                        // wfi is waiting for an interrupt: stall the pipeline
 );
 
   logic [4:0]               CauseM;                                         // trap cause
@@ -122,7 +122,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   logic                     BreakpointFaultM, EcallFaultM;                  // breakpoint and Ecall traps; they do not retire
 
   logic                     IntPendingM;                                    // a locally enabled interrupt is pending
-  logic                     WaitedM;                                        // wait instruction in M has waited
+  logic                     wfiWaitedM;                                     // wfi in M has waited
 
   // track the current privilege level
   privmode #(P) privmode(.clk, .reset, .StallW, .TrapM, .mretM, .sretM, .DelegateM,
@@ -132,7 +132,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   privdec #(P) pmd(.clk, .reset, .StallM, .InstrM(InstrM[31:7]),
     .PrivilegedM, .IllegalIEUFPUInstrM, .IllegalCSRAccessM,
     .PrivilegeModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_TW, .IntPendingM, .IllegalInstrFaultM,
-    .EcallFaultM, .BreakpointFaultM, .sretM, .mretM, .RetM, .WaitM, .WaitedM, .sfencevmaM, .sfencevmaAllM);
+    .EcallFaultM, .BreakpointFaultM, .sretM, .mretM, .RetM, .wfiWaitM, .wfiWaitedM, .sfencevmaM, .sfencevmaAllM);
 
   // Control and Status Registers
   csr #(P) csr(.clk, .reset, .FlushM, .FlushW, .StallE, .StallM, .StallW,
@@ -165,5 +165,5 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .LoadPageFaultM, .StoreAmoPageFaultM, .PrivilegeModeW,
     .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW, .STATUS_MIE, .STATUS_SIE,
     .InstrValidM, .CommittedM, .CommittedF,
-    .TrapM, .WaitedM, .InterruptM, .ExceptionM, .IntPendingM, .DelegateM, .CauseM);
+    .TrapM, .wfiWaitedM, .InterruptM, .ExceptionM, .IntPendingM, .DelegateM, .CauseM);
 endmodule

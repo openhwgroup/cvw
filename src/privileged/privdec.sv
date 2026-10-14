@@ -30,7 +30,7 @@
 
 module privdec import cvw::*;  #(parameter cvw_t P) (
   input  logic         clk, reset,
-  input  logic         StallM,                              // Memory stage stalled: the wait instruction stays in M
+  input  logic         StallM,                              // Memory stage stalled: the wfi stays in M
   input  logic [31:7 ] InstrM,                              // privileged instruction function field
   input  logic         PrivilegedM,                         // is this a privileged instruction (from IEU controller)
   input  logic         IllegalIEUFPUInstrM,                 // Not a legal IEU instruction
@@ -41,8 +41,8 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   output logic         IllegalInstrFaultM,                  // Illegal instruction
   output logic         EcallFaultM, BreakpointFaultM,       // Ecall or breakpoint; traps without retiring
   output logic         sretM, mretM, RetM,                  // return instructions
-  output logic         WaitM,                               // a wait instruction is waiting: stall the pipeline
-  output logic         WaitedM,                             // the instruction in M has waited; it retires before an interrupt is taken
+  output logic         wfiWaitM,                            // wfi in M is waiting for an interrupt: stall the pipeline
+  output logic         wfiWaitedM,                          // wfi in M has waited (not a delayed wfiWaitM): it retires before an interrupt is taken
   output logic         sfencevmaM,                          // sfence.vma / sinval.vma instructions
   output logic         sfencevmaAllM                        // sfence.vma with rs2=x0: flush all TLB entries including global
 );
@@ -50,8 +50,8 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   logic                rs1zeroM, rdzeroM;                   // rs1 / rd field = 0
   logic                IllegalPrivilegedInstrM;             // privileged instruction isn't a legal one or in legal mode
   logic                wfiM;                                // wfi instruction
-  logic                wfiTWM;                              // wfi wait is bounded by the mstatus.TW time limit
-  logic                TWTimeoutM;                          // TW time limit reached: illegal instruction
+  logic                wfiTimeoutM;                         // mstatus.TW time limit reached: illegal instruction
+  logic                wfiWaitedNextM;                      // wfiWaitedM for the next cycle
   logic                ebreakM, ecallM;                     // ebreak / ecall instructions
   logic                sinvalvmaM;                          // sinval.vma
   logic                presfencevmaM;                       // sfence.vma before checking privilege mode
@@ -93,27 +93,30 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
 
   ///////////////////////////////////////////
   // Wait: wfi (Privileged Spec 3.3.3, mstatus.TW 3.1.6.6)
-  // The waiting instruction stays in M while WaitM stalls the whole pipeline, so the instruction
+  // The waiting wfi stays in M while wfiWaitM stalls the whole pipeline, so the instruction
   // in W keeps forwarding.  The wait ends when a locally enabled interrupt is pending (any
   // privilege level, regardless of global enables), or when the mstatus.TW time limit
   // (WFI_TIMEOUT_BIT) raises an illegal instruction.
   ///////////////////////////////////////////
 
-  assign wfiTWM = wfiM & ((STATUS_TW & PrivilegeModeW != P.M_MODE) | (P.S_SUPPORTED & PrivilegeModeW == P.U_MODE));
-  assign WaitM  = wfiM & ~IntPendingM & ~TWTimeoutM;
+  assign wfiWaitM = wfiM & ~IntPendingM & ~wfiTimeoutM;
 
-  // One counter of waiting cycles, held while the instruction stays in M and cleared when M advances,
-  // so it never outlives its instruction.  It saturates at its top bit, the largest limit in use.
-  if (P.U_SUPPORTED) begin : waitcnt
-    localparam CB = P.WFI_TIMEOUT_BIT;
-    logic [CB:0] WaitCount;
-    flopr #(CB+1) waitcountreg(clk, reset, StallM ? WaitCount + {{CB{1'b0}}, WaitM & ~WaitCount[CB]} : '0, WaitCount);
-    assign TWTimeoutM = wfiTWM & WaitCount[P.WFI_TIMEOUT_BIT];
-  end else assign TWTimeoutM = 1'b0;
+  // Counter of waiting cycles, held while the wfi stays in M and cleared when M advances,
+  // so it never outlives its wfi.  It saturates at WFI_TIMEOUT_BIT, the time limit.
+  if (P.U_SUPPORTED) begin : wficnt
+    logic [P.WFI_TIMEOUT_BIT:0] WFICount, WFICountNext;
+    assign WFICountNext = StallM ? WFICount + {{P.WFI_TIMEOUT_BIT{1'b0}}, wfiWaitM & ~WFICount[P.WFI_TIMEOUT_BIT]} : '0;
+    flopr #(P.WFI_TIMEOUT_BIT+1) wficountreg(clk, reset, WFICountNext, WFICount);
+    assign wfiTimeoutM = wfiM & ((STATUS_TW & PrivilegeModeW != P.M_MODE) | (P.S_SUPPORTED & PrivilegeModeW == P.U_MODE)) &
+                         WFICount[P.WFI_TIMEOUT_BIT];
+  end else assign wfiTimeoutM = 1'b0;
 
-  // Set once the instruction in M has waited; an interrupt that ends the wait is then taken on the
-  // next instruction (mepc = pc + 4), while one already enabled and pending is taken on the wfi itself.
-  flopr #(1) waitedreg(clk, reset, StallM & (WaitM | WaitedM), WaitedM);
+  // Set once the wfi in M has waited, and held until M advances.  An interrupt that ends the wait is then
+  // taken on the next instruction (mepc = pc + 4), while one already enabled and pending is taken on the wfi
+  // itself.  This is not wfiWaitM delayed a cycle: the cycle the wait ends, M can still be stalled for
+  // another reason (IFU or external stall), and the wfi must keep wfiWaitedM until it moves to W.
+  assign wfiWaitedNextM = StallM & (wfiWaitM | wfiWaitedM);
+  flopr #(1) wfiwaitedreg(clk, reset, wfiWaitedNextM, wfiWaitedM);
 
   ///////////////////////////////////////////
   // Extract exceptions by name and handle them
@@ -127,5 +130,5 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   ///////////////////////////////////////////
 
   assign IllegalPrivilegedInstrM = PrivilegedM & ~(sretM|mretM|ecallM|ebreakM|wfiM|sfencevmaM);
-  assign IllegalInstrFaultM = IllegalIEUFPUInstrM | IllegalPrivilegedInstrM | IllegalCSRAccessM | TWTimeoutM;
+  assign IllegalInstrFaultM = IllegalIEUFPUInstrM | IllegalPrivilegedInstrM | IllegalCSRAccessM | wfiTimeoutM;
 endmodule
