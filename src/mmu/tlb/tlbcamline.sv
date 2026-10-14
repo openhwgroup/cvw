@@ -64,7 +64,7 @@ module tlbcamline import cvw::*;  #(parameter cvw_t P,
   // Split up key and query into sections for each page table level.
   logic [P.ASID_BITS-1:0] Key_ASID;
   logic [SEGMENT_BITS-1:0] Key0, Key1, Query0, Query1;
-  logic MatchASID, MatchNAPOT, Match0, Match1, Match2, Match3, Match4;
+  logic MatchASID, Match0Upper, MatchNAPOT, Match0, Match1, Match2, Match3, Match4;
 
   assign Key_ASID = Key[KEY_BITS-1:KEY_BITS-P.ASID_BITS];
   assign MatchASID = (SATP_ASID == Key_ASID) | PTE_G;
@@ -77,7 +77,8 @@ module tlbcamline import cvw::*;  #(parameter cvw_t P,
   assign Key0   = Key[SEGMENT_BITS-1:0];
   assign Query0 = VPN[SEGMENT_BITS-1:0];
   // In Svnapot, if N bit is set and bottom 4 bits of PPN = 1000, then these bits don't need to match
-  assign MatchNAPOT = P.SVNAPOT_SUPPORTED & PTE_NAPOT & (Query0[SEGMENT_BITS-1:4] == Key0[SEGMENT_BITS-1:4]);
+  assign Match0Upper = (Query0[SEGMENT_BITS-1:4] == Key0[SEGMENT_BITS-1:4]);
+  assign MatchNAPOT = P.SVNAPOT_SUPPORTED & PTE_NAPOT & Match0Upper;
   assign Match0 = (Query0 == Key0) | (PageType > 3'd0) | MatchNAPOT; // always match for megapage or larger
 
   // segment 1
@@ -112,7 +113,7 @@ module tlbcamline import cvw::*;  #(parameter cvw_t P,
   // either page, and a global PTE overlaps lines of every ASID.  A TLB write invalidates every other overlapping
   // line, so no address ever matches two entries (lookups OR the matching entries together).
   logic Overlap;
-  assign Overlap = (Match0 | (PageTypeWriteVal > 3'd0) | (WritePTE_NAPOT & (Query0[SEGMENT_BITS-1:4] == Key0[SEGMENT_BITS-1:4]))) &
+  assign Overlap = (Match0 | (PageTypeWriteVal > 3'd0) | (WritePTE_NAPOT & Match0Upper)) &
                    (Match1 | (PageTypeWriteVal > 3'd1)) & (Match2 | (PageTypeWriteVal > 3'd2)) &
                    (Match3 | (PageTypeWriteVal > 3'd3)) & Match4 & (MatchASID | WritePTE_G) & Valid;
 
