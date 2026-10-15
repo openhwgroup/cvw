@@ -109,8 +109,8 @@ module tlbcamline import cvw::*; #(parameter cvw_t P,
   // line, so no address ever matches two entries (lookups OR the matching entries together).
   logic Overlap;
   assign Overlap = (Match0 | (PageTypeWriteVal > KILOPAGE) | (WritePTE_NAPOT & Match0Upper)) &
-                   (Match1 | (PageTypeWriteVal > 3'd1)) & (Match2 | (PageTypeWriteVal > 3'd2)) &
-                   (Match3 | (PageTypeWriteVal > 3'd3)) & Match4 & (MatchASID | WritePTE_G) & Valid;
+                   (Match1 | (PageTypeWriteVal > MEGAPAGE)) & (Match2 | (PageTypeWriteVal > GIGAPAGE)) &
+                   (Match3 | (PageTypeWriteVal > TERAPAGE)) & Match4 & (MatchASID | WritePTE_G) & Valid;
 
   // On a write, update the type of the page referred to by this line.
   flopenr #(3) pagetypeflop(clk, reset, WriteEnable, PageTypeWriteVal, PageType);
