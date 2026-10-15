@@ -80,6 +80,7 @@ module tlb import cvw::*; #(parameter cvw_t P,
 );
 
   logic [TLB_ENTRIES-1:0]         Matches, WriteEnables, PTE_Gs, PTE_NAPOTs; // used as the one-hot encoding of WriteIndex
+  logic                           WritePTE_NAPOT;
   // Sections of the virtual and physical addresses
   logic [P.VPN_BITS-1:0]          VPN;
   logic [P.PPN_BITS-1:0]          PPN;
@@ -112,7 +113,7 @@ module tlb import cvw::*; #(parameter cvw_t P,
   end
 
   assign VPN = VAdr[P.VPN_BITS+11:12];
-  assign NAPOT4 = (PPN[3:0] == 4'b1000); // 64 KiB contiguous region with pte.napot_bits = 4
+  assign NAPOT4 = (PPN[3:0] == 4'b1000) & (HitPageType == 3'b000); // 64 KiB contiguous region with pte.napot_bits = 4; N=1 is reserved on superpages
 
   tlbcontrol #(P, ITLB) tlbcontrol(.SATP_MODE, .VAdr, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_ADUE,
     .EffectivePrivilegeModeW, .ReadAccess, .WriteAccess, .CMOpM, .DisableTranslation,
@@ -120,10 +121,11 @@ module tlb import cvw::*; #(parameter cvw_t P,
     .TLBMiss, .TLBHit, .TLBPageFault,
     .UpdateDA, .SV39Mode, .SV48Mode, .Translate, .PTE_N, .PBMemoryType);
 
+  assign WritePTE_NAPOT = P.SVNAPOT_SUPPORTED & PTE[P.XLEN-1] & (PTE[13:10] == 4'b1000);
   tlblru #(TLB_ENTRIES) lru(.clk, .reset, .TLBWrite, .Matches, .TLBHit, .WriteEnables);
   tlbcam #(P, TLB_ENTRIES, P.VPN_BITS + P.ASID_BITS, P.VPN_SEGMENT_BITS)
     tlbcam(.clk, .reset, .VPN, .PageTypeWriteVal, .SV39Mode, .SV48Mode, .TLBFlush, .TLBFlushAll, .WriteEnables, .PTE_Gs, .PTE_NAPOTs,
-           .SATP_ASID, .Matches, .HitPageType, .CAMHit);
+           .SATP_ASID, .TLBWrite, .WritePTE_G(PTE[5]), .WritePTE_NAPOT, .Matches, .HitPageType, .CAMHit);
   tlbram #(P, TLB_ENTRIES) tlbram(.clk, .reset, .PTE, .Matches, .WriteEnables, .PPN, .PTEAccessBits, .PTE_Gs, .PTE_NAPOTs);
 
   // Replace segments of the virtual page number with segments of the physical
