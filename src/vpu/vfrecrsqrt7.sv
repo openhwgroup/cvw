@@ -56,16 +56,6 @@ module vfrecrsqrt7 import cvw::*; #(parameter cvw_t P) (
       119,118,116,114,113,111,109,108,106,105,103,102,100,99,97,96,95,93,92,91,90,88,87,86,85,84,83,82,
       80,79,78,77,76,75,74,73,72,71,70,70,69,68,67,66,65,64,63,63,62,61,60,59,59,58,57,56,56,55,54,53};
 
-  // Output exponent constants for native bias B and internal bias D = P.D_BIAS (e = unbiased input exponent):
-  //   normal input, Xe = e + D:        rec  B-1-e          = (B+D-1) - Xe
-  //                                    rsqrt (3B-1-(e+B))/2 = ((2B+D-1) - Xe) / 2
-  //   subnormal input, e = -B - Z:     rec  2B-1+Z,  rsqrt (3B-1+Z)/2
-  // so the exponent is one adder: K + ~Xe (K = constant + 1, since ~Xe = -Xe-1) or K + Z.
-  function automatic logic [EW-1:0] ExpK(integer B, logic Sqrt, Sub);
-    if (Sub) ExpK = Sqrt ? EW'(3*B - 1) : EW'(2*B - 1);
-    else     ExpK = Sqrt ? EW'(2*B + P.D_BIAS) : EW'(B + P.D_BIAS);
-  endfunction
-
   logic [EW-1:0]    K, ExpSum;
   logic [P.NE-1:0]  NormExp, RecDenormXe, ResExp;
   logic [5:0]       ZeroCount;
@@ -104,12 +94,20 @@ module vfrecrsqrt7 import cvw::*; #(parameter cvw_t P) (
   // internal biases are both odd, so that LSB is Xe[0] for a normal and Z[0] for a subnormal.
   assign LutOut = IsSqrt ? REC7SQRT_TBL[{XSubnorm ? ZeroCount[0] : Xe[0], Idx[6:1]}] : REC7_TBL[Idx];
 
-  // Output exponent; the rsqrt divide by 2 is a shift of the sum
+  // Output exponent constants for native bias B and internal bias D = P.D_BIAS (e = unbiased input exponent):
+  //   normal input, Xe = e + D:        rec  B-1-e          = (B+D-1) - Xe
+  //                                    rsqrt (3B-1-(e+B))/2 = ((2B+D-1) - Xe) / 2
+  //   subnormal input, e = -B - Z:     rec  2B-1+Z,  rsqrt (3B-1+Z)/2
+  // so the exponent is one adder: K + ~Xe (K = constant + 1, since ~Xe = -Xe-1) or K + Z.
+  // The rsqrt divide by 2 is a shift of the sum.
   always_comb
     case (Vsew)
-      VSEW_16: K = ExpK(P.H_BIAS, IsSqrt, XSubnorm);
-      VSEW_32: K = ExpK(P.S_BIAS, IsSqrt, XSubnorm);
-      default: K = ExpK(P.D_BIAS, IsSqrt, XSubnorm);
+      VSEW_16: K = XSubnorm ? (IsSqrt ? EW'(3*P.H_BIAS - 1) : EW'(2*P.H_BIAS - 1)) :
+                              (IsSqrt ? EW'(2*P.H_BIAS + P.D_BIAS) : EW'(P.H_BIAS + P.D_BIAS));
+      VSEW_32: K = XSubnorm ? (IsSqrt ? EW'(3*P.S_BIAS - 1) : EW'(2*P.S_BIAS - 1)) :
+                              (IsSqrt ? EW'(2*P.S_BIAS + P.D_BIAS) : EW'(P.S_BIAS + P.D_BIAS));
+      default: K = XSubnorm ? (IsSqrt ? EW'(3*P.D_BIAS - 1) : EW'(2*P.D_BIAS - 1)) :
+                              (IsSqrt ? EW'(2*P.D_BIAS + P.D_BIAS) : EW'(P.D_BIAS + P.D_BIAS));
     endcase
   assign ExpSum  = K + (XSubnorm ? EW'(ZeroCount) : {1'b1, ~Xe});
   assign NormExp = IsSqrt ? ExpSum[P.NE:1] : ExpSum[P.NE-1:0];
