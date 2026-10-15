@@ -43,6 +43,9 @@ module tlbcam import cvw::*;  #(parameter cvw_t P,
   input  logic [TLB_ENTRIES-1:0]  PTE_Gs,           // Global bits of all TLB entries
   input  logic [TLB_ENTRIES-1:0]  PTE_NAPOTs,       // NAPOT mode bits of all TLB entries
   input  logic [P.ASID_BITS-1:0]  SATP_ASID,        // satp.ASID
+  input  logic                    TLBWrite,         // A PTE is being written into the TLB
+  input  logic                    WritePTE_G,       // G bit of the PTE being written
+  input  logic                    WritePTE_NAPOT,   // The PTE being written is a NAPOT entry
   output logic [TLB_ENTRIES-1:0]  Matches,          // One-hot TLB entry that matches
   output logic [2:0]              HitPageType,      // Page type of the matching TLB entry
   output logic                    CAMHit            // A TLB entry matches the virtual page number
@@ -58,7 +61,7 @@ module tlbcam import cvw::*;  #(parameter cvw_t P,
 
   tlbcamline #(P, KEY_BITS, SEGMENT_BITS) camlines[TLB_ENTRIES-1:0](
     .clk, .reset, .VPN, .SATP_ASID, .SV39Mode, .SV48Mode, .PTE_G(PTE_Gs), .PTE_NAPOT(PTE_NAPOTs), .PageTypeWriteVal, .TLBFlush, .TLBFlushAll,
-    .WriteEnable(WriteEnables), .PageTypeRead, .Match(Matches));
+    .WriteEnable(WriteEnables), .TLBWrite, .WritePTE_G, .WritePTE_NAPOT, .PageTypeRead, .Match(Matches));
   assign CAMHit = |Matches & ~TLBFlush;
   or_rows #(TLB_ENTRIES, 3) PageTypeOr(PageTypeRead, HitPageType);
 endmodule
