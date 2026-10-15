@@ -85,7 +85,7 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
 
   // check if reserved, N, or PBMT bits are malformed in RV64
   assign BadPBMT = ((PTE_PBMT != 0) & ~(P.SVPBMT_SUPPORTED & ENVCFG_PBMTE)) | PTE_PBMT == 3; // PBMT must be zero if not supported; value of 3 is reserved
-  assign BadNAPOT = PTE_N & (~P.SVNAPOT_SUPPORTED | ~NAPOT4);              // N must be 0 if Svnapot is not supported or not 64 KiB contiguous region
+  assign BadNAPOT = PTE_N & (~P.SVNAPOT_SUPPORTED | ~NAPOT4);              // N must be 0 if Svnapot is not supported or the PTE is not a 64 KiB region in a 4 KiB leaf
   assign BadReserved = PTE_RESERVED;                                       // Reserved bits must be zero
   assign ReservedRW = PTE_W & ~PTE_R;                                      // page fault on reserved encoding with R=0, W=1 per Privileged Spec 10.3.1
 
@@ -121,8 +121,10 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
 
   // Determine whether page fault occurs
   assign PrePageFault = UpperBitsUnequal | Misaligned | ~PTE_V | ImproperPrivilege | (P.XLEN == 64 & (BadPBMT | BadNAPOT | BadReserved)) | (PreUpdateDA & (~P.SVADU_SUPPORTED | ~ENVCFG_ADUE));
-  assign TLBPageFault = Translate & TLBHit & (PrePageFault | InvalidAccess);
+  // A non-canonical address (UpperBitsUnequal, part of PrePageFault) faults before any page table access,
+  // so it faults whether or not it hits and is never a miss, which would start a walk
+  assign TLBPageFault = Translate & (TLBHit | UpperBitsUnequal) & (PrePageFault | InvalidAccess);
 
   assign TLBHit = CAMHit & TLBAccess;
-  assign TLBMiss = ~CAMHit & TLBAccess & Translate;
+  assign TLBMiss = ~CAMHit & TLBAccess & Translate & ~UpperBitsUnequal;
 endmodule
