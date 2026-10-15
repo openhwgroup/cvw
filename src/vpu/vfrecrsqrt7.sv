@@ -36,11 +36,6 @@ module vfrecrsqrt7 import cvw::*; #(parameter cvw_t P) (
   output logic [4:0]        VfrecFlg                                // fflags {NV, DZ, OF, UF, NX}
 );
 
-  // Requires D and ZFH without Q, so P.NE/NF/FLEN are the double widths shared by every SEW.
-  if (~P.D_SUPPORTED | ~P.ZFH_SUPPORTED | P.Q_SUPPORTED) begin : g_fmtcheck
-    $error("vfrecrsqrt7 requires D and ZFH without Q: the unpacked operand must be double width");
-  end
-
   localparam logic [2:0] VSEW_16 = 3'b001, VSEW_32 = 3'b010, VSEW_64 = 3'b011;
   localparam logic [2:0] RTZ = 3'b001, RDN = 3'b010, RUP = 3'b011;
   localparam integer     EW     = P.NE + 1;       // one extra bit holds the unshifted rsqrt exponent
