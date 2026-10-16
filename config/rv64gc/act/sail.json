@@ -407,9 +407,8 @@
             "lrsc": "AccessFault"
           },
           "atomic_support": "AMOCASQ",
-          // Zama16b: Wally performs a misaligned load, store or AMO that stays within one 64-byte cache line,
-          // except a misaligned amocas.q, which it always faults (align.sv does not split it)
-          "misaligned_atomicity_granule_size_exp": 6,
+          // Zama16b: Wally performs a misaligned AMO only within a naturally aligned 16-byte granule
+          "misaligned_atomicity_granule_size_exp": 4,
           "vector_misaligned_atomicity_granule_size_exp": 0,
           "reservability": "RsrvEventual",
           "supports_cbo_zero": true,
