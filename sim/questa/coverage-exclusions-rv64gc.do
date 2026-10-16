@@ -319,11 +319,12 @@ set line [GetLineNum ${SRC}/mmu/pmachecker.sv "assign IdempotentRegion"]
 coverage exclude -scope /core/lsu/dmmu/dmmu/pmachecker -fecexprrow $line 2 4 6
 coverage exclude -scope /core/ifu/immu/immu/pmachecker -fecexprrow $line 2 4 6
 
-# The instruction side ties AtomicAccessM low, so every row that needs an atomic access is
-# unreachable in the instruction MMU: AtomicAccessM_1 (row 4), and the Cacheable (5, 6) and
-# CrossesLineM (7, 8) rows, whose non-masking condition includes AtomicAccessM.
+# The instruction side ties AtomicAccessM, ReadAccessM and WriteAccessM low, so every row that needs an
+# atomic access is unreachable in the instruction MMU: AtomicAccessM_1 (row 4), and the Cacheable (5, 6),
+# CrossesGranuleM (7, 8), ReadAccessM (9, 10) and WriteAccessM (11, 12) rows, whose non-masking condition
+# includes AtomicAccessM.
 set line [GetLineNum ${SRC}/mmu/mmu.sv "assign MisalignedCausesAccessFaultM"]
-coverage exclude -scope /core/ifu/immu/immu -fecexprrow $line 4-8
+coverage exclude -scope /core/ifu/immu/immu -fecexprrow $line 4-12
 
 # The following peripherals are always supported (Supported_0, row 3); the boot ROM, CLINT and RAM accept every
 # access size (SizeValid_0, row 7)
