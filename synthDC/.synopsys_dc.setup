@@ -5,7 +5,7 @@ set search_path [list "./" ]
 
 set tech $::env(TECH)
 
-# TSMC library locations come from the environment (setup.sh / site setup)
+# TSMC library locations come from the environment (site-setup.sh / site-setup.csh)
 foreach v {SYN_pdk SYN_TLU SYN_MW SYN_memory} {
   if {[info exists ::env($v)]} { set $v $::env($v) }
 }
@@ -58,6 +58,10 @@ if {$tech == "sky130"} {
                    tsdn28hpcpa1024x68m4mw_130a/NLDM/tsdn28hpcpa1024x68m4mw tsdn28hpcpa64x32m4mw_130a/NLDM/tsdn28hpcpa64x32m4mw} {
             lappend target_library $SYN_memory/${m}_tt0p9v25c.db
         }
+    } elseif {[info exists ::env(CONFIGDIR)] && ![catch {exec grep -q {USE_SRAM *= *1} $::env(CONFIGDIR)/config.vh}]} {
+        # without the macros, the caches of a USE_SRAM = 1 configuration would be unlinked black boxes
+        puts "Error: SYN_memory is not set, so the SRAM macros of this USE_SRAM = 1 configuration cannot be linked"
+        exit 1
     }
 } elseif {$tech == "tsmc28psyn"} {
     set mw_reference_library [list ]
