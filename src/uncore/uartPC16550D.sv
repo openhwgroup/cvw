@@ -270,7 +270,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
       // timeout counting
       // reset timeout on read, and while the receive FIFO is empty, so a timeout does not outlive a FIFO reset
       if ((~MEMRb & A == 3'b000 & ~DLAB) | rxfifoempty) rxtimeoutcnt <= '0;
-      else if (fifoenabled & ~rxfifoempty & rxbaudpulse & ~rxfifotimeout) rxtimeoutcnt <= rxtimeoutcnt+1; // may not be right
+      else if (fifoenabled & ~rxfifoempty & rxbaudpulse & ~rxfifotimeout) rxtimeoutcnt <= rxtimeoutcnt+1; // count 16x baud pulses while characters wait
     end
 
   assign rxcentered = rxbaudpulse & (rxoversampledcnt == 4'b1000);     // implies rxstate = UART_ACTIVE
@@ -340,8 +340,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
                          (rxfifohead + 16 - rxfifotail);
   /* verilator lint_on WIDTH */
   assign rxfifotriggered = rxfifoentries >= rxfifotriggerlevel;
-  assign rxfifotimeout = rxtimeoutcnt == {rxbitsexpected, 6'b0}; // time out after 4 character periods; probably not right yet
-  //assign rxfifotimeout = 0; // disabled pending fix
+  assign rxfifotimeout = rxtimeoutcnt == {rxbitsexpected, 6'b0}; // time out after 4 character times: 4 x 16 baud pulses per bit (one stop bit assumed)
 
   // detect any errors in rx fifo
   // although rxfullbit looks like a combinational loop, in one bit rxfifotail == i and breaks the loop
