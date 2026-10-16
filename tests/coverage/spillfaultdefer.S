@@ -9,6 +9,9 @@
 //          vanished, so the store retired with no trap, the second half written and the first not.
 //          The failing interleaving depends on where the sd sits in its I$ line, so sweep it
 //          across a line with cold I$ (fence.i) and cold DTLB (sfence.vma) each trial.
+//          Without the fix (main at 9f672c914), trial 22, with the sd at byte 0x34 of its 64-byte
+//          I$ line, loses the fault, alone or in the full sweep, and fails check 22.  If a timing
+//          change makes trial 22 pass without the fix, this test no longer reaches the bug.
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwfoundation/cvw
