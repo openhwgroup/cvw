@@ -27,6 +27,9 @@
 #                          the vectors that take it.
 #   -item c N / -item e N  the Nth condition or expression on the line, with all of its subexpressions
 #   -linerange alone       every statement, branch arm and condition on the lines
+#   -code X                every item of the kinds X (s, b, c, e) on the lines
+#   -code b -allfalse      the all-false branch of the if or case on the line: the vectors that take its
+#                          implicit else, or its missing default
 #   -fecexprrow/-feccondrow L R..  Questa row R of the first expression on line L tests input term
 #                          (R+1)/2 at 0 for odd R and at 1 for even R (inputs numbered in order of first
 #                          appearance, leaving out constants, as Questa does), with the rest of the
@@ -40,10 +43,15 @@
 # A Questa scope inside a generate block names code that VCS reports as part of the enclosing instance,
 # marked with the generate loop's index; such a scope selects that instance's objects with that index.
 # The log marks each exclusion PORTED, PARTLY PORTED (some items have no VCS counterpart that can be
-# excluded on its own), NOT PORTED, or N/A (VCS does not count what Questa excludes, so nothing is lost).
+# excluded on its own), NOT PORTED (including any option not listed above), N/A (VCS does not count what
+# Questa excludes, so nothing is lost), or STALE (it matches nothing and its source line holds nothing of
+# the kind it excludes, so it names the wrong line).  As Questa stops on an exclusion that matches
+# nothing, a STALE exclusion makes this script fail.
 
 import argparse
+import os
 import re
+import shutil
 import subprocess
 import sys
 from collections import defaultdict
@@ -61,9 +69,20 @@ proc echo {args} {}
 proc onerror {args} {}
 # vsim treats [N] in a scope such as iterations[0] as an index rather than a command; do the same
 proc unknown {args} { return "\[[join $args]\]" }
-proc coverage {args} { puts [join $args "\x1f"] }
+# print the file the last GetLineNum read before each command's arguments, so its line can be checked
+set ::lastfile ""
+rename proc _proc
+_proc proc {name params body} {
+  if {$name eq "GetLineNum"} { set body "set ::lastfile \[lindex \[info level 0\] 1\]\n$body" }
+  uplevel 1 [list _proc $name $params $body]
+}
+proc coverage {args} { puts [join [list $::lastfile {*}$args] "\x1f"]; set ::lastfile "" }
 uplevel #0 [list source [lindex $argv 0]]
 """
+
+# Options of "coverage exclude" that are translated: those that take values, and flags
+VALUE_OPTS = {"-scope", "-linerange", "-item", "-code", "-fecexprrow", "-feccondrow", "-ftrans", "-fstate"}
+FLAG_OPTS = {"-allfalse"}
 
 CONTROL_STMT = re.compile(r"^(if\b|if\(|case[zx]?\b|unique\b|priority\b|for\b|else\b|while\b)")
 
@@ -566,8 +585,9 @@ class Translator:
             info.append((o, cands[n] if n < len(cands) else None))
         return info
 
-    def branchArms(self, header, line, ordinals, file=None):
-        """Vectors of the Questa branch items numbered on a line; ordinals None means all of them."""
+    def branchArms(self, header, line, ordinals, file=None, allFalse=False):
+        """Vectors of the Questa branch items numbered on a line; ordinals None means all of them.  With
+        allFalse, only the vectors that take no arm of the if or case statement starting on the line."""
         sc = self.scopes("branch", header)
         if sc is None:
             return None, [], ["N/A: VCS counts no branch in this scope"]
@@ -606,6 +626,22 @@ class Translator:
                     arms.append(((2, k), sel))
         arms.sort(key=lambda a: a[0])
         problems = []
+        if allFalse:
+            # Questa's AllFalse branch: the implicit else of an if without one, or the missing default of a case
+            out = []
+            for o, b in info:
+                if b is None or b["type"] == "TERNARY":
+                    continue
+                vecs = o["vectors"]
+                if b["type"] == "CASE" and b["line"] == line:
+                    out += [v["text"] for v in vecs if v["fields"] and v["fields"][0] == "MISSING_DEFAULT"]
+                caseOffset = 1 if b["type"] == "CASE" else 0
+                for k, ln in b["cols"].items():
+                    if ln == line and k > caseOffset:
+                        out += [v["text"] for v in vecs if len(v["fields"]) >= k and v["fields"][k - 1] == "0"]
+            if not out:
+                problems.append(f"VCS shows no all-false branch on line {line}")
+            return sc, out, problems
         if ordinals is None:
             chosen = arms
         else:
@@ -621,16 +657,21 @@ class Translator:
         return sc, out, problems
 
     # ---- one Questa command ----
-    def questa(self, args):
+    def questa(self, file, args):
+        """Translate one "coverage exclude" command; file is the source its GetLineNum read, if any."""
         cmd = "coverage " + " ".join(args)
         opts = defaultdict(list)
         key = None
         for a in args[1:]:
             if a.startswith("-") and not re.match(r"^-\d", a):
-                key = a
-                opts[key]
+                key = None if a in FLAG_OPTS else a
+                opts[a]
             elif key:
                 opts[key].append(a)
+        unknown = sorted(set(opts) - VALUE_OPTS - FLAG_OPTS)
+        if unknown:
+            self.log.append((cmd, "NOT PORTED", f"unsupported option {', '.join(unknown)}"))
+            return
         scope = opts.get("-scope", [None])[0]
         if scope is None or not scope.startswith(QUESTA_ROOT):
             self.log.append((cmd, "NOT PORTED", "only -scope exclusions under /core are translated"))
@@ -649,6 +690,7 @@ class Translator:
         self.gen = [int(x) for p in rest for x in re.findall(r"\[(\d+)\]", p)] or None
         why = f"Questa: {cmd}"
         results, problems = [], []
+        lines, kinds = [], ""    # the source lines and item kinds the exclusion names, for staleReason
         if "-ftrans" in opts or "-fstate" in opts:
             kind, vals = ("Transition", opts["-ftrans"]) if "-ftrans" in opts else ("State", opts["-fstate"])
             var, names = vals[0], vals[1:]
@@ -670,6 +712,7 @@ class Translator:
             problems += probs
             if texts:
                 results.append(("cond", sc, texts))
+            lines, kinds = [line], "e"
         elif "-linerange" in opts:
             lines = []
             for r in opts["-linerange"]:
@@ -678,9 +721,26 @@ class Translator:
             items = opts.get("-item")
             if items:
                 letters, nums = items[0], [int(x) for x in items[1:]] or [1]
+            elif opts.get("-code"):
+                letters, nums = opts["-code"][0], None
             else:
                 letters, nums = "sbce", None
+            if "-allfalse" in opts:
+                if letters != "b" or items:
+                    self.log.append((cmd, "NOT PORTED", "-allfalse is translated only with -code b"))
+                    return
+                for ln in lines:
+                    sc, texts, probs = self.branchArms(header, ln, None, allFalse=True)
+                    problems += probs
+                    if texts:
+                        results.append(("branch", sc, texts))
+                self.record(cmd, why, results, problems, self.staleReason(file, lines, "b", results))
+                return
+            kinds = letters
             for letter in letters:
+                if letter not in "sbce":
+                    problems.append(f"-code/-item {letter} (only s, b, c and e are translated)")
+                    continue
                 if letter == "s":
                     for n in nums or [None]:
                         sc, texts = self.blocks(header, lines, n)
@@ -704,9 +764,25 @@ class Translator:
         else:
             self.log.append((cmd, "NOT PORTED", "unsupported form"))
             return
-        self.record(cmd, why, results, problems)
+        self.record(cmd, why, results, problems, self.staleReason(file, lines, kinds, results))
 
-    def record(self, cmd, why, results, problems):
+    def staleReason(self, file, lines, kinds, results):
+        """When an exclusion matches nothing in VCS and its source lines hold nothing of the kinds it excludes
+        (s, b, c, e), it names the wrong line, as after an edit moves the line its GetLineNum pattern finds:
+        say so.  Questa stops on an exclusion that matches nothing."""
+        if results or not file or not lines:
+            return None
+        for ln in lines:
+            src = self.srcLine(file, ln)
+            if ("s" in kinds and ";" in src) or (("c" in kinds or "e" in kinds) and re.search(r"[&|^!~?<>]|==|\bif\b", src)) \
+                    or ("b" in kinds and re.search(r"\b(if|else|case[zx]?|default)\b|[?:]", src)):
+                return None
+        return f"{Path(file).name} line(s) {lines[0]}-{lines[-1]} hold nothing of kind {kinds} to exclude"
+
+    def record(self, cmd, why, results, problems, stale=None):
+        if stale:
+            self.log.append((cmd, "STALE", stale))
+            return
         n = 0
         for metric, sc, texts in results:
             self.select(metric, sc, texts, why)
@@ -821,11 +897,16 @@ def rowList(vals):
 
 
 def questaCommands(dofile, wally):
-    res = subprocess.run(["tclsh", "/dev/stdin", str(dofile)], input=REPLAY_TCL, capture_output=True, text=True,
-                         env={"WALLY": str(wally), "PATH": "/usr/bin:/bin"})
+    """(source file of its GetLineNum or "", arguments) of each "coverage exclude" command in dofile."""
+    tclsh = shutil.which("tclsh")
+    if tclsh is None:
+        sys.exit("exclusions2el: tclsh not found on PATH (install tcl)")
+    res = subprocess.run([tclsh, "/dev/stdin", str(dofile)], input=REPLAY_TCL, capture_output=True, text=True,
+                         env={**os.environ, "WALLY": str(wally)})
     if res.returncode:
         sys.exit(f"exclusions2el: replaying {dofile} failed:\n{res.stderr}")
-    return [line.split("\x1f") for line in res.stdout.splitlines() if line.startswith("exclude")]
+    cmds = [line.split("\x1f") for line in res.stdout.splitlines()]
+    return [(c[0], c[1:]) for c in cmds if len(c) > 1 and c[1] == "exclude"]
 
 
 def main():
@@ -838,8 +919,8 @@ def main():
     ap.add_argument("--log", required=True, help="translation log to write")
     a = ap.parse_args()
     t = Translator(Path(a.dump), a.modinfo)
-    for args in questaCommands(a.do, a.wally):
-        t.questa(args)
+    for file, args in questaCommands(a.do, a.wally):
+        t.questa(file, args)
     t.pragmas(Path(a.wally) / "src")
     t.write(a.out)
     counts = defaultdict(int)
@@ -851,6 +932,11 @@ def main():
         f.write(f"\n{len(t.log)} exclusions: {summary}\n")
     print(f"exclusions2el: {len(t.log)} exclusions: {summary}; {sum(len(v) for v in t.selected.values())} "
           f"VCS objects excluded; see {a.log}")
+    stale = [(cmd, detail) for cmd, status, detail in t.log if status == "STALE"]
+    if stale:
+        for cmd, detail in stale:
+            print(f"exclusions2el: STALE {cmd.replace(chr(31), ' ')}: {detail}", file=sys.stderr)
+        sys.exit(f"exclusions2el: {len(stale)} exclusions name lines with nothing to exclude; fix them in {a.do}")
 
 
 if __name__ == "__main__":
