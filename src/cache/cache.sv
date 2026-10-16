@@ -17,7 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module cache import cvw::*; #(parameter cvw_t P,
-                              parameter PA_BITS, LINELEN,  NUMSETS,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTERVAL, READ_ONLY_CACHE) (
+                              parameter PA_BITS, LINELEN,  NUMSETS,  OFFSETLEN, SETLEN, NUMWAYS, LOGBWPL, WORDLEN, MUXINTERVAL, READ_ONLY_CACHE) (
   input  logic                   clk,
   input  logic                   reset,
   input  logic                   Stall,             // Stall the cache, preventing new accesses. In-flight access finished but does not return to READY
@@ -27,8 +27,8 @@ module cache import cvw::*; #(parameter cvw_t P,
   input  logic [1:0]             CacheRW,           // [1] Read, [0] Write
   input  logic                   FlushCache,        // Flush all dirty lines back to memory
   input  logic                   InvalidateCache,   // Clear all valid bits
-  input  logic [3:0]             CMOpM,              // 1: cbo.inval; 2: cbo.clean; 4: cbo.flush; 8: cbo.zero
-  input  logic [11:0]            NextSet,           // Virtual address, but we only use the lower 12 bits.
+  input  logic [3:0]             CMOpM,             // 1: cbo.inval; 2: cbo.clean; 4: cbo.flush; 8: cbo.zero
+  input  logic [OFFSETLEN+SETLEN-1:0] NextSet,      // Virtual address, but we only use the lower 12 bits.
   input  logic [PA_BITS-1:0]     PAdr,              // Physical address
   input  logic [(WORDLEN-1)/8:0] ByteMask,          // Which bytes to write (D$ only)
   input  logic [WORDLEN-1:0]     WriteData,    // Data to write to cache (D$ only)
@@ -50,9 +50,6 @@ module cache import cvw::*; #(parameter cvw_t P,
 );
 
   // Cache parameters
-  localparam                     LINEBYTELEN = LINELEN/8;            // Line length in bytes
-  localparam                     OFFSETLEN = $clog2(LINEBYTELEN);    // Number of bits in offset field
-  localparam                     SETLEN = $clog2(NUMSETS);          // Number of set bits
   localparam                     SETTOP = SETLEN+OFFSETLEN;          // Number of set plus offset bits
   localparam                     TAGLEN = PA_BITS - SETTOP;          // Number of tag bits
   localparam                     FLUSHADRTHRESHOLD = NUMSETS - 1;   // Used to determine when flush is complete
@@ -122,7 +119,7 @@ module cache import cvw::*; #(parameter cvw_t P,
 
   assign Hit = |HitWay;
   assign LineDirty = |DirtyWay;
-  assign HitLineDirty = |HitDirtyWay;
+  assign HitLineDirty = |(HitDirtyWay & HitWay);
 
   // ReadDataLineWay is a 2d array of cache line len by number of ways.
   // Need to OR together each way in a bitwise manner.
