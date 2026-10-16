@@ -23,9 +23,11 @@
 module riscvassertions import cvw::*; #(parameter cvw_t P);
   initial begin
     assert (P.PMP_ENTRIES == 0 | P.PMP_ENTRIES==16 | P.PMP_ENTRIES==64) else $fatal(1, "Illegal number of PMP entries: PMP_ENTRIES must be 0, 16, or 64");
+    assert (P.ZICSR_SUPPORTED | !P.F_SUPPORTED) else $fatal(1, "Can't support float (F) without supporting Zicsr (fcsr and mstatus.FS)");
     assert (P.F_SUPPORTED | !P.D_SUPPORTED) else $fatal(1, "Can't support double fp (D) without supporting float (F)");
     assert (P.D_SUPPORTED | !P.Q_SUPPORTED) else $fatal(1, "Can't support quad fp (Q) without supporting double (D)");
     assert (P.F_SUPPORTED | !P.ZFH_SUPPORTED) else $fatal(1, "Can't support half-precision fp (ZFH) without supporting float (F)");
+    assert (P.F_SUPPORTED | !P.ZFA_SUPPORTED) else $fatal(1, "Can't support additional fp instructions (ZFA) without supporting float (F)");
 
     assert (P.I_SUPPORTED ^ P.E_SUPPORTED) else $fatal(1, "Exactly one of I and E must be supported");
 
