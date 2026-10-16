@@ -47,6 +47,9 @@ module ram2p1r1wbe import cvw::*; #(parameter USE_SRAM=0, DEPTH=1024, WIDTH=68) 
   ///////////////////////////////////////////////////////////////////////////////
   // TRUE SRAM macro
   ///////////////////////////////////////////////////////////////////////////////
+  // The TSMC dual-port macros return X on port A when it reads the address port B writes in the same cycle,
+  // whereas the behavioral model below is read-first.  The BTB and PHT can read and write one index in a cycle,
+  // so a simulation with the macro models can see an X prediction there.
 
   if ((USE_SRAM == 1) & (WIDTH == 68) & (DEPTH == 1024)) begin
 
