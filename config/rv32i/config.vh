@@ -244,6 +244,9 @@ localparam BTB_SIZE = 32'd10;
 localparam RAS_SIZE = 32'd16;
 localparam INSTR_CLASS_PRED = 0;
 
+// FMA normalization: 1 = leading zero anticipator in parallel with the adder, 0 = leading zero counter on the sum
+localparam logic FMA_LZA = 1;
+
 // FPU division architecture
 localparam RADIX = 32'd4;
 localparam DIVCOPIES = 32'd4;

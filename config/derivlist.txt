@@ -1675,3 +1675,17 @@ ICACHE_LINELENINBITS   32'd256
 derive rv32gc_novm_cache_4way_64KB_512Bline  rv32gc_novm_cache_4way_64KB_256Bline
 DCACHE_LINELENINBITS   32'd512
 ICACHE_LINELENINBITS   32'd512
+
+# FMA_LZA = 0: the FMA normalizes with a leading zero counter on the sum instead of the leading zero anticipator.
+# fdqh_lzc_* run the testfloat FMA vectors; rv64gc_lzc and syn_sram_rv64gc_lzc are for synthesis comparisons.
+deriv fdqh_lzc_rv64gc fdqh_rv64gc
+FMA_LZA 0
+
+deriv fdqh_lzc_rv32gc fdqh_rv32gc
+FMA_LZA 0
+
+deriv rv64gc_lzc rv64gc
+FMA_LZA 0
+
+deriv syn_sram_rv64gc_lzc syn_sram_rv64gc
+FMA_LZA 0

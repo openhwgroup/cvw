@@ -130,6 +130,7 @@ localparam cvw_t P = '{
   BTB_SIZE :        BTB_SIZE,
   RAS_SIZE :        RAS_SIZE,
   INSTR_CLASS_PRED :  INSTR_CLASS_PRED,
+  FMA_LZA :      FMA_LZA,
   RADIX :        RADIX,
   DIVCOPIES :        DIVCOPIES,
   ZBA_SUPPORTED :        ZBA_SUPPORTED,
