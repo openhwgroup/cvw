@@ -2,7 +2,7 @@
 // pmpchecker.sv
 //
 // Written:  Thomas Fleming tfleming@hmc.edu, Jessica Torrey jtorrey@hmc.edu 28 April 2021
-// Modified: David Harris David_Harris@hmc.edu, Kip Macsai-Goren kmacsaigoren@hmc.edu, Rose Thompson rose@rosethompson.net, Madeleine Masser-Frye
+// Modified: David Harris, Kip Macsai-Goren, Rose Thompson, Madeleine Masser-Frye
 //
 // Purpose: Checks each physical access against the PMP registers and raises access faults on illegal reads, writes, and fetches.
 //

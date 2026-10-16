@@ -2,7 +2,7 @@
 // packer.sv
 //
 // Written:  Kelvin Tran kelvin.tran@okstate.edu, James Stine james.stine@okstate.edu 5 October 2023
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: Zbkb pack, packh, and packw operations.
 //

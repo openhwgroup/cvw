@@ -2,7 +2,7 @@
 // pmachecker.sv
 //
 // Written:  Thomas Fleming tfleming@hmc.edu, Jessica Torrey jtorrey@hmc.edu 20 April 2021
-// Modified: David Harris David_Harris@hmc.edu, Rose Thompson rose@rosethompson.net, Muhammad Zain zainzahid2050@gmail.com
+// Modified: David Harris, Rose Thompson, Muhammad Zain
 //
 // Purpose: Determines the physical memory attributes of each access and reports access faults for illegal accesses.
 //

@@ -2,7 +2,7 @@
 // fregfile.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 9 January 2021
-// Modified: Katherine Parry me@KatherineParry.com, James Stine james.stine@okstate.edu
+// Modified: Katherine Parry, James Stine
 //
 // Purpose: Floating-point register file with three read ports and one write port.
 //

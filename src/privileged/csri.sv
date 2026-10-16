@@ -2,7 +2,7 @@
 // csri.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 9 January 2021
-// Modified: Ben Bracker bbracker@hmc.edu, Rose Thompson rose@rosethompson.net, Kip Macsai-Goren kmacsaigoren@hmc.edu, Harshini Srinath harshini.srinath@gmail.com
+// Modified: Ben Bracker, Rose Thompson, Kip Macsai-Goren, Harshini Srinath
 //
 // Purpose: Interrupt pending and enable CSRs (mip/mie and sip/sie).
 //

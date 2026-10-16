@@ -2,7 +2,7 @@
 // RASPredictor.sv
 //
 // Written:  Rose Thompson rose@rosethompson.net 15 February 2021
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: Return address stack that predicts the target address of function returns.
 //

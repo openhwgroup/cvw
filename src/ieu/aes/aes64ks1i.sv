@@ -2,7 +2,7 @@
 // aes64ks1i.sv
 //
 // Written:  Ryan Swann ryan.swann@okstate.edu, James Stine james.stine@okstate.edu 20 February 2024
-// Modified: David Harris David_Harris@hmc.edu, Kelvin Tran kelvin.tran@okstate.edu
+// Modified: David Harris, Kelvin Tran
 //
 // Purpose: AES key schedule step for aes64ks1i: rotate a word, substitute it through the shared S-box, and XOR the round constant.
 //

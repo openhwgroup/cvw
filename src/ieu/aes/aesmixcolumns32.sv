@@ -2,7 +2,7 @@
 // aesmixcolumns32.sv
 //
 // Written:  Ryan Swann ryan.swann@okstate.edu, James Stine james.stine@okstate.edu, David Harris David_Harris@hmc.edu 20 February 2024
-// Modified: Kelvin Tran kelvin.tran@okstate.edu
+// Modified: Kelvin Tran
 //
 // Purpose: AES MixColumns transformation of one 32-bit column.
 //

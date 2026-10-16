@@ -2,7 +2,7 @@
 // lrsc.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 17 July 2021
-// Modified: Rose Thompson rose@rosethompson.net
+// Modified: Rose Thompson
 //
 // Purpose: Tracks load-reserved reservations and suppresses failing store-conditionals.
 //

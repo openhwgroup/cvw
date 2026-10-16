@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // csa.sv
 //
-// Written:  Katherine Parry me@KatherineParry.com, David Harris David_Harris@hmc.edu 21 August 2022
+// Written:  Katherine Parry, David Harris David_Harris@hmc.edu 21 August 2022
 // Modified:
 //
 // Purpose: 3:2 carry-save adder that reduces three operands to a sum and a carry.

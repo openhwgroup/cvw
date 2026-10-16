@@ -2,7 +2,7 @@
 // fround.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 21 April 2024
-// Modified: Corey Hickson chickson@hmc.edu, Jordan Carlin jcarlin@hmc.edu, Vikram Krishna vkrishna@hmc.edu
+// Modified: Corey Hickson, Jordan Carlin, Vikram Krishna
 //
 // Purpose: Round a floating-point value to an integral value for the Zfa fround and froundnx instructions.
 //

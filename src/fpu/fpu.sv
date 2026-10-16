@@ -1,8 +1,8 @@
 ///////////////////////////////////////////
 // fpu.sv
 //
-// Written:  Katherine Parry me@KatherineParry.com, James Stine james.stine@okstate.edu, Brett Mathis brett.mathis@okstate.edu, David Harris David_Harris@hmc.edu
-// Modified: Rose Thompson rose@rosethompson.net, Cedar Turek cturek@hmc.edu, Ben Bracker bbracker@hmc.edu
+// Written:  Katherine Parry me@KatherineParry.com, James Stine, Brett Mathis, David Harris
+// Modified: Rose Thompson, Cedar Turek, Ben Bracker
 //
 // Purpose: Top level of the floating-point unit, connecting the register file, hazard logic, functional units, and result selection.
 //

@@ -2,7 +2,7 @@
 // specialcase.sv
 //
 // Written:  Katherine Parry me@KatherineParry.com 13 June 2022
-// Modified: James Stine james.stine@okstate.edu, David Harris David_Harris@hmc.edu, Jordan Carlin jcarlin@hmc.edu
+// Modified: James Stine, David Harris, Jordan Carlin
 //
 // Purpose: Select the final result for NaN, infinity, overflow, underflow, and invalid integer conversion cases.
 //

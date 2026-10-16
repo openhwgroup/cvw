@@ -2,7 +2,7 @@
 // ebu.sv
 //
 // Written:  Rose Thompson rose@rosethompson.net 29 August 2022
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: External bus unit that arbitrates IFU and LSU requests onto a single AHB-Lite bus, with the LSU having priority.
 //          See ARM IHI0033A AMBA AHB-Lite Specification 1.0. Bus width presently matches XLEN.

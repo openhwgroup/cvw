@@ -2,7 +2,7 @@
 // lsu.sv
 //
 // Written:  David Harris David_Harris@hmc.edu, Rose Thompson rose@rosethompson.net 9 January 2021
-// Modified: Katherine Parry me@KatherineParry.com, Kip Macsai-Goren kmacsaigoren@hmc.edu, Muhammad Zain zainzahid2050@gmail.com
+// Modified: Katherine Parry, Kip Macsai-Goren, Muhammad Zain
 //
 // Purpose: Load/store unit containing the DMMU, HPTW, data cache or DTIM, bus interface, atomics, misaligned access, endian swap, and subword logic.
 //

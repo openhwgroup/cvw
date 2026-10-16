@@ -2,7 +2,7 @@
 // ram2p1r1wbe_1024x68.sv
 //
 // Written:  James Stine james.stine@okstate.edu 28 January 2023
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: Wrapper that instantiates a 1024x68 two-port SRAM macro with bit write enables.
 //

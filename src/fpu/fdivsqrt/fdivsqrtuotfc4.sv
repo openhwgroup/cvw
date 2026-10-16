@@ -2,7 +2,7 @@
 // fdivsqrtuotfc4.sv
 //
 // Written:  Katherine Parry me@KatherineParry.com, Cedar Turek cturek@hmc.edu 15 July 2022
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: Radix-4 unified on-the-fly converter that accumulates quotient or root digits into U and UM.
 //

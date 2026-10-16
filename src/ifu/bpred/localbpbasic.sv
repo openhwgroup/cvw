@@ -1,8 +1,8 @@
 ///////////////////////////////////////////
 // localbpbasic.sv
 //
-// Written:  Rose Thompson rose@rosethompson.net, Shreya Sanghai ssanghai@hmc.edu 16 March 2021
-// Modified: Jarred Allen jaallen@g.hmc.edu
+// Written:  Rose Thompson rose@rosethompson.net, Shreya Sanghai 16 March 2021
+// Modified: Jarred Allen
 //
 // Purpose: Basic local-history branch direction predictor using flip-flop history registers without speculative repair.
 //

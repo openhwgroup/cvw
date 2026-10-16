@@ -2,7 +2,7 @@
 // fdivsqrtcycles.sv
 //
 // Written:  David Harris David_Harris@hmc.edu, Katherine Parry me@KatherineParry.com, Cedar Turek cturek@hmc.edu, Alessandro Maiuolo amaiuolo@hmc.edu 18 April 2023
-// Modified: Kevin Kim kekim@hmc.edu
+// Modified: Kevin Kim
 //
 // Purpose: Compute the number of cycles needed for a floating-point divide, square root, or integer divide.
 //

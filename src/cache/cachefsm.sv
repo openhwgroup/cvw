@@ -2,7 +2,7 @@
 // cachefsm.sv
 //
 // Written:  Rose Thompson rose@rosethompson.net 25 August 2021
-// Modified: David Harris David_Harris@hmc.edu, Alec Vercruysse avercruysse@hmc.edu, Limnanthes Serafini lserafini@hmc.edu, Haiqua Ghaffar haiqua.ghaffar1003@gmail.com
+// Modified: David Harris, Alec Vercruysse, Limnanthes Serafini, Haiqua Ghaffar
 //
 // Purpose: Cache controller state machine that sequences hits, misses, line fetches, writebacks, flushes, and cache management operations.
 //

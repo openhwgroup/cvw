@@ -2,7 +2,7 @@
 // divshiftcalc.sv
 //
 // Written:  Katherine Parry me@KatherineParry.com 23 June 2022
-// Modified: David Harris David_Harris@hmc.edu, Cedar Turek cturek@hmc.edu
+// Modified: David Harris, Cedar Turek
 //
 // Purpose: Compute the normalization shift amount and subnormal status for divide and square root results.
 //

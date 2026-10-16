@@ -2,7 +2,7 @@
 // ram1p1rwe.sv
 //
 // Written:  Alec Vercruysse avercruysse@hmc.edu 4 April 2023
-// Modified: Rose Thompson rose@rosethompson.net, David Harris David_Harris@hmc.edu
+// Modified: Rose Thompson rose@rosethompson.net, David Harris
 //
 // Purpose: Single-port RAM with a word write enable and a synchronous read, used for read-only cache ways.
 //          Coverage is turned off for (ce & we): read-only caches never have we=1 with ce=0.

@@ -2,7 +2,7 @@
 // cacheway.sv
 //
 // Written:  Rose Thompson rose@rosethompson.net 7 July 2021
-// Modified: David Harris David_Harris@hmc.edu, Alec Vercruysse avercruysse@hmc.edu, Katherine Parry me@KatherineParry.com
+// Modified: David Harris, Alec Vercruysse, Katherine Parry
 //
 // Purpose: One cache way holding the tag, valid, dirty, and data arrays, with hit detection, flush and victim selection, and way-gated read data.
 //

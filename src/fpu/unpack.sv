@@ -2,7 +2,7 @@
 // unpack.sv
 //
 // Written:  Katherine Parry me@KatherineParry.com 14 July 2021
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: Unpack the X, Y, and Z operands into sign, exponent, and significand and classify each one.
 //

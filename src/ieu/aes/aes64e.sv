@@ -2,7 +2,7 @@
 // aes64e.sv
 //
 // Written:  Ryan Swann ryan.swann@okstate.edu, James Stine james.stine@okstate.edu 20 February 2024
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: ShiftRows, SubBytes, and MixColumns for the RV64 aes64es and aes64esm encryption instructions.
 //

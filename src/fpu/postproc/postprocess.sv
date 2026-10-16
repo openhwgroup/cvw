@@ -2,7 +2,7 @@
 // postprocess.sv
 //
 // Written:  Katherine Parry me@KatherineParry.com 13 June 2022
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: Normalize, round, and select special-case results and flags for FMA, divide/square root, and conversion operations.
 //

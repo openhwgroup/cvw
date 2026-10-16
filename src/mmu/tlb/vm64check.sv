@@ -2,7 +2,7 @@
 // vm64check.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 4 November 2022
-// Modified: Ayesha Anwaar ayesha.anwaar2005@gmail.com, Muhammad Zain zainzahid2050@gmail.com
+// Modified: Ayesha Anwaar, Muhammad Zain
 //
 // Purpose: Checks that the unused upper virtual address bits are a sign extension in RV64 virtual memory modes.
 //

@@ -2,7 +2,7 @@
 // cache.sv
 //
 // Written:  Rose Thompson rose@rosethompson.net 7 July 2021
-// Modified: David Harris David_Harris@hmc.edu, Alec Vercruysse avercruysse@hmc.edu, Katherine Parry me@KatherineParry.com, Limnanthes Serafini lserafini@hmc.edu
+// Modified: David Harris, Alec Vercruysse, Katherine Parry, Limnanthes Serafini
 //
 // Purpose: Configurable set-associative cache used for the I$ and D$, serving CPU and page table walker requests and filling or writing back lines over the bus.
 //

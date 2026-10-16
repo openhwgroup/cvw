@@ -2,7 +2,7 @@
 // csru.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 9 January 2021
-// Modified: Rose Thompson rose@rosethompson.net, Katherine Parry me@KatherineParry.com
+// Modified: Rose Thompson, Katherine Parry
 //
 // Purpose: User-mode floating-point CSRs (fflags, frm, and fcsr).
 //

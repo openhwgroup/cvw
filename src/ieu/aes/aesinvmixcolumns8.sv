@@ -2,7 +2,7 @@
 // aesinvmixcolumns8.sv
 //
 // Written:  Kelvin Tran kelvin.tran@okstate.edu, James Stine james.stine@okstate.edu 5 March 2024
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: AES InvMixColumns of a 32-bit column whose only nonzero byte is the low byte, as used by aes32d.
 //

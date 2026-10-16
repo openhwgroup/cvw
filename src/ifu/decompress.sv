@@ -2,7 +2,7 @@
 // decompress.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 9 January 2021
-// Modified: Jordan Carlin jordanmcarlin@gmail.com, Kevin Thomas ps2gamer20@gmail.com
+// Modified: Jordan Carlin, Kevin Thomas
 //
 // Purpose: Expands 16-bit compressed instructions into their 32-bit equivalents.
 //

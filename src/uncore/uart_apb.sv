@@ -2,7 +2,7 @@
 // uart_apb.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 21 January 2021
-// Modified: Ben Bracker bbracker@hmc.edu
+// Modified: Ben Bracker
 //
 // Purpose: APB interface to the PC16550D-compatible UART.
 //          Compatible with the UART in the Imperas Virtio model.

@@ -2,7 +2,7 @@
 // ram2p1r1wbe.sv
 //
 // Written:  Rose Thompson rose@rosethompson.net 3 May 2021
-// Modified: David Harris David_Harris@hmc.edu, James Stine james.stine@okstate.edu
+// Modified: David Harris, James Stine james.stine@okstate.edu
 //
 // Purpose: Two-port RAM with one read port and one byte-enabled write port, built from a behavioral array or SRAM macros.
 //

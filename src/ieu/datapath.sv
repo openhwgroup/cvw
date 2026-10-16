@@ -2,7 +2,7 @@
 // datapath.sv
 //
 // Written:  David Harris David_Harris@hmc.edu, Sarah Harris Sarah.Harris@unlv.edu 9 January 2021
-// Modified: Katherine Parry me@KatherineParry.com, Rose Thompson rose@rosethompson.net, Kevin Kim kekim@hmc.edu, James Stine james.stine@okstate.edu, Kip Macsai-Goren kmacsaigoren@hmc.edu, Madeleine Masser-Frye, Shreya Sanghai ssanghai@hmc.edu
+// Modified: Katherine Parry, Rose Thompson, Kevin Kim, James Stine, Kip Macsai-Goren, Madeleine Masser-Frye, Shreya Sanghai
 //
 // Purpose: Integer datapath with register file, immediate extension, forwarding muxes, ALU, and result selection from Decode to Writeback.
 //

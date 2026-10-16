@@ -2,7 +2,7 @@
 // plic_apb.sv
 //
 // Written:  Ben Bracker bbracker@hmc.edu 18 January 2021
-// Modified: David Harris David_Harris@hmc.edu, Rose Thompson rose@rosethompson.net, Jacob Pease jacobpease@protonmail.com, Juan Schroeder jcschroeder@gmail.com
+// Modified: David Harris, Rose Thompson, Jacob Pease, Juan Schroeder
 //
 // Purpose: Platform-level interrupt controller (PLIC) with an APB interface.
 //          Based on https://github.com/riscv/riscv-plic-spec/blob/master/riscv-plic.adoc with clarifications

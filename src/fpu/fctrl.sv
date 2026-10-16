@@ -2,7 +2,7 @@
 // fctrl.sv
 //
 // Written:  Katherine Parry me@KatherineParry.com 4 February 2021
-// Modified: Brett Mathis brett.mathis@okstate.edu, David Harris David_Harris@hmc.edu, Sydney Riley sriley@g.hmc.edu, Rose Thompson rose@rosethompson.net, Corey Hickson chickson@hmc.edu, Jordan Carlin jcarlin@hmc.edu
+// Modified: Brett Mathis, David Harris, Sydney Riley, Rose Thompson, Corey Hickson, Jordan Carlin
 //
 // Purpose: Decode floating-point instructions, detect illegal ones, and pipeline the FPU control signals to the Execute, Memory, and Writeback stages.
 //

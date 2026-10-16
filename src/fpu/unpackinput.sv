@@ -2,7 +2,7 @@
 // unpackinput.sv
 //
 // Written:  Katherine Parry me@KatherineParry.com 31 May 2022
-// Modified: David Harris David_Harris@hmc.edu, Sydney Riley sriley@g.hmc.edu
+// Modified: David Harris, Sydney Riley
 //
 // Purpose: Unpack one operand into sign, exponent, and significand in the largest supported format and classify it.
 //

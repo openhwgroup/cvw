@@ -2,7 +2,7 @@
 // negateintres.sv
 //
 // Written:  Katherine Parry me@KatherineParry.com 3 July 2022
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: Round and conditionally negate the integer result of a floating-point to integer conversion.
 //

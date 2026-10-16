@@ -2,7 +2,7 @@
 // cacheLRU.sv
 //
 // Written:  Rose Thompson rose@rosethompson.net 20 July 2021
-// Modified: David Harris David_Harris@hmc.edu, Alec Vercruysse avercruysse@hmc.edu
+// Modified: David Harris, Alec Vercruysse
 //
 // Purpose: Tree-based pseudo-LRU replacement policy that records accesses for each set and selects the victim way.
 //

@@ -2,7 +2,7 @@
 // csrsr.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 9 January 2021
-// Modified: Ben Bracker bbracker@hmc.edu, Noah Boorstin nboorstin@hmc.edu, Katherine Parry me@KatherineParry.com, Kip Macsai-Goren kmacsaigoren@hmc.edu, Rose Thompson rose@rosethompson.net, Jordan Carlin jordanmcarlin@gmail.com, Haiqua Ghaffar haiqua.ghaffar1003@gmail.com
+// Modified: Ben Bracker, Noah Boorstin, Katherine Parry, Kip Macsai-Goren, Rose Thompson, Jordan Carlin, Haiqua Ghaffar
 //
 // Purpose: Status registers (mstatus, mstatush, and sstatus) shared across privilege modes.
 //

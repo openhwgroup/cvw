@@ -2,7 +2,7 @@
 // fmashiftcalc.sv
 //
 // Written:  Katherine Parry me@KatherineParry.com 13 June 2022
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: Compute the normalization shift amount, normalized exponent, and subnormal status for FMA results.
 //

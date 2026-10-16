@@ -2,7 +2,7 @@
 // tlb.sv
 //
 // Written:  Jessica Torrey jtorrey@hmc.edu 16 February 2021
-// Modified: Thomas Fleming tfleming@hmc.edu, David Harris David_Harris@hmc.edu, Kip Macsai-Goren kmacsaigoren@hmc.edu, Rose Thompson rose@rosethompson.net, Ayesha Anwaar ayesha.anwaar2005@gmail.com, Muhammad Zain zainzahid2050@gmail.com
+// Modified: Thomas Fleming, David Harris, Kip Macsai-Goren kmacsaigoren@hmc.edu, Rose Thompson, Ayesha Anwaar, Muhammad Zain
 //
 // Purpose: Translation lookaside buffer that caches virtual-to-physical address translations.
 //

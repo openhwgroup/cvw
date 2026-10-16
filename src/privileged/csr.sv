@@ -2,7 +2,7 @@
 // csr.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 9 January 2021
-// Modified: Rose Thompson rose@rosethompson.net, Ben Bracker bbracker@hmc.edu, Domenico Ottolia dottolia@hmc.edu, Udeema Shakya ushakya@hmc.edu, Katherine Parry me@KatherineParry.com, Jordan Carlin jordanmcarlin@gmail.com
+// Modified: Rose Thompson, Ben Bracker, Domenico Ottolia dottolia@hmc.edu, Udeema Shakya, Katherine Parry, Jordan Carlin
 //
 // Purpose: Control and status registers, including CSR read/write muxing, trap vector selection, and exception PC handling.
 //

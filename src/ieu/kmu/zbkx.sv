@@ -2,7 +2,7 @@
 // zbkx.sv
 //
 // Written:  Kelvin Tran kelvin.tran@okstate.edu, James Stine james.stine@okstate.edu 1 February 2024
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: Zbkx crossbar permutations xperm4 and xperm8.
 //

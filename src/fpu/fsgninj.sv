@@ -2,7 +2,7 @@
 // fsgninj.sv
 //
 // Written:  Katherine Parry me@KatherineParry.com
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: Floating-point sign injection for fsgnj, fsgnjn, and fsgnjx.
 //

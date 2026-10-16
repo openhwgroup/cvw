@@ -2,7 +2,7 @@
 // rom_ahb.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 9 January 2021
-// Modified: Rose Thompson rose@rosethompson.net
+// Modified: Rose Thompson
 //
 // Purpose: On-chip ROM with an AHB interface.
 //

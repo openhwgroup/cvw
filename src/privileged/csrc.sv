@@ -2,7 +2,7 @@
 // csrc.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 9 January 2021
-// Modified: Shreya Sanghai ssanghai@hmc.edu, Rose Thompson rose@rosethompson.net, Ben Bracker bbracker@hmc.edu, Abdul Rafay abdulrafay7038@gmail.com
+// Modified: Shreya Sanghai, Rose Thompson, Ben Bracker, Abdul Rafay
 //
 // Purpose: Counter CSRs: cycle, time, instret, and hardware performance monitors.
 //

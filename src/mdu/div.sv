@@ -2,7 +2,7 @@
 // div.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 12 September 2021
-// Modified: Rose Thompson rose@rosethompson.net, Ben Bracker bbracker@hmc.edu, Skylar Litz slitz@hmc.edu
+// Modified: Rose Thompson, Ben Bracker, Skylar Litz
 //
 // Purpose: Iterative restoring integer divider that computes quotient and remainder several bits per cycle.
 //

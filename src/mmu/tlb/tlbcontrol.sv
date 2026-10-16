@@ -2,7 +2,7 @@
 // tlbcontrol.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 5 July 2021
-// Modified: Rose Thompson rose@rosethompson.net, Kip Macsai-Goren kmacsaigoren@hmc.edu, Muhammad Zain zainzahid2050@gmail.com
+// Modified: Rose Thompson, Kip Macsai-Goren, Muhammad Zain
 //
 // Purpose: TLB control logic for translation enable, hit and miss, permission checks, and page faults.
 //

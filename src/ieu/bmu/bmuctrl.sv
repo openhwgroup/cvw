@@ -2,7 +2,7 @@
 // bmuctrl.sv
 //
 // Written:  Kevin Kim kekim@hmc.edu, Kelvin Tran kelvin.tran@okstate.edu 16 February 2023
-// Modified: David Harris David_Harris@hmc.edu, James Stine james.stine@okstate.edu
+// Modified: David Harris, James Stine
 //
 // Purpose: Decodes bit-manipulation and scalar crypto instructions and generates their Decode and Execute stage control signals.
 //

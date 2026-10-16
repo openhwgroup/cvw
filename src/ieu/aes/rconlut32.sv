@@ -2,7 +2,7 @@
 // rconlut32.sv
 //
 // Written:  Ryan Swann ryan.swann@okstate.edu, James Stine james.stine@okstate.edu 20 February 2024
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: Lookup table for the AES key schedule round constant, zero-extended to 32 bits.
 //

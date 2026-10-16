@@ -2,7 +2,7 @@
 // round.sv
 //
 // Written:  Katherine Parry me@KatherineParry.com 13 June 2022
-// Modified: David Harris David_Harris@hmc.edu, Mason Adams Adams.mason25@gmail.com
+// Modified: David Harris, Mason Adams
 //
 // Purpose: Find the guard, round, and sticky bits and decide whether to round up for the selected rounding mode and format.
 //

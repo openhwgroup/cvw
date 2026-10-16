@@ -2,7 +2,7 @@
 // fdivsqrtstage2.sv
 //
 // Written:  David Harris David_Harris@hmc.edu, Katherine Parry me@KatherineParry.com, Cedar Turek cturek@hmc.edu 29 August 2022
-// Modified: Alessandro Maiuolo amaiuolo@hmc.edu
+// Modified: Alessandro Maiuolo
 //
 // Purpose: One radix-2 step of the unified divide and square root digit recurrence.
 //

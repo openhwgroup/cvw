@@ -2,7 +2,7 @@
 // tlbcamline.sv
 //
 // Written:  Thomas Fleming tfleming@hmc.edu, Jessica Torrey jtorrey@hmc.edu 6 April 2021
-// Modified: David Harris David_Harris@hmc.edu, Kip Macsai-Goren kmacsaigoren@hmc.edu, Ayesha Anwaar ayesha.anwaar2005@gmail.com, Muhammad Zain zainzahid2050@gmail.com
+// Modified: David Harris, Kip Macsai-Goren kmacsaigoren@hmc.edu, Ayesha Anwaar, Muhammad Zain
 //
 // Purpose: One TLB CAM entry that matches a virtual page number and ASID against its stored key for its page size.
 //

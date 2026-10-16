@@ -2,7 +2,7 @@
 // ahbcacheinterface.sv
 //
 // Written:  Rose Thompson rose@rosethompson.net 29 August 2022
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: Translates cache line fetches, writebacks, and uncached memory requests into AHB transactions.
 //

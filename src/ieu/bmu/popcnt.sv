@@ -2,7 +2,7 @@
 // popcnt.sv
 //
 // Written:  Kevin Kim kekim@hmc.edu 4 February 2023
-// Modified: Kip Macsai-Goren kmacsaigoren@hmc.edu
+// Modified: Kip Macsai-Goren
 //
 // Purpose: Counts the number of one bits in a word.
 //

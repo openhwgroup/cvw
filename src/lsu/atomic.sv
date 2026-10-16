@@ -2,7 +2,7 @@
 // atomic.sv
 //
 // Written:  Rose Thompson rose@rosethompson.net 31 January 2022
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: Atomic memory operation support combining the AMO ALU and the LR/SC reservation logic.
 //

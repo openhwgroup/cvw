@@ -2,7 +2,7 @@
 // aes32e.sv
 //
 // Written:  Ryan Swann ryan.swann@okstate.edu, James Stine james.stine@okstate.edu 20 February 2024
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: S-box and MixColumns on one byte for the RV32 aes32esi and aes32esmi encryption instructions.
 //

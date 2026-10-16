@@ -1,8 +1,8 @@
 ///////////////////////////////////////////
 // tlbmixer.sv
 //
-// Written:  David Harris David_Harris@hmc.edu, Kip Macsai-Goren kmacsaigoren@hmc.edu 7 June 2021
-// Modified: Ayesha Anwaar ayesha.anwaar2005@gmail.com
+// Written:  David Harris, Kip Macsai-Goren kmacsaigoren@hmc.edu 7 June 2021
+// Modified: Ayesha Anwaar
 //
 // Purpose: Forms the physical address by combining physical and virtual page number segments according to the page size and NAPOT encoding.
 //

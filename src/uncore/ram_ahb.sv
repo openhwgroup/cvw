@@ -2,7 +2,7 @@
 // ram_ahb.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 9 January 2021
-// Modified: Rose Thompson rose@rosethompson.net, Ben Bracker bbracker@hmc.edu, Noah Boorstin nboorstin@hmc.edu
+// Modified: Rose Thompson, Ben Bracker, Noah Boorstin
 //
 // Purpose: On-chip RAM with an AHB interface.
 //

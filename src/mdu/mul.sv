@@ -2,7 +2,7 @@
 // mul.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 16 February 2021
-// Modified: Shreya Sanghai ssanghai@hmc.edu
+// Modified: Shreya Sanghai
 //
 // Purpose: Integer multiplier that forms partial products in Execute and sums them into the full product in Memory.
 //

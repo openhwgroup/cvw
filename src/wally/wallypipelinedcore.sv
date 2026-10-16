@@ -2,7 +2,7 @@
 // wallypipelinedcore.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 9 January 2021
-// Modified: Rose Thompson rose@rosethompson.net, Katherine Parry me@KatherineParry.com, Ben Bracker bbracker@hmc.edu, Thomas Fleming tfleming@hmc.edu, Kip Macsai-Goren kmacsaigoren@hmc.edu, Lucio nicholas.lucioforlife@yahoo.com
+// Modified: Rose Thompson, Katherine Parry, Ben Bracker, Thomas Fleming, Kip Macsai-Goren, Lucio
 //
 // Purpose: Top level of the five-stage pipelined RISC-V core, connecting the IFU, IEU, LSU, FPU, MDU, privileged unit, hazard unit, and bus interface.
 //

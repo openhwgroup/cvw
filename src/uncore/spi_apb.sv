@@ -2,7 +2,7 @@
 // spi_apb.sv
 //
 // Written:  Naiche Whyte-Aguayo nwhyteaguayo@g.hmc.edu, Jacob Pease jacobpease@protonmail.com 16 November 2022
-// Modified: Rose Thompson rose@rosethompson.net
+// Modified: Rose Thompson
 //
 // Purpose: SPI controller peripheral following the SiFive FU540-C000 SPI specification, with an APB interface and transmit and receive FIFOs.
 //          8-byte transmit and receive FIFOs feed shift registers controlled by an FSM. Uses 4 tristate data pins,

@@ -2,7 +2,7 @@
 // sha512_32.sv
 //
 // Written:  Kelvin Tran kelvin.tran@okstate.edu, James Stine james.stine@okstate.edu 13 February 2024
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: RV32 SHA-512 sig0h/l, sig1h/l, sum0r, and sum1r functions on a 64-bit value split across two registers.
 //

@@ -2,7 +2,7 @@
 // alu.sv
 //
 // Written:  David Harris David_Harris@hmc.edu, Sarah Harris Sarah.Harris@unlv.edu, Kevin Kim kekim@hmc.edu 9 January 2021
-// Modified: James Stine james.stine@okstate.edu
+// Modified: James Stine
 //
 // Purpose: Integer ALU for add, subtract, logical, shift, and set-less-than operations, with hooks for the bit-manipulation and crypto units.
 //

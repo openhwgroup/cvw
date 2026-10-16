@@ -2,7 +2,7 @@
 // mdu.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 9 January 2021
-// Modified: James Stine james.stine@okstate.edu, Rose Thompson rose@rosethompson.net
+// Modified: James Stine, Rose Thompson
 //
 // Purpose: Multiply/divide unit implementing the M extension.
 //

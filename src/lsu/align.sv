@@ -2,7 +2,7 @@
 // align.sv
 //
 // Written:  Rose Thompson rose@rosethompson.net 26 October 2023
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: Splits misaligned loads and stores that cross a cache-line boundary into two accesses and realigns the data for Zicclsm.
 //          Similar to the IFU's spill module; the two could be merged with some effort.

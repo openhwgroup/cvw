@@ -2,7 +2,7 @@
 // clint_apb.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 14 January 2021
-// Modified: Rose Thompson rose@rosethompson.net, Ben Bracker bbracker@hmc.edu
+// Modified: Rose Thompson, Ben Bracker
 //
 // Purpose: Core-local interruptor (CLINT) with machine timer and software interrupts on an APB interface.
 //          See FE310-G002-Manual-v19p05.

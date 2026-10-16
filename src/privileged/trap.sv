@@ -2,7 +2,7 @@
 // trap.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 9 January 2021
-// Modified: Domenico Ottolia dottolia@hmc.edu, Rose Thompson rose@rosethompson.net, Ben Bracker bbracker@hmc.edu, Jinghe Yu, Kip Macsai-Goren kmacsaigoren@hmc.edu, Thomas Fleming tfleming@hmc.edu
+// Modified: Domenico Ottolia dottolia@hmc.edu, Rose Thompson, Ben Bracker, Jinghe Yu, Kip Macsai-Goren, Thomas Fleming
 //
 // Purpose: Detects and prioritizes exceptions and interrupts and selects the trap cause.
 //

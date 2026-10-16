@@ -2,7 +2,7 @@
 // hazard.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 9 January 2021
-// Modified: Rose Thompson rose@rosethompson.net, Katherine Parry me@KatherineParry.com, Jarred Allen jaallen@g.hmc.edu
+// Modified: Rose Thompson, Katherine Parry, Jarred Allen
 //
 // Purpose: Computes the pipeline stall and flush signals for every stage.
 //

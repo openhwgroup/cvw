@@ -2,7 +2,7 @@
 // aesinvsbox64.sv
 //
 // Written:  Ryan Swann ryan.swann@okstate.edu, James Stine james.stine@okstate.edu 20 February 2024
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: Eight AES inverse S-boxes that substitute each byte of a 64-bit word.
 //

@@ -2,7 +2,7 @@
 // zknde64.sv
 //
 // Written:  Kelvin Tran kelvin.tran@okstate.edu, James Stine james.stine@okstate.edu 27 November 2023
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: RV64 Zkne/Zknd unit for AES encryption, decryption, and key schedule instructions.
 //

@@ -2,7 +2,7 @@
 // spill.sv
 //
 // Written:  Rose Thompson rose@rosethompson.net 28 January 2022
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: Splits an instruction fetch that crosses a cache-line boundary (or an XLEN/8 boundary without a cache) into two accesses and merges the halves.
 //

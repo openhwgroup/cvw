@@ -2,7 +2,7 @@
 // pmpadrdec.sv
 //
 // Written:  Thomas Fleming tfleming@hmc.edu 28 April 2021
-// Modified: David Harris David_Harris@hmc.edu, Kip Macsai-Goren kmacsaigoren@hmc.edu, Madeleine Masser-Frye
+// Modified: David Harris, Kip Macsai-Goren, Madeleine Masser-Frye
 //
 // Purpose: Determines whether an address matches one PMP entry in TOR, NA4, or NAPOT mode.
 //

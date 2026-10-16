@@ -2,7 +2,7 @@
 // ieu.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 9 January 2021
-// Modified: Rose Thompson rose@rosethompson.net, Katherine Parry me@KatherineParry.com, Kevin Kim kekim@hmc.edu, James Stine james.stine@okstate.edu, Ben Bracker bbracker@hmc.edu
+// Modified: Rose Thompson, Katherine Parry, Kevin Kim, James Stine, Ben Bracker
 //
 // Purpose: Integer execution unit that connects the controller and datapath.
 //

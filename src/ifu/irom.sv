@@ -2,7 +2,7 @@
 // irom.sv
 //
 // Written:  Rose Thompson rose@rosethompson.net 30 January 2022
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: Instruction ROM tightly integrated into the IFU.
 //

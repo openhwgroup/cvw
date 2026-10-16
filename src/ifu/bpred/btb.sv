@@ -2,7 +2,7 @@
 // btb.sv
 //
 // Written:  Rose Thompson rose@rosethompson.net 15 February 2021
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: Branch target buffer that predicts the target address and instruction class of control-flow instructions.
 //

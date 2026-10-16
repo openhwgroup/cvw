@@ -2,7 +2,7 @@
 // galoismultforward8.sv
 //
 // Written:  Ryan Swann ryan.swann@okstate.edu, James Stine james.stine@okstate.edu, David Harris David_Harris@hmc.edu 20 February 2024
-// Modified: Kelvin Tran kelvin.tran@okstate.edu
+// Modified: Kelvin Tran
 //
 // Purpose: Multiplies a byte by 2 in GF(2^8) modulo the AES polynomial for MixColumns.
 //

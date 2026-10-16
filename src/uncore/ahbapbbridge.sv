@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // ahbapbbridge.sv
 //
-// Written:  David Harris David_Harris@hmc.edu, Lucio nicholas.lucioforlife@yahoo.com 7 June 2022
+// Written:  David Harris David_Harris@hmc.edu, Lucio 7 June 2022
 // Modified:
 //
 // Purpose: Bridges the AHB bus to the APB peripherals.

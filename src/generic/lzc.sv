@@ -2,7 +2,7 @@
 // lzc.sv
 //
 // Written:  Katherine Parry me@KatherineParry.com 27 May 2022
-// Modified: James Stine james.stine@okstate.edu, Marcus Mellor marcus@infinitymdm.dev, Kevin Kim kekim@hmc.edu
+// Modified: James Stine james.stine@okstate.edu, Marcus Mellor marcus@infinitymdm.dev, Kevin Kim
 //
 // Purpose: Counts the leading zeros of its input.
 //

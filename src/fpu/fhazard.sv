@@ -2,7 +2,7 @@
 // fhazard.sv
 //
 // Written:  Katherine Parry me@KatherineParry.com 19 May 2021
-// Modified: Rose Thompson rose@rosethompson.net
+// Modified: Rose Thompson
 //
 // Purpose: Detect floating-point register dependencies to stall Decode and select forwarding for the Execute-stage operands.
 //

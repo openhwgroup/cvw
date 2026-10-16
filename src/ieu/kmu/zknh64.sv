@@ -2,7 +2,7 @@
 // zknh64.sv
 //
 // Written:  Kelvin Tran kelvin.tran@okstate.edu, James Stine james.stine@okstate.edu 13 February 2024
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: RV64 Zknh unit for the SHA-256 and SHA-512 hash instructions.
 //

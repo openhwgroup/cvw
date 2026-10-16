@@ -2,7 +2,7 @@
 // wallypipelinedsoc.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 6 November 2020
-// Modified: Rose Thompson rose@rosethompson.net, Jacob Pease jacobpease@protonmail.com, Ben Bracker bbracker@hmc.edu, Naiche Whyte-Aguayo nwhyteaguayo@g.hmc.edu
+// Modified: Rose Thompson, Jacob Pease, Ben Bracker, Naiche Whyte-Aguayo
 //
 // Purpose: System on chip containing the pipelined core and the uncore memories and peripherals.
 //

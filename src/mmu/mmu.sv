@@ -2,7 +2,7 @@
 // mmu.sv
 //
 // Written:  David Harris David_Harris@hmc.edu, Kip Macsai-Goren kmacsaigoren@hmc.edu 4 June 2021
-// Modified: Rose Thompson rose@rosethompson.net, Muhammad Zain zainzahid2050@gmail.com
+// Modified: Rose Thompson, Muhammad Zain
 //
 // Purpose: Memory management unit containing the TLB, PMA checker, and PMP checker, which reports page and access faults.
 //

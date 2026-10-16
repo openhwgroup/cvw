@@ -2,7 +2,7 @@
 // fdivsqrtuslc4cmp.sv
 //
 // Written:  David Harris David_Harris@hmc.edu, Katherine Parry me@KatherineParry.com, Cedar Turek cturek@hmc.edu 9 October 2022
-// Modified: Kevin Kim kekim@hmc.edu, Alessandro Maiuolo amaiuolo@hmc.edu
+// Modified: Kevin Kim, Alessandro Maiuolo
 //
 // Purpose: Comparator-based radix-4 unified quotient and square root digit selection.
 //

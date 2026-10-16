@@ -2,7 +2,7 @@
 // ram2p1r1wbe_128x64.sv
 //
 // Written:  James Stine james.stine@okstate.edu 28 January 2023
-// Modified: Rose Thompson rose@rosethompson.net
+// Modified: Rose Thompson
 //
 // Purpose: Wrapper that instantiates a 128x64 two-port SRAM macro.
 //

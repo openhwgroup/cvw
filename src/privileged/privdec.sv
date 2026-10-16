@@ -2,7 +2,7 @@
 // privdec.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 9 January 2021
-// Modified: Rose Thompson rose@rosethompson.net, Jinghe Yu, Domenico Ottolia dottolia@hmc.edu, Katherine Parry me@KatherineParry.com
+// Modified: Rose Thompson, Jinghe Yu, Domenico Ottolia, Katherine Parry
 //
 // Purpose: Decodes privileged instructions and flags illegal privileged instructions.
 //

@@ -2,7 +2,7 @@
 // cvw.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 27 January 2023
-// Modified: Rose Thompson rose@rosethompson.net, James Stine james.stine@okstate.edu, Naiche Whyte-Aguayo nwhyteaguayo@g.hmc.edu, Kevin Kim kekim@hmc.edu, Jordan Carlin jordanmcarlin@gmail.com
+// Modified: Rose Thompson, James Stine, Naiche Whyte-Aguayo, Kevin Kim, Jordan Carlin
 //
 // Purpose: Package defining the cvw_t configuration structure that parameterizes every module.
 //

@@ -2,7 +2,7 @@
 // spi_controller.sv
 //
 // Written:  Jacob Pease jacobpease@protonmail.com 28 October 2024
-// Modified: Naiche Whyte-Aguayo nwhyteaguayo@g.hmc.edu
+// Modified: Naiche Whyte-Aguayo
 //
 // Purpose: SPI controller that generates the serial clock, chip select, and shift and sample timing.
 //

@@ -2,7 +2,7 @@
 // ifu.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 9 January 2021
-// Modified: Rose Thompson rose@rosethompson.net, Thomas Fleming tfleming@hmc.edu, Jarred Allen jaallen@g.hmc.edu, Kip Macsai-Goren kmacsaigoren@hmc.edu, Shreya Sanghai ssanghai@hmc.edu, Ben Bracker bbracker@hmc.edu, Jordan Carlin jordanmcarlin@gmail.com
+// Modified: Rose Thompson, Thomas Fleming, Jarred Allen, Kip Macsai-Goren, Shreya Sanghai, Ben Bracker, Jordan Carlin
 //
 // Purpose: Instruction fetch unit containing the PC logic, branch predictor, ITLB, instruction cache or IROM, and bus interface.
 //

@@ -2,7 +2,7 @@
 // hptw.sv
 //
 // Written:  Thomas Fleming tfleming@hmc.edu 2 March 2021
-// Modified: Rose Thompson rose@rosethompson.net, David Harris David_Harris@hmc.edu, Kip Macsai-Goren kmacsaigoren@hmc.edu, Ayesha Anwaar ayesha.anwaar2005@gmail.com, Muhammad Zain zainzahid2050@gmail.com, Flavien Solt flavien.solt97@gmail.com, Abdul Rafay abdulrafay7038@gmail.com
+// Modified: Rose Thompson, David Harris David_Harris@hmc.edu, Kip Macsai-Goren kmacsaigoren@hmc.edu, Ayesha Anwaar, Muhammad Zain, Flavien Solt, Abdul Rafay
 //
 // Purpose: Hardware page table walker that refills the TLBs on a miss and updates PTE A/D bits.
 //
@@ -13,7 +13,17 @@
 //
 // Copyright (C) 2021-27 Harvey Mudd College & Oklahoma State University
 //
-// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
+// files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,
+// modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
+// is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+// BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
+// OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
 module hptw import cvw::*;  #(parameter cvw_t P) (

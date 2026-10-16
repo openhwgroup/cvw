@@ -2,7 +2,7 @@
 // csrs.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 9 January 2021
-// Modified: Rose Thompson rose@rosethompson.net, Ben Bracker bbracker@hmc.edu, Noah Boorstin nboorstin@hmc.edu, Domenico Ottolia dottolia@hmc.edu, Kip Macsai-Goren kmacsaigoren@hmc.edu, Jacob Pease jacobpease@protonmail.com, Ayesha Anwaar ayesha.anwaar2005@gmail.com
+// Modified: Rose Thompson, Ben Bracker, Noah Boorstin, Domenico Ottolia dottolia@hmc.edu, Kip Macsai-Goren, Jacob Pease, Ayesha Anwaar
 //
 // Purpose: Supervisor-mode control and status registers.
 //

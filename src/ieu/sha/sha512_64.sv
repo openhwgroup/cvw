@@ -2,7 +2,7 @@
 // sha512_64.sv
 //
 // Written:  Kelvin Tran kelvin.tran@okstate.edu, James Stine james.stine@okstate.edu 13 February 2024
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: RV64 SHA-512 sig0, sig1, sum0, and sum1 functions built from selected rotates and shifts and a three-input XOR.
 //

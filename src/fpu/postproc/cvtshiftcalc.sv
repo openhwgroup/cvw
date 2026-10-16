@@ -2,7 +2,7 @@
 // cvtshiftcalc.sv
 //
 // Written:  Katherine Parry me@KatherineParry.com 13 June 2022
-// Modified: David Harris David_Harris@hmc.edu, James Stine james.stine@okstate.edu
+// Modified: David Harris, James Stine
 //
 // Purpose: Prepare the normalization shifter input and detect underflow for conversion results.
 //

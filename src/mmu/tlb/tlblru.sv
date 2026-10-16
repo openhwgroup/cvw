@@ -2,7 +2,7 @@
 // tlblru.sv
 //
 // Written:  Thomas Fleming tfleming@hmc.edu, Jessica Torrey jtorrey@hmc.edu 16 February 2021
-// Modified: David Harris David_Harris@hmc.edu, Kip Macsai-Goren kmacsaigoren@hmc.edu
+// Modified: David Harris, Kip Macsai-Goren
 //
 // Purpose: Pseudo-LRU replacement policy that selects the next TLB entry to write.
 //

@@ -2,7 +2,7 @@
 // privpiperegs.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 12 May 2022
-// Modified: Rose Thompson rose@rosethompson.net
+// Modified: Rose Thompson
 //
 // Purpose: Pipeline registers that carry early exceptions from Fetch and Decode to the Memory stage.
 //

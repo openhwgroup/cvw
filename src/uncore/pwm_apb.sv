@@ -1,8 +1,8 @@
 ///////////////////////////////////////////
 // pwm_apb.sv
 //
-// Written:  Naiche Whyte-Aguayo nwhyteaguayo@g.hmc.edu 29 April 2026
-// Modified: David Harris David_Harris@hmc.edu
+// Written:  Naiche Whyte-Aguayo 29 April 2026
+// Modified: David Harris
 //
 // Purpose: Pulse-width modulation (PWM) peripheral with an APB interface.
 //

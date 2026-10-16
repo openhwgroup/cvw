@@ -2,7 +2,7 @@
 // tlbcam.sv
 //
 // Written:  Jessica Torrey jtorrey@hmc.edu 16 February 2021
-// Modified: David Harris David_Harris@hmc.edu, Kip Macsai-Goren kmacsaigoren@hmc.edu, Thomas Fleming tfleming@hmc.edu, Ayesha Anwaar ayesha.anwaar2005@gmail.com
+// Modified: David Harris, Kip Macsai-Goren kmacsaigoren@hmc.edu, Thomas Fleming, Ayesha Anwaar
 //
 // Purpose: Content-addressable memory of TLB virtual page numbers that determines whether a translation hits.
 //

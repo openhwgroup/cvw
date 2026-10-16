@@ -2,7 +2,7 @@
 // fdivsqrtstage4.sv
 //
 // Written:  David Harris David_Harris@hmc.edu, Katherine Parry me@KatherineParry.com, Cedar Turek cturek@hmc.edu 29 August 2022
-// Modified: Kevin Kim kekim@hmc.edu, Alessandro Maiuolo amaiuolo@hmc.edu
+// Modified: Kevin Kim, Alessandro Maiuolo
 //
 // Purpose: One radix-4 step of the unified divide and square root digit recurrence.
 //

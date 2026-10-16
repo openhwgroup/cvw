@@ -2,7 +2,7 @@
 // ram1p1rwbe_64x128.sv
 //
 // Written:  James Stine james.stine@okstate.edu 28 January 2023
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: Wrapper that instantiates a 64x128 single-port SRAM macro with bit write enables.
 //

@@ -2,7 +2,7 @@
 // ebufsmarb.sv
 //
 // Written:  Rose Thompson rose@rosethompson.net 23 January 2023
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: Arbitration state machine that grants the AHB bus to the IFU or LSU, giving the LSU priority and holding the grant through a burst.
 //

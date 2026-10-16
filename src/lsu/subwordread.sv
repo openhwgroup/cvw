@@ -2,7 +2,7 @@
 // subwordread.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 9 January 2021
-// Modified: Rose Thompson rose@rosethompson.net, Kevin Kim kekim@hmc.edu, Katherine Parry me@KatherineParry.com
+// Modified: Rose Thompson, Kevin Kim, Katherine Parry
 //
 // Purpose: Selects and sign- or zero-extends the addressed byte, halfword, word, or doubleword from read data.
 //

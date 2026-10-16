@@ -2,7 +2,7 @@
 // aesinvshiftrows64.sv
 //
 // Written:  Ryan Swann ryan.swann@okstate.edu, James Stine james.stine@okstate.edu 20 February 2024
-// Modified: Kelvin Tran kelvin.tran@okstate.edu, David Harris David_Harris@hmc.edu
+// Modified: Kelvin Tran, David Harris
 //
 // Purpose: AES inverse ShiftRows on a 128-bit state, producing the low 64 bits of the result.
 //

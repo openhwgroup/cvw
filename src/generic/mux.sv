@@ -2,7 +2,7 @@
 // mux.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 9 January 2021
-// Modified: James Stine james.stine@okstate.edu
+// Modified: James Stine
 //
 // Purpose: Parameterized-width 2- through 7-input multiplexers.
 //

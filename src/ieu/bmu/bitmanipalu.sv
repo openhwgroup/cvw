@@ -2,7 +2,7 @@
 // bitmanipalu.sv
 //
 // Written:  Kevin Kim kekim@hmc.edu, Kelvin Tran kelvin.tran@okstate.edu 23 March 2023
-// Modified: David Harris David_Harris@hmc.edu, James Stine james.stine@okstate.edu
+// Modified: David Harris, James Stine
 //
 // Purpose: Bit-manipulation ALU that computes Zba, Zbb, Zbc, Zbs, Zbk*, and Zkn* results and merges them with the base ALU.
 //

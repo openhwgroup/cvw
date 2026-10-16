@@ -2,7 +2,7 @@
 // fcmp.sv
 //
 // Written:  Katherine Parry me@KatherineParry.com 2 July 2021
-// Modified: David Harris David_Harris@hmc.edu, Vikram Krishna vkrishna@hmc.edu, Noah Limpert nlimpert@g.hmc.edu
+// Modified: David Harris, Vikram Krishna, Noah Limpert
 //
 // Purpose: Floating-point compare, min, and max, including the Zfa fminm, fmaxm, fleq, and fltq variants.
 //

@@ -2,7 +2,7 @@
 // uartPC16550D.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 21 January 2021
-// Modified: Rose Thompson rose@rosethompson.net, Ben Bracker bbracker@hmc.edu, Lucio nicholas.lucioforlife@yahoo.com, Jacob Pease jacobpease@protonmail.com
+// Modified: Rose Thompson, Ben Bracker, Lucio, Jacob Pease
 //
 // Purpose: UART with FIFOs emulating the Texas Instruments PC16550D.
 //          Datasheet: https://media.digikey.com/pdf/Data%20Sheets/Texas%20Instruments%20PDFs/PC16550D.pdf

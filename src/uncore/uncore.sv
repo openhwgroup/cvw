@@ -2,7 +2,7 @@
 // uncore.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 9 January 2021
-// Modified: Rose Thompson rose@rosethompson.net, Jacob Pease jacobpease@protonmail.com, Ben Bracker bbracker@hmc.edu, Noah Boorstin nboorstin@hmc.edu, Naiche Whyte-Aguayo nwhyteaguayo@g.hmc.edu, Thomas Fleming tfleming@hmc.edu
+// Modified: Rose Thompson, Jacob Pease, Ben Bracker, Noah Boorstin, Naiche Whyte-Aguayo, Thomas Fleming
 //
 // Purpose: System-on-chip components outside the core: memories, peripherals, and bus interconnect.
 //

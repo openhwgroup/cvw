@@ -2,7 +2,7 @@
 // aes64ks2.sv
 //
 // Written:  Ryan Swann ryan.swann@okstate.edu, James Stine james.stine@okstate.edu 20 February 2024
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: AES key schedule step for aes64ks2: XOR words of rs1 and rs2 to form the next two round key words.
 //

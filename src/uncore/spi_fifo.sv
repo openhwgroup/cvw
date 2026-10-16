@@ -1,8 +1,8 @@
 ///////////////////////////////////////////
 // spi_fifo.sv
 //
-// Written:  Naiche Whyte-Aguayo nwhyteaguayo@g.hmc.edu 16 November 2022
-// Modified: David Harris David_Harris@hmc.edu, Rose Thompson rose@rosethompson.net, Jacob Pease jacobpease@protonmail.com
+// Written:  Naiche Whyte-Aguayo 16 November 2022
+// Modified: David Harris, Rose Thompson, Jacob Pease
 //
 // Purpose: Synchronous FIFO with read and write watermarks for the SPI peripheral.
 //

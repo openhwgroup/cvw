@@ -2,7 +2,7 @@
 // rom1p1r.sv
 //
 // Written:  David Harris David_Harris@hmc.edu 24 August 2022
-// Modified: Jacob Pease jacobpease@protonmail.com, Rose Thompson rose@rosethompson.net, James Stine james.stine@okstate.edu, Kunlin Han hi@iwktd.com, Lucio nicholas.lucioforlife@yahoo.com
+// Modified: Jacob Pease, Rose Thompson, James Stine, Kunlin Han, Lucio
 //
 // Purpose: Single-port ROM with a synchronous read, optionally preloaded with boot code.
 //

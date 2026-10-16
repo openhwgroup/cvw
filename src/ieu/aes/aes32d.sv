@@ -2,7 +2,7 @@
 // aes32d.sv
 //
 // Written:  Ryan Swann ryan.swann@okstate.edu, James Stine james.stine@okstate.edu 20 February 2024
-// Modified: David Harris David_Harris@hmc.edu
+// Modified: David Harris
 //
 // Purpose: Inverse S-box and InvMixColumns on one byte for the RV32 aes32dsi and aes32dsmi decryption instructions.
 //

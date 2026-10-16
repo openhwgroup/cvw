@@ -2,7 +2,7 @@
 // bpred.sv
 //
 // Written:  Rose Thompson rose@rosethompson.net 12 February 2021
-// Modified: David Harris David_Harris@hmc.edu, Shreya Sanghai ssanghai@hmc.edu, Ben Bracker bbracker@hmc.edu
+// Modified: David Harris, Shreya Sanghai, Ben Bracker
 //
 // Purpose: Branch predictor that predicts the direction, target, and class of control-flow instructions in Fetch and corrects mispredictions in Execute.
 //
