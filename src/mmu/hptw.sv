@@ -39,10 +39,12 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0] PCSpillF,               // addresses to translate
   input  logic [P.XLEN+1:0] IEUAdrExtM,             // addresses to translate
   input  logic [1:0]        MemRWM, AtomicM,
+  input  logic              FpLoadStoreM,           // FP load/store in M
   // system status
   input  logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV,
   input  logic [1:0]        STATUS_MPP,
   input  logic              ENVCFG_ADUE,            // HPTW A/D Update enable
+  input  logic              ENVCFG_PBMTE,           // Page-based memory types enabled
   input  logic [1:0]        PrivilegeModeW,
   input  logic [P.XLEN-1:0] ReadDataM,              // page table entry from LSU
   input  logic [P.XLEN-1:0] WriteDataM,
@@ -65,6 +67,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   output logic [2:0]        LSUFunct3M,
   output logic [6:0]        LSUFunct7M,
   output logic [3:0]        LSUCMOpM,
+  output logic              LSUFpLoadStoreM,        // FpLoadStoreM, cleared for the walker's PTE accesses
   output logic              HPTWFlushW,
   output logic              SelHPTW,
   output logic              HPTWStall,
@@ -203,8 +206,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   if(P.SVADU_SUPPORTED) begin : hptwwrites
     logic                 ReadAccess, WriteAccess;
     logic                 InvalidRead, InvalidWrite, InvalidOp;
-    logic                 UpperBitsUnequal, UpperBitsUnequalD;
-    logic                 OtherPageFault;
+    logic                 OtherPageFault, LeafReservedFault;
     logic [1:0]           EffectivePrivilegeMode;
     logic                 ImproperPrivilege;
     logic                 SaveHPTWAdr, SelHPTWWriteAdr;
@@ -230,15 +232,16 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
     assign ImproperPrivilege = ((EffectivePrivilegeMode == P.U_MODE) & ~PTE_U) |
                                ((EffectivePrivilegeMode == P.S_MODE) & PTE_U & (~STATUS_SUM | ~DTLBWalk));
 
-    // Check for page faults
-    vm64check #(P) vm64check(.SATP_MODE(SATP_REGW[P.XLEN-1:P.XLEN-P.SVMODE_BITS]), .VAdr(TranslationVAdr),
-      .SV39Mode(), .SV48Mode(), .UpperBitsUnequal);
-    // This register is not functionally necessary, but improves the critical path.
-    flopr #(1) upperbitsunequalreg(clk, reset, UpperBitsUnequal, UpperBitsUnequalD);
+    // Check for page faults.  Non-canonical addresses page fault in the TLB and are never walked.
     assign InvalidRead = ReadAccess & ~Readable & (~STATUS_MXR | ~Executable);
     assign InvalidWrite = WriteAccess & ~Writable;
     assign InvalidOp = DTLBWalk ? (InvalidRead | InvalidWrite) : ~Executable;
-    assign OtherPageFault = ImproperPrivilege | InvalidOp | UpperBitsUnequalD | Misaligned | ~Valid;
+    // Reserved bit, PBMT, and NAPOT encodings that tlbcontrol faults on must also block the A/D update
+    if (P.XLEN == 64) assign LeafReservedFault = (|PTE[60:54]) |
+                        (PTE[62:61] == 2'b11) | ((PTE[62:61] != 2'b00) & ~(P.SVPBMT_SUPPORTED & ENVCFG_PBMTE)) |
+                        (PTE[63] & (~P.SVNAPOT_SUPPORTED | (PTE[13:10] != 4'b1000) | (PageType != 3'b000)));
+    else              assign LeafReservedFault = 1'b0;
+    assign OtherPageFault = ImproperPrivilege | InvalidOp | Misaligned | LeafReservedFault | ~Valid;
 
     // hptw needs to know if there is a Dirty or Access fault occurring on this
     // memory access.  If there is the PTE needs to be updated setting Access
@@ -396,6 +399,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   mux2 #(7) funct7mux(Funct7M, 7'b0, SelHPTW, LSUFunct7M);
   mux2 #(2) atomicmux(AtomicM, 2'b00, SelHPTW, LSUAtomicM);
   mux2 #(4) cmomux(CMOpM, 4'b0, SelHPTW, LSUCMOpM);
+  mux2 #(1) fpmux(FpLoadStoreM, 1'b0, SelHPTW, LSUFpLoadStoreM);
   mux2 #(P.XLEN+2) lsupadrmux(IEUAdrExtM, HPTWAdrExt, SelHPTWAdr, IHAdrM);
   if (P.SVADU_SUPPORTED)
     mux2 #(P.XLEN) lsuwritedatamux(WriteDataM, PTE, SelHPTW, IHWriteDataM);
