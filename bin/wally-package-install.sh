@@ -198,8 +198,8 @@ else
 
     # Post install steps
     # Vivado looks for ncurses5 libraries, but Ubuntu 24.04+ and Debian 13+ only have ncurses6
-    # Create symbolic links to the ncurses6 libraries to fool Vivado
-    if (( UBUNTU_VERSION >= 24 || DEBIAN_VERSION >= 13 )); then
+    # Create symbolic links to the ncurses6 libraries to fool Vivado (which runs only on x86-64)
+    if [[ "$(uname -m)" == x86_64 ]] && (( UBUNTU_VERSION >= 24 || DEBIAN_VERSION >= 13 )); then
         lib_dir=$(gcc -dumpmachine)
         ln -vsf /lib/"$lib_dir"/libncurses.so.6 /lib/"$lib_dir"/libncurses.so.5
         ln -vsf /lib/"$lib_dir"/libtinfo.so.6 /lib/"$lib_dir"/libtinfo.so.5
