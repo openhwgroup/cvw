@@ -39,6 +39,7 @@ module hptw import cvw::*; #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0] PCSpillF,               // PCF, or PCF + 2 for the second half of a spilled fetch
   input  logic [P.XLEN+1:0] IEUAdrExtM,             // Memory stage address, zero-extended to XLEN+2 bits
   input  logic [1:0]        MemRWM, AtomicM,        // Memory read/write and atomic operation in Memory stage
+  input  logic              FpLoadStoreM,           // FP load or store in Memory stage
   // system status
   input  logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV, // mstatus.MXR, SUM, MPRV: control address translation permissions
   input  logic [1:0]        STATUS_MPP,             // mstatus.MPP: machine previous privilege mode
@@ -66,6 +67,7 @@ module hptw import cvw::*; #(parameter cvw_t P) (
   output logic [2:0]        LSUFunct3M,             // IEU or HPTW memory operation size and signedness
   output logic [6:0]        LSUFunct7M,             // IEU or HPTW AMO operation
   output logic [3:0]        LSUCMOpM,               // IEU or HPTW cache management operation
+  output logic              LSUFpLoadStoreM,        // FpLoadStoreM, cleared for the walker's PTE accesses
   output logic              HPTWFlushW,             // HPTW walk needs to flush and replay the memory operation
   output logic              SelHPTW,                // HPTW is accessing memory through the LSU
   output logic              HPTWStall,              // HPTW walk in progress; stall the pipeline
@@ -397,6 +399,7 @@ module hptw import cvw::*; #(parameter cvw_t P) (
   mux2 #(7) funct7mux(Funct7M, 7'b0, SelHPTW, LSUFunct7M);
   mux2 #(2) atomicmux(AtomicM, 2'b00, SelHPTW, LSUAtomicM);
   mux2 #(4) cmomux(CMOpM, 4'b0, SelHPTW, LSUCMOpM);
+  mux2 #(1) fpmux(FpLoadStoreM, 1'b0, SelHPTW, LSUFpLoadStoreM);
   mux2 #(P.XLEN+2) lsupadrmux(IEUAdrExtM, HPTWAdrExt, SelHPTWAdr, IHAdrM);
   if (P.SVADU_SUPPORTED)
     mux2 #(P.XLEN) lsuwritedatamux(WriteDataM, PTE, SelHPTW, IHWriteDataM);
