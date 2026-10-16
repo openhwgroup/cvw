@@ -42,7 +42,6 @@ module csr import cvw::*; #(parameter cvw_t P) (
   input  logic                     TrapM,                                 // Trap is occurring
   input  logic                     mretM, sretM,                          // mret and sret instructions
   input  logic                     InterruptM,                            // Interrupt is occurring
-  input  logic                     ExceptionM,                            // Exception is occurring
   input  logic                     MTimerInt,                             // Machine timer interrupt
   input  logic                     MExtInt, SExtInt,                      // Machine and supervisor external interrupts
   input  logic                     MSwInt,                                // Machine software interrupt
@@ -209,8 +208,9 @@ module csr import cvw::*; #(parameter cvw_t P) (
   assign CSRMWriteM = UngatedCSRMWriteM & InstrValidNotFlushedM;
   assign CSRSWriteM = CSRWriteM & (|PrivilegeModeW) & InstrValidNotFlushedM;
   assign CSRUWriteM = CSRWriteM & InstrValidNotFlushedM;
-  assign MTrapM = TrapM & (NextPrivilegeModeM == P.M_MODE);
-  assign STrapM = TrapM & (NextPrivilegeModeM == P.S_MODE) & P.S_SUPPORTED;
+  // Record the trap only when it is taken, like mstatus and the privilege mode
+  assign MTrapM = TrapM & ~StallW & (NextPrivilegeModeM == P.M_MODE);
+  assign STrapM = TrapM & ~StallW & (NextPrivilegeModeM == P.S_MODE) & P.S_SUPPORTED;
 
   ///////////////////////////////////////////
   // CSRs
@@ -279,11 +279,11 @@ module csr import cvw::*; #(parameter cvw_t P) (
   end
 
   // counters are always instantiated but may read as zero if not supported
-  csrc #(P) counters(.clk, .reset, .StallE, .StallM, .FlushM,
+  csrc #(P) counters(.clk, .reset, .StallE, .StallM, .StallW, .FlushM,
     .InstrValidNotFlushedM, .LoadStallD, .StoreStallD, .CSRWriteM, .CSRMWriteM,
     .BPDirWrongM, .BTAWrongM, .RASPredPCWrongM, .IClassWrongM, .BPWrongM,
     .IClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .sfencevmaM,
-    .InterruptM, .ExceptionM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
+    .InterruptM, .TrapM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
     .CSRAdrM, .PrivilegeModeW, .CSRWriteValM,
     .MCOUNTINHIBIT_REGW, .MCOUNTEREN_REGW, .SCOUNTEREN_REGW,
     .MTIME_CLINT, .CSRCReadValM, .IllegalCSRCAccessM);

@@ -30,7 +30,7 @@
 
 module csrc import cvw::*; #(parameter cvw_t P) (
   input  logic              clk, reset,                                           // Clock and reset
-  input  logic              StallE, StallM,                                       // Stall Execute, Memory stages
+  input  logic              StallE, StallM, StallW,                               // Stall Execute, Memory, Writeback stages
   input  logic              FlushM,                                               // Flush Memory stage
   input  logic              InstrValidNotFlushedM, LoadStallD, StoreStallD,       // Instruction valid and not flushed; load and store stalls
   input  logic              CSRMWriteM, CSRWriteM,                                // Write a machine-mode CSR, write any CSR
@@ -48,7 +48,7 @@ module csrc import cvw::*; #(parameter cvw_t P) (
   input  logic              DCacheStallM,                                         // D$ busy with multicycle operation
   input  logic              sfencevmaM,                                           // sfence.vma: invalidate TLB entries
   input  logic              InterruptM,                                           // Interrupt is occurring
-  input  logic              ExceptionM,                                           // Exception is occurring
+  input  logic              TrapM,                                                // Trap is occurring
   input  logic              InvalidateICacheM,                                    // fence.i: invalidate the I$
   input  logic              DivBusyE,                                             // Integer divider busy
   input  logic              FDivBusyE,                                            // FPU divider busy
@@ -125,8 +125,8 @@ module csrc import cvw::*; #(parameter cvw_t P) (
     assign CounterEvent[19] = CSRWriteM & InstrValidNotFlushedM;                         // CSR writes
     assign CounterEvent[20] = InvalidateICacheM & InstrValidNotFlushedM;                 // fence.i
     assign CounterEvent[21] = sfencevmaM & InstrValidNotFlushedM;                        // sfence.vma
-    assign CounterEvent[22] = InterruptM;                                                // interrupt, InstrValidNotFlushedM will be low
-    assign CounterEvent[23] = ExceptionM;                                                // exceptions, InstrValidNotFlushedM will be low
+    assign CounterEvent[22] = TrapM & ~StallW & InterruptM;                              // interrupts taken, counted once; InstrValidNotFlushedM will be low
+    assign CounterEvent[23] = TrapM & ~StallW & ~InterruptM;                             // exceptions taken, counted once; InstrValidNotFlushedM will be low
     // DivBusyE is never asserted on rv64gc, which divides integers in the FPU; coverage-exclusions-rv64gc.do excludes that row
     assign CounterEvent[24] = DivBusyE | FDivBusyE;                                      // division cycles
     assign CounterEvent[31:25] = '0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
