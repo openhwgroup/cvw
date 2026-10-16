@@ -116,7 +116,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic [1:0]                    PrivilegeModeW;
   logic [P.XLEN-1:0]             PTE;
   logic [2:0]                    PageType;
-  logic                          sfencevmaM, sfencevmaAllM;
+  logic                          sfencevmaM, sfencevmaAllM, sfencevmaAdrM;
   logic                          SelHPTW;
 
   // PMA checker signals
@@ -195,7 +195,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .IllegalBaseInstrD, .IllegalFPUInstrD, .InstrPageFaultF, .IllegalIEUFPUInstrD, .InstrMisalignedFaultM,
     // mmu management
     .PrivilegeModeW, .PTE, .PageType, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV,
-    .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_ADUE, .ITLBWriteF, .sfencevmaM, .sfencevmaAllM, .ITLBMissOrUpdateAF,
+    .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_ADUE, .ITLBWriteF, .sfencevmaM, .sfencevmaAllM, .SFenceASIDM(WriteDataM[P.ASID_BITS-1:0]), .ITLBMissOrUpdateAF,
     .HPTWInstrAccessFaultF, .HPTWInstrPageFaultF, .HPTWInstrAccessFaultHeldF, .HPTWInstrPageFaultHeldF,
     // pmp/pma (inside mmu) signals.
     .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW, .InstrAccessFaultF);
@@ -251,7 +251,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .STATUS_MPP,                  // from csr
     .ENVCFG_PBMTE,                // from csr
     .ENVCFG_ADUE,                 // from csr
-    .sfencevmaM, .sfencevmaAllM,  // connects to privilege
+    .sfencevmaM, .sfencevmaAllM, .sfencevmaAdrM,  // connects to privilege
     .DCacheStallM,                // connects to privilege
     .IEUAdrxTvalM,                // connects to privilege
     .LoadPageFaultM,              // connects to privilege
@@ -301,7 +301,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .FlushD, .FlushE, .FlushM, .FlushW, .StallD, .StallE, .StallM, .StallW,
       .CSRReadM, .CSRWriteM, .SrcAM, .PCM, .PCSpillM,
       .InstrM, .InstrOrigM, .CSRReadValW, .EPCM, .TrapVectorM,
-      .RetM, .TrapM, .sfencevmaM, .sfencevmaAllM, .InvalidateICacheM, .DCacheStallM, .ICacheStallF,
+      .RetM, .TrapM, .sfencevmaM, .sfencevmaAllM, .sfencevmaAdrM, .InvalidateICacheM, .DCacheStallM, .ICacheStallF,
       .InstrValidM, .CommittedM, .CommittedF,
       .FRegWriteM, .LoadStallD, .StoreStallD,
       .BPDirWrongM, .BTAWrongM, .BPWrongM,
@@ -323,7 +323,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
             // PMPCFG_ARRAY_REGW, PMPADDR_ARRAY_REGW,
             ENVCFG_CBE, ENVCFG_PBMTE, ENVCFG_ADUE,
             EPCM, TrapVectorM, RetM, TrapM,
-            sfencevmaM, sfencevmaAllM, BigEndianM, wfiM, IntPendingM} = '0;
+            sfencevmaM, sfencevmaAllM, sfencevmaAdrM, BigEndianM, wfiM, IntPendingM} = '0;
   end
 
   // multiply/divide unit

@@ -95,6 +95,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   output logic              RetM, TrapM,                                    // return instruction, or trap
   output logic              sfencevmaM,                                     // sfence.vma instruction
   output logic              sfencevmaAllM,                                  // sfence.vma with rs2=x0: flush all TLB entries including global
+  output logic              sfencevmaAdrM,                                  // sfence.vma with rs1!=x0: flush only entries for the address in rs1
   input  logic              InvalidateICacheM,                              // fence instruction
   output logic              BigEndianM,                                     // Use big endian in current privilege mode
   // Fault outputs
@@ -131,7 +132,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   privdec #(P) pmd(.clk, .reset, .StallW, .FlushW, .InstrM(InstrM[31:7]),
     .PrivilegedM, .IllegalIEUFPUInstrM, .IllegalCSRAccessM,
     .PrivilegeModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_TW, .TrapM, .IllegalInstrFaultM,
-    .EcallFaultM, .BreakpointFaultM, .sretM, .mretM, .RetM, .wfiM, .wfiW, .sfencevmaM, .sfencevmaAllM);
+    .EcallFaultM, .BreakpointFaultM, .sretM, .mretM, .RetM, .wfiM, .wfiW, .sfencevmaM, .sfencevmaAllM, .sfencevmaAdrM);
 
   // Control and Status Registers
   csr #(P) csr(.clk, .reset, .FlushM, .FlushW, .StallE, .StallM, .StallW,

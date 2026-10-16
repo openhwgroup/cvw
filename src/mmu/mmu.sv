@@ -45,7 +45,9 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   input  logic [2:0]           PageTypeWriteVal,   // page type
   input  logic                 TLBWrite,           // write TLB entry
   input  logic                 TLBFlush,           // Invalidate all TLB entries (ASID-specific preserves global)
-  input  logic                 TLBFlushAll,        // Flush global (G=1) entries too; when 0, G=1 entries are preserved
+  input  logic                 TLBFlushAll,        // sfence.vma rs2 = x0: flush every ASID and global (G=1) entries too
+  input  logic                 TLBFlushVA,         // sfence.vma rs1 != x0: flush only entries whose page holds VAdr
+  input  logic [P.ASID_BITS-1:0] TLBFlushASID,      // sfence.vma rs2 ASID
   output logic [P.PA_BITS-1:0] PhysicalAddress,    // PAdr when no translation, or translated VAdr (TLBPAdr) when there is translation
   output logic                 TLBMiss,            // Miss TLB
   output logic                 Cacheable,          // PMA indicates memory address is cacheable
@@ -96,7 +98,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
           .VAdr(VAdr[P.XLEN-1:0]), .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_ADUE,
           .EffectivePrivilegeModeW, .ReadAccess, .WriteAccess, .CMOpM,
           .DisableTranslation, .PTE, .PageTypeWriteVal,
-          .TLBWrite, .TLBFlush, .TLBFlushAll, .TLBPAdr, .TLBMiss,
+          .TLBWrite, .TLBFlush, .TLBFlushAll, .TLBFlushVA, .TLBFlushASID, .TLBPAdr, .TLBMiss,
           .Translate, .TLBPageFault, .UpdateDA, .PBMemoryType);
   end else begin : tlb // just pass address through as physical
     assign Translate    = 1'b0;

@@ -38,7 +38,9 @@ module tlbcam  import cvw::*;  #(parameter cvw_t P,
   input  logic                    SV39Mode,
   input  logic                    SV48Mode,
   input  logic                    TLBFlush,
-  input  logic                    TLBFlushAll,  // Flush global (G=1) entries too
+  input  logic                    TLBFlushAll,  // sfence.vma rs2 = x0: flush every ASID and global (G=1) entries too
+  input  logic                    TLBFlushVA,   // sfence.vma rs1 != x0: flush only entries whose page holds VPN
+  input  logic [P.ASID_BITS-1:0]  TLBFlushASID, // sfence.vma rs2 ASID
   input  logic [TLB_ENTRIES-1:0]  WriteEnables,
   input  logic [TLB_ENTRIES-1:0]  PTE_Gs,
   input  logic [TLB_ENTRIES-1:0]  PTE_NAPOTs,  // entry is in NAPOT mode (N bit set and PPN[3:0] = 1000)
@@ -49,6 +51,11 @@ module tlbcam  import cvw::*;  #(parameter cvw_t P,
 );
 
   logic [2:0] PageTypeRead [TLB_ENTRIES-1:0];
+  logic [P.ASID_BITS-1:0] CompareASID;
+
+  // A flush compares the lines against the sfence.vma ASID instead of SATP's.  CAMHit is forced low during
+  // a flush, and new entries still store SATP's ASID, so lookups are unaffected.
+  mux2 #(P.ASID_BITS) asidmux(SATP_ASID, TLBFlushASID, TLBFlush, CompareASID);
 
   // TLB_ENTRIES CAM lines, each of which will independently consider
   // whether the requested virtual address is a match. Each line stores the
@@ -57,7 +64,8 @@ module tlbcam  import cvw::*;  #(parameter cvw_t P,
   // page number segments.
 
   tlbcamline #(P, KEY_BITS, SEGMENT_BITS) camlines[TLB_ENTRIES-1:0](
-    .clk, .reset, .VPN, .SATP_ASID, .SV39Mode, .SV48Mode, .PTE_G(PTE_Gs), .PTE_NAPOT(PTE_NAPOTs), .PageTypeWriteVal, .TLBFlush, .TLBFlushAll,
+    .clk, .reset, .VPN, .SATP_ASID, .CompareASID, .SV39Mode, .SV48Mode, .PTE_G(PTE_Gs), .PTE_NAPOT(PTE_NAPOTs), .PageTypeWriteVal,
+    .TLBFlush, .TLBFlushAll, .TLBFlushVA,
     .WriteEnable(WriteEnables), .PageTypeRead, .Match(Matches));
   assign CAMHit = |Matches & ~TLBFlush;
   or_rows #(TLB_ENTRIES,3) PageTypeOr(PageTypeRead, HitPageType);

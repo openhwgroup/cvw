@@ -322,7 +322,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
                       ControlsD = `CTRLW'b1_101_00_00_000_0_0_0_1_0_0_0_0_0_00_0_0; // mop.r.n, mop.rr.n write zero to rd
                   else if (P.ZICSR_SUPPORTED) begin
                    if (PFunctD)
-                      ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_1_0_0_00_0_0; // privileged; decoded further in privdec modules
+                      ControlsD = `CTRLW'b0_101_01_00_000_0_0_0_0_0_0_1_0_0_00_0_0; // privileged; decoded further in privdec modules; IEUAdr = rs1 (sfence.vma address)
                    else if (CSRFunctD)
                       ControlsD = `CTRLW'b1_000_00_00_010_0_0_0_0_0_1_0_0_0_00_0_0; // csrs
                   end
