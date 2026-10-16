@@ -9,7 +9,7 @@
 //          cause, so lost cycles that no cause explains, or that cost more than the
 //          microarchitecture should, stand out. Enabled with the PERF_MONITOR testbench
 //          parameter; writes one CSV row per ELF to +PERF_FILE (default <prefix>perf.csv)
-//          and a per-PC breakdown of lost cycles to the same name with .csv -> pc.csv.
+//          and a per-PC breakdown of lost cycles to the same name with .csv -> .pc.csv.
 //
 // A cycle retires when InstrValidM & ~StallW & ~FlushW (the minstret event). A lost cycle is
 //   1. a W-stage stall, charged to the LSU (page walk, D$, uncached bus, misaligned spill)
@@ -117,7 +117,10 @@ module perfmon import cvw::*; #(parameter cvw_t P) (
   assign CMOpM = dut.core.lsu.CMOpM;
   assign PCPF = dut.core.ifu.PCPF;
   assign PAdrM = dut.core.lsu.PAdrM;
-  // Cache FSM states (cachefsm.sv statetype): 0 ACCESS, 1 FETCH, 2 WRITEBACK, 3 WRITE_LINE, 4 ADDRESS_SETUP, 5 FLUSH, 6 FLUSH_WRITEBACK
+  // Cache FSM state encodings.  They must follow the order of statetype in src/cache/cachefsm.sv, which is
+  // declared inside that module, so it cannot be referenced from here.
+  localparam logic [3:0] CS_ACCESS = 4'd0, CS_FETCH = 4'd1, CS_WRITEBACK = 4'd2, CS_WRITE_LINE = 4'd3,
+                         CS_ADDRESS_SETUP = 4'd4, CS_FLUSH = 4'd5, CS_FLUSH_WRITEBACK = 4'd6;
   logic [3:0] CacheState[2];      // [0] I$, [1] D$
   if (P.ICACHE_SUPPORTED) begin : istate assign CacheState[0] = dut.core.ifu.bus.icache.icache.cachefsm.CurrState; end
   else begin : noistate assign CacheState[0] = '0; end
@@ -248,8 +251,8 @@ module perfmon import cvw::*; #(parameter cvw_t P) (
   always_ff @(posedge clk)
     for (int c = 0; c < 2; c++) begin
       PrevState[c] <= CacheState[c];
-      if (CacheState[c] == 4'd3) PrevFromFill[c] <= 1;
-      else if (CacheState[c] == 4'd0) PrevFromFill[c] <= 0;
+      if (CacheState[c] == CS_WRITE_LINE) PrevFromFill[c] <= 1;
+      else if (CacheState[c] == CS_ACCESS) PrevFromFill[c] <= 0;
     end
   longint      ReMiss[2];                            // I$/D$ re-fills of a line not invalidated since its last fill
   logic        LineFill[2][longint];                 // lines filled since the last invalidation
@@ -271,7 +274,7 @@ module perfmon import cvw::*; #(parameter cvw_t P) (
 
   initial begin
     if (!$value$plusargs("PERF_FILE=%s", perffile)) perffile = {sim_log_prefix, "perf.csv"};
-    pcfile = {perffile.substr(0, perffile.len()-5), "pc.csv"};
+    pcfile = {perffile.substr(0, perffile.len()-5), ".pc.csv"};
     Trace = $test$plusargs("PERF_TRACE");
   end
 
@@ -320,7 +323,7 @@ module perfmon import cvw::*; #(parameter cvw_t P) (
     LineFill[c][line] = 1;
   endfunction
 
-  bit FilesOpened = 0;   // the output files are started fresh by the first ELF of the simulation
+  bit FilesOpened;       // starts at 0, so the output files are started fresh by the first ELF of the simulation
 
   function automatic void writeResults();
     integer fd, fp;
@@ -386,28 +389,28 @@ module perfmon import cvw::*; #(parameter cvw_t P) (
       end
       if (FlushD & ~StallD & causeFlushD == C_BPWRONG) BPFlushes++;
       for (int c = 0; c < 2; c++) begin
-        if (CacheState[c] == 4'd1) Visited[c][0] = 1;
-        if (CacheState[c] == 4'd2 || CacheState[c] == 4'd6) Visited[c][1] = 1;
-        if (CacheState[c] == 4'd5 || CacheState[c] == 4'd6) Visited[c][2] = 1;
+        if (CacheState[c] == CS_FETCH) Visited[c][0] = 1;
+        if (CacheState[c] == CS_WRITEBACK || CacheState[c] == CS_FLUSH_WRITEBACK) Visited[c][1] = 1;
+        if (CacheState[c] == CS_FLUSH || CacheState[c] == CS_FLUSH_WRITEBACK) Visited[c][2] = 1;
         if (c ? (FlushW | HPTWStall) : FlushD) Visited[c][3] = 1;   // the walker also pre-empts a D$ miss that has not started
         if (c && CMOpM != 0) Visited[c][4] = 1;
         // a fill writes the line in WRITE_LINE and ends when ADDRESS_SETUP returns to ACCESS; CacheMiss must pulse
         // once in between (in WRITE_LINE, or in ADDRESS_SETUP on older RTL)
-        if (CacheState[c] == 4'd3) SawMiss[c] = (c ? DCacheMiss : ICacheMiss);
-        else if (CacheState[c] == 4'd4 && (c ? DCacheMiss : ICacheMiss)) SawMiss[c] = 1;
-        if (PrevState[c] == 4'd4 && CacheState[c] != 4'd4 && PrevFromFill[c]) begin
+        if (CacheState[c] == CS_WRITE_LINE) SawMiss[c] = (c ? DCacheMiss : ICacheMiss);
+        else if (CacheState[c] == CS_ADDRESS_SETUP && (c ? DCacheMiss : ICacheMiss)) SawMiss[c] = 1;
+        if (PrevState[c] == CS_ADDRESS_SETUP && CacheState[c] != CS_ADDRESS_SETUP && PrevFromFill[c]) begin
           Fills[c]++;
           if (!SawMiss[c]) FillsUnreported[c]++;
         end
       end
       // only fills load a line; older RTL also pulses CacheMiss after D$ flushes and CMOs
-      if (CacheState[0] == 4'd3) noteMiss(0, longint'(PCPF >> ILINEBITS));
-      if (CacheState[1] == 4'd3) noteMiss(1, longint'(PAdrM >> DLINEBITS));
+      if (CacheState[0] == CS_WRITE_LINE) noteMiss(0, longint'(PCPF >> ILINEBITS));
+      if (CacheState[1] == CS_WRITE_LINE) noteMiss(1, longint'(PAdrM >> DLINEBITS));
       if (Trace) begin
         if (ICacheMiss) $display("PERFTRACE t=%0t cyc=%0d icache_miss line=%h pcf=%h pcpf=%h", $time, Cycles, PCPF >> ILINEBITS, PCF, PCPF);
         if (DCacheMiss) $display("PERFTRACE t=%0t cyc=%0d dcache_miss line=%h pcm=%h", $time, Cycles, PAdrM >> DLINEBITS, PCM);
         if (InvalidateICacheM) $display("PERFTRACE t=%0t cyc=%0d invalidate_icache stallM=%b pcm=%h", $time, Cycles, StallM, PCM);
-        if (CacheState[0] == 4'd1 && PrevState[0] != 4'd1) $display("PERFTRACE t=%0t cyc=%0d icache_fetch_start pcf=%h pcpf=%h", $time, Cycles, PCF, PCPF);
+        if (CacheState[0] == CS_FETCH && PrevState[0] != CS_FETCH) $display("PERFTRACE t=%0t cyc=%0d icache_fetch_start pcf=%h pcpf=%h", $time, Cycles, PCF, PCPF);
       end
       if (InvalidateICacheM) LineFill[0].delete();
       if (FlushDCacheM | (CMOpM[0] | CMOpM[2])) LineFill[1].delete();

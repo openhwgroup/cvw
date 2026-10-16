@@ -7,7 +7,7 @@
 # monitor (testbench/common/perfmon.sv) and report lost cycles that may come from RTL defects.
 #
 # usage: perfanalyze.py SWEEPDIR [-o REPORT.md] [-n TOP]
-#   SWEEPDIR holds one subdirectory per configuration with <dir>.csv and <dir>pc.csv files.
+#   SWEEPDIR holds one subdirectory per configuration with <dir>.csv and <dir>.pc.csv files.
 #
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
@@ -69,7 +69,7 @@ def read_sweep(sweepdir):
     for cfgdir in sorted(glob.glob(os.path.join(sweepdir, "*/"))):
         config = os.path.basename(os.path.normpath(cfgdir))
         for f in sorted(glob.glob(os.path.join(cfgdir, "*.csv"))):
-            if f.endswith("pc.csv"):
+            if f.endswith(".pc.csv"):
                 with open(f) as fh:
                     pcs[config] += [(e, int(p, 16), c, int(n)) for e, p, c, n in csv.reader(fh)]
             else:
