@@ -41,11 +41,12 @@ module icpred import cvw::*;  #(parameter cvw_t P,
   output logic             ReturnD, ReturnE, ReturnM, ReturnW,
   input  logic             BTBCallF, BTBReturnF, BTBJumpF, BTBBranchF,
   output logic             BPCallF, BPReturnF, BPJumpF, BPBranchF,
-  output logic             IClassWrongM, BPReturnWrongD
+  output logic             IClassWrongM, BPReturnWrongD,
+  output logic             BPReturnD                          // the instruction in D was predicted to be a return
 );
 
   logic                    IClassWrongD;
-  logic                    BPBranchD, BPJumpD, BPReturnD, BPCallD;
+  logic                    BPBranchD, BPJumpD, BPCallD;
   logic                    IClassWrongE;
 
   if (!INSTR_CLASS_PRED) begin : DirectClassDecode
@@ -74,7 +75,7 @@ module icpred import cvw::*;  #(parameter cvw_t P,
 
     assign BPBranchF = NCBranchF | (P.ZCA_SUPPORTED & CBranchF);
     assign BPJumpF = NCJumpF | (P.ZCA_SUPPORTED & (CJumpF));
-    assign BPReturnF = (NCJumpF & (PostSpillInstrRawF[19:15] & 5'h1B) == 5'h01 & PostSpillInstrRawF[11:7] == 5'b0) | // return must return to ra or r5
+    assign BPReturnF = (PostSpillInstrRawF[6:0] == 7'h67 & (PostSpillInstrRawF[19:15] & 5'h1B) == 5'h01 & PostSpillInstrRawF[11:7] == 5'b0) | // return is a jalr to ra or r5
         (P.ZCA_SUPPORTED & cjr & ((PostSpillInstrRawF[11:7] & 5'h1B) == 5'h01));
 
     assign BPCallF = (NCJumpF & (PostSpillInstrRawF[11:07] & 5'h1B) == 5'h01) | // call(r) must link to ra or x5
@@ -85,7 +86,7 @@ module icpred import cvw::*;  #(parameter cvw_t P,
     assign {BPCallF, BPReturnF, BPJumpF, BPBranchF} = {BTBCallF, BTBReturnF, BTBJumpF, BTBBranchF};
   end
 
-  assign ReturnD = JumpD & (InstrD[19:15] & 5'h1B) == 5'h01; // returnurn must returnurn to ra or x5
+  assign ReturnD = JumpD & ~InstrD[3] & (InstrD[19:15] & 5'h1B) == 5'h01; // return is a jalr (not jal, whose [19:15] are offset bits) to ra or x5
   assign CallD = JumpD & (InstrD[11:7] & 5'h1B) == 5'h01; // call(r) must link to ra or x5
 
   flopenrc #(2) InstrClassRegE(clk, reset,  FlushE, ~StallE, {CallD, ReturnD}, {CallE, ReturnE});
