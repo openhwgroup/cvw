@@ -41,11 +41,12 @@ module icpred import cvw::*;  #(parameter cvw_t P,
   output logic             ReturnD, ReturnE, ReturnM, ReturnW,
   input  logic             BTBCallF, BTBReturnF, BTBJumpF, BTBBranchF,
   output logic             BPCallF, BPReturnF, BPJumpF, BPBranchF,
-  output logic             IClassWrongM, BPReturnWrongD
+  output logic             IClassWrongM, BPReturnWrongD,
+  output logic             BPReturnD                          // the instruction in D was predicted to be a return
 );
 
   logic                    IClassWrongD;
-  logic                    BPBranchD, BPJumpD, BPReturnD, BPCallD;
+  logic                    BPBranchD, BPJumpD, BPCallD;
   logic                    IClassWrongE;
 
   if (!INSTR_CLASS_PRED) begin : DirectClassDecode
