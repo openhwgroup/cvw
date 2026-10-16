@@ -71,6 +71,10 @@ module csrindextoaddr #(parameter TOTAL_CSRS = 36) (
     12'h003  // 35 fcsr
   };
 
+  if (TOTAL_CSRS > $size(CSR_ADDR)) begin : toomanycsrs
+    $error("csrindextoaddr: TOTAL_CSRS = %0d, but CSR_ADDR lists only %0d CSR addresses", TOTAL_CSRS, $size(CSR_ADDR));
+  end
+
   // CSRWen is one-hot: bit i selects CSRArray[i].  Return the address of that CSR (0 if none).
   always_comb begin
     CSRAddr = 12'h000;
