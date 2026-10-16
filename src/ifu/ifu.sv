@@ -164,7 +164,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     logic              SelSpillF, SelSpillD, SelSpillE, SelSpillM;
     spill #(P) spill(.clk, .reset, .StallF, .FlushD, .PCF, .PCPlus4F, .PCNextF, .InstrRawF,  .CacheableF,
       .InstrPageFaultF(InstrPageFaultRawF), .InstrAccessFaultF(InstrAccessFaultRawF),
-      .IFUCacheBusStallF, .ITLBMissOrUpdateAF(ITLBMissOrUpdateRawF), .PCSpillNextF, .PCSpillF, .SelSpillNextF, .SelSpillF,
+      .IFUCacheBusStallF, .ITLBMissOrUpdateRawF, .PCSpillNextF, .PCSpillF, .SelSpillNextF, .SelSpillF,
       .PostSpillInstrRawF, .CompressedF);
     // A spill is taken only when the first half fetches cleanly, so a fault during a spill belongs to the
     // second half and is reported at PCM+2.

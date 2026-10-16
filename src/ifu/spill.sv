@@ -39,7 +39,7 @@ module spill import cvw::*;  #(parameter cvw_t P) (
   input logic [P.XLEN-1:0]  PCNextF,           // The next PCF
   input logic [31:0]        InstrRawF,         // Instruction from the IROM, I$, or bus. Used to check if the instruction if compressed
   input logic               IFUCacheBusStallF, // I$ or bus are stalled. Transition to second fetch of spill after the first is fetched
-  input logic               ITLBMissOrUpdateAF, // ITLB miss causes HPTW (hardware pagetable walker) walk or update access bit
+  input logic               ITLBMissOrUpdateRawF, // ITLB miss or A update; not masked by a walk fault, so it blocks the spill when the first half's walk faults
   input logic               CacheableF,        // Is the instruction from the cache?
   input logic               InstrPageFaultF,   // Page fault on the first half; the spill is not taken if it faults
   input logic               InstrAccessFaultF, // Access fault on the first half; the spill is not taken if it faults
@@ -88,8 +88,9 @@ module spill import cvw::*;  #(parameter cvw_t P) (
     assign SpillF = PCF[1];
   // Don't take the spill if there is a stall, TLB miss, or hardware update to the D/A bits.
   // Nor if the first half faults: its bits are not the instruction, so the instruction length is
-  // unknown, and the fault on the first half is reported alone at PCF.
-  assign TakeSpillF = SpillF & ~EarlyCompressedF & ~IFUCacheBusStallF & ~ITLBMissOrUpdateAF &
+  // unknown, and the fault on the first half is reported alone at PCF.  A page table walk fault on the
+  // first half is not in InstrPageFaultF/InstrAccessFaultF; ITLBMissOrUpdateRawF blocks the spill then.
+  assign TakeSpillF = SpillF & ~EarlyCompressedF & ~IFUCacheBusStallF & ~ITLBMissOrUpdateRawF &
                       ~InstrPageFaultF & ~InstrAccessFaultF;
 
   always_ff @(posedge clk)
