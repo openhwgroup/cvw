@@ -42,6 +42,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
   input logic [P.LLEN*2-1:0]      DCacheReadDataWordM, // Instruction from the IROM, I$, or bus. Used to check if the instruction if compressed
   input logic                     CacheBusHPWTStall, // I$ or bus are stalled. Transition to second fetch of spill after the first is fetched
   input logic                     SelHPTW,
+  input logic                     DataFaultM, // This M-stage access raises a page or access fault: do not take the spill
 
   input logic [(P.LLEN-1)/8:0]    ByteMaskM,
   input logic [(P.LLEN-1)/8:0]    ByteMaskExtendedM,
@@ -123,7 +124,10 @@ module align import cvw::*;  #(parameter cvw_t P) (
   end
   assign MisalignedM = (|MemRWM) & (AccessByteOffsetM != 0);
 
-  assign ValidSpillM = MisalignedM & PotentialSpillM & ~CacheBusHPWTStall;   // Don't take the spill if there is a stall
+  // Don't take the spill if there is a stall or the access faults.  A faulting access must keep presenting the
+  // original address: the fault is recomputed combinationally each cycle and would vanish at the second-half
+  // address while a committed I$ fill defers the trap, losing the exception and half-executing a store.
+  assign ValidSpillM = MisalignedM & PotentialSpillM & ~CacheBusHPWTStall & ~DataFaultM;
 
   always_ff @(posedge clk)
     if (reset | FlushM)    CurrState <= STATE_READY;
