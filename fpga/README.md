@@ -68,4 +68,3 @@ screen /dev/ttyUSB1 115200
 ```
 
 Swap out the `USB1` for `USB0` or `USB1` as needed.
-

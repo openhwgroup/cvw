@@ -15,5 +15,3 @@ DA=riscv64-unknown-elf-objdump -d
 
 
 include $(ROOT)/makefile.inc
-
-

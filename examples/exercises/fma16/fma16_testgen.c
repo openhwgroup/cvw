@@ -19,7 +19,7 @@ uint16_t easyExponents[] = {15, 0x8000};
 uint16_t easyFracts[] = {0, 0x200, 0x8000}; // 1.0 and 1.1
 
 void softfloatInit(void) {
-    softfloat_roundingMode = softfloat_round_minMag; 
+    softfloat_roundingMode = softfloat_round_minMag;
     softfloat_exceptionFlags = 0;
     softfloat_detectTininess = softfloat_tininess_beforeRounding;
 }
@@ -60,7 +60,7 @@ void genCase(FILE *fptr, float16_t x, float16_t y, float16_t z, int mul, int add
     result = f16_mulAdd(x2, y, z2); // call SoftFloat to compute expected result
 
     // Extract expected flags from SoftFloat
-    sprintf(flags, "NV: %d OF: %d UF: %d NX: %d", 
+    sprintf(flags, "NV: %d OF: %d UF: %d NX: %d",
         (softfloat_exceptionFlags >> 4) % 2,
         (softfloat_exceptionFlags >> 2) % 2,
         (softfloat_exceptionFlags >> 1) % 2,
@@ -94,7 +94,7 @@ void genCase(FILE *fptr, float16_t x, float16_t y, float16_t z, int mul, int add
     fprintf(fptr, "%04x_%04x_%04x_%02x_%04x_%01x // %s %s\n", x.v, y.v, z.v, op, result.v, flagVals, calc, flags);
 }
 
-void prepTests(uint16_t *e, uint16_t *f, char *testName, char *desc, float16_t *cases, 
+void prepTests(uint16_t *e, uint16_t *f, char *testName, char *desc, float16_t *cases,
                FILE *fptr, int *numCases) {
     int i, j;
 
@@ -114,7 +114,7 @@ void genMulTests(uint16_t *e, uint16_t *f, int sgn, char *testName, char *desc, 
     float16_t cases[100000];
     FILE *fptr;
     char fn[80];
- 
+
     sprintf(fn, "work/%s.tv", testName);
     if ((fptr = fopen(fn, "w")) == 0) {
         printf("Error opening to write file %s.  Does directory exist?\n", fn);
@@ -122,7 +122,7 @@ void genMulTests(uint16_t *e, uint16_t *f, int sgn, char *testName, char *desc, 
     }
     prepTests(e, f, testName, desc, cases, fptr, &numCases);
     z.v = 0x0000;
-    for (i=0; i < numCases; i++) { 
+    for (i=0; i < numCases; i++) {
         x.v = cases[i].v;
         for (j=0; j<numCases; j++) {
             y.v = cases[j].v;
@@ -139,15 +139,15 @@ int main()
 {
     if (system("mkdir -p work") != 0) exit(1); // create work directory if it doesn't exist
     softfloatInit(); // configure softfloat modes
- 
+
     // Test cases: multiplication
     genMulTests(easyExponents, easyFracts, 0, "fmul_0", "// Multiply with exponent of 0, significand of 1.0 and 1.1, RZ", 0, 0, 0, 0);
 
 /*  // example of how to generate tests with a different rounding mode
-    softfloat_roundingMode = softfloat_round_near_even; 
+    softfloat_roundingMode = softfloat_round_near_even;
     genMulTests(easyExponents, easyFracts, 0, "fmul_0_rne", "// Multiply with exponent of 0, significand of 1.0 and 1.1, RNE", 1, 0, 0, 0); */
 
     // Add your cases here
-  
+
     return 0;
 }

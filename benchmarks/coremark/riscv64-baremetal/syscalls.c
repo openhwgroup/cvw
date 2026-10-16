@@ -19,22 +19,22 @@ extern volatile uint64_t fromhost;
 
 
 void _send_char(char c) {
-/*#error "You must implement the method _send_char to use this file!\n";
-*/
-volatile unsigned char *THR=(unsigned char *)0x10000000;
-volatile unsigned char *LSR=(unsigned char *)0x10000005;
+  /*#error "You must implement the method _send_char to use this file!\n";
+  */
+  volatile unsigned char *THR=(unsigned char *)0x10000000;
+  volatile unsigned char *LSR=(unsigned char *)0x10000005;
 
-while(!(*LSR&0b100000));
-*THR=c;
-while(!(*LSR&0b100000)); 
+  while(!(*LSR&0b100000));
+  *THR=c;
+  while(!(*LSR&0b100000));
 }
 
 int sendstring(const char *p){
   int n=0;
     while (*p) {
-	_send_char(*p);
-	n++;
-	p++;
+    _send_char(*p);
+    n++;
+    p++;
   }
 
   return n;
@@ -83,12 +83,12 @@ void setStats(int enable)
   READ_CTR(mhpmcounter9);
   READ_CTR(mhpmcounter10);
   READ_CTR(mhpmcounter11);
-  READ_CTR(mhpmcounter12);  
-  READ_CTR(mhpmcounter13);  
-  READ_CTR(mhpmcounter14);  
-  READ_CTR(mhpmcounter15);  
-  READ_CTR(mhpmcounter16);  
-  READ_CTR(mhpmcounter17);  
+  READ_CTR(mhpmcounter12);
+  READ_CTR(mhpmcounter13);
+  READ_CTR(mhpmcounter14);
+  READ_CTR(mhpmcounter15);
+  READ_CTR(mhpmcounter16);
+  READ_CTR(mhpmcounter17);
 
 #undef READ_CTR
 }
@@ -147,6 +147,22 @@ static void init_tls()
 
 void _init(int cid, int nc)
 {
+  // mhpmcounter3-17 count only while their mhpmevent is nonzero
+  write_csr(mhpmevent3, 1);
+  write_csr(mhpmevent4, 1);
+  write_csr(mhpmevent5, 1);
+  write_csr(mhpmevent6, 1);
+  write_csr(mhpmevent7, 1);
+  write_csr(mhpmevent8, 1);
+  write_csr(mhpmevent9, 1);
+  write_csr(mhpmevent10, 1);
+  write_csr(mhpmevent11, 1);
+  write_csr(mhpmevent12, 1);
+  write_csr(mhpmevent13, 1);
+  write_csr(mhpmevent14, 1);
+  write_csr(mhpmevent15, 1);
+  write_csr(mhpmevent16, 1);
+  write_csr(mhpmevent17, 1);
   init_tls();
   thread_entry(cid, nc);
 
@@ -179,7 +195,7 @@ void _init(int cid, int nc)
   ee_printf("Load Stalls %d\n", counters[11]);
   ee_printf("Store Stalls %d\n", counters[12]);
   ee_printf("D-Cache Accesses %d\n", counters[13]);
-  ee_printf("D-Cache Misses %d\n", counters[14]); 
+  ee_printf("D-Cache Misses %d\n", counters[14]);
   ee_printf("I-Cache Accesses %d\n", counters[16]);
   ee_printf("I-Cache Misses %d\n", counters[17]);
   ee_printf("Branches %d\n", counters[3]);
@@ -301,7 +317,7 @@ static void vprintfmt(void (*putch)(int, void**), void **putdat, const char *fmt
     case '-':
       padc = '-';
       goto reswitch;
-      
+
     // flag to pad with 0's instead of spaces
     case '0':
       padc = '0';
@@ -411,7 +427,7 @@ static void vprintfmt(void (*putch)(int, void**), void **putdat, const char *fmt
     case '%':
       putch(ch, putdat);
       break;
-      
+
     // unrecognized escape sequence - just print it literally
     default:
       putch('%', putdat);

@@ -7,7 +7,7 @@
 //
 // Purpose: Converts the compressed RVVI format into AXI 4 burst write transactions.
 //
-// Documentation: 
+// Documentation:
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 //
@@ -15,20 +15,20 @@
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module packetizer import cvw::*; #(parameter cvw_t P,
-                                   parameter integer MAX_CSRS, 
+                                   parameter integer MAX_CSRS,
                                    parameter logic [31:0] RVVI_INIT_TIME_OUT = 32'd4,
                                    parameter logic [31:0] RVVI_PACKET_DELAY = 32'd2
 )(
@@ -38,11 +38,11 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   output logic RVVIStall,
   // axi 4 write address channel
   // axi 4 write data channel
-  output logic [31:0]      RvviAxiWdata,
-  output logic [3:0] 	   RvviAxiWstrb,
-  output logic  		   RvviAxiWlast,
-  output logic  		   RvviAxiWvalid,
-  input  logic  		   RvviAxiWready
+  output logic [31:0]  RvviAxiWdata,
+  output logic [3:0]   RvviAxiWstrb,
+  output logic         RvviAxiWlast,
+  output logic         RvviAxiWvalid,
+  input  logic         RvviAxiWready
   );
 
   localparam NearTotalFrameLengthBits = 2*48+16+72+(5*P.XLEN) + MAX_CSRS*(P.XLEN+16);
@@ -63,14 +63,14 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   logic [WordPadLen-1:0]     WordPad;
 
   logic [72+(5*P.XLEN) + MAX_CSRS*(P.XLEN+16)-1:0] rvviDelay;
-  
+
   typedef enum logic [2:0] {STATE_RST, STATE_COUNT, STATE_RDY, STATE_WAIT, STATE_TRANS, STATE_TRANS_INSERT_DELAY} statetype;
 (* mark_debug = "true" *)  statetype CurrState, NextState;
 
-   logic [31:0] 	    RstCount;
-(* mark_debug = "true" *)   logic [31:0] 	    FrameCount;
-  logic 		    RstCountRst, RstCountEn, CountFlag, DelayFlag;
-   
+  logic [31:0]       RstCount;
+(* mark_debug = "true" *)   logic [31:0]      FrameCount;
+  logic              RstCountRst, RstCountEn, CountFlag, DelayFlag;
+
 
   always_ff @(posedge m_axi_aclk) begin
     if(~m_axi_aresetn) CurrState <= STATE_RST;
@@ -109,7 +109,7 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   assign DelayFlag = RstCount == RVVI_PACKET_DELAY;
 
   counter #(32) framecounter(m_axi_aclk, ~m_axi_aresetn, (RvviAxiWready & RvviAxiWlast), FrameCount);
-   
+
 
   flopenr #(72+(5*P.XLEN) + MAX_CSRS*(P.XLEN+16)) rvvireg(m_axi_aclk, ~m_axi_aresetn, valid, rvvi, rvviDelay);
 
@@ -121,7 +121,7 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   assign BurstDone = WordCount == (BytesInFrame[11:2] - 1'b1);
 
   genvar index;
-  for (index = 0; index < TotalFrameLengthBytes/4; index++) begin 
+  for (index = 0; index < TotalFrameLengthBytes/4; index++) begin
     assign TotalFrameWords[index] = TotalFrame[(index*32)+32-1 : (index*32)];
   end
 
@@ -133,11 +133,10 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   assign DstMac = 48'h8F54_0000_1654; // made something up
   assign SrcMac = 48'h4502_1111_6843;
   assign EthType = 16'h005c;
-  
+
   assign RvviAxiWdata = TotalFrameWords[WordCount[4:0]];
   assign RvviAxiWstrb = '1;
   assign RvviAxiWlast = BurstDone & (CurrState == STATE_TRANS);
   assign RvviAxiWvalid = (CurrState == STATE_TRANS);
-  
+
 endmodule
- 

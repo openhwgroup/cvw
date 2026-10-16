@@ -4,20 +4,20 @@
 // A component of the Wally configurable RISC-V project.
 // Implements a RISC-V Verification Interface (RVVI)
 // to support functional coverage and lockstep simulation.
-// 
+//
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -41,7 +41,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
 
   localparam NUM_REGS = P.E_SUPPORTED ? 16 : 32;
   localparam NUM_CSRS = 4096;
-  
+
   // wally specific signals
   logic                  reset;
   logic                  clk;
@@ -68,10 +68,9 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   logic                  frf_we4;
   logic                  CSRWriteM, CSRWriteW;
   logic [11:0]           CSRAdrM, CSRAdrW;
-  logic                  wfiM;
   logic                  InterruptM, InterruptW;
-  logic                  MExtInt, SExtInt, MTimerInt, MSwInt;
   logic                  valid;
+  logic                  HPTWUpdateDA, DA_updated, capture_PTE;
 
   //For VM Verification
   logic [(P.XLEN-1):0]     IVAdrF,IVAdrD,IVAdrE,IVAdrM,IVAdrW,DVAdrM,DVAdrW;
@@ -113,27 +112,18 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
     assign PrivilegeModeW = testbench.dut.core.priv.priv.privmode.PrivilegeModeW;
     assign STATUS_SXL     = testbench.dut.core.priv.priv.csr.csrsr.STATUS_SXL;
     assign STATUS_UXL     = testbench.dut.core.priv.priv.csr.csrsr.STATUS_UXL;
-    assign wfiM           = testbench.dut.core.priv.priv.wfiM;
     assign InterruptM     = testbench.dut.core.priv.priv.InterruptM;
-    assign MExtInt        = testbench.dut.MExtInt;
-    assign SExtInt        = testbench.dut.SExtInt;
-    assign MTimerInt      = testbench.dut.MTimerInt;
-    assign MSwInt         = testbench.dut.MSwInt;
   end else begin
     assign PrivilegeModeW = 2'b11;
     assign STATUS_SXL     = 0;
     assign STATUS_UXL     = 0;
-    assign wfiM           = 0;
     assign InterruptM     = 0;
-    assign MExtInt        = 0;
-    assign SExtInt        = 0;
-    assign MTimerInt      = 0;
-    assign MSwInt         = 0;
   end
 
   //For VM Verification
   if (P.VIRTMEM_SUPPORTED) begin
     assign SelHPTW        = testbench.dut.core.lsu.hptw.hptw.SelHPTW;
+    assign HPTWUpdateDA   = testbench.dut.core.lsu.hptw.hptw.HPTWUpdateDA;
     assign IVAdrF         = testbench.dut.core.ifu.immu.immu.tlb.tlb.VAdr;
     assign DVAdrM         = testbench.dut.core.lsu.dmmu.dmmu.tlb.tlb.VAdr;
     assign IPAF           = testbench.dut.core.ifu.immu.immu.PhysicalAddress;
@@ -144,7 +134,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
     assign IPTEF          = testbench.dut.core.ifu.immu.immu.PTE;
     assign DPTEM          = testbench.dut.core.lsu.dmmu.dmmu.PTE;
     assign IPPNF          = testbench.dut.core.ifu.immu.immu.tlb.tlb.PPN;
-    assign DPPNM          = testbench.dut.core.lsu.dmmu.dmmu.tlb.tlb.PPN; 
+    assign DPPNM          = testbench.dut.core.lsu.dmmu.dmmu.tlb.tlb.PPN;
     assign IPageTypeF     = testbench.dut.core.ifu.immu.immu.PageTypeWriteVal;
     assign DPageTypeM     = testbench.dut.core.lsu.dmmu.dmmu.PageTypeWriteVal;
   end else begin
@@ -213,8 +203,8 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
     `CONNECT_CSR(MCOUNTINHIBIT, 12'h320, testbench.dut.core.priv.priv.csr.csrm.MCOUNTINHIBIT_REGW);
     // mhpmevent3-31 not connected (232-33F)
     if (P.ZICNTR_SUPPORTED) begin
-      `CONNECT_CSR(MCYCLE, 12'hB00, testbench.dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[0]); // MCYCLE
-      `CONNECT_CSR(MINSTRET, 12'hB02, testbench.dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2]); // MINSTRET
+      `CONNECT_CSR(MCYCLE, 12'hB00, testbench.dut.core.priv.priv.csr.counters.HPMCOUNTER_REGW[0]); // MCYCLE
+      `CONNECT_CSR(MINSTRET, 12'hB02, testbench.dut.core.priv.priv.csr.counters.HPMCOUNTER_REGW[2]); // MINSTRET
       // mhpmcounter3-31 not connected (B03-B1F)
       // cycle, time, instret not connected (C00-C02)
       // hpmcounter3-31 not connected (C03-C1F)
@@ -242,7 +232,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
         `CONNECT_CSR(STIMECMPH, 12'h15D, testbench.dut.core.priv.priv.csr.csrs.csrs.STIMECMP_REGW[63:32]);
       end
     end
-    
+
     // Zkr CSRs
     // seed not connected (015)
 
@@ -288,7 +278,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
 
   // Integer register file
   assign rf[0] = 0;
-  for(genvar index = 1; index < NUM_REGS; index += 1) 
+  for(genvar index = 1; index < NUM_REGS; index += 1)
     assign rf[index] = testbench.dut.core.ieu.dp.regf.rf[index];
 
   assign rf_a3  = testbench.dut.core.ieu.dp.regf.a3;
@@ -304,12 +294,12 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   if (P.F_SUPPORTED) begin
     assign frf_a4  = testbench.dut.core.fpu.fpu.fregfile.a4;
     assign frf_we4 = testbench.dut.core.fpu.fpu.fregfile.we4;
-    for(genvar index = 0; index < 32; index += 1) 
+    for(genvar index = 0; index < 32; index += 1)
       assign frf[index] = testbench.dut.core.fpu.fpu.fregfile.rf[index];
   end else begin
     assign frf_a4  = '0;
     assign frf_we4 = 0;
-    for(genvar index = 0; index < 32; index += 1) 
+    for(genvar index = 0; index < 32; index += 1)
       assign frf[index] = '0;
   end
 
@@ -322,7 +312,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   // CSR writes
   assign CSRAdrM  = testbench.dut.core.priv.priv.csr.CSRAdrM;
   assign CSRWriteM = testbench.dut.core.priv.priv.csr.CSRWriteM;
-  
+
   // pipeline to writeback stage
   flopenrc #(32)    InstrRawEReg (clk, reset, FlushE, ~StallE, InstrRawD, InstrRawE);
   flopenrc #(32)    InstrRawMReg (clk, reset, FlushM, ~StallM, InstrRawE, InstrRawM);
@@ -337,27 +327,32 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   flopenrc #(1)     CSRWriteWReg (clk, reset, FlushW, ~StallW, CSRWriteM, CSRWriteW);
 
   // For VM Verification
-  flopenr #(P.XLEN)     IVAdrDReg (clk, reset, ~StallD, IVAdrF, IVAdrD); //Virtual Address for IMMU 
+  flopenr #(P.XLEN)     IVAdrDReg (clk, reset, ~StallD, IVAdrF, IVAdrD); //Virtual Address for IMMU
   flopenr #(P.XLEN)     IVAdrEReg (clk, reset, ~StallE, IVAdrD, IVAdrE); //Virtual Address for IMMU
   flopenr #(P.XLEN)     IVAdrMReg (clk, reset, ~StallM, IVAdrE, IVAdrM); //Virtual Address for IMMU
   flopenr #(P.XLEN)     IVAdrWReg (clk, reset, ~StallW, IVAdrM, IVAdrW); //Virtual Address for IMMU
   flopenr #(P.XLEN)     DVAdrWReg (clk, reset, ~StallW, DVAdrM, DVAdrW); //Virtual Address for DMMU
 
-  flopenr #(P.PA_BITS)  IPADReg (clk, reset, ~StallD, IPAF, IPAD); //Physical Address for IMMU 
+  flopenr #(P.PA_BITS)  IPADReg (clk, reset, ~StallD, IPAF, IPAD); //Physical Address for IMMU
   flopenr #(P.PA_BITS)  IPAEReg (clk, reset, ~StallE, IPAD, IPAE); //Physical Address for IMMU
   flopenr #(P.PA_BITS)  IPAMReg (clk, reset, ~StallM, IPAE, IPAM); //Physical Address for IMMU
   flopenr #(P.PA_BITS)  IPAWReg (clk, reset, ~StallW, IPAM, IPAW); //Physical Address for IMMU
   flopenr #(P.PA_BITS)  DPAWReg (clk, reset, ~StallW, DPAM, DPAW); //Physical Address for DMMU
 
-  flopenr #(P.XLEN)     IPTEFReg (clk, reset, SelHPTW, IPTEF, IPTEHPTWF); //PTE for IMMU // No value for PTE when SelHPTW is low. Used to capture valid PTE during page table walk
-  flopenr #(P.XLEN)     IPTEDReg (clk, reset, ~StallD, IPTEHPTWF, IPTED); //PTE for IMMU 
-  flopenr #(P.XLEN)     IPTEEReg (clk, reset, ~StallE, IPTED, IPTEE);     //PTE for IMMU
-  flopenr #(P.XLEN)     IPTEMReg (clk, reset, ~StallM, IPTEE, IPTEM);     //PTE for IMMU
-  flopenr #(P.XLEN)     IPTEWReg (clk, reset, ~StallW, IPTEM, IPTEW);     //PTE for IMMU
-  flopenr #(P.XLEN)     DPTEMReg (clk, reset, SelHPTW, DPTEM, DPTEHPTWM); //PTE for DMMU // No value for PTE when SelHPTW is low. Used to capture valid PTE during page table walk
-  flopenr #(P.XLEN)     DPTEWReg (clk, reset, ~StallW, DPTEHPTWM, DPTEW); //PTE for DMMU
+  // 'DA_updated' is a sticky bit that latches when HPTWUpdateDA asserts. Cleared as the walk finishes.
+  flopenrc #(1)         UpdDAReg (clk, reset, ~SelHPTW, 1'b1, (HPTWUpdateDA | DA_updated), DA_updated);
+  // Capture valid PTE during page table walk; no value when SelHPTW is low
+  // Don't capture if hardware has update DA bits of PTE
+  assign capture_PTE = SelHPTW & ~DA_updated;
+  flopenr #(P.XLEN)     IPTEFReg (clk, reset, capture_PTE, IPTEF, IPTEHPTWF); //PTE for IMMU
+  flopenr #(P.XLEN)     IPTEDReg (clk, reset, ~StallD, IPTEHPTWF, IPTED);     //PTE for IMMU
+  flopenr #(P.XLEN)     IPTEEReg (clk, reset, ~StallE, IPTED, IPTEE);         //PTE for IMMU
+  flopenr #(P.XLEN)     IPTEMReg (clk, reset, ~StallM, IPTEE, IPTEM);         //PTE for IMMU
+  flopenr #(P.XLEN)     IPTEWReg (clk, reset, ~StallW, IPTEM, IPTEW);         //PTE for IMMU
+  flopenr #(P.XLEN)     DPTEMReg (clk, reset, capture_PTE, DPTEM, DPTEHPTWM); //PTE for DMMU
+  flopenr #(P.XLEN)     DPTEWReg (clk, reset, ~StallW, DPTEHPTWM, DPTEW);     //PTE for DMMU
 
-  flopenr #(2)     IPageTypeDReg (clk, reset, ~StallD, IPageTypeF, IPageTypeD); //PageType (kilo, mega, giga, tera) from IMMU 
+  flopenr #(2)     IPageTypeDReg (clk, reset, ~StallD, IPageTypeF, IPageTypeD); //PageType (kilo, mega, giga, tera) from IMMU
   flopenr #(2)     IPageTypeEReg (clk, reset, ~StallE, IPageTypeD, IPageTypeE); //PageType (kilo, mega, giga, tera) from IMMU
   flopenr #(2)     IPageTypeMReg (clk, reset, ~StallM, IPageTypeE, IPageTypeM); //PageType (kilo, mega, giga, tera) from IMMU
   flopenr #(2)     IPageTypeWReg (clk, reset, ~StallW, IPageTypeM, IPageTypeW); //PageType (kilo, mega, giga, tera) from IMMU
@@ -389,13 +384,15 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   assign valid  = ((InstrValidW | TrapW) & ~StallW) & ~reset;
   assign rvvi.clk = clk;
   assign rvvi.valid[0][0]    = valid;
-  assign rvvi.order[0][0]    = order; 
+  assign rvvi.order[0][0]    = order;
   assign rvvi.insn[0][0]     = InstrRawW;
   assign rvvi.pc_rdata[0][0] = PCW;
   assign rvvi.trap[0][0]     = TrapW;
   assign rvvi.halt[0][0]     = HaltW;
   assign rvvi.intr[0][0]     = InterruptW;
   assign rvvi.mode[0][0]     = PrivilegeModeW;
+  assign rvvi.mode_virt[0][0] = 1'b0;  // no hypervisor, so never in a virtual mode
+  assign rvvi.debug_mode[0][0] = 1'b0; // no debug mode
   assign rvvi.ixl[0][0]      = PrivilegeModeW == 2'b11 ? 2'b10 :
                                PrivilegeModeW == 2'b01 ? STATUS_SXL : STATUS_UXL;
   assign rvvi.pc_wdata[0][0] = ~FlushW ? PCM :
@@ -411,14 +408,6 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
     assign rvvi.f_wdata[0][0][index] = frf[index];
     assign rvvi.f_wb[0][0][index]    = frf_wb[index];
   end
-
-`ifdef FCOV
-  // Interrupts
-  assign rvvi.m_ext_intr[0][0]   = MExtInt;
-  assign rvvi.s_ext_intr[0][0]   = SExtInt;
-  assign rvvi.m_timer_intr[0][0] = MTimerInt;
-  assign rvvi.m_soft_intr[0][0]  = MSwInt;
-`endif
 
   // *** implementation only cancel? so sc does not clear?
   assign rvvi.lrsc_cancel[0][0] = 0;
@@ -452,7 +441,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
       file = $fopen(LogFile, "w");
     end
   end
-  
+
   always_ff @(posedge clk) begin
     if(valid) begin
       if(`STD_LOG) begin
@@ -477,10 +466,10 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
       if(`PRINT_PC_INSTR & !(`PRINT_ALL | `PRINT_MOST))
         $display("order = %08d, PC = %08x, insn = %08x", rvvi.order[0][0], rvvi.pc_rdata[0][0], rvvi.insn[0][0]);
       else if(`PRINT_MOST & !`PRINT_ALL)
-        $display("order = %08d, PC = %010x, insn = %08x, trap = %1d, halt = %1d, intr = %1d, mode = %1x, ixl = %1x, pc_wdata = %010x, x%02d = %016x, f%02d = %016x, csr%03x = %016x", 
+        $display("order = %08d, PC = %010x, insn = %08x, trap = %1d, halt = %1d, intr = %1d, mode = %1x, ixl = %1x, pc_wdata = %010x, x%02d = %016x, f%02d = %016x, csr%03x = %016x",
                  rvvi.order[0][0], rvvi.pc_rdata[0][0], rvvi.insn[0][0], rvvi.trap[0][0], rvvi.halt[0][0], rvvi.intr[0][0], rvvi.mode[0][0], rvvi.ixl[0][0], rvvi.pc_wdata[0][0], rf_a3, rvvi.x_wdata[0][0][rf_a3], frf_a4, rvvi.f_wdata[0][0][frf_a4], CSRAdrW, rvvi.csr[0][0][CSRAdrW]);
       else if(`PRINT_ALL) begin
-        $display("order = %08d, PC = %08x, insn = %08x, trap = %1d, halt = %1d, intr = %1d, mode = %1x, ixl = %1x, pc_wdata = %08x", 
+        $display("order = %08d, PC = %08x, insn = %08x, trap = %1d, halt = %1d, intr = %1d, mode = %1x, ixl = %1x, pc_wdata = %08x",
                  rvvi.order[0][0], rvvi.pc_rdata[0][0], rvvi.insn[0][0], rvvi.trap[0][0], rvvi.halt[0][0], rvvi.intr[0][0], rvvi.mode[0][0], rvvi.ixl[0][0], rvvi.pc_wdata[0][0]);
         for(index2 = 0; index2 < NUM_REGS; index2 += 1) begin
           $display("x%02d = %08x", index2, rvvi.x_wdata[0][0][index2]);
@@ -497,16 +486,6 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
       //     end
       //   end
       // end
-    end
-    if(HaltW) begin
-`ifdef FCOV
-      $display("Functional coverage test complete.");
-`endif
-`ifdef QUESTA
-      $stop;  // if this is changed to $finish for Questa, wally.do does not go to the next step to run coverage and terminates without allowing GUI debug
-`else
-      $finish;
-`endif
     end
   end
 endmodule

@@ -8,7 +8,7 @@ extern int sum(int);
 
 int main(void) {
     int s[1], expected[1];
-    
+
     setStats(1);
     s[0] = sum(4);
     setStats(0);

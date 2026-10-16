@@ -19,7 +19,7 @@ TARGETDIR	:= bin
 TARGET		:= $(TARGETDIR)/boot
 MEMFILES    := $(TARGETDIR/boot.mem $(TARGETDIR)/data.mem
 ROOT		:= ..
-LIBRARY_DIRS	:= 
+LIBRARY_DIRS	:=
 LIBRARY_FILES	:=
 
 MARCH           :=-march=rv64imfdc_zifencei
@@ -63,7 +63,7 @@ ifdef LIBRARY_DIRS
 LIBS+=${LIBRARY_DIRS:%=-L%}  ${LIBRARY_FILES:%=-l%}
 INC+=${LIBRARY_DIRS:%=-I%}
 
-${LIBRARY_DIRS}: 
+${LIBRARY_DIRS}:
 	$(MAKE) -C $@ -j 1
 
 .PHONY: $(LIBRARY_DIRS) $(TARGET)
@@ -115,8 +115,8 @@ $(TARGET).memfile: $(TARGET)
 	@echo 'Making object dump file.'
 	riscv64-unknown-elf-objdump -DS $< > $<.objdump
 	@echo 'Making memory file'
-	riscv64-unknown-elf-elf2hex --bit-width 64 --input $^ --output $@
-	extractFunctionRadix.sh $<.objdump
+	elf2hex $^ $@
+	extractFunctionRadix.sh $<
 	@echo 'Splitting memfile.'
 	./splitfile.sh $@
 	mv boot.mem ../src/boot.mem

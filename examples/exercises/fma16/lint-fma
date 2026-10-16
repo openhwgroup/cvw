@@ -9,4 +9,3 @@ if ($verilator --lint-only --top-module fma16 fma16.sv); then
 else
     echo "fma16 failed lint"
 fi
-

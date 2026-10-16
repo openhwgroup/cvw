@@ -4,12 +4,12 @@
 ##
 ## Written: Jordan Carlin, jcarlin@hmc.edu
 ## Created: May 30 2025
-## Modified: 
+## Modified:
 ##
 ## Purpose: Spike installation script
 ##
 ## A component of the CORE-V-WALLY configurable RISC-V project.
-## https://github.com/openhwgroup/cvw
+## https://github.com/openhwfoundation/cvw
 ##
 ## Copyright (C) 2021-24 Harvey Mudd College & Oklahoma State University
 ##
@@ -19,7 +19,7 @@
 ## except in compliance with the License, or, at your option, the Apache License version 2.0. You
 ## may obtain a copy of the License at
 ##
-## https:##solderpad.org/licenses/SHL-2.1/
+## https://solderpad.org/licenses/SHL-2.1/
 ##
 ## Unless required by applicable law or agreed to in writing, any work distributed under the
 ## License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -27,7 +27,7 @@
 ## and limitations under the License.
 ################################################################################################
 
-SPIKE_VERSION=4c870d063dbbaeb4dc7007fe5c2a1bf8b00a767e # Last commit as of May 30, 2025
+SPIKE_VERSION=76ced61f540a55d6d26a23e6dadd02f83ea634ca # Last commit as of March 23, 2026
 
 set -e # break on error
 # If run standalone, check environment. Otherwise, use info from main install script

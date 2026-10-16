@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
 
 ###########################################
 ## analyze_riscv_elf.py
@@ -9,11 +9,11 @@
 ## Purpose: Analyze a RISC-V ELF file and report which instructions are used,
 ##          along with their frequency. The script disassembles the ELF using
 ##          riscv64-unknown-elf-objdump, filters real instructions (excluding
-##          pseudo-ops and section headers), and displays a histogram of 
+##          pseudo-ops and section headers), and displays a histogram of
 ##          instruction use.
 ##
 ## A component of the CORE-V-WALLY configurable RISC-V project.
-## https://github.com/openhwgroup/cvw
+## https://github.com/openhwfoundation/cvw
 ##
 ## Copyright (C) 2021-25 Harvey Mudd College & Oklahoma State University
 ##
@@ -23,7 +23,7 @@
 ## except in compliance with the License, or, at your option, the Apache License version 2.0. You
 ## may obtain a copy of the License at
 ##
-## https:##solderpad.org/licenses/SHL-2.1/
+## https://solderpad.org/licenses/SHL-2.1/
 ##
 ## Unless required by applicable law or agreed to in writing, any work distributed under the
 ## License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -80,4 +80,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

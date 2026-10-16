@@ -8,11 +8,11 @@ set t1 [clock seconds]
 
 # Ignore unnecessary warnings:
 # intraassignment delays for nonblocking assignments are ignored
-suppress_message {VER-130} 
+suppress_message {VER-130}
 # statements in initial blocks are ignored
-suppress_message {VER-281} 
-suppress_message {VER-173} 
- # Unsupported system task '$warn'
+suppress_message {VER-281}
+suppress_message {VER-173}
+# Unsupported system task '$warn'
 suppress_message {VER-274}
 # Disable Warning:  Little argument or return value checking implemented for system task or function '$readmemh'. (VER-209)
 suppress_message {VER-209}
@@ -61,28 +61,28 @@ if { [shell_is_in_topographical_mode] } {
         -mw_reference_library $mw_reference_library $outputDir/$MY_LIB_NAME
     # Open MW
     open_mw_lib $outputDir/$MY_LIB_NAME
-    
+
     # TLU+
     set_tlu_plus_files -max_tluplus $MAX_TLU_FILE -min_tluplus $MIN_TLU_FILE \
-	-tech2itf_map $PRS_MAP_FILE
+    -tech2itf_map $PRS_MAP_FILE
 
 } else {
     echo "In normal DC mode...processing\n"
 }
 
-# Due to parameterized Verilog must use analyze/elaborate and not 
+# Due to parameterized Verilog must use analyze/elaborate and not
 # read_verilog/vhdl (change to pull in Verilog and/or VHDL)
 #
 #set alib_library_analysis_path ./$outputDir
 define_design_lib WORK -path ./$outputDir/WORK
 analyze -f sverilog -lib WORK $my_verilog_files
-elaborate $my_toplevel -lib WORK 
+elaborate $my_toplevel -lib WORK
 
-# Set the current_design 
+# Set the current_design
 current_design $my_toplevel
 link
 
-# Reset all constraints 
+# Reset all constraints
 reset_design
 
 # Power Dissipation Analysis
@@ -106,14 +106,14 @@ set my_uncertainty 0.0
 set my_clk_freq_MHz $::env(FREQ)
 set my_period [expr 1000.0 / $my_clk_freq_MHz]
 
-# Create clock object 
+# Create clock object
 set find_clock [ find port [list $my_clock_pin] ]
 if {  $find_clock != [list] } {
     echo "Found clock!"
     set my_clk $my_clock_pin
     create_clock -period $my_period $my_clk
     set_clock_uncertainty $my_uncertainty [get_clocks $my_clk]
- } else {
+} else {
     echo "Did not find clock! Design is probably combinational!"
     set my_clk vclk
     create_clock -period $my_period -name $my_clk
@@ -125,33 +125,33 @@ set_critical_range 0.05 $current_design
 
 # Partitioning - flatten or hierarchically synthesize
 if { $maxopt == 1 } {
-    ungroup -all -simple_names -flatten 
+    ungroup -all -simple_names -flatten
 }
 
 # Set input pins except clock
 set all_in_ex_clk [remove_from_collection [all_inputs] [get_ports $my_clk]]
 
 # Specifies delays be propagated through the clock network
-# This is getting optimized poorly in the current flow, causing a lot of clock skew 
+# This is getting optimized poorly in the current flow, causing a lot of clock skew
 # and unrealistic bad timing results.
 # set_propagated_clock [get_clocks $my_clk]
 
-# Setting constraints on input ports 
+# Setting constraints on input ports
 if {$tech == "sky130"} {
     if {$drive == "INV"} {
-	    set_driving_cell -lib_cell inv -pin Y $all_in_ex_clk
+        set_driving_cell -lib_cell inv -pin Y $all_in_ex_clk
     } elseif {$drive == "FLOP"} {
-	    set_driving_cell  -lib_cell sky130_osu_sc_12T_ms__dff_1 -pin Q $all_in_ex_clk
+        set_driving_cell  -lib_cell sky130_osu_sc_12T_ms__dff_1 -pin Q $all_in_ex_clk
     }
 } elseif {$tech == "sky90"} {
     if {$drive == "INV"} {
-	    set_driving_cell -lib_cell scc9gena_inv_1 -pin Y $all_in_ex_clk
+        set_driving_cell -lib_cell scc9gena_inv_1 -pin Y $all_in_ex_clk
     } elseif {$drive == "FLOP"} {
-	    set_driving_cell  -lib_cell scc9gena_dfxbp_1 -pin Q $all_in_ex_clk
+        set_driving_cell  -lib_cell scc9gena_dfxbp_1 -pin Q $all_in_ex_clk
     }
 } elseif {$tech == "tsmc28" || $tech=="tsmc28psyn"} {
     if {$drive == "INV"} {
-	    set_driving_cell -lib_cell INVD1BWP30P140 -pin ZN $all_in_ex_clk
+        set_driving_cell -lib_cell INVD1BWP30P140 -pin ZN $all_in_ex_clk
     } elseif {$drive == "FLOP"} {
         set_driving_cell -lib_cell DFQD1BWP30P140 -pin Q $all_in_ex_clk
     }
@@ -166,29 +166,29 @@ if {$drive == "FLOP"} {
     set_output_delay 0.0 -max -clock $my_clk [all_outputs]
 }
 
-# Setting load constraint on output ports 
+# Setting load constraint on output ports
 if {$tech == "sky130"} {
     if {$drive == "INV"} {
-	    set_load [expr [load_of sky130_osu_sc_12T_ms_TT_1P8_25C.ccs/sky130_osu_sc_12T_ms__inv_4/A] * 1] [all_outputs]
+        set_load [expr [load_of sky130_osu_sc_12T_ms_TT_1P8_25C.ccs/sky130_osu_sc_12T_ms__inv_4/A] * 1] [all_outputs]
     } elseif {$drive == "FLOP"} {
         set_load [expr [load_of sky130_osu_sc_12T_ms_TT_1P8_25C.ccs/sky130_osu_sc_12T_ms__dff_1/D] * 1] [all_outputs]
     }
  } elseif {$tech == "sky90"} {
     if {$drive == "INV"} {
-	    set_load [expr [load_of scc9gena_tt_1.2v_25C/scc9gena_inv_4/A] * 1] [all_outputs]
+        set_load [expr [load_of scc9gena_tt_1.2v_25C/scc9gena_inv_4/A] * 1] [all_outputs]
     } elseif {$drive == "FLOP"} {
         set_load [expr [load_of scc9gena_tt_1.2v_25C/scc9gena_dfxbp_1/D] * 1] [all_outputs]
     }
 } elseif {$tech == "tsmc28" || $tech == "tsmc28psyn"} {
     if {$drive == "INV"} {
-	    set_load [expr [load_of tcbn28hpcplusbwp30p140tt0p9v25c/INVD4BWP30P140/I] * 1] [all_outputs]
+        set_load [expr [load_of tcbn28hpcplusbwp30p140tt0p9v25c/INVD4BWP30P140/I] * 1] [all_outputs]
     } elseif {$drive == "FLOP"} {
         set_load [expr [load_of tcbn28hpcplusbwp30p140tt0p9v25c/DFQD1BWP30P140/D] * 1] [all_outputs]
     }
 }
 
 if {$tech != "tsmc28psyn"} {
-    # Set the wire load model 
+    # Set the wire load model
     set_wire_load_mode "top"
 }
 
@@ -210,7 +210,7 @@ set_fix_multiple_port_nets -all -buffer_constants
 
 # setting up the group paths to find out the required timings
 # group_path -name OUTPUTS -to [all_outputs]
-# group_path -name INPUTS -from [all_inputs] 
+# group_path -name INPUTS -from [all_inputs]
 # group_path -name COMBO -from [all_inputs] -to [all_outputs]
 
 # Save Unmapped Design
@@ -231,11 +231,11 @@ set verilogout_equation false
 
 # setting to generate output files
 set write_v    1        ;# generates structural netlist
-set write_sdc  1	;# generates synopsys design constraint file for p&r
-set write_ddc  1	;# compiler file in ddc format
-set write_sdf  1	;# sdf file for backannotated timing sim
-set write_pow  1 	;# generates estimated power report
-set write_rep  1	;# generates estimated area and timing report
+set write_sdc  1        ;# generates synopsys design constraint file for p&r
+set write_ddc  1        ;# compiler file in ddc format
+set write_sdf  1        ;# sdf file for backannotated timing sim
+set write_pow  1        ;# generates estimated power report
+set write_rep  1        ;# generates estimated area and timing report
 set write_cst  1        ;# generate report of constraints
 set write_hier 1        ;# generate hierarchy report
 
@@ -256,7 +256,7 @@ if { $wrapper == 1 } {
         set my_clk vclk
         create_clock -period $my_period -name $my_clk
     }
-} 
+}
 
 # Report Constraint Violators
 set filename [format "%s%s" $outputDir "/reports/constraint_all_violators.rpt"]
@@ -319,4 +319,4 @@ set t2 [clock seconds]
 set t [expr $t2 - $t1]
 echo [expr $t/60]
 
-quit 
+quit

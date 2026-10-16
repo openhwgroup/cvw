@@ -16,4 +16,3 @@ module xz(
   assign w = q & 1'b1;
   assign x = q | 1'b1;
 endmodule
-

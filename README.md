@@ -1,12 +1,25 @@
-[![Installation CI](https://github.com/openhwgroup/cvw/actions/workflows/install.yml/badge.svg?branch=main)](https://github.com/openhwgroup/cvw/actions/workflows/install.yml)
+[![Installation CI](https://github.com/openhwfoundation/cvw/actions/workflows/install.yml/badge.svg?branch=main)](https://github.com/openhwfoundation/cvw/actions/workflows/install.yml)
 
 # core-v-wally
 
-Wally is a 5-stage pipelined processor configurable to support all the standard RISC-V options, including RV32/64, A, B, C, D, F, M, Q, and Zk* extensions, virtual memory, PMP, and the various privileged modes and CSRs. It provides optional caches, branch prediction, and standard RISC-V peripherals (CLINT, PLIC, UART, GPIO).   Wally is written in SystemVerilog.  It passes the [RISC-V Arch Tests](https://github.com/riscv-non-isa/riscv-arch-test) and boots Linux on an FPGA.  Configurations range from a minimal RV32E core to a fully featured RV64GC application processor with all of the RVA22S64 profile extensions. Wally is part of the OpenHWGroup family of robust open RISC-V cores.
+Wally is a 5-stage pipelined processor configurable to support up through the RVA22 profile, including virtual memory, PMP, and the various privileged modes and CSRs. The rv64gc configuration supports:
+
+- RV64IMAFDCB with M, S, and U modes
+- Zicsr, Zifencei, Zicntr, Zihpm, Zicond, and Zicclsm
+- Zbc
+- Zkn scalar crypto (Zbkb, Zbkc, Zbkx, Zknd, Zkne, and Zknh)
+- Zcb
+- Zfh and Zfa
+- Zicbom, Zicboz, and Zicbop
+- Sstc
+- Sv39, Sv48, and Sv57 virtual memory with Svpbmt, Svnapot, Svinval, and Svadu
+- 16 PMP entries
+
+Other configurations range down to a minimal RV32E core, and derivative configurations add the Q extension. Wally provides optional caches, branch prediction, and standard RISC-V peripherals (CLINT, PLIC, UART, GPIO).   Wally is written in SystemVerilog.  It passes the [RISC-V Arch Tests](https://github.com/riscv/riscv-arch-test) and boots Linux on an FPGA.  Wally is part of the OpenHW Foundation family of robust open RISC-V cores.
 
 ![Wally block diagram](wallyriscvTopAll.png)
 
-Wally is described in an upcoming textbook, *RISC-V System-on-Chip Design*, by Harris, Stine, Thompson, and Harris.  Users should follow the setup instructions below.  A system administrator must install CAD tools using the directions further down.
+Wally is described in a textbook, [*RISC-V System-on-Chip Design*](https://pages.hmc.edu/harris/ddca/rvsocd.html), by Harris, Stine, Thompson, and Harris.  Users should follow the setup instructions below.
 
 # Verification
 
@@ -17,88 +30,89 @@ Wally is presently at Technology Readiness Level 4, passing the RISC-V compatibi
 New users may wish to do the following setup to access the server via a GUI and use a text editor.
 
 - Git started with Git configuration and authentication: C.1  (replace with your name and email)
-	```bash
-	$ git config --global user.name "Ben Bitdiddle"
-	$ git config --global user.email "ben_bitdiddle@wally.edu"
-	$ git config --global pull.rebase false
-	```
+  ```bash
+  $ git config --global user.name "Ben Bitdiddle"
+  $ git config --global user.email "ben_bitdiddle@wally.edu"
+  $ git config --global pull.rebase false
+  ```
 - Optional: Download and install x2go - B.1.1
 - Optional: Download and install VSCode - B.4.2
 - Optional: Make sure you can log into your server via x2go and via a terminal
-	- Terminal on Mac, cmd on Windows, xterm on Linux
-	- See B.1 about ssh -Y login from a terminal
+  - Terminal on Mac, cmd on Windows, xterm on Linux
+  - See B.1 about ssh -Y login from a terminal
 
 Then fork and clone the repo, source setup, make the tests and run regression
 
 1. If you don't already have a Github account, create one
-2. In a web browser, visit https://github.com/openhwgroup/cvw
+2. In a web browser, visit https://github.com/openhwfoundation/cvw
 3. In the upper right part of the screen, click on Fork
 4. Create a fork, choosing the owner as your github account and the repository as cvw.
 5. On the Linux computer where you will be working, log in.
 6. Clone your fork of the repo. Change `<yourgithubid>` to your github id.
-	```bash
-	$ git clone --recurse-submodules https://github.com/<yourgithubid>/cvw
-	$ cd cvw
-	$ git remote add upstream https://github.com/openhwgroup/cvw
-	```
+  ```bash
+  $ git clone --recurse-submodules https://github.com/<yourgithubid>/cvw
+  $ cd cvw
+  $ git remote add upstream https://github.com/openhwfoundation/cvw
+  ```
 
 > [!NOTE]
-> If you are installing on a new system without any tools installed, please jump to the next section, [Toolchain Installation](#toolchain-installation-and-configuration-sys-admin), then come back here.
+> If you are installing on a new system without any tools installed, please jump to the next section, [Toolchain Installation](#toolchain-installation-and-configuration), then come back here.
 
 7. Run the setup script to update your `PATH` and activate the python virtual environment.
 
-	```bash
-	$ source ./setup.sh
-	```
+  ```bash
+  $ source ./setup.sh
+  ```
 
 8. Add the following lines to your `.bashrc` or `.bash_profile` to run the setup script each time you log in.
 
-	```bash
-	if [ -f ~/cvw/setup.sh ]; then
-		source ~/cvw/setup.sh
-	fi
-	```
+  ```bash
+  if [ -f ~/cvw/setup.sh ]; then
+    source ~/cvw/setup.sh
+  fi
+  ```
 
 9. Try compiling the HelloWally program and simulating it on the SystemVerilog with Verilator and on the Spike simulator.
-	```
-	$ cd examples/C/hello
-	$ make
-	$ wsim --sim verilator rv64gc --elf hello
-	Hello Wally!
-	0 1 2 3 4 5 6 7 8 9 
-	$ spike hello
-	Hello Wally!
-	0 1 2 3 4 5 6 7 8 9 
-	```
+  ```
+  $ cd examples/C/hello
+  $ make
+  $ wsim --sim verilator rv64gc --elf hello
+  Hello Wally!
+  0 1 2 3 4 5 6 7 8 9
+  $ spike hello
+  Hello Wally!
+  0 1 2 3 4 5 6 7 8 9
+  ```
 
 10. Build the tests from the cvw directory and run a regression simulation to prove everything is installed.  Building tests may take a while.
 
-	```bash
-	$ cd ~/cvw && make --jobs
-	$ regression-wally
-	```
+  ```bash
+  $ cd ~/cvw && make --jobs
+  $ regression-wally
+  ```
 
-# Toolchain Installation and Configuration (Sys Admin)
+# Toolchain Installation and Configuration
 
-> This section describes the open source toolchain installation.
+This section describes the open source toolchain installation.
 
 ### Compatibility
-The current version of the toolchain has been tested on Ubuntu (versions 20.04 LTS, 22.04 LTS, and 24.04 LTS), Debian (versions 11, 12, and 13), Red Hat/Rocky/AlmaLinux (versions 8, 9, and 10), and SUSE version 15.6. Only the latest minor release of each major version is tested.
+The current version of the toolchain has been tested on Ubuntu (versions 20.04 LTS, 22.04 LTS, 24.04 LTS, and 26.04 LTS), Debian (versions 12 and 13), Red Hat/Rocky/AlmaLinux (versions 8, 9, and 10), SUSE versions 15.6 and 16.0 and Fedora (version 44). Only the latest minor release of each major version is tested.
 
 > [!WARNING]
-> - Ubuntu 22.04LTS is incompatible with Synopsys Design Compiler.
-> - Verilator currently fails to simulate correctly on Ubuntu 20.04 LTS and Red Hat/Rocky/AlmaLinux 8.
+> - Ubuntu 22.04 LTS is incompatible with Synopsys Design Compiler.
+> - Whisper is not installed on Ubuntu 20.04 LTS due to issues compiling the boost libraries.
 
 ### Overview
 The toolchain installation script installs the following tools:
 - [RISC-V GNU Toolchain](https://github.com/riscv-collab/riscv-gnu-toolchain): GCC and accompanying compiler tools
-- [elf2hex](https://github.com/sifive/elf2hex): executable file to hexadecimal converter
 - [QEMU](https://www.qemu.org/docs/master/system/target-riscv.html): emulator
 - [Spike](https://github.com/riscv-software-src/riscv-isa-sim): functional RISC-V model
+- [Whisper](https://github.com/tenstorrent/whisper): RISC-V instruction set simulator (ISS)
 - [Verilator](https://github.com/verilator/verilator): open-source Verilog simulator
 - [RISC-V Sail Model](https://github.com/riscv/sail-riscv): golden reference model for RISC-V
 - [OSU Skywater 130 cell library](https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12): standard cell library
-- [RISCOF](https://github.com/riscv-software-src/riscof.git): RISC-V compliance test framework
+- [uv](https://docs.astral.sh/uv/): Python package manager and virtual environment tool
+- [mise](https://mise.jdx.dev/): development environment setup tool for managing tool versions and environment variables
 
 Additionally, Buildroot Linux is built for Wally and linux test-vectors are generated for simulation. See the [Linux README](linux/README.md) for more details. This can be skipped using the `--no-buildroot` flag.
 
@@ -157,7 +171,7 @@ Running code or functional coverage simulations or lock-step presently require c
 
 Note: Some EDA tools utilize `LM_LICENSE_FILE` for their environmental variable to point to their license server.  Some operating systems may also utilize `MGLS_LICENSE_FILE` instead, therefore, it is important to read the user manual on the preferred environmental variable required to point to a user’s license file.  Although there are different mechanisms to allow licenses to work, many companies commonly utilize the FlexLM (i.e., Flex-enabled) license server manager that runs off a node locked license.
 
-Although most EDA tools are Linux-friendly, they tend to have issues when not installed on recommended OS flavors.  Red Hat Enterprise Linux (and its free Rocky clone) and SUSE Linux products  typically tend to be recommended for installing commercial-based EDA tools and are recommended for utilizing complex simulation and architecture exploration.  
+Although most EDA tools are Linux-friendly, they tend to have issues when not installed on recommended OS flavors.  Red Hat Enterprise Linux (and its free Rocky clone) and SUSE Linux products  typically tend to be recommended for installing commercial-based EDA tools and are recommended for utilizing complex simulation and architecture exploration.
 
 ### Siemens Questa
 
@@ -218,63 +232,68 @@ If you want to add a cronjob you can do the following:
 2) Enter `crontab -e` into a terminal
 3) add this code to test cloning CVW, making CVW's tests, then running `regression-wally --nightly --buildroot` every day at 21:30 in your local time
 ```bash
-30 21 * * * curl -L https://raw.githubusercontent.com/openhwgroup/cvw/refs/heads/main/bin/nightly_build.py | python - --path {PATH_FOR_NIGHTLY_RUNS} --target all --tests all --send_email harris@hmc.edu,rose@rosethompson.net
+30 21 * * * curl -L https://raw.githubusercontent.com/openhwfoundation/cvw/refs/heads/main/bin/nightly_build.py | python - --path {PATH_FOR_NIGHTLY_RUNS} --target all --tests all --send_email harris@hmc.edu,rose@rosethompson.net
 ```
 This utility will take up approximately 100 GB on your hard drive. You can also run the script directly from `bin/nightly_build.py`.
 
 # Example wsim commands
 
-wsim runs one of multiple simulators, Questa, VCS, or Verilator using a specific configuration and either a suite of tests or a specific elf file.
+wsim runs one of multiple simulators, Questa, VCS, or Verilator using a specific configuration and one or more ELF files.
 The general syntax is
-`wsim <config> <suite or elf file> [--options]`
+`wsim <config> <elf or directory>... [--options]`
+
+Every ELF named, and every `*.elf` found under every directory named, runs back-to-back in a single simulation session.
+Tests are self-checking, so the simulation ends with a single summary: `SUCCESS! All tests ran without failures.` or `FAIL: N test programs had errors`.
 
 Parameters and options:
 
 ```
 -h, --help                                                   show this help message and exit
 --elf ELF, -e ELF                                            ELF File name; use if name does not end in .elf
+--test {buildroot,fpga,coremark,embench}, -T ...             Special testbench mode
+--name NAME, -n NAME                                         Name used for log and coverage database files
 --sim {questa,verilator,vcs}, -s {questa,verilator,vcs}      Simulator
 --tb {testbench,testbench_fp}, -t {testbench,testbench_fp}   Testbench
 --gui, -g                                                    Simulate with GUI
 --ccov, -c                                                   Code Coverage
---fcov, -f                                                   Functional Coverage with cvw-arch-verif, implies lockstep
+--fcov, -f                                                   Functional Coverage
 --args ARGS, -a ARGS                                         Optional arguments passed to simulator via $value$plusargs
---params PARAMS, -p PARAMS            			 								 Optional top-level parameter overrides of the form param=value
---define DEFINE, -d DEFINE            											 Optional define macros passed to simulator
+--params PARAMS, -p PARAMS                                   Optional top-level parameter overrides of the form param=value
+--define DEFINE, -d DEFINE                                   Optional define macros passed to simulator
 --vcd, -v                                                    Generate testbench.vcd
 --lockstep, -l                                               Run ImperasDV lock, step, and compare.
 --lockstepverbose, -lv                                       Run ImperasDV lock, step, and compare with tracing enabled
 --rvvi, -r                                                   Simulate rvvi hardware interface and ethernet.
 ```
 
-Run basic test with Questa
+Run a whole directory of RISC-V Architecture Tests in one session with Questa
 
 ```bash
-wsim rv64gc arch64i
+wsim rv64gc $WALLY/addins/riscv-arch-test/work/cvw-rv64gc/elfs/rv64i/I
 ```
 
-Run Questa with gui
+Run one ELF in the Questa gui
 
 ```bash
-wsim rv64gc wally64priv --gui
+wsim rv64gc $WALLY/addins/riscv-arch-test/work/cvw-rv64gc/elfs/rv64i/I/I-add-01.elf --gui
 ```
 
-Run basic test with Verilator
+Run several ELFs back-to-back with Verilator
 
 ```bash
-wsim rv32i arch32i --sim verilator
+wsim rv32gc $WALLY/tests/periph/rv32/WALLY-gpio-01.elf $WALLY/tests/periph/rv32/WALLY-clint-01.elf --sim verilator
 ```
 
-Run lockstep against ImperasDV with a single elf file in the gui. Lockstep requires single elf.
+Run lockstep against ImperasDV with a single elf file in the gui. Lockstep requires a single elf.
 
 ```bash
-wsim rv64gc $WALLY/tests/riscof/work/riscv-arch-test/rv64i_m/I/src/add-01.S/ref/ref.elf --lockstep --gui
+wsim rv64gc $WALLY/addins/riscv-arch-test/work/cvw-rv64gc/elfs/rv64i/I/I-add-01.elf --lockstep --gui
 ```
 
-Run lockstep against ImperasDV with a single elf file. Collect functional coverage.
+Collect functional coverage over a directory of tests.
 
 ```bash
-wsim rv64gc $WALLY/addins/cvw-arch-verif/tests/rv64/Zicsr/WALLY-COV-ALL.elf --fcov
+wsim rv64gc $WALLY/addins/riscv-arch-test/work/cvw-rv64gc/elfs/priv/Sv --fcov
 ```
 
 Run Linux boot simulation in lock step between Wally and ImperasDV
@@ -282,3 +301,7 @@ Run Linux boot simulation in lock step between Wally and ImperasDV
 ```bash
 wsim buildroot buildroot --args +INSTR_LIMIT=600000000 --lockstep
 ```
+
+# Textbook Errata
+
+See [errata.md](./errata.md) for errata on the [RISC-V System-on-Chip Design](https://www.amazon.com/RISC-V-Microprocessor-System-Chip-Design/dp/0323994989/ref=sr_1_1?crid=YOSKDWK56LXC&dib=eyJ2IjoiMSJ9.i4blNUie7NEcJ_TrpjJwYQ_y6wL-OSpvTGm0v2Wh2IoJEaId29iR3DrWO5fSXIZU.3W9njvBVqXebkFyqQkDg46q8zg1hjoo5cqXEPYe3k5c&dib_tag=se&keywords=riscv+system+on+chip+design&qid=1767552817&sprefix=riscv+system+on+chip+design%2Caps%2C175&sr=8-1) textbook.

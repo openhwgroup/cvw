@@ -1,28 +1,28 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
 
 ###########################################
 ## Written: Rose Thompson rose@rosethompson.net
 ## Created: 20 September 2023
-## Modified: 
+## Modified:
 ##
 ## Purpose: Parses the performance counters from a modelsim trace.
 ##
 ## A component of the CORE-V-WALLY configurable RISC-V project.
-## https://github.com/openhwgroup/cvw
+## https://github.com/openhwfoundation/cvw
 ##
 ## Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 ##
 ## SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 ##
-## Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-## except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+## Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+## except in compliance with the License, or, at your option, the Apache License version 2.0. You
 ## may obtain a copy of the License at
 ##
-## https:##solderpad.org/licenses/SHL-2.1/
+## https://solderpad.org/licenses/SHL-2.1/
 ##
-## Unless required by applicable law or agreed to in writing, any work distributed under the 
-## License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-## either express or implied. See the License for the specific language governing permissions 
+## Unless required by applicable law or agreed to in writing, any work distributed under the
+## License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+## either express or implied. See the License for the specific language governing permissions
 ## and limitations under the License.
 ################################################################################################
 
@@ -36,10 +36,10 @@ import numpy as np
 
 WALLY = os.environ.get('WALLY')
 
-RefDataBP = [('twobitCModel6', 'twobitCModel', 64, 128, 10.0060297551637), ('twobitCModel8', 'twobitCModel', 256, 512, 8.4320392215602), ('twobitCModel10', 'twobitCModel', 1024, 2048, 7.29493318805151),
-           ('twobitCModel12', 'twobitCModel', 4096, 8192, 6.84739616147794), ('twobitCModel14', 'twobitCModel', 16384, 32768, 5.68432926870082), ('twobitCModel16', 'twobitCModel', 65536, 131072, 5.68432926870082),
-           ('gshareCModel6', 'gshareCModel', 64, 128, 11.4737703417701), ('gshareCModel8', 'gshareCModel', 256, 512, 8.52341470761974), ('gshareCModel10', 'gshareCModel', 1024, 2048, 6.32975690693015),
-           ('gshareCModel12', 'gshareCModel', 4096, 8192, 4.55424632377659), ('gshareCModel14', 'gshareCModel', 16384, 32768, 3.54251547725509), ('gshareCModel16', 'gshareCModel', 65536, 131072, 1.90424999467293)]
+RefDataBP = [('twobitCModel6', 'twobitCModel', 64, 128, 11.347), ('twobitCModel8', 'twobitCModel', 256, 512, 9.11658), ('twobitCModel10', 'twobitCModel', 1024, 2048, 7.41704),
+           ('twobitCModel12', 'twobitCModel', 4096, 8192, 6.25292), ('twobitCModel14', 'twobitCModel', 16384, 32768, 5.83108), ('twobitCModel16', 'twobitCModel', 65536, 131072, 5.83108),
+           ('gshareCModel6', 'gshareCModel', 64, 128, 11.7594), ('gshareCModel8', 'gshareCModel', 256, 512, 8.37632), ('gshareCModel10', 'gshareCModel', 1024, 2048, 6.30409),
+           ('gshareCModel12', 'gshareCModel', 4096, 8192, 4.54733), ('gshareCModel14', 'gshareCModel', 16384, 32768, 3.67724), ('gshareCModel16', 'gshareCModel', 65536, 131072, 1.97659)]
 RefDataBTB = [('BTBCModel6', 'BTBCModel', 64, 128, 1.51480272475844), ('BTBCModel8', 'BTBCModel', 256, 512, 0.209057900418965), ('BTBCModel10', 'BTBCModel', 1024, 2048, 0.0117345454469572),
               ('BTBCModel12', 'BTBCModel', 4096, 8192, 0.00125540990359826), ('BTBCModel14', 'BTBCModel', 16384, 32768, 0.000732471628510962), ('BTBCModel16', 'BTBCModel', 65536, 131072, 0.000732471628510962)]
 
@@ -57,7 +57,7 @@ def ParseBranchListFile(path):
             lst.append([predictorLog, predictorType, predictorParams])
             #print(predictorLog, predictorType, predictorParams)
     return lst
-    
+
 def ProcessFile(fileName):
     '''Extract performance counters from a modelsim log.  Outputs a list of tuples for each test/benchmark.
     The tuple contains the test name, optimization characteristics, and dictionary of performance counters.'''
@@ -70,7 +70,9 @@ def ProcessFile(fileName):
     with open(fileName) as transcript:
         for line in transcript.readlines():
             lineToken = line.split()
-            if (args.sim == "questa") & (lineToken[0] == "#"):
+            if not lineToken:
+                continue
+            if args.sim == "questa" and lineToken[0] == "#":
                 lineToken = lineToken[1:] # Questa uses a leading # for each line, other simulators do not
             if(len(lineToken) > 2 and lineToken[0] == 'Read' and lineToken[1] == 'memfile'):
                 opt = lineToken[2].split('/')[-4]
@@ -86,42 +88,33 @@ def ProcessFile(fileName):
     return benchmarks
 
 
+def Percent(num, den):
+    return 0 if den == 0 else 100.0 * num / den
+
 def ComputeStats(benchmarks):
     for benchmark in benchmarks:
         (nameString, opt, dataDict) = benchmark
-        dataDict['CPI'] = 1.0 * int(dataDict['Mcycle']) / int(dataDict['InstRet'])
-        dataDict['BDMR'] = 100.0 * int(dataDict['BP Dir Wrong']) / int(dataDict['Br Count'])
-        dataDict['BTMR'] = 100.0 * int(dataDict['BP Target Wrong']) / (int(dataDict['Br Count']) + int(dataDict['Jump Not Return']))
-        dataDict['RASMPR'] = 100.0 * int(dataDict['RAS Wrong']) / int(dataDict['Return'])
-        dataDict['ClassMPR'] = 100.0 * int(dataDict['Instr Class Wrong']) / int(dataDict['InstRet'])
-        dataDict['ICacheMR'] = 100.0 * int(dataDict['I Cache Miss']) / int(dataDict['I Cache Access'])
-
-        cycles = int(dataDict['I Cache Miss'])
-        if(cycles == 0): ICacheMR = 0
-        else: ICacheMR = 100.0 * int(dataDict['I Cache Cycles']) / cycles
-        dataDict['ICacheMT'] = ICacheMR
-
-        dataDict['DCacheMR'] = 100.0 * int(dataDict['D Cache Miss']) / int(dataDict['D Cache Access'])
-
-        (nameString, opt, dataDict) = benchmark
-        cycles = int(dataDict['D Cache Miss'])
-        if(cycles == 0): DCacheMR = 0
-        else: DCacheMR = 100.0 * int(dataDict['D Cache Cycles']) / cycles
-        dataDict['DCacheMT'] = DCacheMR
+        if dataDict['Br Count'] == 0:
+            print(f'Error: {nameString} ({opt}) counted no branches; the log does not hold valid performance counters')
+            sys.exit(1)
+        dataDict['CPI'] = 1.0 * dataDict['Mcycle'] / dataDict['InstRet']
+        dataDict['BDMR'] = Percent(dataDict['BP Dir Wrong'], dataDict['Br Count'])
+        dataDict['BTMR'] = Percent(dataDict['BP Target Wrong'], dataDict['Br Count'] + dataDict['Jump Not Return'])
+        dataDict['RASMPR'] = Percent(dataDict['RAS Wrong'], dataDict['Return'])
+        dataDict['ClassMPR'] = Percent(dataDict['Instr Class Wrong'], dataDict['InstRet'])
+        dataDict['ICacheMR'] = Percent(dataDict['I Cache Miss'], dataDict['I Cache Access'])
+        dataDict['ICacheMT'] = Percent(dataDict['I Cache Cycles'], dataDict['I Cache Miss'])
+        dataDict['DCacheMR'] = Percent(dataDict['D Cache Miss'], dataDict['D Cache Access'])
+        dataDict['DCacheMT'] = Percent(dataDict['D Cache Cycles'], dataDict['D Cache Miss'])
 
 
 def ComputeGeometricAverage(benchmarks):
     fields = ['BDMR', 'BTMR', 'RASMPR', 'ClassMPR', 'ICacheMR', 'DCacheMR', 'CPI', 'ICacheMT', 'DCacheMT']
     AllAve = {}
     for field in fields:
-        Product = 1
-        index = 0
-        for (testName, opt, HPMCList) in benchmarks:
-            #print(HPMCList)
-            value = HPMCList[field]
-            if(value != 0): Product *= value # if that value is 0 exclude from mean because it destories the geo mean
-            index += 1
-        AllAve[field] = Product ** (1.0/index)
+        # exclude values of 0 from the mean because they destroy the geometric mean
+        values = [HPMCList[field] for (testName, opt, HPMCList) in benchmarks if HPMCList[field] != 0]
+        AllAve[field] = math.prod(values) ** (1.0/len(values)) if values else 0
     benchmarks.append(('Mean', '', AllAve))
 
 def GenerateName(predictorType, predictorParams):
@@ -163,7 +156,7 @@ def ComputePredSize(predictorType, predictorParams):
     else:
         print(f'Error unsupported predictor type {predictorType}')
         sys.exit(-1)
-        
+
 def BuildDataBase(predictorLogs):
     # Once done with the following loop, performanceCounterList will contain the predictor type and size along with the
     # raw performance counter data and the processed data on a per benchmark basis.  It also includes the geometric mean.
@@ -208,13 +201,10 @@ def ExtractSelectedData(benchmarkFirstList):
     for benchmark in benchmarkFirstList:
         (name, opt, config, prefixName, entries, size, dataDict) = benchmark
         #print(f'config = {config}, prefixName = {prefixName} entries = {entries}')
-        # use this code to distinguish speed opt and size opt.
-        #if opt == 'bd_speedopt_speed': NewName = name+'Sp'
-        #elif opt == 'bd_sizeopt_speed': NewName = name+'Sz'
-        #else: NewName = name
-        NewName = name
-        #print(NewName)
-        #NewName = name+'_'+opt
+        # distinguish the speed- and size-optimized builds of each benchmark
+        if opt == 'bd_speedopt_speed': NewName = name+'Sp'
+        elif opt == 'bd_sizeopt_speed': NewName = name+'Sz'
+        else: NewName = name
         if NewName in benchmarkDict:
             benchmarkDict[NewName].append((config, prefixName, entries, size, dataDict[ReportPredictorType]))
         else:
@@ -226,24 +216,24 @@ def ReportAsTable(benchmarkDict):
     FirstLine = []
     SecondLine = []
     for Elements in refLine:
-        (name, typ, size, entries, val) = Elements
+        (name, typ, entries, size, val) = Elements
         FirstLine.append(name)
         SecondLine.append(entries if not args.size else size)
 
     sys.stdout.write('benchmark\t\t')
     for name in FirstLine:
         if(len(name) < 8): sys.stdout.write(f'{name}\t\t')
-        else: sys.stdout.write(f'{name}\t')        
+        else: sys.stdout.write(f'{name}\t')
     sys.stdout.write('\n')
     sys.stdout.write('size\t\t\t')
     for size in SecondLine:
         if(len(str(size)) < 8): sys.stdout.write(f'{size}\t\t')
-        else: sys.stdout.write(f'{size}\t')        
+        else: sys.stdout.write(f'{size}\t')
     sys.stdout.write('\n')
 
     if(args.summary):
         sys.stdout.write('Mean\t\t\t')
-        for (name, typ, size, entries, val) in refLine:
+        for (name, typ, entries, size, val) in refLine:
             sys.stdout.write('%0.2f\t\t' % (val if not args.invert else 100 - val))
         sys.stdout.write('\n')
 
@@ -263,7 +253,7 @@ def ReportAsText(benchmarkDict):
         print('Mean')
         for (name, typ, entries, size, val) in mean:
             sys.stdout.write(f'{name} {entries if not args.size else size} {val if not args.invert else 100 - val:0.2f}\n')
-        
+
     if(not args.summary):
         for benchmark in benchmarkDict:
             print(benchmark)
@@ -345,21 +335,21 @@ def ReportAsGraph(benchmarkDict, bar, FileName):
         else: plt.title(titles[ReportPredictorType])
         for branchPredName in sequences:
             data = sequences[branchPredName]
-            (xdata, ydata) = zip(*data) 
+            (xdata, ydata) = zip(*data)
             if args.invert: ydata = [100 - x for x in ydata]
             axes.plot(xdata, ydata, color=colors[index])
             axes.scatter(xdata, ydata, label=branchPredName, color=colors[index], marker=markers[index])
             index = (index + 1) % len(markers)
         axes.legend(loc='upper left')
         axes.set_xscale("log")
-        axes.set_ylabel('Prediction Accuracy')
+        axes.set_ylabel('Prediction Accuracy (%)' if args.invert else 'Misprediction Rate (%)')
         Xlabel = 'Entries' if not args.size else 'Size (bytes)'
         axes.set_xlabel(Xlabel)
         axes.set_xticks(xdata)
         axes.set_xticklabels(xdata)
         axes.grid(color='b', alpha=0.5, linestyle='dashed', linewidth=0.5)
         if FileName is None: plt.show()
-        else: plt.savefig(FileName)        
+        else: plt.savefig(FileName)
 
     # if(not args.summary):
     #     size = len(benchmarkDict)
@@ -487,7 +477,7 @@ if(ReportMode == 'text'):
 
 if(ReportMode == 'gui'):
     ReportAsGraph(benchmarkDict, args.bar, args.FileName)
-            
+
 # *** this is only needed of -b (no -s)
 
 # debug

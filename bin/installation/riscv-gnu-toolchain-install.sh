@@ -4,12 +4,12 @@
 ##
 ## Written: Jordan Carlin, jcarlin@hmc.edu
 ## Created: May 30 2025
-## Modified: 
+## Modified:
 ##
 ## Purpose: RISC-V GNU Toolchain installation script
 ##
 ## A component of the CORE-V-WALLY configurable RISC-V project.
-## https://github.com/openhwgroup/cvw
+## https://github.com/openhwfoundation/cvw
 ##
 ## Copyright (C) 2021-24 Harvey Mudd College & Oklahoma State University
 ##
@@ -19,7 +19,7 @@
 ## except in compliance with the License, or, at your option, the Apache License version 2.0. You
 ## may obtain a copy of the License at
 ##
-## https:##solderpad.org/licenses/SHL-2.1/
+## https://solderpad.org/licenses/SHL-2.1/
 ##
 ## Unless required by applicable law or agreed to in writing, any work distributed under the
 ## License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -27,8 +27,7 @@
 ## and limitations under the License.
 ################################################################################################
 
-RISCV_GNU_TOOLCHAIN_VERSION=23863c2ca74e6c050f0c97e7af61f5f1776aadd1 # Last commit with GCC 14.2.0
-
+RISCV_GNU_TOOLCHAIN_VERSION=d118e5335a33d4dc77fdc64e5a5223931ab422a0 # Latest commit as of August 25, 2026 (GCC 16.1, Binutils 2.47)
 set -e # break on error
 # If run standalone, check environment. Otherwise, use info from main install script
 if [ -z "$FAMILY" ]; then

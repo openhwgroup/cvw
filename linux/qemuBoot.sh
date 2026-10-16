@@ -7,7 +7,7 @@
 ## Modified:
 ##
 ## A component of the CORE-V-WALLY configurable RISC-V project.
-## https://github.com/openhwgroup/cvw
+## https://github.com/openhwfoundation/cvw
 ##
 ## Copyright (C) 2021-25 Harvey Mudd College & Oklahoma State University
 ##
@@ -17,7 +17,7 @@
 ## except in compliance with the License, or, at your option, the Apache License version 2.0. You
 ## may obtain a copy of the License at
 ##
-## https:##solderpad.org/licenses/SHL-2.1/
+## https://solderpad.org/licenses/SHL-2.1/
 ##
 ## Unless required by applicable law or agreed to in writing, any work distributed under the
 ## License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -33,10 +33,10 @@ if [[ "$1" == "--gdb" && -n "$2" ]]; then
 fi
 
 qemu-system-riscv64 \
-	-M virt -m 256M -nographic \
-	-bios "$IMAGES"/fw_jump.bin \
-	-kernel "$IMAGES"/Image \
-	-initrd "$IMAGES"/rootfs.cpio \
-	-dtb "$IMAGES"/wally-virt.dtb \
-	-cpu rva22s64,zicond=true,zfa=true,zfh=true,zcb=true,zbc=true,zkn=true,sstc=true,svadu=true,svnapot=true,pmp=on,debug=off \
-	$GDB_FLAG
+  -M virt -m 256M -nographic \
+  -bios "$IMAGES"/fw_jump.bin \
+  -kernel "$IMAGES"/Image \
+  -initrd "$IMAGES"/rootfs.cpio \
+  -dtb "$IMAGES"/wally-virt.dtb \
+  -cpu rva22s64,zicond=true,zfa=true,zfh=true,zcb=true,zbc=true,zkn=true,sstc=true,svadu=true,svnapot=true,pmp=on,debug=off \
+  $GDB_FLAG

@@ -1,6 +1,6 @@
 #include "header.h"
 
 int main(){
-  lpddr_test();  
+  lpddr_test();
   return 0;
 }

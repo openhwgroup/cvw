@@ -2,25 +2,25 @@
 // fpgaTop.sv
 //
 // Written: rose@rosethompson.net November 17, 2021
-// Modified: 
+// Modified:
 //
 // Purpose: This is a top level for the fpga's implementation of wally.
 //          Instantiates wallysoc, ddr4, abh lite to axi converters, pll, etc
-// 
+//
 // A component of the Wally configurable RISC-V project.
-// 
+//
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
-// files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, 
-// modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software 
+// files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,
+// modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
 // is furnished to do so, subject to the following conditions:
 //
 // The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
-// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-// BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+// BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
@@ -28,9 +28,9 @@
 
 import cvw::*;
 
-module fpgaTop 
+module fpgaTop
   (input           default_250mhz_clk1_0_n,
-   input           default_250mhz_clk1_0_p, 
+   input           default_250mhz_clk1_0_p,
    input           reset,
    input           south_rst,
 
@@ -46,7 +46,7 @@ module fpgaTop
    output        SDCCmd,
    output        SDCCS,
    input         SDCCD,
-   input         SDCWP,         
+   input         SDCWP,
 
    output          cpu_reset,
    output          ahblite_resetn,
@@ -67,131 +67,131 @@ module fpgaTop
    output [0 : 0]  c0_ddr4_ck_t
    );
 
-  logic		   CPUCLK;
-  logic		   c0_ddr4_ui_clk_sync_rst;
-  logic		   bus_struct_reset;
-  logic		   peripheral_reset;
-  logic		   interconnect_aresetn;
-  logic		   peripheral_aresetn;
-  logic		   mb_reset;
-  
-  logic		   HCLKOpen;
-  logic		   HRESETnOpen;
+  logic       CPUCLK;
+  logic       c0_ddr4_ui_clk_sync_rst;
+  logic       bus_struct_reset;
+  logic       peripheral_reset;
+  logic       interconnect_aresetn;
+  logic       peripheral_aresetn;
+  logic       mb_reset;
+
+  logic            HCLKOpen;
+  logic            HRESETnOpen;
   logic [64-1:0]   HRDATAEXT;
-  logic		   HREADYEXT;
-  logic		   HRESPEXT;
-  logic		   HSELEXT;
-  logic [55:0]	   HADDR;
+  logic            HREADYEXT;
+  logic            HRESPEXT;
+  logic            HSELEXT;
+  logic [55:0]     HADDR;
   logic [64-1:0]   HWDATA;
   logic [64/8-1:0] HWSTRB;
-  logic		   HWRITE;
-  logic [2:0]	   HSIZE;
-  logic [2:0]	   HBURST;
-  logic [1:0]	   HTRANS;
-  logic		   HREADY;
-  logic [3:0]	   HPROT;
-  logic		   HMASTLOCK;
+  logic            HWRITE;
+  logic [2:0]      HSIZE;
+  logic [2:0]      HBURST;
+  logic [1:0]      HTRANS;
+  logic            HREADY;
+  logic [3:0]      HPROT;
+  logic            HMASTLOCK;
 
-  logic		   RVVIStall;
+  logic            RVVIStall;
 
-  logic [31:0]	   GPIOIN, GPIOOUT, GPIOEN;
+  logic [31:0]     GPIOIN, GPIOOUT, GPIOEN;
 
-  logic [3:0]	   m_axi_awid;
-  logic [7:0]	   m_axi_awlen;
-  logic [2:0]	   m_axi_awsize;
-  logic [1:0]	   m_axi_awburst;
-  logic [3:0]	   m_axi_awcache;
-  logic [31:0]	   m_axi_awaddr;
-  logic [2:0]	   m_axi_awprot;
-  logic		   m_axi_awvalid;
-  logic		   m_axi_awready;
-  logic		   m_axi_awlock;
-  logic [63:0]	   m_axi_wdata;
-  logic [7:0]	   m_axi_wstrb;
-  logic		   m_axi_wlast;
-  logic		   m_axi_wvalid;
-  logic		   m_axi_wready;
-  logic [3:0]	   m_axi_bid;
-  logic [1:0]	   m_axi_bresp;
-  logic		   m_axi_bvalid;
-  logic		   m_axi_bready;
-  logic [3:0]	   m_axi_arid;
-  logic [7:0]	   m_axi_arlen;
-  logic [2:0]	   m_axi_arsize;
-  logic [1:0]	   m_axi_arburst;
-  logic [2:0]	   m_axi_arprot;
-  logic [3:0]	   m_axi_arcache;
-  logic		   m_axi_arvalid;
-  logic [31:0]	   m_axi_araddr;
-  logic		   m_axi_arlock;
-  logic		   m_axi_arready;
-  logic [3:0]	   m_axi_rid;
-  logic [63:0]	   m_axi_rdata;
-  logic [1:0]	   m_axi_rresp;
-  logic		   m_axi_rvalid;
-  logic		   m_axi_rlast;
-  logic		   m_axi_rready;
+  logic [3:0]     m_axi_awid;
+  logic [7:0]     m_axi_awlen;
+  logic [2:0]     m_axi_awsize;
+  logic [1:0]     m_axi_awburst;
+  logic [3:0]     m_axi_awcache;
+  logic [31:0]    m_axi_awaddr;
+  logic [2:0]     m_axi_awprot;
+  logic           m_axi_awvalid;
+  logic           m_axi_awready;
+  logic           m_axi_awlock;
+  logic [63:0]    m_axi_wdata;
+  logic [7:0]     m_axi_wstrb;
+  logic           m_axi_wlast;
+  logic           m_axi_wvalid;
+  logic           m_axi_wready;
+  logic [3:0]     m_axi_bid;
+  logic [1:0]     m_axi_bresp;
+  logic           m_axi_bvalid;
+  logic           m_axi_bready;
+  logic [3:0]     m_axi_arid;
+  logic [7:0]     m_axi_arlen;
+  logic [2:0]     m_axi_arsize;
+  logic [1:0]     m_axi_arburst;
+  logic [2:0]     m_axi_arprot;
+  logic [3:0]     m_axi_arcache;
+  logic           m_axi_arvalid;
+  logic [31:0]    m_axi_araddr;
+  logic           m_axi_arlock;
+  logic           m_axi_arready;
+  logic [3:0]     m_axi_rid;
+  logic [63:0]    m_axi_rdata;
+  logic [1:0]     m_axi_rresp;
+  logic           m_axi_rvalid;
+  logic           m_axi_rlast;
+  logic           m_axi_rready;
 
   // Extra Bus signals
-  logic [3:0]	   BUS_axi_arregion;
-  logic [3:0]	   BUS_axi_arqos;
-  logic [3:0]	   BUS_axi_awregion;
-  logic [3:0]	   BUS_axi_awqos;
+  logic [3:0]     BUS_axi_arregion;
+  logic [3:0]     BUS_axi_arqos;
+  logic [3:0]     BUS_axi_awregion;
+  logic [3:0]     BUS_axi_awqos;
 
   // Bus signals
-  logic [3:0]	   BUS_axi_awid;
-  logic [7:0]	   BUS_axi_awlen;
-  logic [2:0]	   BUS_axi_awsize;
-  logic [1:0]	   BUS_axi_awburst;
-  logic [3:0]	   BUS_axi_awcache;
-  logic [30:0]	   BUS_axi_awaddr;
-  logic [2:0]	   BUS_axi_awprot;
-  logic		   BUS_axi_awvalid;
-  logic		   BUS_axi_awready;
-  logic		   BUS_axi_awlock;
-  logic [63:0]	   BUS_axi_wdata;
-  logic [7:0]	   BUS_axi_wstrb;
-  logic		   BUS_axi_wlast;
-  logic		   BUS_axi_wvalid;
-  logic		   BUS_axi_wready;
-  logic [3:0]	   BUS_axi_bid;
-  logic [1:0]	   BUS_axi_bresp;
-  logic		   BUS_axi_bvalid;
-  logic		   BUS_axi_bready;
-  logic [3:0]	   BUS_axi_arid;
-  logic [7:0]	   BUS_axi_arlen;
-  logic [2:0]	   BUS_axi_arsize;
-  logic [1:0]	   BUS_axi_arburst;
-  logic [2:0]	   BUS_axi_arprot;
-  logic [3:0]	   BUS_axi_arcache;
-  logic		   BUS_axi_arvalid;
-  logic [30:0]	   BUS_axi_araddr;
-  logic		   BUS_axi_arlock;
-  logic		   BUS_axi_arready;
-  logic [3:0]	   BUS_axi_rid;
-  logic [63:0]	   BUS_axi_rdata;
-  logic [1:0]	   BUS_axi_rresp;
-  logic		   BUS_axi_rvalid;
-  logic		   BUS_axi_rlast;
-  logic		   BUS_axi_rready;
+  logic [3:0]     BUS_axi_awid;
+  logic [7:0]     BUS_axi_awlen;
+  logic [2:0]     BUS_axi_awsize;
+  logic [1:0]     BUS_axi_awburst;
+  logic [3:0]     BUS_axi_awcache;
+  logic [30:0]    BUS_axi_awaddr;
+  logic [2:0]     BUS_axi_awprot;
+  logic           BUS_axi_awvalid;
+  logic           BUS_axi_awready;
+  logic           BUS_axi_awlock;
+  logic [63:0]    BUS_axi_wdata;
+  logic [7:0]     BUS_axi_wstrb;
+  logic           BUS_axi_wlast;
+  logic           BUS_axi_wvalid;
+  logic           BUS_axi_wready;
+  logic [3:0]     BUS_axi_bid;
+  logic [1:0]     BUS_axi_bresp;
+  logic           BUS_axi_bvalid;
+  logic           BUS_axi_bready;
+  logic [3:0]     BUS_axi_arid;
+  logic [7:0]     BUS_axi_arlen;
+  logic [2:0]     BUS_axi_arsize;
+  logic [1:0]     BUS_axi_arburst;
+  logic [2:0]     BUS_axi_arprot;
+  logic [3:0]     BUS_axi_arcache;
+  logic           BUS_axi_arvalid;
+  logic [30:0]    BUS_axi_araddr;
+  logic           BUS_axi_arlock;
+  logic           BUS_axi_arready;
+  logic [3:0]     BUS_axi_rid;
+  logic [63:0]    BUS_axi_rdata;
+  logic [1:0]     BUS_axi_rresp;
+  logic           BUS_axi_rvalid;
+  logic           BUS_axi_rlast;
+  logic           BUS_axi_rready;
 
-  logic		   BUSCLK;
+  logic           BUSCLK;
 
-  logic		   c0_init_calib_complete;
-  logic		   dbg_clk;
+  logic            c0_init_calib_complete;
+  logic            dbg_clk;
   logic [511 : 0]  dbg_bus;
 
-  logic		   CLK208;
+  logic            CLK208;
 
   assign GPIOIN = {25'b0, SDCCD, SDCWP, 2'b0, GPI};
   assign GPO = GPIOOUT[4:0];
   assign ahblite_resetn = peripheral_aresetn;
   assign cpu_reset = bus_struct_reset;
-  
+
   logic [3:0] SDCCSin;
   assign SDCCS = SDCCSin[0];
 
-   
+
   // reset controller XILINX IP
   sysrst sysrst
     (.slowest_sync_clk(CPUCLK),
@@ -207,13 +207,13 @@ module fpgaTop
 
   `include "parameter-defs.vh"
 
-  // Wally 
-  wallypipelinedsoc  #(P) 
-  wallypipelinedsoc(.clk(CPUCLK), .reset_ext(bus_struct_reset), .reset(), 
+  // Wally
+  wallypipelinedsoc  #(P)
+  wallypipelinedsoc(.clk(CPUCLK), .reset_ext(bus_struct_reset), .reset(),
                     .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT,
-                    .HCLK(HCLKOpen), .HRESETn(HRESETnOpen), 
+                    .HCLK(HCLKOpen), .HRESETn(HRESETnOpen),
                     .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
-                    .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), 
+                    .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0),
                     .GPIOIN, .GPIOOUT, .GPIOEN,
                     .UARTSin, .UARTSout, .SDCIn, .SDCCmd, .SDCCS(SDCCSin), .SDCCLK, .ExternalStall(RVVIStall));
 
@@ -354,7 +354,7 @@ module fpgaTop
      .m_axi_rvalid(BUS_axi_rvalid),
      .m_axi_rlast(BUS_axi_rlast),
      .m_axi_rready(BUS_axi_rready));
-   
+
   ddr4 ddr4
     (.c0_init_calib_complete(c0_init_calib_complete),
      .dbg_clk(dbg_clk), // open
@@ -423,8 +423,7 @@ module fpgaTop
 
      .addn_ui_clkout1(CPUCLK),
      .addn_ui_clkout2(CLK208));
-  
+
   assign RVVIStall = '0;
 
 endmodule
-

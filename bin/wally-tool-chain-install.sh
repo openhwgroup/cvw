@@ -9,7 +9,7 @@
 ## Purpose: Open source tool chain installation script
 ##
 ## A component of the CORE-V-WALLY configurable RISC-V project.
-## https://github.com/openhwgroup/cvw
+## https://github.com/openhwfoundation/cvw
 ##
 ## Copyright (C) 2021-24 Harvey Mudd College & Oklahoma State University
 ##
@@ -19,7 +19,7 @@
 ## except in compliance with the License, or, at your option, the Apache License version 2.0. You
 ## may obtain a copy of the License at
 ##
-## https:##solderpad.org/licenses/SHL-2.1/
+## https://solderpad.org/licenses/SHL-2.1/
 ##
 ## Unless required by applicable law or agreed to in writing, any work distributed under the
 ## License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -47,11 +47,14 @@ else
 fi
 
 
-# Create python virtual environment so the python command targets desired version of python
-# and installed packages are isolated from the rest of the system. Also installs python packages,
-# including RISCOF (https://github.com/riscv-software-src/riscof.git)
-# RISCOF is a RISC-V compliance test framework that is used to run the RISC-V Arch Tests.
-source "$WALLY"/bin/installation/python-setup.sh
+# mise (https://mise.jdx.dev/)
+# mise is a development environment setup tool for managing tool versions and environment variables.
+source "$WALLY"/bin/installation/mise-install.sh
+
+
+# uv (https://docs.astral.sh/uv/)
+# uv is a Python package manager and virtual environment tool.
+source "$WALLY"/bin/installation/uv-install.sh
 
 
 # Activate tools (python virtual environment and possibly newer version of gcc)
@@ -59,8 +62,7 @@ source "${WALLY}"/bin/installation/activate-tools.sh
 
 
 # Newer version of glib required for QEMU.
-# Anything newer than this won't build on red hat 8
-# Used for all installed tools becuase mixing glib versions can cause issues.
+# Used for all installed tools because mixing glib versions can cause issues.
 if (( RHEL_VERSION == 8 )) || (( UBUNTU_VERSION == 20 )); then
     source "$WALLY"/bin/installation/glib-installation.sh
 fi
@@ -73,12 +75,6 @@ fi
 source "$WALLY"/bin/installation/riscv-gnu-toolchain-install.sh
 
 
-# elf2hex (https://github.com/sifive/elf2hex)
-# The elf2hex utility to converts executable files into hexadecimal files for Verilog simulation.
-# Note: The exe2hex utility that comes with Spike doesn’t work for our purposes because it doesn’t
-# handle programs that start at 0x80000000.
-source "$WALLY"/bin/installation/elf2hex-install.sh
-
 
 # QEMU (https://www.qemu.org/docs/master/system/target-riscv.html)
 # QEMU is an open source machine emulator and virtualizer capable of emulating RISC-V
@@ -88,6 +84,16 @@ source "$WALLY"/bin/installation/qemu-install.sh
 # Spike (https://github.com/riscv-software-src/riscv-isa-sim)
 # Spike is a reference model for RISC-V. It is a functional simulator that can be used to run RISC-V programs.
 source "$WALLY"/bin/installation/spike-install.sh
+
+
+# Whisper (https://github.com/tenstorrent/whisper)
+# Whisper is a RISC-V instruction set simulator (ISS) developed by Tenstorrent.
+# The boost libraries (needed for Whisper) do not compile correctly on Ubuntu 20.04
+if (( UBUNTU_VERSION != 20 )); then
+    source "$WALLY"/bin/installation/whisper-install.sh
+else
+    echo -e "${WARNING_COLOR}Skipping Whisper installation due to incompatible Boost libraries on Ubuntu 20.04.${ENDC}"
+fi
 
 
 # RISC-V Sail Model (https://github.com/riscv/sail-riscv)
@@ -127,8 +133,8 @@ section_header "Downloading Site Setup Script"
 STATUS="site-setup_scripts"
 cd "$RISCV"
 if [ ! -e "${RISCV}"/site-setup.sh ]; then
-    wget -nv --retry-connrefused $retry_on_host_error https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.sh
-    wget -nv --retry-connrefused $retry_on_host_error https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.csh
+    wget -nv --retry-connrefused $retry_on_host_error https://raw.githubusercontent.com/openhwfoundation/cvw/main/site-setup.sh
+    wget -nv --retry-connrefused $retry_on_host_error https://raw.githubusercontent.com/openhwfoundation/cvw/main/site-setup.csh
     echo -e "${SUCCESS_COLOR}Site setup script successfully downloaded!${ENDC}"
     echo -e "${WARNING_COLOR}Make sure to edit the environment variables in $RISCV/site-setup.sh (or .csh) to point to your installation of EDA tools and license files.${ENDC}"
 else

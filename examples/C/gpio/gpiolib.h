@@ -2,7 +2,7 @@
 // Basic Arduino-compatible functions for general-purpose input/output
 
 // Assumes GPIO0_BASE is set to the memory-mapped GPIO address from
-// config/rv64gc/config.vh.  
+// config/rv64gc/config.vh.
 
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 

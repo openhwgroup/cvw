@@ -68,5 +68,5 @@ int main() {
     printf("The GF(2^3) result is %d\n", gfmul(0b101,0b010, 3, 0b1011));
     printf("The GF(2^3) result is %d\n", gfmul(0b101,0b100, 3, 0b1011));
     printf("The GF(2^3) result is %d\n", gfmul(0b101,0b011, 3, 0b1011));
- 
+
 }

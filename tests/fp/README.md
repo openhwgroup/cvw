@@ -199,4 +199,3 @@ Any config that includes floating point support can be used. Each test will test
         756     2268    27972 ui64_f64_ru.tv
         756     2268    27972 ui64_f64_rz.tv
     2840352 11308896 94651296 total
-

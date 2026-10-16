@@ -28,5 +28,5 @@ done:
     mv a0, s0           # put result in a0 to return
     ld s0, 0(sp)        # restore s0 and s1 from stack
     ld s1, 8(sp)
-    addi sp, sp, 16  
+    addi sp, sp, 16
     ret                 # return from function

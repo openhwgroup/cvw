@@ -30,6 +30,10 @@ SECTIONS
 
   .text : { *(.text) }
 
+  . = ALIGN(0x1000);
+  .rodata : { *(.rodata .rodata.*) *(.srodata .srodata.*) } /* Read-only data in DMEM */
+  . = ALIGN(16);
+
   /* data segment */
   .data : { *(.data) }
 
@@ -63,4 +67,3 @@ SECTIONS
   /* End of uninitialized data segment */
   _end = .;
 }
-

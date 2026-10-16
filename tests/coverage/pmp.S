@@ -34,7 +34,7 @@ main:
   # |14     | 0x200003be  | 0x10      | 0 | 10   | 0 | 0 | 0 | 14
   # |15     | 0x2000041e  | 0x18      | 0 | 11   | 0 | 0 | 0 | 15
  # configure the pmp address of register 0 in mode 0
- # changed from 2000003F to 20000040 5/22/25 david_harris@hmc.edu 
+ # changed from 2000003F to 20000040 5/22/25 david_harris@hmc.edu
  # to prevent access fault to trap handler when grain size is large
  # may result in lower coverage.
 li t5, 0x20000040

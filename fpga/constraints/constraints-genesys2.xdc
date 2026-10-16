@@ -11,7 +11,7 @@ set_property PACKAGE_PIN AD12 [get_ports default_200mhz_clk_p]
 set_property PACKAGE_PIN AD11 [get_ports default_200mhz_clk_n]
 set_property IOSTANDARD LVDS [get_ports default_200mhz_clk_p]
 
-# *** don't love this hack.  RT: Don't understand why the recomemded input clock is causing a clock routing issue.  
+# *** don't love this hack.  RT: Don't understand why the recomemded input clock is causing a clock routing issue.
 set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets default_200mhz_clk_p]
 set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets default_200mhz_clk_n]
 
@@ -72,20 +72,12 @@ set_output_delay -clock [get_clocks clk_out3_mmcm] -max -add_delay 0.000 [get_po
 
 ##### reset #####
 #************** reset is inverted
-set_property -dict { PACKAGE_PIN B19   IOSTANDARD LVCMOS12 } [get_ports { south_reset }]; #IO_L24N_T3_17 Sch=btnu
-set_property -dict { PACKAGE_PIN R19   IOSTANDARD LVCMOS33 } [get_ports { resetn }]; #IO_0_14 Sch=cpu_resetn
+set_property -dict { PACKAGE_PIN R19   IOSTANDARD LVCMOS33 } [get_ports { aresetn }]; #IO_0_14 Sch=cpu_resetn
 
-set_input_delay -clock [get_clocks clk_out3_mmcm] -min -add_delay 2.000 [get_ports resetn]
-set_input_delay -clock [get_clocks clk_out3_mmcm] -max -add_delay 2.000 [get_ports resetn]
-set_max_delay -from [get_ports resetn] 20.000
-set_false_path -from [get_ports resetn]
-
-
-set_input_delay -clock [get_clocks clk_out3_mmcm] -min -add_delay 2.000 [get_ports south_reset]
-set_input_delay -clock [get_clocks clk_out3_mmcm] -max -add_delay 2.000 [get_ports south_reset]
-set_max_delay -from [get_ports south_reset] 20.000
-set_false_path -from [get_ports south_reset]
-
+set_input_delay -clock [get_clocks clk_out3_mmcm] -min -add_delay 2.000 [get_ports aresetn]
+set_input_delay -clock [get_clocks clk_out3_mmcm] -max -add_delay 2.000 [get_ports aresetn]
+set_max_delay -from [get_ports aresetn] 20.000
+set_false_path -from [get_ports aresetn]
 
 
 ##### SD Card I/O #####

@@ -13,7 +13,7 @@ module testbench_fma16;
   fma16 dut(x, y, z, mul, add, negp, negz, roundmode, result, flags);
 
   // generate clock
-  always 
+  always
     begin
       clk = 1; #5; clk = 0; #5;
     end
@@ -38,14 +38,14 @@ module testbench_fma16;
     if (~reset) begin // skip during reset
       if (result !== rexpected /* | flags !== flagsexpected */) begin  // check result
         $display("Error: inputs %h * %h + %h", x, y, z);
-        $display("  result = %h (%h expected) flags = %b (%b expected)", 
+        $display("  result = %h (%h expected) flags = %b (%b expected)",
           result, rexpected, flags, flagsexpected);
         errors = errors + 1;
       end
       vectornum = vectornum + 1;
-      if (testvectors[vectornum] === 'x) begin 
-        $display("%d tests completed with %d errors", 
-	           vectornum, errors);
+      if (testvectors[vectornum] === 'x) begin
+        $display("%d tests completed with %d errors",
+                 vectornum, errors);
         $stop;
       end
     end

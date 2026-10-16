@@ -2,7 +2,7 @@
 
 // Design parameters, used in the code below and custom to this design!
 //`define RAM_PATH soc_top.soc_instance.i_sram_subsystem.i_shared_ram
-//sim:/testbench/dut/uncore/uncore/ram/ram/memory/RAM 
+//sim:/testbench/dut/uncore/uncore/ram/ram/memory/RAM
 //`define RAM_PATH testbench.dut.uncore.uncore.ram.ram.memory.RAM
 //`define RAM_PATH testbench.dut.uncore.uncore.ram.ram.memory
 `define RAM_PATH testbench.dut.uncoregen.uncore.ram.ram.memory.ram
