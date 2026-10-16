@@ -158,9 +158,10 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   // handled in hardware and either the access is atomic (not handled in hardware without Zama16b; see privileged spec 3.6.3.3)
   // or the region is non-idempotent, where the spec recommends an access fault so software does not emulate the
   // access with multiple smaller accesses that could have side effects
-  // Zama16b excuses a misaligned atomic that the LSU can do in one cache access
+  // Zama16b excuses a misaligned AMO (which both reads and writes) that the LSU can do in one cache access;
+  // it does not cover LR/SC, so a misaligned LR or SC still faults
   assign MisalignedCausesAccessFaultM = DataMisalignedM & P.ZICCLSM_SUPPORTED &
-                                        ((AtomicAccessM & Cacheable & ~(P.ZAMA16B_SUPPORTED & ~CrossesLineM)) | ~Idempotent);
+                                        ((AtomicAccessM & Cacheable & ~(P.ZAMA16B_SUPPORTED & ReadAccessM & WriteAccessM & ~CrossesLineM)) | ~Idempotent);
 
   // Access faults
   // If TLB miss and translating we want to not have faults from the PMA and PMP checkers.
