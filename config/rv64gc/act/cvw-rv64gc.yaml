@@ -31,6 +31,7 @@ implemented_extensions:
   - { name: Zmmul, version: "= 1.0.0" }
   - { name: Zaamo, version: "= 1.0.0" }
   - { name: Zalrsc, version: "= 1.0.0" }
+  - { name: Zawrs, version: "= 1.0.0" }
   - { name: Zabha, version: "= 1.0.0" }
   - { name: Zacas, version: "= 1.0.0" }
   - { name: Zimop, version: "= 1.0.0" }
@@ -106,6 +107,8 @@ params:
   U_MODE_ENDIANNESS: dynamic
   UXLEN: [64]
   TRAP_ON_ECALL_FROM_U: true
+  # Zawrs params
+  ZAWRS_NTO_IS_NOP: false # wrs.nto stalls until a reservation-set change, an interrupt or a TW timeout
   # S params
   SEI_INTR_IMPL: true
   SSI_INTR_IMPL: true
