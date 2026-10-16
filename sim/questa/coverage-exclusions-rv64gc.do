@@ -436,8 +436,9 @@ set line [GetLineNum ${SRC}/mmu/tlb/tlbcontrol.sv "ReadAccess \\| WriteAccess"]
 coverage exclude -scope /core/ifu/immu/immu/tlb/tlb/tlbcontrol -fecexprrow $line 1 3-6
 set line [GetLineNum ${SRC}/mmu/tlb/tlbcontrol.sv "CAMHit & TLBAccess"]
 coverage exclude -scope /core/ifu/immu/immu/tlb/tlb/tlbcontrol -fecexprrow $line 3
+# Questa orders the TLBMiss terms CAMHit, UpperBitsUnequal, TLBAccess, Translate: row 5 is TLBAccess_0
 set line [GetLineNum ${SRC}/mmu/tlb/tlbcontrol.sv "~CAMHit & TLBAccess"]
-coverage exclude -scope /core/ifu/immu/immu/tlb/tlb/tlbcontrol -fecexprrow $line 3
+coverage exclude -scope /core/ifu/immu/immu/tlb/tlb/tlbcontrol -fecexprrow $line 5
 
 # IMMU only makes word-sized accesses (Size = 2'b10), so the byte, halfword and doubleword arms of the
 # misalignment case never run, and the fetch address bit 0 is always 0 (row 4, VAdr[0]_1, of the word arm).
@@ -485,9 +486,9 @@ coverage exclude -scope /core/ifu/immu/immu/pmp/pmpchecker -fecexprrow [GetLineN
 coverage exclude -scope /core/ifu/immu/immu/pmp/pmpchecker -fecexprrow [GetLineNum ${SRC}/mmu/pmpchecker.sv "exclusion-tag: immu-pmpcboaccess"] 2 4
 
 # No irom
-set line [GetLineNum ${SRC}/ifu/ifu.sv "~ITLBMissF & ~CacheableF & ~SelIROM"]
+set line [GetLineNum ${SRC}/ifu/ifu.sv "~ITLBMissOrUpdateRawF & ~CacheableF & ~SelIROM"]
 coverage exclude -scope /core/ifu -feccondrow $line 6
-set line [GetLineNum ${SRC}/ifu/ifu.sv "~ITLBMissF & CacheableF & ~SelIROM"]
+set line [GetLineNum ${SRC}/ifu/ifu.sv "~ITLBMissOrUpdateRawF & CacheableF & ~SelIROM"]
 coverage exclude -scope /core/ifu -feccondrow $line 4
 
 # no DTIM
@@ -618,6 +619,9 @@ coverage exclude -scope /core/hzu -fecexprrow [GetLineNum ${SRC}/hazard/hazard.s
 
 # Instruction Misaligned never asserted because compressed instructions are accepted
 coverage exclude -scope /core/priv/priv/trap -fecexprrow [GetLineNum ${SRC}/privileged/trap.sv "assign ExceptionM"] 2
+# The wait counter clears whenever M advances and M holds the same instruction while it is stalled, so the counter
+# can only reach its limit with the wfi still in M: wfiM_0 (row 1) never sees the counter's top bit set.
+coverage exclude -scope /core/priv/priv/pmd -fecexprrow [GetLineNum ${SRC}/privileged/privdec.sv "assign TWTimeoutM"] 1
 
 # Attempting to access fflags, frm, fcsr with mstatus.FS = 0 traps, so checking for (STATUS_FS != 2'b00)
 # before enabling writes to these CSRs is redundant and uncoverable
