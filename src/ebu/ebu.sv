@@ -48,7 +48,7 @@ module ebu import cvw::*; #(parameter cvw_t P) (
   input  logic [P.PA_BITS-1:0] LSUHADDR,      // LSU AHB address
   input  logic [P.XLEN-1:0]    LSUHWDATA,     // LSU AHB write data
   input  logic [P.XLEN/8-1:0]  LSUHWSTRB,     // LSU AHB byte write enables
-  output logic                 LSUHREADY,     // AHB ready to LSU; never gated because the LSU has priority
+  output logic                 LSUHREADY,     // AHB ready to LSU; gated while the IFU owns the bus
 
   // AHB-Lite external signals
   output logic                 HCLK, HRESETn, // AHB clock and reset (active low)

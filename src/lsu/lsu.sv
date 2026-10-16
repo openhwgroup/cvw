@@ -75,7 +75,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   output logic [P.PA_BITS-1:0]    LSUHADDR,                             // LSU AHB address
   input  logic [P.XLEN-1:0]       HRDATA,                               // AHB read data
   output logic [P.XLEN-1:0]       LSUHWDATA,                            // LSU AHB write data
-  input  logic                    LSUHREADY,                            // AHB ready to LSU; never gated because the LSU has priority
+  input  logic                    LSUHREADY,                            // AHB ready to LSU; gated while the IFU owns the bus
   output logic                    LSUHWRITE,                            // LSU AHB write (1) or read (0)
   output logic [2:0]              LSUHSIZE,                             // LSU AHB transfer size
   output logic [2:0]              LSUHBURST,                            // LSU AHB burst type
