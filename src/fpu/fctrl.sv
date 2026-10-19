@@ -306,8 +306,8 @@ module fctrl import cvw::*; #(parameter cvw_t P) (
 
   //    Z - unpacked for fma (OpCtrl 0xx) and add/sub (11x), where Z takes Y's value; not fmul (100).
   //    rs3 is only read by fma, so ZEnD, which drives the hazard unit, excludes add/sub, whose InstrD[31:27] is funct5, not rs3.
-  assign ZUnpackEnD = (PostProcSelD == 2'b10) & (~OpCtrlD[2] | OpCtrlD[1]);                                     // fma, add, sub
-  assign ZEnD       = (PostProcSelD == 2'b10) & ~OpCtrlD[2];                                                    // fma only
+  assign ZUnpackEnD = (PostProcSelD == POSTPROC_FMA) & (~OpCtrlD[2] | OpCtrlD[1]);                               // fma, add, sub
+  assign ZEnD       = (PostProcSelD == POSTPROC_FMA) & ~OpCtrlD[2];                                              // fma only
 
   //  Final Res Sel:
   //        fp      int

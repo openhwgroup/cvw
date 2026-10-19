@@ -83,7 +83,7 @@ module icpred import cvw::*; #(parameter cvw_t P,
 
     assign BPBranchF = NCBranchF | (P.ZCA_SUPPORTED & CBranchF);
     assign BPJumpF = NCJumpF | (P.ZCA_SUPPORTED & (CJumpF));
-    assign BPReturnF = (PostSpillInstrRawF[6:0] == 7'h67 & (PostSpillInstrRawF[19:15] & 5'h1B) == 5'h01 & PostSpillInstrRawF[11:7] == 5'b0) | // return is a jalr to ra or x5
+    assign BPReturnF = (PostSpillInstrRawF[6:0] == OP_JALR & (PostSpillInstrRawF[19:15] & 5'h1B) == 5'h01 & PostSpillInstrRawF[11:7] == 5'b0) | // return is a jalr to ra or x5
         (P.ZCA_SUPPORTED & cjr & ((PostSpillInstrRawF[11:7] & 5'h1B) == 5'h01));
 
     assign BPCallF = (NCJumpF & (PostSpillInstrRawF[11:07] & 5'h1B) == 5'h01) | // call(r) must link to ra or x5
