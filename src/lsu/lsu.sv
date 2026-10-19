@@ -61,6 +61,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   input  logic                    BigEndianM,                           // Swap byte order to big endian
   input  logic                    sfencevmaM,                           // Virtual memory address fence, invalidate TLB entries
   input  logic                    sfencevmaAllM,                        // sfence.vma with rs2=x0: flush all TLB entries including global
+  input  logic                    sfencevmaAdrM,                        // sfence.vma with rs1!=x0: flush only entries for the address in rs1 (IEUAdrM)
   output logic                    DCacheStallM,                         // D$ busy with multicycle operation
   output logic [P.XLEN-1:0]       IEUAdrxTvalM,                         // IEUAdrM, but could be spilled onto the next cacheline or virtual page.
   // fpu
@@ -279,6 +280,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_ADUE,
       .PrivilegeModeW, .DisableTranslation, .VAdr(IHAdrM), .Size(LSUSizeM),
       .PTE, .PageTypeWriteVal(PageType), .TLBWrite(DTLBWriteM), .TLBFlush(sfencevmaM), .TLBFlushAll(sfencevmaAllM),
+      .TLBFlushVA(sfencevmaAdrM), .TLBFlushASID(WriteDataM[P.ASID_BITS-1:0]), // WriteDataM holds rs2
       .PhysicalAddress(PAdrM), .TLBMiss(DTLBMissM), .Cacheable(CacheableM), .Idempotent(), .SelTIM(SelDTIM),
       .InstrAccessFaultF(), .LoadAccessFaultM(LSULoadAccessFaultM),
       .StoreAmoAccessFaultM(LSUStoreAmoAccessFaultM), .InstrPageFaultF(), .LoadPageFaultM(LSULoadPageFaultM),
