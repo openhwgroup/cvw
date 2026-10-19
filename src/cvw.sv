@@ -313,7 +313,7 @@ typedef struct packed {
   logic DEBUG_SUPPORTED;
   logic SDEXT_SUPPORTED;
   logic [31:0] JEDEC;
-  logic [5:0] ABITS;
+  logic [5:0] DTM_ABITS;
   int         DTM_INSTR_WIDTH;
 
   // Trigger Module

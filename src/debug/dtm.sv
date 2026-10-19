@@ -78,7 +78,7 @@ module dtm import cvw::*; #(parameter cvw_t P) (
   // Test Data Register Stuff
   logic [31:0] dtmcs, DTMCSNext;
 
-  logic [P.ABITS + 34 - 1:0] DMINextReg, DMINext, dmi;
+  logic [P.DTM_ABITS + 34 - 1:0] DMINextReg, DMINext, dmi;
 
   // Debug Module Interface Control
   logic        UpdateDMI;
@@ -156,7 +156,7 @@ module dtm import cvw::*; #(parameter cvw_t P) (
     end
   end
 
-  assign DTMCSNext = {11'b0, 3'd4, DTMHardReset, DMIReset, 1'b0, 3'd0, DMINextReg[1:0], P.ABITS, 4'b1};
+  assign DTMCSNext = {11'b0, 3'd4, DTMHardReset, DMIReset, 1'b0, 3'd0, DMINextReg[1:0], P.DTM_ABITS, 4'b1};
 
   // Sticky error
   always_ff @(posedge clk) begin
@@ -180,7 +180,7 @@ module dtm import cvw::*; #(parameter cvw_t P) (
       case(DMIState)
         IDLE: begin
           if (UpdateDMI) begin
-            DMIADDR <= dmi[P.ABITS+34-1:34];
+            DMIADDR <= dmi[P.DTM_ABITS+34-1:34];
             DMIDATA <= dmi[33:2];
             DMINextReg[33:2] <= dmi[33:2];
             if ((dmi[1:0] == RD) | (dmi[1:0] == WR)) begin

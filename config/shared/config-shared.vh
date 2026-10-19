@@ -130,5 +130,5 @@ localparam LOGNORMSHIFTSZ = ($clog2(NORMSHIFTSZ));                  // log_2(NOR
 
 // Debug Specification (if enabled)
 localparam JEDEC = 32'h1002ac05;
-localparam ABITS = 6'd7;
+localparam DTM_ABITS = 6'd7;
 localparam DTM_INSTR_WIDTH = 32'd5;

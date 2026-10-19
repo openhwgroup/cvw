@@ -35,8 +35,8 @@ module data_reg import cvw::*; #(parameter cvw_t P) (
   input logic                         ShiftDR, ClockDR, UpdateDR,
   input logic [31:0]                  dtmcs_next,
   output logic [31:0]                 dtmcs,
-  input logic [P.ABITS + 34 - 1:0]    dmi_next,
-  output logic [P.ABITS + 34 - 1:0]   dmi,
+  input logic [P.DTM_ABITS + 34 - 1:0]    dmi_next,
+  output logic [P.DTM_ABITS + 34 - 1:0]   dmi,
   output logic                        tdo
 );
 
@@ -60,11 +60,11 @@ module data_reg import cvw::*; #(parameter cvw_t P) (
   idreg #(32) idcode(tck, tdi, resetn, P.JEDEC, ShiftDR, ClockDR, tdo_idcode);
 
   // DTMCS TODO (JACOB): Debug Spec Section 6.1.4
-  internalreg #(32) dtmcsreg(tck, tdi, resetn, dtmcs_next, {11'b0, 3'd4, 6'd0, 2'b0, P.ABITS, 4'b1},
+  internalreg #(32) dtmcsreg(tck, tdi, resetn, dtmcs_next, {11'b0, 3'd4, 6'd0, 2'b0, P.DTM_ABITS, 4'b1},
   ShiftDR, ClockDR, dtmcs, tdo_dtmcs);
 
   // DMI
-  internalreg #(P.ABITS + 34) dmireg(tck, tdi, resetn, dmi_next, {(P.ABITS + 34){1'b0}},
+  internalreg #(P.DTM_ABITS + 34) dmireg(tck, tdi, resetn, dmi_next, {(P.DTM_ABITS + 34){1'b0}},
   ShiftDR, ClockDR, dmi, tdo_dmi);
 
 
