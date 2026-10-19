@@ -41,7 +41,8 @@ module ram_ahb import cvw::*; #(parameter cvw_t P,
   output logic                 HRESPRam, HREADYRam // AHB response and ready from RAM
 );
 
-  localparam ADDR_WIDTH = $clog2(RANGE/8);
+  localparam DEPTH      = (RANGE+1)/64'(P.XLEN/8); // RANGE is a mask (size-1), DEPTH is in XLEN-bit words
+  localparam ADDR_WIDTH = $clog2(DEPTH);
   localparam OFFSET     = $clog2(P.XLEN/8);
 
   logic [P.PA_BITS-1:0]        HADDRD, RamAddr;
@@ -69,7 +70,7 @@ module ram_ahb import cvw::*; #(parameter cvw_t P,
   mux2 #(P.PA_BITS) adrmux(HADDR, HADDRD, memwriteD | ~HREADY, RamAddr);
 
   // single-ported RAM
-  ram1p1rwbe #(P.USE_SRAM, RANGE/8, P.XLEN, PRELOAD) memory(.clk(HCLK), .ce(1'b1),
+  ram1p1rwbe #(P.USE_SRAM, DEPTH, P.XLEN, PRELOAD) memory(.clk(HCLK), .ce(1'b1),
     .addr(RamAddr[ADDR_WIDTH+OFFSET-1:OFFSET]), .we(memwriteD), .din(HWDATA), .bwe(HWSTRB), .dout(HREADRam));
 
   // use this to add arbitrary latency to ram. Helps test AHB controller correctness

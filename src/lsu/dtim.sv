@@ -43,7 +43,7 @@ module dtim import cvw::*; #(parameter cvw_t P) (
 
   localparam LLENBYTES  = P.LLEN/8;
   // verilator lint_off WIDTH
-  localparam DEPTH      = P.DTIM_RANGE/LLENBYTES;
+  localparam DEPTH      = (P.DTIM_RANGE+1)/LLENBYTES; // DTIM_RANGE is a mask (size-1)
   // verilator lint_on WIDTH
   localparam ADDR_WIDTH = $clog2(DEPTH);
   localparam OFFSET     = $clog2(LLENBYTES);
