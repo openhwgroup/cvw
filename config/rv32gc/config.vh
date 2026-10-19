@@ -59,6 +59,7 @@ localparam logic ZAAMO_SUPPORTED  = 1;
 localparam logic ZALRSC_SUPPORTED = 1;
 localparam logic ZABHA_SUPPORTED  = 1; // Byte and halfword AMOs
 localparam logic ZACAS_SUPPORTED  = 1; // Compare-and-swap AMOs
+localparam logic ZAWRS_SUPPORTED  = 0; // Wait on reservation set
 
 // Bit manipulation extensions
 // B extension is Zba + Zbb + Zbs
@@ -163,7 +164,9 @@ localparam PMP_G = 32'd4; // 64 bytes for 512-bit cache line
 localparam logic [63:0] RESET_VECTOR = 64'h80000000;
 
 // WFI Timeout Wait
-localparam WFI_TIMEOUT_BIT = 32'd16;
+localparam WFI_TIMEOUT_BIT = 32'd14;
+localparam WRSNTO_TIMEOUT_BIT = 32'd13; // Zawrs wrs.nto wait
+localparam WRSSTO_TIMEOUT_BIT = 32'd12; // Zawrs wrs.sto wait
 
 // Peripheral Physical Addresses
 // Peripheral memory space extends from BASE to BASE+RANGE
@@ -242,6 +245,9 @@ localparam BPRED_NUM_LHR = 32'd6;
 localparam BTB_SIZE = 32'd10;
 localparam RAS_SIZE = 32'd16;
 localparam INSTR_CLASS_PRED = 1;
+
+// FMA normalization: 1 = leading zero anticipator in parallel with the adder, 0 = leading zero counter on the sum
+localparam logic FMA_LZA = 1;
 
 // FPU division architecture
 localparam RADIX = 32'd4;
