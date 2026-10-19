@@ -32,8 +32,8 @@ module ram2p1r1wbe_2048x64(
   input  logic          CEBB,  // SRAM port B chip enable (active low)
   input  logic          WEBA,  // SRAM port A write enable (active low)
   input  logic          WEBB,  // SRAM port B write enable (active low)
-  input  logic [8:0]    AA,    // SRAM port A address
-  input  logic [8:0]    AB,    // SRAM port B address
+  input  logic [10:0]   AA,    // SRAM port A address
+  input  logic [10:0]   AB,    // SRAM port B address
   input  logic [63:0]   DA,    // SRAM port A write data
   input  logic [63:0]   DB,    // SRAM port B write data
   input  logic [63:0]   BWEBA, // SRAM port A bit write enables (active low)

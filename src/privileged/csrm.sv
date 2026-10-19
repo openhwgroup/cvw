@@ -98,9 +98,8 @@ module csrm import cvw::*; #(parameter cvw_t P) (
   localparam DPC           = 12'h7B1;
   localparam DSCRATCH0     = 12'h7B2;
   localparam DSCRATCH1     = 12'h7B3;
-  /* verilator lint_off UNUSEDPARAM */
+  /* verilator lint_on UNUSEDPARAM */
   // Constants
-  localparam ZERO = {(P.XLEN){1'b0}};
   // Delegable exceptions: causes 0-9, 12, 13, 15.  Cause 11 (ecall from M-mode) cannot be delegated and 10, 14 are reserved.
   // when compressed instructions are supported, there can't be misaligned instructions
   localparam MEDELEG_MASK  = P.ZCA_SUPPORTED ? 16'hB3FE : 16'hB3FF;

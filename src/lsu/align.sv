@@ -42,6 +42,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.LLEN*2-1:0]     DCacheReadDataWordM,      // D$ read data, two LLEN words wide
   input  logic                    CacheBusHPWTStall,        // D$, bus, or HPTW is stalled. Transition to second access of spill after the first completes
   input  logic                    SelHPTW,                  // HPTW is accessing memory through the LSU
+  input  logic                    DataFaultM,               // Page or access fault on the access in Memory stage; do not take the spill
 
   input  logic [(P.LLEN-1)/8:0]   ByteMaskM,                // Byte write enables
   input  logic [(P.LLEN-1)/8:0]   ByteMaskExtendedM,        // Byte write enables for the next word of a misaligned access
@@ -122,7 +123,10 @@ module align import cvw::*;  #(parameter cvw_t P) (
   end
   assign MisalignedM = (|MemRWM) & (AccessByteOffsetM != 0);
 
-  assign ValidSpillM = MisalignedM & PotentialSpillM & ~CacheBusHPWTStall;   // Don't take the spill if there is a stall
+  // Don't take the spill if there is a stall or the access faults.  A faulting access must keep presenting the
+  // original address: the fault is recomputed combinationally each cycle and would vanish at the second-half
+  // address while a committed I$ fill defers the trap, losing the exception and half-executing a store.
+  assign ValidSpillM = MisalignedM & PotentialSpillM & ~CacheBusHPWTStall & ~DataFaultM;
 
   always_ff @(posedge clk)
     if (reset | FlushM)    CurrState <= STATE_READY;

@@ -33,6 +33,7 @@ module RASPredictor import cvw::*;  #(parameter cvw_t P) (
   input  logic              reset,          // Reset
   input  logic              StallD, StallE, StallM, FlushD, FlushE, FlushM, // Stall and flush Decode, Execute, Memory stages
   input  logic              BPReturnWrongD, // Return prediction was wrong in Decode stage
+  input  logic              BPReturnD,      // Instruction in Decode stage was predicted to be a return, so it popped the RAS when fetched
   input  logic              ReturnD,        // Return instruction in Decode stage
   input  logic              ReturnE, CallE, // Return and call instructions in Execute stage
   input  logic              BPReturnF,      // Predicted return instruction in Fetch stage
@@ -60,7 +61,10 @@ module RASPredictor import cvw::*;  #(parameter cvw_t P) (
   assign PushE = CallE & ~StallM & ~FlushM;
 
   assign WrongPredReturnD = (BPReturnWrongD) & ~StallE & ~FlushE;
-  assign FlushedReturnDE = (~StallE & FlushE & ReturnD) | (FlushM & ReturnE); // flushed return
+  // Undo the pop of an instruction that is discarded: in D, the pop was made for the predicted class (the D-stage
+  // repair has not run yet); in E, the D-stage repair has made it match the actual class.  A stall bubble
+  // (FlushE while D is stalled, FlushM while E is stalled) does not discard the instruction.
+  assign FlushedReturnDE = (~StallD & FlushE & BPReturnD) | (~StallE & FlushM & ReturnE);
 
   assign RepairD = WrongPredReturnD | FlushedReturnDE;
 
