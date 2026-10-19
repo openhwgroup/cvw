@@ -73,7 +73,7 @@ module shiftcorrection import cvw::*;  #(parameter cvw_t P) (
     if (FmaOp | (DivOp & ~DivResSubnorm))  // one bit shift for FMA or divsqrt
       if (RightShift)                      Mf = {Shifted[P.NORMSHIFTSZ-2:1], 2'b00};
       else                                 Mf = {Shifted[P.NORMSHIFTSZ-3:0], 2'b00};
-    else                                   Mf = Shifted[P.NORMSHIFTSZ-1:0];  // convert and subnormal division result
+    else                                   Mf =  Shifted[P.NORMSHIFTSZ-1:0];  // convert and subnormal division result
 
   // Determine sum's exponent
   //  main exponent issues:

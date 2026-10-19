@@ -90,7 +90,7 @@ module fdivsqrtiter import cvw::*;  #(parameter cvw_t P) (
     assign DBar2 = ~D2;       // for -2D, only used in R4
   end
 
-  // k = DIVCOPIES copies of the recurrence logic
+  // k = DIVCOPIES of the recurrence logic
   genvar i;
   generate
     for (i = 0; $unsigned(i) < P.DIVCOPIES; i++) begin : iterations
