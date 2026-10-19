@@ -29,8 +29,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module atomic import cvw::*;  #(parameter cvw_t P) (
-  input  logic                 clk,            // Clock
-  input  logic                 reset,          // Reset
+  input  logic                 clk,
+  input  logic                 reset,
   input  logic                 StallW,         // Stall Writeback stage
   input  logic [P.XLEN-1:0]    ReadDataM,      // Read data from memory in Memory stage
   input  logic [P.XLEN-1:0]    IHWriteDataM,   // IEU or HPTW write data

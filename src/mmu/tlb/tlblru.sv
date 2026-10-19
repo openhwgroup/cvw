@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module tlblru #(parameter TLB_ENTRIES = 8) (
-  input  logic                    clk, reset,  // Clock and reset
+  input  logic                    clk, reset,
   input  logic                    TLBWrite,    // Write TLB entry
   input  logic [TLB_ENTRIES-1:0]  Matches,     // One-hot TLB entry that matches
   input  logic                    TLBHit,      // TLB hit

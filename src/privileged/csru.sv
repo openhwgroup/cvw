@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module csru import cvw::*; #(parameter cvw_t P) (
-  input  logic              clk, reset,                   // Clock and reset
+  input  logic              clk, reset,
   input  logic              InstrValidNotFlushedM,        // Instruction in Memory stage is valid and not flushed
   input  logic              CSRUWriteM,                   // Write a user-mode CSR
   input  logic [11:0]       CSRAdrM,                      // CSR address

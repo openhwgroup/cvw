@@ -31,8 +31,8 @@
 
 module btb import cvw::*;  #(parameter cvw_t P,
                              parameter Depth = 10) (
-  input  logic              clk,                         // Clock
-  input  logic              reset,                       // Reset
+  input  logic              clk,
+  input  logic              reset,
   input  logic              StallF, StallD, StallE, StallM, StallW, FlushD, FlushE, FlushM, FlushW, // Stall and flush each stage
   input  logic [P.XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM, // Next PC to fetch, PC in Fetch, Decode, Execute, Memory stages
   output logic [P.XLEN-1:0] BPBTAF,                      // BTB's guess at PC

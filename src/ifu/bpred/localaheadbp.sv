@@ -30,8 +30,8 @@ module localaheadbp import cvw::*; #(parameter cvw_t P,
                                      parameter XLEN,
                                      parameter m = 6, // 2^m = number of local history branches
                                      parameter k = 10) ( // number of past branches stored
-  input  logic            clk,                                    // Clock
-  input  logic            reset,                                  // Reset
+  input  logic            clk,
+  input  logic            reset,
   input  logic            StallF, StallD, StallE, StallM, StallW, // Stall Fetch, Decode, Execute, Memory, Writeback stages
   input  logic            FlushD, FlushE, FlushM, FlushW,         // Flush Decode, Execute, Memory, Writeback stages
   output logic [1:0]      BPDirD,                                 // Branch direction prediction (2-bit counter state) in Decode stage

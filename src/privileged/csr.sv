@@ -30,7 +30,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module csr import cvw::*; #(parameter cvw_t P) (
-  input  logic                     clk, reset,                            // Clock and reset
+  input  logic                     clk, reset,
   input  logic                     FlushM, FlushW,                        // Flush Memory, Writeback stages
   input  logic                     StallE, StallM, StallW,                // Stall Execute, Memory, Writeback stages
   input  logic [31:0]              InstrM,                                // Instruction in Memory stage

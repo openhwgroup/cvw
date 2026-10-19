@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fregfile #(parameter FLEN) (
-  input logic              clk, reset,      // Clock and reset
+  input logic              clk, reset,
   input logic              we4,             // write enable
   input logic [4:0]        a1, a2, a3, a4,  // Source registers to read (a1, a2, a3), destination register to write (a4)
   input logic [FLEN-1:0]   wd4,             // write data

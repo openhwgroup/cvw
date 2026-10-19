@@ -29,8 +29,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module RASPredictor import cvw::*;  #(parameter cvw_t P) (
-  input  logic              clk,            // Clock
-  input  logic              reset,          // Reset
+  input  logic              clk,
+  input  logic              reset,
   input  logic              StallD, StallE, StallM, FlushD, FlushE, FlushM, // Stall and flush Decode, Execute, Memory stages
   input  logic              BPReturnWrongD, // Return prediction was wrong in Decode stage
   input  logic              BPReturnD,      // Instruction in Decode stage was predicted to be a return, so it popped the RAS when fetched

@@ -28,8 +28,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module div import cvw::*;  #(parameter cvw_t P) (
-  input  logic              clk,                            // Clock
-  input  logic              reset,                          // Reset
+  input  logic              clk,
+  input  logic              reset,
   input  logic              StallM,                         // Stall Memory stage
   input  logic              FlushE,                         // Flush Execute stage
   input  logic              IntDivE,                        // Integer divide or remainder instruction in Execute stage

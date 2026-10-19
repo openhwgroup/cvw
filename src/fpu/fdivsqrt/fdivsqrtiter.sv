@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fdivsqrtiter import cvw::*;  #(parameter cvw_t P) (
-  input  logic              clk,                   // Clock
+  input  logic              clk,
   input  logic              IFDivStartE,           // Start integer or FP divide/sqrt
   input  logic              FDivBusyE,             // FPU divider busy
   input  logic              SqrtE,                 // Square root operation in Execute stage

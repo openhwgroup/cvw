@@ -31,7 +31,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 module lsu import cvw::*;  #(parameter cvw_t P) (
-  input  logic                    clk, reset,                           // Clock and reset
+  input  logic                    clk, reset,
   input  logic                    StallM, FlushM, StallW, FlushW,       // Stall and flush Memory and Writeback stages
   output logic                    LSUStallM,                            // LSU stalls pipeline during a multicycle operation
   // connected to cpu (controls)

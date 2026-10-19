@@ -26,7 +26,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module flopr #(parameter WIDTH = 8) (
-  input  logic             clk, reset, // Clock and reset
+  input  logic             clk, reset,
   input  logic [WIDTH-1:0] d,          // Data input
   output logic [WIDTH-1:0] q);         // Data output
 

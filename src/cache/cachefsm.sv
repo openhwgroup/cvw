@@ -29,8 +29,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module cachefsm #(parameter READ_ONLY_CACHE = 0) (
-  input  logic       clk,               // Clock
-  input  logic       reset,             // Reset
+  input  logic       clk,
+  input  logic       reset,
   // hazard and privilege unit
   input  logic       Stall,             // Pipeline is stalled
   input  logic       FlushStage,        // Pipeline flush of second stage (prevent writes and bus operations)

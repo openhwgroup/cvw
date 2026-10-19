@@ -29,7 +29,7 @@
 
 module icpred import cvw::*;  #(parameter cvw_t P,
                                 parameter INSTR_CLASS_PRED = 1) (
-  input  logic             clk, reset,                                 // Clock and reset
+  input  logic             clk, reset,
   input  logic             StallD, StallE, StallM, StallW,             // Stall Decode, Execute, Memory, Writeback stages
   input  logic             FlushD, FlushE, FlushM,                     // Flush Decode, Execute, Memory stages
   input  logic [31:0]      PostSpillInstrRawF, InstrD,                 // Fetched instruction, instruction in Decode stage

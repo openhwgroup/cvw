@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module mdu import cvw::*;  #(parameter cvw_t P) (
-  input  logic              clk, reset,                     // Clock and reset
+  input  logic              clk, reset,
   input  logic              StallM, StallW,                 // Stall Memory, Writeback stages
   input  logic              FlushE, FlushM, FlushW,         // Flush Execute, Memory, Writeback stages
   input  logic [P.XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // Source operands A and B after forwarding, before ALU source select

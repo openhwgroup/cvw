@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module privdec import cvw::*; #(parameter cvw_t P) (
-  input  logic         clk, reset,                          // Clock and reset
+  input  logic         clk, reset,
   input  logic         StallM,                              // Memory stage stalled: the wfi stays in M
   input  logic [31:7]  InstrM,                              // Instruction in Memory stage
   input  logic         PrivilegedM,                         // Privileged instruction

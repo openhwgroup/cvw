@@ -32,8 +32,8 @@ module gsharebasic import cvw::*; #(parameter cvw_t P,
                      parameter XLEN,
                      parameter k = 10,
                      parameter TYPE = 1) (
-  input  logic            clk,                                    // Clock
-  input  logic            reset,                                  // Reset
+  input  logic            clk,
+  input  logic            reset,
   input  logic            StallF, StallD, StallE, StallM, StallW, // Stall Fetch, Decode, Execute, Memory, Writeback stages
   input  logic            FlushD, FlushE, FlushM, FlushW,         // Flush Decode, Execute, Memory, Writeback stages
   output logic [1:0]      BPDirF,                                 // Branch direction prediction (2-bit counter state) in Fetch stage

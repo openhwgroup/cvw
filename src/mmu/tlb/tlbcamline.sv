@@ -32,7 +32,7 @@
 
 module tlbcamline import cvw::*;  #(parameter cvw_t P,
                                     parameter KEY_BITS = 20, SEGMENT_BITS = 10) (
-  input  logic                   clk, reset,       // Clock and reset
+  input  logic                   clk, reset,
   input  logic [P.VPN_BITS-1:0]  VPN,              // Virtual page number
   input  logic [P.ASID_BITS-1:0] SATP_ASID,        // satp.ASID
   input  logic                   SV39Mode,         // Translation mode is Sv39

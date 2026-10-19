@@ -34,7 +34,7 @@
 ///////////////////////////////////////////
 
 module hptw import cvw::*;  #(parameter cvw_t P) (
-  input  logic              clk, reset,             // Clock and reset
+  input  logic              clk, reset,
   input  logic [P.XLEN-1:0] SATP_REGW,              // satp CSR
   input  logic [P.XLEN-1:0] PCSpillF,               // PCF, or PCF + 2 for the second half of a spilled fetch
   input  logic [P.XLEN+1:0] IEUAdrExtM,             // Memory stage address, zero-extended to XLEN+2 bits

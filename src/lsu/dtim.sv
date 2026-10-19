@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module dtim import cvw::*;  #(parameter cvw_t P) (
-  input  logic                 clk, reset,    // Clock and reset
+  input  logic                 clk, reset,
   input  logic                 FlushW,        // Flush Writeback stage
   input  logic                 ce,            // Chip enable
   input  logic [1:0]           MemRWM,        // Memory read/write control in Memory stage: [1] read, [0] write

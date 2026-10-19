@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module trap import cvw::*; #(parameter cvw_t P) (
-  input  logic                 reset,                                           // Reset
+  input  logic                 reset,
   input  logic                 InstrMisalignedFaultM, InstrAccessFaultM, HPTWInstrAccessFaultM, HPTWInstrPageFaultM, IllegalInstrFaultM, // Instruction trap sources
   input  logic                 BreakpointFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM, // Trap sources: breakpoint, misaligned load and store/AMO
   input  logic                 LoadAccessFaultM, StoreAmoAccessFaultM, EcallFaultM, InstrPageFaultM, // Trap sources: access faults, ecall, instruction page fault

@@ -28,8 +28,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fdivsqrt import cvw::*;  #(parameter cvw_t P) (
-  input  logic                 clk,                               // Clock
-  input  logic                 reset,                             // Reset
+  input  logic                 clk,
+  input  logic                 reset,
   input  logic [P.FMTBITS-1:0] FmtE,                              // FP format in Execute stage
   input  logic                 XsE,                               // X sign
   input  logic [P.NF:0]        XmE, YmE,                          // X and Y significands

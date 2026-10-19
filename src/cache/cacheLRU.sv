@@ -30,8 +30,8 @@
 
 module cacheLRU
   #(parameter NUMWAYS = 4, SETLEN = 9, NUMSETS = 128) (
-  input  logic                clk,                  // Clock
-  input  logic                reset,                // Reset
+  input  logic                clk,
+  input  logic                reset,
   input  logic                InvalidateFlushStage, // Flush of the stage issuing InvalidateCache (suppresses the invalidate)
   input  logic                CacheEn,              // Enable the cache memory arrays.  When disabled, hold read data constant
   input  logic [NUMWAYS-1:0]  HitWay,               // Way is valid and its tag matches PAdr

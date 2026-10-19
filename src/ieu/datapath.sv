@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module datapath import cvw::*;  #(parameter cvw_t P) (
-  input  logic              clk, reset,              // Clock and reset
+  input  logic              clk, reset,
   // Decode stage signals
   input  logic [2:0]        ImmSrcD,                 // Type of immediate extension
   input  logic [31:0]       InstrD,                  // Instruction in Decode stage

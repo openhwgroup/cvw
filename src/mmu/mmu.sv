@@ -29,7 +29,7 @@
 
 module mmu import cvw::*;  #(parameter cvw_t P,
                              parameter TLB_ENTRIES = 8, IMMU = 0) (
-  input  logic                 clk, reset,         // Clock and reset
+  input  logic                 clk, reset,
   input  logic [P.XLEN-1:0]    SATP_REGW,          // satp CSR
   input  logic                 STATUS_MXR,         // mstatus.MXR: make executable pages readable
   input  logic                 STATUS_SUM,         // mstatus.SUM: supervisor access to user memory
