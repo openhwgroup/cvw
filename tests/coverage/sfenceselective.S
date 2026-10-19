@@ -3,12 +3,15 @@
 //
 // Written: david_harris@hmc.edu 16 October 2026
 //
-// Purpose: Check that sfence.vma invalidates the TLB entries it names and leaves the others.
+// Purpose: Check that sfence.vma and sinval.vma invalidate the TLB entries they name and leave the others
+//          (TLB_EXACT_FENCE_INVAL = 1).
 //          An address-scoped fence (rs1 != x0) must invalidate every entry whose page holds the address,
 //          including a megapage entry addressed through a different 4 KiB page; an ASID-scoped fence
 //          (rs2 != x0) must invalidate the non-global entries of that ASID.  Wally keeps the other
 //          entries, which the test observes by remapping a page without a covering fence: the stale
 //          entry still translates to the old page, which the privileged specification permits.
+//          sfence.w.inval and sfence.inval.ir must not flush the entries sinval.vma kept, and sfence.inval.ir
+//          must make later instruction fetches use the new translation.
 //          Self-checking (WALLY-selfcheck.h).
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
@@ -33,6 +36,7 @@
 #define MEGA_A 0x80400000
 #define MEGA_B 0x80600000
 #define MEGA_OFF 0x5000                 // offset of the word read through the megapage
+#define INVAL_OFF 0x100                 // offset of the Svinval sequence in the code pages
 
 // PTE t0 = ((page address in \adr >> 12) << 10) | \flags
 .macro MAKEPTE adr, flags
@@ -198,6 +202,57 @@ main:
     jalr ra, 0(s2)
     SC_CHECK_EQ a5, s11, 15
 
+    ////////////////////////////////////////////////////////////////////////////////////////////
+    // 5. Svinval: sinval.vma invalidates the entries it names, as sfence.vma does, and the
+    //    sfence.w.inval / sfence.inval.ir around it keep the others
+    ////////////////////////////////////////////////////////////////////////////////////////////
+    la t1, data_page_a
+    MAKEPTE t1, PTE_RWL
+    sd t0, 0(s4)                        // X -> page A
+    sd t0, 8(s4)                        // Y -> page A
+    sfence.vma
+    ld t2, 0(s0)
+    SC_CHECK_EQ t2, s6, 16
+    ld t2, 0(s1)
+    SC_CHECK_EQ t2, s6, 17
+    la t1, data_page_b
+    MAKEPTE t1, PTE_RWL
+    sd t0, 0(s4)                        // X -> page B
+    sd t0, 8(s4)                        // Y -> page B
+    sfence.w.inval
+    sinval.vma s0, x0                   // X in every address space
+    sfence.inval.ir
+    ld t2, 0(s0)
+    SC_CHECK_EQ t2, s7, 18              // X was invalidated
+    ld t2, 0(s1)
+    SC_CHECK_EQ t2, s6, 19              // Y kept its entry
+    sfence.w.inval
+    sinval.vma x0, s8                   // ASID 1
+    sfence.inval.ir
+    ld t2, 0(s1)
+    SC_CHECK_EQ t2, s6, 20              // the ASID 2 entry for Y was kept
+    sfence.w.inval
+    sinval.vma x0, s9                   // ASID 2
+    sfence.inval.ir
+    ld t2, 0(s1)
+    SC_CHECK_EQ t2, s7, 21
+
+    // C runs code page A; remap it to code page B and jump to the invalidation sequence at
+    // C + INVAL_OFF.  It is fetched from page A through the stale entry and invalidates C, so the
+    // instructions after sfence.inval.ir must come from page B.
+    la t1, code_page_a
+    MAKEPTE t1, PTE_RXL
+    sd t0, 16(s4)                       // C -> code page A
+    sfence.vma
+    jalr ra, 0(s2)
+    SC_CHECK_EQ a5, s10, 22
+    la t1, code_page_b
+    MAKEPTE t1, PTE_RXL
+    sd t0, 16(s4)                       // C -> code page B
+    addi t1, s2, INVAL_OFF
+    jalr ra, 0(t1)
+    SC_CHECK_EQ a5, s11, 23
+
     li a0, 3
     ecall                               // return to machine mode to terminate
     SC_PASS
@@ -227,7 +282,19 @@ data_page_b:
 code_page_a:
     li a5, 0xA
     ret
+.org code_page_a + INVAL_OFF
+    sfence.w.inval
+    sinval.vma s2, s9                   // C in ASID 2
+    sfence.inval.ir
+    li a5, 0xA
+    ret
 .align 12
 code_page_b:
+    li a5, 0xB
+    ret
+.org code_page_b + INVAL_OFF
+    sfence.w.inval
+    sinval.vma s2, s9
+    sfence.inval.ir
     li a5, 0xB
     ret

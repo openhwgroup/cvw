@@ -53,9 +53,11 @@ module tlbcam  import cvw::*;  #(parameter cvw_t P,
   logic [2:0] PageTypeRead [TLB_ENTRIES-1:0];
   logic [P.ASID_BITS-1:0] CompareASID;
 
-  // A flush compares the lines against the sfence.vma ASID instead of SATP's.  CAMHit is forced low during
-  // a flush, and new entries still store SATP's ASID, so lookups are unaffected.
-  mux2 #(P.ASID_BITS) asidmux(SATP_ASID, TLBFlushASID, TLBFlush, CompareASID);
+  // With exact invalidation, a flush compares the lines against the sfence.vma ASID instead of SATP's.
+  // CAMHit is forced low during a flush, and new entries still store SATP's ASID, so lookups are unaffected.
+  if (P.TLB_EXACT_FENCE_INVAL) begin : exactasid
+    mux2 #(P.ASID_BITS) asidmux(SATP_ASID, TLBFlushASID, TLBFlush, CompareASID);
+  end else assign CompareASID = SATP_ASID;
 
   // TLB_ENTRIES CAM lines, each of which will independently consider
   // whether the requested virtual address is a match. Each line stores the

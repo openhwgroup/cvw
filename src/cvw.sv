@@ -97,6 +97,7 @@ typedef struct packed {
 // TLB configuration.  Entries should be a power of 2
   int           ITLB_ENTRIES;
   int           DTLB_ENTRIES;
+  logic         TLB_EXACT_FENCE_INVAL; // sfence.vma and sinval.vma invalidate only the entries their rs1/rs2 name
 
 // Cache configuration.  Sizes should be a power of two
 // typical configuration 4 ways, 4096 ints per way, 256 bit or more lines

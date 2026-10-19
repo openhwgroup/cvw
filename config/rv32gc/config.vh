@@ -138,6 +138,9 @@ localparam logic BIGENDIAN_SUPPORTED = 1;
 // TLB configuration.  Entries should be a power of 2
 localparam ITLB_ENTRIES = 32'd32;
 localparam DTLB_ENTRIES = 32'd32;
+// 1: sfence.vma and sinval.vma invalidate only the TLB entries that rs1 and rs2 name.
+// 0: they also invalidate entries for other addresses and ASIDs, which is legal and saves hardware.
+localparam logic TLB_EXACT_FENCE_INVAL = 1;
 
 // Cache configuration.  Sizes should be a power of two
 // typical configuration 4 ways, 4096 bytes per way, 256 bit or more lines
