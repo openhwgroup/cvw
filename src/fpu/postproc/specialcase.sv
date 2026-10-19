@@ -88,7 +88,7 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
   // A BF16 result is packed for single precision below and reboxed at the end of the module.  That
   // works for every result but underflow, whose one nonzero bit sits at single's lsb and would be
   // reboxed away, so give it its own result with that bit at the BF16 lsb.
-  assign Bf16UfRes = {{P.FLEN-P.S_LEN{1'b1}}, Rs, (P.S_LEN-2-BF16LSB)'(0), Plus1&Frm[1]&~(DivOp&YInf), (BF16LSB)'(0)};
+  assign Bf16UfRes = {{P.FLEN-P.S_LEN{1'b1}}, Rs, (P.S_LEN-2-BF16LSB)'(0), Plus1 & Frm[1] & ~(DivOp & YInf), (BF16LSB)'(0)};
 
   // does the overflow result output the maximum normalized floating point number
   //                output infinity if the input is infinity
