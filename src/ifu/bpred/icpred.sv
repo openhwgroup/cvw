@@ -2,7 +2,7 @@
 // icpred.sv
 //
 // Written:  Rose Thompson rose@rosethompson.net 26 February 2023
-// Modified:
+// Modified: David Harris
 //
 // Purpose: Partially decodes fetched instructions to classify them as call, return, jump, or branch.
 //

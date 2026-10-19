@@ -2,7 +2,7 @@
 // ahbinterface.sv
 //
 // Written:  Rose Thompson rose@rosethompson.net 29 August 2022
-// Modified:
+// Modified: David Harris
 //
 // Purpose: Translates simple uncached IFU or LSU memory requests into single (NONSEQ) AHB transactions.
 //
