@@ -39,17 +39,14 @@ module spill import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0] PCNextF,           // The next PCF
   input  logic [31:0]       InstrRawF,         // Instruction from the IROM, I$, or bus. Used to check if the instruction is compressed
   input  logic              IFUCacheBusStallF, // I$ or bus are stalled. Transition to second fetch of spill after the first is fetched
-  input  logic              ITLBMissOrUpdateAF, // ITLB miss causes HPTW (hardware pagetable walker) walk or update access bit
+  input  logic              ITLBMissOrUpdateRawF, // ITLB miss or A update; not masked by a walk fault, so it blocks the spill when the first half's walk faults
   input  logic              CacheableF,        // Is the instruction from the cache?
-  input  logic              InstrPageFaultF,   // Page fault on the half currently being fetched
-  input  logic              InstrAccessFaultF, // Access fault on the half currently being fetched
+  input  logic              InstrPageFaultF,   // Page fault on the first half; the spill is not taken if it faults
+  input  logic              InstrAccessFaultF, // Access fault on the first half; the spill is not taken if it faults
   output logic [P.XLEN-1:0] PCSpillNextF,      // The next PCF for one of the two memory addresses of the spill
   output logic [P.XLEN-1:0] PCSpillF,          // PCF for one of the two memory addresses of the spill
   output logic              SelSpillNextF,     // During the transition between the two spill operations, the IFU should stall the pipeline
   output logic              SelSpillF,         // Select incremented PC on a spill
-  output logic              InstrPageFaultSpillF,   // Page fault on either half of the spilled fetch
-  output logic              InstrAccessFaultSpillF, // Access fault on either half of the spilled fetch
-  output logic              FirstHalfFaultF,   // The first half of the spilled fetch faulted, so it is the portion to report in xtval
   output logic [31:0]       PostSpillInstrRawF, // The final 32 bit instruction after merging the two spilled fetches into 1 instruction
   output logic              CompressedF);      // The fetched instruction is compressed
 
@@ -63,7 +60,6 @@ module spill import cvw::*;  #(parameter cvw_t P) (
   logic              SpillSaveF;
   logic [15:0]       InstrFirstHalfF;
   logic              EarlyCompressedF;
-  logic              FirstHalfPageFaultF, FirstHalfAccessFaultF;
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   // PC logic
@@ -90,8 +86,12 @@ module spill import cvw::*;  #(parameter cvw_t P) (
     assign SpillF = (CacheableF ? SpillCachedF : SpillUncachedF);
   end else
     assign SpillF = PCF[1];
-  // Don't take the spill if there is a stall, TLB miss, or hardware update to the D/A bits
-  assign TakeSpillF = SpillF & ~EarlyCompressedF & ~IFUCacheBusStallF & ~ITLBMissOrUpdateAF;
+  // Don't take the spill if there is a stall, TLB miss, or hardware update to the D/A bits.
+  // Nor if the first half faults: its bits are not the instruction, so the instruction length is
+  // unknown, and the fault on the first half is reported alone at PCF.  A page table walk fault on the
+  // first half is not in InstrPageFaultF/InstrAccessFaultF; ITLBMissOrUpdateRawF blocks the spill then.
+  assign TakeSpillF = SpillF & ~EarlyCompressedF & ~IFUCacheBusStallF & ~ITLBMissOrUpdateRawF &
+                      ~InstrPageFaultF & ~InstrAccessFaultF;
 
   always_ff @(posedge clk)
     if (reset | FlushD)    CurrState <= STATE_READY;
@@ -117,16 +117,6 @@ module spill import cvw::*;  #(parameter cvw_t P) (
 
   // save the first 2 bytes
   flopenr #(16) SpillInstrReg(clk, reset, SpillSaveF, InstrRawF[15:0], InstrFirstHalfF);
-
-  // Save the fetch fault status of the first half.  The second half is translated and checked at
-  // PCF+2 in the next cycle, so without this the first half's fault would be lost whenever the
-  // second half fetches cleanly.  Qualifying with SelSpillF drops the latched status on a FlushD,
-  // which returns the state machine to STATE_READY.
-  flopenr #(2) SpillFaultReg(clk, reset, SpillSaveF, {InstrPageFaultF, InstrAccessFaultF},
-                             {FirstHalfPageFaultF, FirstHalfAccessFaultF});
-  assign InstrPageFaultSpillF   = InstrPageFaultF   | (SelSpillF & FirstHalfPageFaultF);
-  assign InstrAccessFaultSpillF = InstrAccessFaultF | (SelSpillF & FirstHalfAccessFaultF);
-  assign FirstHalfFaultF        = SelSpillF & (FirstHalfPageFaultF | FirstHalfAccessFaultF);
 
   // merge together
   mux2 #(32) postspillmux(InstrRawF, {InstrRawF[15:0], InstrFirstHalfF}, SelSpillF, PostSpillInstrRawF);

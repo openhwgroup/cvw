@@ -99,7 +99,11 @@ case "$FAMILY" in
         SAIL_PACKAGES+=(ninja-build libgmp-dev)
         VERILATOR_PACKAGES+=(libfl2 libfl-dev zlib1g-dev libunwind-dev libgoogle-perftools-dev perl-doc)
         BUILDROOT_PACKAGES+=(ncurses-base ncurses-bin libncurses-dev gfortran) # gfortran is only needed for compiling spec benchmarks on buildroot linux
-        VIVADO_PACKAGES+=(libncurses*) # Vivado hangs on the third stage of installation without this
+        # Vivado hangs on the third stage of installation without the ncurses5 libraries.
+        # Newer distros no longer package them, so symbolic links are created after installation instead.
+        if (( (UBUNTU_VERSION > 0 && UBUNTU_VERSION < 24) || (DEBIAN_VERSION > 0 && DEBIAN_VERSION < 13) )); then
+            VIVADO_PACKAGES+=(libncurses5 libtinfo5)
+        fi
         ;;
     suse)
         if ((SUSE_VERSION >= 160)); then
@@ -193,12 +197,12 @@ else
     eval $PACKAGE_MANAGER install "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${WHISPER_PACKAGES[@]}" "${SAIL_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}" "${VIVADO_PACKAGES[@]}"
 
     # Post install steps
-    # Vivado looks for ncurses5 libraries, but Ubuntu 24.04 only has ncurses6
-    # Create symbolic links to the ncurses6 libraries to fool Vivado
-    if (( UBUNTU_VERSION >= 24 )); then
+    # Vivado looks for ncurses5 libraries, but Ubuntu 24.04+ and Debian 13+ only have ncurses6
+    # Create symbolic links to the ncurses6 libraries to fool Vivado (which runs only on x86-64)
+    if [[ "$(uname -m)" == x86_64 ]] && (( UBUNTU_VERSION >= 24 || DEBIAN_VERSION >= 13 )); then
         lib_dir=$(gcc -dumpmachine)
         ln -vsf /lib/"$lib_dir"/libncurses.so.6 /lib/"$lib_dir"/libncurses.so.5
-        ln -vsf /lib/"$lib_dir"/libtinfo.so.6 /lib/"$lib_dir"/libntinfo.so.5
+        ln -vsf /lib/"$lib_dir"/libtinfo.so.6 /lib/"$lib_dir"/libtinfo.so.5
     fi
 
     echo -e "${SUCCESS_COLOR}Packages successfully installed.${ENDC}"

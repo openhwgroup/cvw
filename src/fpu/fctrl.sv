@@ -75,6 +75,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   logic                        FWriteIntD;                         // integer register write enable
   logic [2:0]                  OpCtrlD;                            // Select which operation to do in each component
   logic [1:0]                  PostProcSelD;                       // select result in the post processing unit
+  logic                        ZUnpackEnD;                         // Z is unpacked in Execute (fma, add, sub)
   logic [1:0]                  FResSelD;                           // Select one of the results that finish in the memory stage
   logic [2:0]                  FrmD;                               // FP rounding mode
   logic [P.FMTBITS-1:0]        FmtD;                               // FP format
@@ -303,8 +304,10 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
                   ((FResSelD == 2'b11) & (PostProcSelD == 2'b00)) |                                             // mv float to int
                   ((FResSelD == 2'b01) & ((PostProcSelD == 2'b00) | ((PostProcSelD == 2'b01) & OpCtrlD[0]))));  // cvt both or sqrt
 
-  //    Z - fma ops only: multiply-add (OpCtrl 0xx) and add/sub (11x), where Z takes Y's value; not fmul (100)
-  assign ZEnD = (PostProcSelD == 2'b10) & (~OpCtrlD[2] | OpCtrlD[1]);                                           // fma, add, sub
+  //    Z - unpacked for fma (OpCtrl 0xx) and add/sub (11x), where Z takes Y's value; not fmul (100).
+  //    rs3 is only read by fma, so ZEnD, which drives the hazard unit, excludes add/sub, whose InstrD[31:27] is funct5, not rs3.
+  assign ZUnpackEnD = (PostProcSelD == 2'b10) & (~OpCtrlD[2] | OpCtrlD[1]);                                     // fma, add, sub
+  assign ZEnD       = (PostProcSelD == 2'b10) & ~OpCtrlD[2];                                                    // fma only
 
   //  Final Res Sel:
   //        fp      int
@@ -369,7 +372,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
               {FRegWriteE, PostProcSelE, FResSelE, FrmE, FmtE, OpCtrlE, FWriteIntE, FCvtIntE, ZfaE, ZfaFRoundNXE, FPUActiveE});
   flopenrc #(15) DEAdrReg(clk, reset, FlushE, ~StallE, {Adr1D, Adr2D, Adr3D}, {Adr1E, Adr2E, Adr3E});
   flopenrc #(1) DEFDivStartReg(clk, reset, FlushE, ~StallE | FDivBusyE, FDivStartD, FDivStartE);
-  flopenrc #(3) DEEnReg(clk, reset, FlushE, ~StallE, {XEnD, YEnD, ZEnD}, {XEnE, YEnE, ZEnE});
+  flopenrc #(3) DEEnReg(clk, reset, FlushE, ~StallE, {XEnD, YEnD, ZUnpackEnD}, {XEnE, YEnE, ZEnE});
 
   // Integer division on FPU divider
   if (P.M_SUPPORTED & P.IDIV_ON_FPU) assign IDivStartE = IntDivE;
