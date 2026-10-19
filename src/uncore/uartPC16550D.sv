@@ -37,29 +37,29 @@
 
 module uartPC16550D #(parameter UART_PRESCALE) (
   // Processor Interface
-  input  logic       PCLK, PRESETn,                  // UART clock and active low reset
-  input  logic [2:0] A,                              // address input (8 registers)
+  input  logic       PCLK, PRESETn,                  // APB clock and reset (active low)
+  input  logic [2:0] A,                              // Register address
   input  logic [7:0] Din,                            // 8-bit WriteData
   output logic [7:0] Dout,                           // 8-bit ReadData
-  input  logic       MEMRb, MEMWb,                   // Active low memory read/write
-  output logic       INTR, TXRDYb, RXRDYb,           // interrupt and ready lines
+  input  logic       MEMRb, MEMWb,                   // Register read and write strobes (active low)
+  output logic       INTR, TXRDYb, RXRDYb,           // UART interrupt and DMA ready signals
   // Clocks
   output logic       BAUDOUTb,                       // active low baud clock
-  input logic        RCLK,                           // usually BAUDOUTb tied to RCLK externally
+  input  logic       RCLK,                           // usually BAUDOUTb tied to RCLK externally
   // E1A Driver
-  input  logic       SIN, DSRb, DCDb, CTSb, RIb,     // UART external serial and flow-control inputs
-  output logic       SOUT, RTSb, DTRb, OUT1b, OUT2b  // UART external serial and flow-control outputs
+  input  logic       SIN, DSRb, DCDb, CTSb, RIb,     // UART serial and modem control inputs
+  output logic       SOUT, RTSb, DTRb, OUT1b, OUT2b  // UART serial and modem control outputs
 );
 
   // register map
   localparam UART_DLL_RBR = 3'b000;
   localparam UART_DLM_IER = 3'b001;
-  localparam UART_IIR = 3'b010;
-  localparam UART_LCR = 3'b011;
-  localparam UART_MCR = 3'b100;
-  localparam UART_LSR = 3'b101;
-  localparam UART_MSR = 3'b110;
-  localparam UART_SCR = 3'b111;
+  localparam UART_IIR     = 3'b010;
+  localparam UART_LCR     = 3'b011;
+  localparam UART_MCR     = 3'b100;
+  localparam UART_LSR     = 3'b101;
+  localparam UART_MSR     = 3'b110;
+  localparam UART_SCR     = 3'b111;
 
   // transmit and receive states
   typedef enum logic [1:0] {UART_IDLE, UART_ACTIVE, UART_DONE, UART_BREAK} statetype;
@@ -159,10 +159,10 @@ module uartPC16550D #(parameter UART_PRESCALE) (
         case (A)
           UART_DLL_RBR: if (DLAB) DLL <= Din; // else TXHR <= Din; // TX handled in TX register/FIFO section
           UART_DLM_IER: if (DLAB) DLM <= Din; else IER <= Din[3:0];
-          UART_IIR: FCR <= {Din[7:6], 2'b0, Din[3], 2'b0, Din[0]}; // Write only FIFO Control Register; 4:5 reserved and 2:1 self-clearing
-          UART_LCR: LCR <= Din;
-          UART_MCR: MCR <= Din[4:0];
-          UART_SCR: SCR <= Din;
+          UART_IIR:     FCR <= {Din[7:6], 2'b0, Din[3], 2'b0, Din[0]}; // Write only FIFO Control Register; 4:5 reserved and 2:1 self-clearing
+          UART_LCR:     LCR <= Din;
+          UART_MCR:     MCR <= Din[4:0];
+          UART_SCR:     SCR <= Din;
         endcase
         /* verilator lint_on CASEINCOMPLETE */
       end
@@ -179,7 +179,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
         LSR[3]   <= (LSR[3] & ~squashRXerrIP) | (rxstate == UART_DONE & rxframingerr); // framing error
         LSR[4]   <= (LSR[4] & ~squashRXerrIP) | (rxstate == UART_DONE & rxbreak);      // break indicator
         LSR[5]   <= THRE; // THRE
-        LSR[6]   <= ~txsrfull & THRE; //  TEMT
+        LSR[6]   <= ~txsrfull & THRE; // TEMT
         LSR[7]   <= rxfifohaserr | (LSR[7] & ~(~MEMRb & (A == UART_LSR))); // error in FIFO; cleared by an LSR read once no queued character has an error
       end
 
@@ -201,12 +201,12 @@ module uartPC16550D #(parameter UART_PRESCALE) (
       case (A)
         UART_DLL_RBR: if (DLAB) Dout = DLL; else Dout = RBR[7:0];
         UART_DLM_IER: if (DLAB) Dout = DLM; else Dout = {4'b0, IER[3:0]};
-        UART_IIR: Dout = {{2{fifoenabled}}, 2'b00, intrID[2:0], ~intrpending}; // Read only Interrupt Ident Register
-        UART_LCR: Dout = LCR;
-        UART_MCR: Dout = {3'b000, MCR};
-        UART_LSR: Dout = LSR;
-        UART_MSR: Dout = {~DCDbsync, ~RIbsync, ~DSRbsync, ~CTSbsync, MSR[3:0]};
-        UART_SCR: Dout = SCR;
+        UART_IIR:     Dout = {{2{fifoenabled}}, 2'b00, intrID[2:0], ~intrpending}; // Read only Interrupt Ident Register
+        UART_LCR:     Dout = LCR;
+        UART_MCR:     Dout = {3'b000, MCR};
+        UART_LSR:     Dout = LSR;
+        UART_MSR:     Dout = {~DCDbsync, ~RIbsync, ~DSRbsync, ~CTSbsync, MSR[3:0]};
+        UART_SCR:     Dout = SCR;
       endcase
     else Dout = 8'b0;
 
@@ -224,16 +224,16 @@ module uartPC16550D #(parameter UART_PRESCALE) (
     if (~PRESETn) begin
       baudcount <= 1;
       baudpulse <= 1'b0;
-    end else if (~MEMWb & DLAB & (A == 3'b0 | A == 3'b1)) begin
+    end else if (~MEMWb & DLAB & (A == UART_DLL_RBR | A == UART_DLM_IER)) begin // writing DLL or DLM restarts the baud counter
       baudcount <= 1;
     end else begin
       // the baudpulse is too long by 2 clock cycles.
-      // This is cause baudpulse is registered adding 1 cycle and
+      // This is because baudpulse is registered adding 1 cycle and
       // baudcount is reset when baudcount equals the threshold {DLM, DLL, UART_PRESCALE}
       // rather than 1 less than that value.  Alternatively the reset value could be 1 rather
       // than 0.
       baudpulse <= baudpulseComb;
-      baudcount <= baudpulseComb ? 1 :  baudcount +1;
+      baudcount <= baudpulseComb ? 1 : baudcount + 1;
     end
 
   assign baudpulseComb = (baudcount == {DLM, DLL, {(UART_PRESCALE){1'b0}}});
@@ -268,8 +268,8 @@ module uartPC16550D #(parameter UART_PRESCALE) (
       end
       // timeout counting
       // reset timeout on read, and while the receive FIFO is empty, so a timeout does not outlive a FIFO reset
-      if ((~MEMRb & A == 3'b000 & ~DLAB) | rxfifoempty) rxtimeoutcnt <= '0;
-      else if (fifoenabled & ~rxfifoempty & rxbaudpulse & ~rxfifotimeout) rxtimeoutcnt <= rxtimeoutcnt+1; // count 16x baud pulses while characters wait
+      if ((~MEMRb & A == UART_DLL_RBR & ~DLAB) | rxfifoempty) rxtimeoutcnt <= '0;
+      else if (fifoenabled & ~rxfifoempty & rxbaudpulse & ~rxfifotimeout) rxtimeoutcnt <= rxtimeoutcnt + 1; // count 16x baud pulses while characters wait
     end
 
   assign rxcentered = rxbaudpulse & (rxoversampledcnt == 4'b1000);     // implies rxstate = UART_ACTIVE
@@ -286,7 +286,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
   assign rxparitybit = rxshiftreg[1]; // parity, if it exists, in bit 1 when all done
   assign rxstopbit = rxshiftreg[0];
   always_comb
-    case(LCR[1:0]) // check how many bits used.  Grab all bits including possible parity
+    case (LCR[1:0]) // check how many bits used.  Grab all bits including possible parity
       2'b00: rxdata9 = {3'b0, rxshiftreg[1], rxshiftreg[2], rxshiftreg[3], rxshiftreg[4], rxshiftreg[5], rxshiftreg[6]}; // 5-bit character
       2'b01: rxdata9 = {2'b0, rxshiftreg[1], rxshiftreg[2], rxshiftreg[3], rxshiftreg[4], rxshiftreg[5], rxshiftreg[6], rxshiftreg[7]}; // 6-bit
       2'b10: rxdata9 = {1'b0, rxshiftreg[1], rxshiftreg[2], rxshiftreg[3], rxshiftreg[4], rxshiftreg[5], rxshiftreg[6], rxshiftreg[7], rxshiftreg[8]}; // 7-bit
@@ -306,10 +306,10 @@ module uartPC16550D #(parameter UART_PRESCALE) (
     if (~PRESETn) begin
       rxfifohead <= '0; rxfifotail <= '0; rxdataready <= 1'b0; RXBR <= '0;
     end else begin
-      if (~MEMWb & (A == 3'b010) & Din[1]) begin
+      if (~MEMWb & (A == UART_IIR) & Din[1]) begin
         rxfifohead <= '0; rxfifotail <= '0; rxdataready <= 1'b0;
       end else if (rxstate == UART_DONE) begin
-        RXBR <= {rxoverrunerr, rxparityerr, rxframingerr, rxdata}; // load recevive buffer register
+        RXBR <= {rxoverrunerr, rxparityerr, rxframingerr, rxdata}; // load receive buffer register
 //        if (rxoverrunerr) $warning("UART RX Overrun Err\n");
 //        if (rxparityerr)  $warning("UART RX Parity Err\n");
 //        if (rxframingerr) $warning("UART RX Framing Err\n");
@@ -318,16 +318,15 @@ module uartPC16550D #(parameter UART_PRESCALE) (
           rxfifohead <= rxfifohead + 1'b1;
         end
         rxdataready <= 1'b1;
-      end else if (~MEMRb & A == 3'b000 & ~DLAB) begin // reading RBR updates ready / pops fifo
+      end else if (~MEMRb & A == UART_DLL_RBR & ~DLAB) begin // reading RBR updates ready / pops fifo
         if (fifoenabled) begin
           if (~rxfifoempty) rxfifotail <= rxfifotail + 1;
-          // if (rxfifoempty) rxdataready <= 1'b0;
           if (rxfifoentries == 1) rxdataready <= 1'b0; // When reading the last entry, data ready becomes zero
         end else begin
           rxdataready <= 1'b0;
           RXBR <= {1'b0, RXBR[9:0]}; // Ben 31 March 2022: I added this so that rxoverrunerr permanently goes away upon reading RBR (when not in FIFO mode)
         end
-      end else if (~MEMWb & A == 3'b010)  // writes to FIFO Control Register
+      end else if (~MEMWb & A == UART_IIR)  // writes to FIFO Control Register
         if (Din[1] | ~Din[0]) begin // rx FIFO reset or FIFO disable clears FIFO contents
           rxfifohead <= '0; rxfifotail <= '0;
         end
@@ -335,7 +334,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
 
   assign rxfifoempty = (rxfifohead == rxfifotail);
   /* verilator lint_off WIDTH */
-  assign rxfifoentries = (rxfifohead >= rxfifotail) ? (rxfifohead-rxfifotail) :
+  assign rxfifoentries = (rxfifohead >= rxfifotail) ? (rxfifohead - rxfifotail) :
                          (rxfifohead + 16 - rxfifotail);
   /* verilator lint_on WIDTH */
   assign rxfifotriggered = rxfifoentries >= rxfifotriggerlevel;
@@ -343,7 +342,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
 
   // detect any errors in rx fifo: slot i holds a character when it lies within rxfifoentries slots above the tail (mod 16)
   genvar i;
-  for (i=0; i<16; i++) begin : rx
+  for (i = 0; i < 16; i++) begin : rx
     assign RXerrbit[i]  = |rxfifo[i][9:8]; // parity or framing error (break is a framing error); overrun is not a FIFO error (PC16550D LSR7)
     assign rxfullbit[i] = (4'(i) - rxfifotail) < rxfifoentries;
   end
@@ -404,7 +403,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
       2'b10: txparity = ^nexttxdata[6:0] ^ ~evenparitysel;
       2'b11: txparity = ^nexttxdata[7:0] ^ ~evenparitysel;
     endcase
-    case({LCR[3], LCR[1:0]}) // parity, data bits
+    case ({LCR[3], LCR[1:0]}) // parity, data bits
       // load up start bit (0), 5-8 data bits, 0-1 parity bits, 2 stop bits (only one sometimes used), padding
       3'b000: txdata = {1'b0, nexttxdata[0], nexttxdata[1], nexttxdata[2], nexttxdata[3], nexttxdata[4], 6'b111111};                                                       // 5 data, no parity
       3'b001: txdata = {1'b0, nexttxdata[0], nexttxdata[1], nexttxdata[2], nexttxdata[3], nexttxdata[4], nexttxdata[5], 5'b11111};                                         // 6 data, no parity
@@ -421,10 +420,10 @@ module uartPC16550D #(parameter UART_PRESCALE) (
   always_ff @(posedge PCLK)
     if (~PRESETn) begin
       txfifohead <= '0; txfifotail <= '0; txhrfull <= 1'b0; txsrfull <= 1'b0; TXHR <= '0; txsr <= 12'hfff;
-    end else if (~MEMWb & (A == 3'b010) & Din[2]) begin
+    end else if (~MEMWb & (A == UART_IIR) & Din[2]) begin
       txfifohead <= '0; txfifotail <= '0;
     end else begin
-      if (~MEMWb & A == 3'b000 & ~DLAB) begin // writing transmit holding register or fifo
+      if (~MEMWb & A == UART_DLL_RBR & ~DLAB) begin // writing transmit holding register or fifo
         if (fifoenabled) begin
           txfifo[txfifohead] <= Din;
           txfifohead         <= txfifohead + 4'b1;
@@ -432,13 +431,13 @@ module uartPC16550D #(parameter UART_PRESCALE) (
           TXHR     <= Din;
           txhrfull <= 1'b1;
         end
-        $write("%c",Din); // for testbench
+        $write("%c", Din); // for testbench
       end
       if (txstate == UART_IDLE) begin // move data into tx shift register if available
         if (fifoenabled) begin
           if (~txfifoempty & ~txsrfull) begin
             txsr       <= txdata;
-            txfifotail <= txfifotail+1;
+            txfifotail <= txfifotail + 1;
             txsrfull   <= 1'b1;
           end
         end else if (txhrfull) begin
@@ -448,27 +447,27 @@ module uartPC16550D #(parameter UART_PRESCALE) (
         end
       end else if (txstate == UART_DONE) txsrfull <= 1'b0; // done transmitting shift register
       else if (txstate == UART_ACTIVE & txnextbit) txsr <= {txsr[10:0], 1'b1}; // shift txhr
-      if (!MEMWb & A == 3'b010) // writes to FIFO control register
-        if (Din[2] | ~Din[0]) begin // tx FIFO reste or FIFO disable clears FIFO contents
+      if (!MEMWb & A == UART_IIR) // writes to FIFO control register
+        if (Din[2] | ~Din[0]) begin // tx FIFO reset or FIFO disable clears FIFO contents
           txfifohead <= '0; txfifotail <= '0;
         end
     end
 
   always_ff @(posedge PCLK) begin
-  // special condition to check if the fifo is empty or full.  Because the head
-  // pointer indicates where the next write goes and not the location of the
-  // current head, the head and tail pointer being equal imply two different
-  // things.  First it could mean the fifo is empty and second it could mean
-  // the fifo is full.  To differentiate we need to know which pointer moved
-  // to cause them to be equal.  If the head pointer moved then it is full.
-  // If the tail pointer moved then it is empty.  it resets to empty so
-  // if reset with the tail pointer indicating the last update.
-  if(~PRESETn)
-    HeadPointerLastMove <= 1'b0;
-  else if(fifoenabled & ~MEMWb & A == 3'b000 & ~DLAB)
-    HeadPointerLastMove <= 1'b1;
-  else if(fifoenabled & ~txfifoempty & ~txsrfull & txstate == UART_IDLE)
-    HeadPointerLastMove <= 1'b0;
+    // special condition to check if the fifo is empty or full.  Because the head
+    // pointer indicates where the next write goes and not the location of the
+    // current head, the head and tail pointer being equal imply two different
+    // things.  First it could mean the fifo is empty and second it could mean
+    // the fifo is full.  To differentiate we need to know which pointer moved
+    // to cause them to be equal.  If the head pointer moved then it is full.
+    // If the tail pointer moved then it is empty.  It resets to empty, as if
+    // the tail pointer made the last update.
+    if (~PRESETn)
+      HeadPointerLastMove <= 1'b0;
+    else if (fifoenabled & ~MEMWb & A == UART_DLL_RBR & ~DLAB)
+      HeadPointerLastMove <= 1'b1;
+    else if (fifoenabled & ~txfifoempty & ~txsrfull & txstate == UART_IDLE)
+      HeadPointerLastMove <= 1'b0;
   end
 
   assign txfifoempty = (txfifohead == txfifotail) & ~HeadPointerLastMove;
@@ -482,7 +481,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
 
   always_comb
     if (fifoenabled & fifodmamodesel) TXRDYb = ~txfifodmaready;
-    else TXRDYb  = ~THRE;
+    else TXRDYb = ~THRE;
 
   // Transmitter pin
   assign SOUTbit = txsr[11]; // transmit most significant bit
@@ -503,11 +502,11 @@ module uartPC16550D #(parameter UART_PRESCALE) (
   // set intrID based on highest priority pending interrupt source; otherwise, no interrupt is pending
   always_comb begin
     intrpending = 1'b1;
-    if      (RXerrIP & IER[2])                     intrID = 3'b011;
-    else if (rxdataavailintr & IER[0])             intrID = 3'b010;
-    else if (rxfifotimeout & fifoenabled & IER[0]) intrID = 3'b110;
-    else if (THRE_IP & IER[1])                     intrID = 3'b001;
-    else if (modemstatusintr & IER[3])             intrID = 3'b000;
+    if      (RXerrIP & IER[2])                     intrID = 3'b011; // receiver line status
+    else if (rxdataavailintr & IER[0])             intrID = 3'b010; // received data available
+    else if (rxfifotimeout & fifoenabled & IER[0]) intrID = 3'b110; // character timeout
+    else if (THRE_IP & IER[1])                     intrID = 3'b001; // transmitter holding register empty
+    else if (modemstatusintr & IER[3])             intrID = 3'b000; // modem status
     else begin
       intrID = 3'b000;
       intrpending = 1'b0;
@@ -516,13 +515,13 @@ module uartPC16550D #(parameter UART_PRESCALE) (
   always_ff @(posedge PCLK) INTR <= intrpending; // prevent glitches on interrupt pin
 
   // Side effect of reading LSR is lowering overrun, parity, framing, break intr's
-  assign setSquashRXerrIP = ~MEMRb & (A==3'b101);
+  assign setSquashRXerrIP = ~MEMRb & (A == UART_LSR);
   assign resetSquashRXerrIP = (rxstate == UART_DONE);
   assign squashRXerrIP = (prevSquashRXerrIP | setSquashRXerrIP) & ~resetSquashRXerrIP;
   flopr #(1) squashRXerrIPreg(PCLK, ~PRESETn, squashRXerrIP, prevSquashRXerrIP);
   // Side effect of reading IIR is lowering THRE_IP if most significant intr
-  assign setSquashTHRE_IP = ~MEMRb & (A==3'b010) & (intrID==3'h1); // there's a 1-cycle delay on set squash so that THRE_IP doesn't change during the process of reading IIR (otherwise combinational loop)
-  assign resetSquashTHRE_IP = ~MEMWb & (A==3'b000) & ~DLAB;
+  assign setSquashTHRE_IP = ~MEMRb & (A == UART_IIR) & (intrID == 3'h1); // there's a 1-cycle delay on set squash so that THRE_IP doesn't change during the process of reading IIR (otherwise combinational loop)
+  assign resetSquashTHRE_IP = ~MEMWb & (A == UART_DLL_RBR) & ~DLAB;
   assign squashTHRE_IP = prevSquashTHRE_IP & ~resetSquashTHRE_IP;
   flopr #(1) squashTHRE_IPreg(PCLK, ~PRESETn, squashTHRE_IP | setSquashTHRE_IP, prevSquashTHRE_IP);
 

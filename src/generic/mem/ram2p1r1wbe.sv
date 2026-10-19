@@ -33,15 +33,15 @@
 
 // WIDTH is number of bits in one "word" of the memory, DEPTH is number of such words
 
-module ram2p1r1wbe import cvw::*; #(parameter USE_SRAM=0, DEPTH=1024, WIDTH=68) (
+module ram2p1r1wbe import cvw::*; #(parameter USE_SRAM = 0, DEPTH = 1024, WIDTH = 68) (
   input  logic                     clk,
-  input  logic                     ce1, ce2,
-  input  logic [$clog2(DEPTH)-1:0] ra1,
-  input  logic [WIDTH-1:0]         wd2,
-  input  logic [$clog2(DEPTH)-1:0] wa2,
-  input  logic                     we2,
-  input  logic [(WIDTH-1)/8:0]     bwe2,
-  output logic [WIDTH-1:0]         rd1
+  input  logic                     ce1, ce2, // Read and write port chip enables
+  input  logic [$clog2(DEPTH)-1:0] ra1,      // Read address
+  input  logic [WIDTH-1:0]         wd2,      // Write data
+  input  logic [$clog2(DEPTH)-1:0] wa2,      // Write address
+  input  logic                     we2,      // Write enable
+  input  logic [(WIDTH-1)/8:0]     bwe2,     // Byte write enables
+  output logic [WIDTH-1:0]         rd1       // Read data
 );
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -86,7 +86,7 @@ module ram2p1r1wbe import cvw::*; #(parameter USE_SRAM=0, DEPTH=1024, WIDTH=68) 
   end else if ((USE_SRAM == 1) & (WIDTH == 2) & (DEPTH == 1024)) begin
 
     // Pack SRAMNUMSETS 2-bit entries into each 32-bit word of a 64-entry SRAM
-    localparam SRAMWIDTH = 32;
+    localparam SRAMWIDTH   = 32;
     localparam SRAMNUMSETS = SRAMWIDTH/WIDTH;
     logic [SRAMWIDTH-1:0]     SRAMReadData;
     logic [SRAMWIDTH-1:0]     SRAMWriteData;
@@ -131,12 +131,12 @@ module ram2p1r1wbe import cvw::*; #(parameter USE_SRAM=0, DEPTH=1024, WIDTH=68) 
     // Write divided into part for bytes and part for extra msbs
     // coverage off
     //   when byte write enables are tied high, the last IF is always taken
-    if(WIDTH >= 8) begin
+    if (WIDTH >= 8) begin
       integer i;
       always @(posedge clk)
         if (ce2 & we2)
-          for(i = 0; i < WIDTH/8; i++)
-            if(bwe2[i]) RAM[wa2][i*8 +: 8] <= wd2[i*8 +: 8];
+          for (i = 0; i < WIDTH/8; i++)
+            if (bwe2[i]) RAM[wa2][i*8 +: 8] <= wd2[i*8 +: 8];
     end
     // coverage on
 
