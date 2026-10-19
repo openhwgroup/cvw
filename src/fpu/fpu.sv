@@ -302,6 +302,8 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   // fmvp.*.x: Select pair of registers
   if (P.ZFA_SUPPORTED & (P.FLEN == 2*P.XLEN))
        assign IntSrcE = ZfaE ? {ForwardedSrcBE, ForwardedSrcAE} : PreIntSrcE; // choose pair of integer registers for fmvp.d.x / fmvp.q.x
+  else if (P.ZFA_SUPPORTED & P.XLEN == 32 & P.FLEN > P.D_LEN) // RV32 with Q: fmvp.d.x NaN-boxes the double the pair forms
+       assign IntSrcE = ZfaE ? {{(P.FLEN-P.D_LEN){1'b1}}, ForwardedSrcBE, ForwardedSrcAE} : PreIntSrcE;
   else assign IntSrcE = PreIntSrcE;
 
   // select a result that may be written to the FP register
