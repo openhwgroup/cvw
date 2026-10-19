@@ -32,6 +32,7 @@ regressionDir = f'{WALLY}/sim'
 archVerifDir = os.environ.get('ACTDIR', f'{WALLY}/addins/riscv-arch-test') # riscv-arch-test checkout; override with ACTDIR
 periphDir = f'{WALLY}/tests/periph'
 coverageDir = f'{WALLY}/tests/coverage'
+coverage32Dir = f'{WALLY}/tests/coverage32'  # RV32 coverage-targeted tests, run on rv32gc
 coveragesim = "questa"     # Questa is required for code/functional coverage
 defaultsim = "verilator"   # Default simulator for all other tests
 lockstepsim = "questa"
@@ -297,6 +298,12 @@ testfloatdivconfigs = [
 lockstepwaivers = [
     "Zicbom-cbo.inval-00.elf", # ImperasDV lacks cache model to match CVW on invalidation
 
+    # Zama16b: Wally performs a misaligned AMO that stays within one cache line and faults one that
+    # crosses a line.  ImperasDV has no Zama16b parameter; its only control, Zam, either faults every
+    # misaligned AMO (Zam=F, the default) or performs every one, including those that cross a line
+    # (Zam=T), so neither setting matches.
+    "zama16b.elf",
+
     # Wally implements writable mhpmevent bits; ImperasDV models them as read-only zero and offers no
     # parameter to change that, so every test that walks or writes mhpmevent disagrees.  The tests
     # themselves pass without lockstep.
@@ -319,6 +326,13 @@ lockstepwaivers = [
     "Svnapot_sv48_Svnapot_reserved_enc_Umode-00.elf",
     "Svnapot_sv57_Svnapot_reserved_enc_Smode-00.elf",
     "Svnapot_sv57_Svnapot_reserved_enc_Umode-00.elf",
+
+    # ImperasDV traps a wfi below M mode with mstatus.TW=1 at once, while Wally waits a bounded time
+    # (WFI_TIMEOUT_BIT) before the illegal-instruction trap; both are legal (Privileged Spec
+    # mstatus_tw_always_illegal vs mstatus_tw_op).  These tests depend on the wait, so lockstep mismatches.
+    "wfiTW.elf",
+    "wfitimeoutint.elf",
+    "wfitimeoutnext.elf",
 ]
 
 # tests for cache simulations on a rv64gc derived config - cache_rv64gc
@@ -802,15 +816,17 @@ def selectTests(args, sims, coverStr):
         addTestsByDir(coverageDir, "rv64gc", lockstepsim, coverStr, configs, lockstepMode=1)
         addTestsByDir(actElfDir("rv64gc"), "rv64gc", lockstepsim, coverStr, configs, lockstepMode=1)
         addTestsByDir(actElfDir("rv32gc"), "rv32gc", lockstepsim, coverStr, configs, lockstepMode=1)
+        addTestsByDir(coverage32Dir, "rv32gc", lockstepsim, coverStr, configs, lockstepMode=1)
         addTests(derivconfigtests, defaultsim, coverStr, configs)
         # addTests(bpredtests, defaultsim) # This is currently broken in regression due to something related to the new wsim script.
     # testfloat tests
     if (args.testfloat or args.nightly): # for nightly, run testfloat along with others
         testfloatconfigs = ["fdqh_rv64gc", "fdq_rv64gc", "fdh_rv64gc", "fd_rv64gc", "fh_rv64gc", "f_rv64gc", "fdqh_rv32gc", "f_rv32gc"]
-        for config in testfloatconfigs + testfloatdivconfigs:
-            tests = ["div", "sqrt", "cvtint", "cvtfp"]
-            if config in testfloatconfigs:
-                tests.extend(["add", "sub", "mul", "fma", "cmp"])
+        fmalzcconfigs = ["fdqh_lzc_rv64gc", "fdqh_lzc_rv32gc"]  # FMA_LZA = 0: only the operations that use the FMA
+        for config in testfloatconfigs + testfloatdivconfigs + fmalzcconfigs:
+            tests = ["div", "sqrt", "cvtint", "cvtfp"] if config not in fmalzcconfigs else []
+            if config in testfloatconfigs or config in fmalzcconfigs:
+                tests.extend(["add", "sub", "mul", "fma"] + ([] if config in fmalzcconfigs else ["cmp"]))
             if "f_" in config:
                 tests.remove("cvtfp")
             for test in tests:

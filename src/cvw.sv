@@ -54,6 +54,16 @@ typedef struct packed {
   logic         ZFA_SUPPORTED;
   logic         ZFBFMIN_SUPPORTED;
   logic         SSTC_SUPPORTED;
+  logic         SMSTATEEN_SUPPORTED;
+  logic         SSSTATEEN_SUPPORTED;
+  logic         SMP1P13_SUPPORTED;
+  logic         SMCTR_SUPPORTED;
+  logic         SSCSRIND_SUPPORTED;
+  logic         SSAIA_SUPPORTED;
+  logic         SDTRIG_SUPPORTED;
+  logic         SSQOSID_SUPPORTED;
+  logic         ZCMT_SUPPORTED;
+  logic         ZFINX_SUPPORTED;
   logic         VIRTMEM_SUPPORTED;
   logic         SVPBMT_SUPPORTED;
   logic         SVNAPOT_SUPPORTED;
@@ -70,6 +80,7 @@ typedef struct packed {
   logic         ZICBOZ_SUPPORTED;
   logic         ZICBOP_SUPPORTED;
   logic         ZICCLSM_SUPPORTED;
+  logic         ZAMA16B_SUPPORTED;
   logic         ZICOND_SUPPORTED;
   logic         ZIMOP_SUPPORTED;
   logic         ZCMOP_SUPPORTED;
@@ -77,6 +88,7 @@ typedef struct packed {
   logic         ZALRSC_SUPPORTED;
   logic         ZABHA_SUPPORTED;
   logic         ZACAS_SUPPORTED;
+  logic         ZAWRS_SUPPORTED;
 
   // Microarchitectural Features
   logic         BUS_SUPPORTED;
@@ -111,6 +123,9 @@ typedef struct packed {
 
 // WFI Timeout Wait
   int           WFI_TIMEOUT_BIT;
+  int           WRSNTO_TIMEOUT_BIT;
+  int           WRSSTO_TIMEOUT_BIT;
+  int           WAIT_TIMEOUT_BIT;
 
 // Peripheral Addresses
 // Peripheral memory space extends from BASE to BASE+RANGE
@@ -181,6 +196,9 @@ typedef struct packed {
   int                  BTB_SIZE;
   int                  RAS_SIZE;
   logic                INSTR_CLASS_PRED; // is class predictor enabled
+
+// FMA normalization
+  logic         FMA_LZA;  // 1: leading zero anticipator, 0: leading zero counter
 
 // FPU division architecture
   int           RADIX;

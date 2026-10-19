@@ -42,7 +42,6 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic                     TrapM,                     // trap is occurring
   input  logic                     mretM, sretM,              // return instruction
   input  logic                     InterruptM,                // interrupt is occurring
-  input  logic                     ExceptionM,                // interrupt is occurring
   input  logic                     MTimerInt,                 // timer interrupt
   input  logic                     MExtInt, SExtInt,          // external interrupt (from PLIC)
   input  logic                     MSwInt,                    // software interrupt
@@ -117,6 +116,8 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic [11:0]             CSRAdrM;
   logic                    IllegalCSRCAccessM, IllegalCSRMAccessM, IllegalCSRSAccessM, IllegalCSRUAccessM;
   logic                    InsufficientCSRPrivilegeM;
+  logic [63:0]             MSTATEEN0_REGW;
+  logic                    SE0AccessM, ENVCFGAccessM;
   logic                    IllegalCSRMWriteReadonlyM;
   logic [P.XLEN-1:0]       CSRReadVal2M;
   logic [11:0]             MIP_REGW_writeable;
@@ -209,8 +210,9 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   assign CSRMWriteM = UngatedCSRMWriteM & InstrValidNotFlushedM;
   assign CSRSWriteM = CSRWriteM & (|PrivilegeModeW) & InstrValidNotFlushedM;
   assign CSRUWriteM = CSRWriteM  & InstrValidNotFlushedM;
-  assign MTrapM = TrapM & (NextPrivilegeModeM == P.M_MODE);
-  assign STrapM = TrapM & (NextPrivilegeModeM == P.S_MODE) & P.S_SUPPORTED;
+  // Record the trap only when it is taken, like mstatus and the privilege mode
+  assign MTrapM = TrapM & ~StallW & (NextPrivilegeModeM == P.M_MODE);
+  assign STrapM = TrapM & ~StallW & (NextPrivilegeModeM == P.S_MODE) & P.S_SUPPORTED;
 
   ///////////////////////////////////////////
   // CSRs
@@ -238,7 +240,13 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     .MEDELEG_REGW, .MIDELEG_REGW,.PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
     .MIP_REGW, .MIE_REGW, .WriteMSTATUSM, .WriteMSTATUSHM,
     .IllegalCSRMAccessM, .IllegalCSRMWriteReadonlyM,
-    .MENVCFG_REGW);
+    .MENVCFG_REGW, .MSTATEEN0_REGW);
+
+  // Smstateen: mstateen0 controls access from less-privileged modes to the state named by each bit,
+  // but never restricts machine mode itself.  Without Smstateen the state is accessible as its own
+  // extension defines.
+  assign SE0AccessM    = ~P.SMSTATEEN_SUPPORTED | (PrivilegeModeW == P.M_MODE) | MSTATEEN0_REGW[63];
+  assign ENVCFGAccessM = ~P.SMSTATEEN_SUPPORTED | (PrivilegeModeW == P.M_MODE) | MSTATEEN0_REGW[62];
 
 
   if (P.S_SUPPORTED) begin : csrs
@@ -252,7 +260,8 @@ module csr import cvw::*;  #(parameter cvw_t P) (
       .CSRSReadValM, .STVEC_REGW, .SEPC_REGW,
       .SCOUNTEREN_REGW,
       .SATP_REGW, .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MTIME_CLINT, .STCE,
-      .WriteSSTATUSM, .IllegalCSRSAccessM, .STimerInt, .SENVCFG_REGW);
+      .WriteSSTATUSM, .IllegalCSRSAccessM, .STimerInt, .SENVCFG_REGW,
+      .SE0AccessM, .ENVCFGAccessM, .SSTATEEN0_MASK(MSTATEEN0_REGW[2:0]));
   end else begin
     assign WriteSSTATUSM = 1'b0;
     assign CSRSReadValM = '0;
@@ -280,11 +289,11 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   end
 
   // counters are always instantiated but may read as zero if not supported
-  csrc #(P) counters(.clk, .reset, .StallE, .StallM, .FlushM,
+  csrc #(P) counters(.clk, .reset, .StallE, .StallM, .StallW, .FlushM,
     .InstrValidNotFlushedM, .LoadStallD, .StoreStallD, .CSRWriteM, .CSRMWriteM,
     .BPDirWrongM, .BTAWrongM, .RASPredPCWrongM, .IClassWrongM, .BPWrongM,
     .IClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .sfencevmaM,
-    .InterruptM, .ExceptionM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
+    .InterruptM, .TrapM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
     .CSRAdrM, .PrivilegeModeW, .CSRWriteValM,
     .MCOUNTINHIBIT_REGW, .MCOUNTEREN_REGW, .SCOUNTEREN_REGW,
     .MTIME_CLINT,  .CSRCReadValM, .IllegalCSRCAccessM);

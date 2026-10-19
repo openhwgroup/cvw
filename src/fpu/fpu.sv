@@ -336,7 +336,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
     mux2 #(1)      sgnmux (XE[P.LEN1-1], XE[P.FLEN-1],FmtE, FmtMvSgn);
     mux2 #(P.FLEN) sgnextmux ({{P.FLEN-P.LEN1{FmtMvSgn}}, XE[P.LEN1-1:0]}, XE, FmtE, FmtSgnExtXE);
   end else if(P.FPSIZES == 3 | P.FPSIZES == 4) begin
-    mux4 #(1)      sgnmux (XE[P.S_LEN-1], XE[P.D_LEN-1], XE[P.H_LEN-1], XE[P.LLEN-1], FmtE, FmtMvSgn);
+    mux4 #(1)      sgnmux (XE[P.S_LEN-1], XE[P.D_LEN-1], XE[P.H_LEN-1], XE[P.FLEN-1], FmtE, FmtMvSgn);
     mux3 #(P.FLEN) sgnextmux ({{P.FLEN-P.S_LEN{FmtMvSgn}}, XE[P.S_LEN-1:0]},
                               {{P.FLEN-P.D_LEN{FmtMvSgn}}, XE[P.D_LEN-1:0]},
                               {{P.FLEN-P.H_LEN{FmtMvSgn}}, XE[P.H_LEN-1:0]},

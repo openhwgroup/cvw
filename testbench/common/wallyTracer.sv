@@ -69,7 +69,6 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   logic                  frf_we4;
   logic                  CSRWriteM, CSRWriteW;
   logic [11:0]           CSRAdrM, CSRAdrW;
-  logic                  wfiM;
   logic                  InterruptM, InterruptW;
   logic                  valid;
   logic                  HPTWUpdateDA, DA_updated, capture_PTE;
@@ -114,13 +113,11 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
     assign PrivilegeModeW = testbench.dut.core.priv.priv.privmode.PrivilegeModeW;
     assign STATUS_SXL     = testbench.dut.core.priv.priv.csr.csrsr.STATUS_SXL;
     assign STATUS_UXL     = testbench.dut.core.priv.priv.csr.csrsr.STATUS_UXL;
-    assign wfiM           = testbench.dut.core.priv.priv.wfiM;
     assign InterruptM     = testbench.dut.core.priv.priv.InterruptM;
   end else begin
     assign PrivilegeModeW = 2'b11;
     assign STATUS_SXL     = 0;
     assign STATUS_UXL     = 0;
-    assign wfiM           = 0;
     assign InterruptM     = 0;
   end
 
@@ -224,9 +221,33 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
     `CONNECT_CSR(MHARTID, 12'hF14, testbench.dut.core.priv.priv.csr.csrm.MHARTID_REGW);
     `CONNECT_CSR(MCONFIGPTR, 12'hF15, 0); //mconfigptr
 
+    // Smstateen CSRs.  mstateen1-3 are read-only zero, as are the bits of mstateen0 whose state
+    // Wally does not implement.
+    if (P.SMSTATEEN_SUPPORTED) begin
+      `CONNECT_CSR(MSTATEEN0, 12'h30C, testbench.dut.core.priv.priv.csr.csrm.MSTATEEN0_REGW[P.XLEN-1:0]);
+      `CONNECT_CSR(MSTATEEN1, 12'h30D, 0);
+      `CONNECT_CSR(MSTATEEN2, 12'h30E, 0);
+      `CONNECT_CSR(MSTATEEN3, 12'h30F, 0);
+      if (P.XLEN == 32) begin
+        `CONNECT_CSR(MSTATEEN0H, 12'h31C, testbench.dut.core.priv.priv.csr.csrm.MSTATEEN0_REGW[63:32]);
+        `CONNECT_CSR(MSTATEEN1H, 12'h31D, 0);
+        `CONNECT_CSR(MSTATEEN2H, 12'h31E, 0);
+        `CONNECT_CSR(MSTATEEN3H, 12'h31F, 0);
+      end
+    end
+
     // Supervisor Information Registers and Configuration CSRs
     if (P.S_SUPPORTED) begin
       `CONNECT_CSR(SENVCFG, 12'h10A, testbench.dut.core.priv.priv.csr.csrs.csrs.SENVCFG_REGW);
+    end
+
+    // Ssstateen CSRs.  An sstateen0 bit reads as zero once the matching mstateen0 bit is cleared,
+    // so report the value software sees rather than the raw register.  sstateen1-3 are read-only zero.
+    if (P.SSSTATEEN_SUPPORTED) begin
+      `CONNECT_CSR(SSTATEEN0, 12'h10C, testbench.dut.core.priv.priv.csr.csrs.csrs.SSTATEEN0_REGW & {{(P.XLEN-3){1'b0}}, testbench.dut.core.priv.priv.csr.csrm.MSTATEEN0_REGW[2:0]});
+      `CONNECT_CSR(SSTATEEN1, 12'h10D, 0);
+      `CONNECT_CSR(SSTATEEN2, 12'h10E, 0);
+      `CONNECT_CSR(SSTATEEN3, 12'h10F, 0);
     end
 
     // Sstc CSRs
