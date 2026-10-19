@@ -30,7 +30,7 @@
 module rvvisynth import cvw::*; #(parameter cvw_t P,
                                   parameter integer MAX_CSRS = 5,
                                   parameter integer TOTAL_CSRS = 36) (
-  input  logic                                          clk, reset,                // Clock and reset
+  input  logic                                          clk, reset,
   input  logic                                          StallE, StallM, StallW, FlushE, FlushM, FlushW, // Stall and flush Execute, Memory, Writeback stages
   // required
   input  logic [P.XLEN-1:0]                             PCM,                       // PC in Memory stage

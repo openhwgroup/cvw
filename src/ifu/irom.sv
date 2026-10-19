@@ -26,7 +26,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module irom import cvw::*; #(parameter cvw_t P) (
-  input  logic              clk,       // Clock
+  input  logic              clk,
   input  logic              ce,        // Chip enable
   input  logic [P.XLEN-1:0] Adr,       // Instruction address
   output logic [31:0]       IROMInstrF // Instruction read data

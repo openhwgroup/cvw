@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fdivsqrtpostproc import cvw::*; #(parameter cvw_t P) (
-  input  logic                 clk, reset,          // Clock and reset
+  input  logic                 clk, reset,
   input  logic                 StallM,              // Stall Memory stage
   input  logic [P.DIVb+3:0]    WS, WC,              // Residual in carry-save form (Q4.DIVb)
   input  logic [P.DIVb+3:0]    D,                   // Divisor (Q4.DIVb)

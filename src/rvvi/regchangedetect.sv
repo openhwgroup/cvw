@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module regchangedetect #(parameter XLEN = 64) (
-  input  logic            clk, reset, // Clock and reset
+  input  logic            clk, reset,
   input  logic [XLEN-1:0] Value,      // Value to monitor
   output logic            Change);    // Value changed
 

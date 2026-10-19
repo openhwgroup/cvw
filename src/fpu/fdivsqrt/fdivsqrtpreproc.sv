@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fdivsqrtpreproc import cvw::*; #(parameter cvw_t P) (
-  input  logic                 clk,              // Clock
+  input  logic                 clk,
   input  logic                 IFDivStartE,      // Start integer or FP divide/sqrt
   input  logic [P.NF:0]        Xm, Ym,           // X and Y significands
   input  logic [P.NE-1:0]      Xe, Ye,           // X and Y exponents

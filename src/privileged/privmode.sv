@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module privmode import cvw::*; #(parameter cvw_t P) (
-  input  logic             clk, reset,          // Clock and reset
+  input  logic             clk, reset,
   input  logic             StallW,              // Stall Writeback stage
   input  logic             TrapM,               // Trap is occurring
   input  logic             mretM, sretM,        // mret and sret instructions

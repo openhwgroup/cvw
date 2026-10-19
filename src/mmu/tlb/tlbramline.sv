@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module tlbramline import cvw::*; #(parameter cvw_t P) (
-  input  logic              clk, reset, // Clock and reset
+  input  logic              clk, reset,
   input  logic              re, we,     // Read and write enables
   input  logic [P.XLEN-1:0] d,          // PTE to write
   output logic [P.XLEN-1:0] q,          // PTE if this entry matches, else 0

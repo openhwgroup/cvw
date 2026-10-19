@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
-  input  logic                  clk, reset,    // Clock and reset
+  input  logic                  clk, reset,
   // Privileged
   input  logic                  MTimerInt, MExtInt, SExtInt, MSwInt, // Interrupt sources: machine timer, machine and supervisor external, machine software
   input  logic [63:0]           MTIME_CLINT,   // MTIME from CLINT

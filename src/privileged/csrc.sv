@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module csrc import cvw::*; #(parameter cvw_t P) (
-  input  logic              clk, reset,                                           // Clock and reset
+  input  logic              clk, reset,
   input  logic              StallE, StallM, StallW,                               // Stall Execute, Memory, Writeback stages
   input  logic              FlushM,                                               // Flush Memory stage
   input  logic              InstrValidNotFlushedM, LoadStallD, StoreStallD,       // Instruction valid and not flushed; load and store stalls

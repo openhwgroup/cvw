@@ -33,7 +33,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module csrm import cvw::*; #(parameter cvw_t P) (
-  input  logic                     clk, reset,                                        // Clock and reset
+  input  logic                     clk, reset,
   input  logic                     UngatedCSRMWriteM, CSRMWriteM, MTrapM,             // Machine-mode CSR write (ungated, gated), trap to machine mode
   input  logic [11:0]              CSRAdrM,                                           // CSR address
   input  logic [P.XLEN-1:0]        NextEPCM, NextXtvalM, MSTATUS_REGW, MSTATUSH_REGW, // Next xepc and xtval on a trap, mstatus and mstatush CSRs

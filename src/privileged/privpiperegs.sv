@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module privpiperegs (
-  input  logic         clk, reset,                          // Clock and reset
+  input  logic         clk, reset,
   input  logic         StallD, StallE, StallM,              // Stall Decode, Execute, Memory stages
   input  logic         FlushD, FlushE, FlushM,              // Flush Decode, Execute, Memory stages
   input  logic         InstrPageFaultF, InstrAccessFaultF,  // Instruction page and access faults in Fetch stage

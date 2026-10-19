@@ -33,7 +33,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module ebu import cvw::*; #(parameter cvw_t P) (
-  input  logic                 clk, reset,    // Clock and reset
+  input  logic                 clk, reset,
   // Signals from IFU
   input  logic [1:0]           IFUHTRANS,     // IFU AHB transfer type
   input  logic [2:0]           IFUHSIZE,      // IFU AHB transfer size

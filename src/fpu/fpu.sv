@@ -28,8 +28,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fpu import cvw::*; #(parameter cvw_t P) (
-  input  logic                 clk,                                // Clock
-  input  logic                 reset,                              // Reset
+  input  logic                 clk,
+  input  logic                 reset,
   // Hazards
   input  logic                 StallE, StallM, StallW,             // Stall Execute, Memory, Writeback stages
   input  logic                 FlushE, FlushM, FlushW,             // Flush Execute, Memory, Writeback stages

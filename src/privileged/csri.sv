@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module csri import cvw::*; #(parameter cvw_t P) (
-  input  logic              clk, reset,             // Clock and reset
+  input  logic              clk, reset,
   input  logic              CSRMWriteM, CSRSWriteM, // Write a machine-mode or supervisor-mode CSR
   input  logic [P.XLEN-1:0] CSRWriteValM,           // Value to write to CSR
   input  logic [11:0]       CSRAdrM,                // CSR address

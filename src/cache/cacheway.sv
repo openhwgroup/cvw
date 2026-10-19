@@ -31,8 +31,8 @@
 module cacheway import cvw::*; #(parameter cvw_t P,
                                  parameter PA_BITS, NUMSETS = 512, LINELEN = 256, TAGLEN = 26,
                                            OFFSETLEN = 5, INDEXLEN = 9, READ_ONLY_CACHE = 0) (
-  input  logic                        clk,            // Clock
-  input  logic                        reset,          // Reset
+  input  logic                        clk,
+  input  logic                        reset,
   input  logic                        FlushStage,     // Pipeline flush of second stage (prevent writes and bus operations)
   input  logic                        InvalidateFlushStage, // Flush of the stage issuing InvalidateCache (suppresses the invalidate)
   input  logic                        CacheEn,        // Enable the cache memory arrays.  Disable hold read data constant

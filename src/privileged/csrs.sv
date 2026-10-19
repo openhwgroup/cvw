@@ -30,7 +30,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module csrs import cvw::*; #(parameter cvw_t P) (
-  input  logic              clk, reset,                         // Clock and reset
+  input  logic              clk, reset,
   input  logic              CSRSWriteM, STrapM,                 // Write a supervisor-mode CSR, trap to supervisor mode
   input  logic [11:0]       CSRAdrM,                            // CSR address
   input  logic [P.XLEN-1:0] NextEPCM, NextXtvalM, SSTATUS_REGW, // Next xepc and xtval on a trap, sstatus CSR

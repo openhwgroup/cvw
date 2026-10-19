@@ -29,7 +29,7 @@
 ///////////////////////////////////////////
 
 module privileged import cvw::*; #(parameter cvw_t P) (
-  input  logic              clk, reset,                                     // Clock and reset
+  input  logic              clk, reset,
   input  logic              StallD, StallE, StallM, StallW,                 // Stall Decode, Execute, Memory, Writeback stages
   input  logic              FlushD, FlushE, FlushM, FlushW,                 // Flush Decode, Execute, Memory, Writeback stages
   // CSR Reads and Writes, and values needed for traps

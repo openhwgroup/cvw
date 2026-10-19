@@ -31,8 +31,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module spill import cvw::*; #(parameter cvw_t P) (
-  input  logic              clk,                  // Clock
-  input  logic              reset,                // Reset
+  input  logic              clk,
+  input  logic              reset,
   input  logic              StallF, FlushD,       // Stall Fetch stage, flush Decode stage
   input  logic [P.XLEN-1:0] PCF,                  // PC in Fetch stage
   input  logic [P.XLEN-1:2] PCPlus4F,             // PCF + 4

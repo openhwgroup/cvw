@@ -26,7 +26,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module synchronizer (
-  input  logic clk, // Clock
+  input  logic clk,
   input  logic d,   // Data input
   output logic q);  // Data output
 

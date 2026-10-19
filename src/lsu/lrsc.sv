@@ -30,8 +30,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module lrsc import cvw::*; #(parameter cvw_t P) (
-  input  logic                 clk,        // Clock
-  input  logic                 reset,      // Reset
+  input  logic                 clk,
+  input  logic                 reset,
   input  logic                 StallW,     // Stall Writeback stage
   input  logic                 MemReadM,   // Memory read
   input  logic [1:0]           PreLSURWM,  // IEU or HPTW memory read/write: [1] read, [0] write

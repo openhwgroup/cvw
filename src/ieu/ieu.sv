@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module ieu import cvw::*; #(parameter cvw_t P) (
-  input  logic              clk, reset,                      // Clock and reset
+  input  logic              clk, reset,
   // Decode stage signals
   input  logic [31:0]       InstrD,                          // Instruction in Decode stage
   input  logic [1:0]        STATUS_FS,                       // mstatus.FS: FPU state (00 off)

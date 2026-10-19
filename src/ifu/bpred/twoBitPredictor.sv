@@ -29,8 +29,8 @@
 
 module twoBitPredictor import cvw::*; #(parameter cvw_t P, parameter XLEN,
                                         parameter k = 10) (
-  input  logic             clk,              // Clock
-  input  logic             reset,            // Reset
+  input  logic             clk,
+  input  logic             reset,
   input  logic             StallF, StallD, StallE, StallM, StallW, // Stall Fetch, Decode, Execute, Memory, Writeback stages
   input  logic             FlushD, FlushE, FlushM, FlushW, // Flush Decode, Execute, Memory, Writeback stages
   input  logic [XLEN-1:0]  PCNextF, PCM,     // Next PC to fetch, PC in Memory stage

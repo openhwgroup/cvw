@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module regfile #(parameter XLEN, E_SUPPORTED) (
-  input  logic             clk, reset,          // Clock and reset
+  input  logic             clk, reset,
   input  logic             we3,                 // Write enable
   input  logic [4:0]       a1, a2, a3,          // Source registers to read (a1, a2), destination register to write (a3)
   input  logic [XLEN-1:0]  wd3,                 // Write data for port 3

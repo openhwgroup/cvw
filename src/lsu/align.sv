@@ -31,8 +31,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module align import cvw::*; #(parameter cvw_t P) (
-  input  logic                    clk,                      // Clock
-  input  logic                    reset,                    // Reset
+  input  logic                    clk,
+  input  logic                    reset,
   input  logic                    StallM, FlushM,           // Stall and flush Memory stage
   input  logic [P.XLEN-1:0]       IEUAdrM,                  // Memory address or branch/jump target in Memory stage
   input  logic [P.XLEN-1:0]       IEUAdrE,                  // Memory address or branch/jump target in Execute stage

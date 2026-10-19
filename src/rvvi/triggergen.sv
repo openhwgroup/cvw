@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module triggergen import cvw::*; (
-  input  logic        clk, reset,    // Clock and reset
+  input  logic        clk, reset,
   input  logic [31:0] RvviAxiRdata,  // AXI read data
   input  logic [3:0]  RvviAxiRstrb,  // AXI read strobes
   input  logic        RvviAxiRlast,  // AXI read last

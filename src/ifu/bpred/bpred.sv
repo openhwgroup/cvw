@@ -30,7 +30,7 @@
 `include "BranchPredictorType.vh"
 
 module bpred import cvw::*; #(parameter cvw_t P) (
-  input  logic              clk, reset,                     // Clock and reset
+  input  logic              clk, reset,
   input  logic              StallF, StallD, StallE, StallM, StallW, // Stall Fetch, Decode, Execute, Memory, Writeback stages
   input  logic              FlushD, FlushE, FlushM, FlushW, // Flush Decode, Execute, Memory, Writeback stages
   // Fetch stage
