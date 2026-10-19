@@ -18,6 +18,7 @@
 
 module pmachecker import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.PA_BITS-1:0] PhysicalAddress,
+  input  logic                 PAOutOfRange,   // Untranslated address has nonzero bits above PA_BITS
   input  logic [1:0]           Size,
   input  logic [3:0]           CMOpM,
   input  logic                 AtomicAccessM,  // Atomic access
@@ -59,8 +60,8 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
   // Check if tightly integrated memories are selected
   assign SelTIM = SelRegions[1] | SelRegions[2]; // exclusion-tag: unused-tim
 
-  // Detect access faults
-  assign PMAAccessFault          = SelRegions[0] & AccessRWXC | AtomicAccessM & ~AtomicAllowed;
+  // Detect access faults.  An address outside the physical address space selects no region.
+  assign PMAAccessFault          = (SelRegions[0] | PAOutOfRange) & AccessRWXC | AtomicAccessM & ~AtomicAllowed;
   assign PMAInstrAccessFaultF    = ExecuteAccessF & PMAAccessFault;
   assign PMALoadAccessFaultM     = ReadAccessM & ~WriteAccessM & PMAAccessFault;
   assign PMAStoreAmoAccessFaultM = (WriteAccessM | (|CMOpM))   & PMAAccessFault;

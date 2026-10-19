@@ -6,9 +6,8 @@
 //
 // Purpose: UART with FIFOs emulating the Texas Instruments PC16550D.
 //          Datasheet: https://media.digikey.com/pdf/Data%20Sheets/Texas%20Instruments%20PDFs/PC16550D.pdf
-//          Compatible with the UART in the Imperas Virtio model. Known exceptions to PC16550D compatibility:
+//          Compatible with the UART in the Imperas Virtio model. Known exception to PC16550D compatibility:
 //            Generates 2 rather than 1.5 stop bits when 5-bit word length is selected and LCR[2] = 1
-//            Timeout not yet implemented
 //
 // Documentation: RISC-V System on Chip Design
 //
@@ -78,7 +77,6 @@ module uartPC16550D #(parameter UART_PRESCALE) (
   logic [9:0]                   rxshiftreg;
   logic [10:0]                  rxfifo[15:0];
   logic [7:0]                   txfifo[15:0];
-  logic [4:0]                   rxfifotailunwrapped;
   logic [3:0]                   rxfifohead, rxfifotail, txfifohead, txfifotail, rxfifotriggerlevel;
   logic [3:0]                   rxfifoentries;
   logic [3:0]                   rxbitsexpected, txbitsexpected;
@@ -95,7 +93,6 @@ module uartPC16550D #(parameter UART_PRESCALE) (
   logic [8:0]                   rxdata9;
   logic [7:0]                   rxdata;
   logic [15:0]                  RXerrbit, rxfullbit;
-  logic [31:0]                  rxfullbitunwrapped;
 
   // transmit data
   logic [7:0]                   TXHR, nexttxdata;
@@ -162,13 +159,14 @@ module uartPC16550D #(parameter UART_PRESCALE) (
         LSR[6:1] <= Din[6:1]; // recommended only for test, see 8.6.3
       else begin
         LSR[0]   <= rxdataready; // Data ready
-        LSR[1]   <= (LSR[1] | RXBR[10]) & ~squashRXerrIP; // overrun error
-        LSR[2]   <= (LSR[2] | RXBR[9])  & ~squashRXerrIP; // parity error
-        LSR[3]   <= (LSR[3] | RXBR[8])  & ~squashRXerrIP; // framing error
-        LSR[4]   <= (LSR[4] | rxbreak)  & ~squashRXerrIP; // break indicator
+        // error flags set by the character completing now and cleared by an LSR read (squashRXerrIP)
+        LSR[1]   <= (LSR[1] & ~squashRXerrIP) | (rxstate == UART_DONE & rxoverrunerr); // overrun error
+        LSR[2]   <= (LSR[2] & ~squashRXerrIP) | (rxstate == UART_DONE & rxparityerr);  // parity error
+        LSR[3]   <= (LSR[3] & ~squashRXerrIP) | (rxstate == UART_DONE & rxframingerr); // framing error
+        LSR[4]   <= (LSR[4] & ~squashRXerrIP) | (rxstate == UART_DONE & rxbreak);      // break indicator
         LSR[5]   <= THRE; // THRE
         LSR[6]   <= ~txsrfull & THRE; //  TEMT
-        if (rxfifohaserr) LSR[7] <= 1'b1; // any bits in FIFO have error
+        LSR[7]   <= rxfifohaserr | (LSR[7] & ~(~MEMRb & (A == UART_LSR))); // error in FIFO; cleared by an LSR read once no queued character has an error
       end
 
       // Modem Status Register (8.6.8)
@@ -255,8 +253,9 @@ module uartPC16550D #(parameter UART_PRESCALE) (
         else rxstate <= UART_IDLE;
       end
       // timeout counting
-      if (~MEMRb & A == 3'b000 & ~DLAB) rxtimeoutcnt <= '0; // reset timeout on read
-      else if (fifoenabled & ~rxfifoempty & rxbaudpulse & ~rxfifotimeout) rxtimeoutcnt <= rxtimeoutcnt+1; // may not be right
+      // reset timeout on read, and while the receive FIFO is empty, so a timeout does not outlive a FIFO reset
+      if ((~MEMRb & A == 3'b000 & ~DLAB) | rxfifoempty) rxtimeoutcnt <= '0;
+      else if (fifoenabled & ~rxfifoempty & rxbaudpulse & ~rxfifotimeout) rxtimeoutcnt <= rxtimeoutcnt+1; // count 16x baud pulses while characters wait
     end
 
   assign rxcentered = rxbaudpulse & (rxoversampledcnt == 4'b1000);     // implies rxstate = UART_ACTIVE
@@ -300,7 +299,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
 //        if (rxoverrunerr) $warning("UART RX Overrun Err\n");
 //        if (rxparityerr)  $warning("UART RX Parity Err\n");
 //        if (rxframingerr) $warning("UART RX Framing Err\n");
-        if (fifoenabled) begin
+        if (fifoenabled & ~rxoverrunerr) begin // a character arriving when the FIFO is full is lost (overrun); the FIFO keeps its contents
           rxfifo[rxfifohead] <= {rxoverrunerr, rxparityerr, rxframingerr, rxdata};
           rxfifohead <= rxfifohead + 1'b1;
         end
@@ -326,25 +325,13 @@ module uartPC16550D #(parameter UART_PRESCALE) (
                          (rxfifohead + 16 - rxfifotail);
   /* verilator lint_on WIDTH */
   assign rxfifotriggered = rxfifoentries >= rxfifotriggerlevel;
-  assign rxfifotimeout = rxtimeoutcnt == {rxbitsexpected, 6'b0}; // time out after 4 character periods; probably not right yet
-  //assign rxfifotimeout = 0; // disabled pending fix
+  assign rxfifotimeout = rxtimeoutcnt == {rxbitsexpected, 6'b0}; // time out after 4 character times: 4 x 16 baud pulses per bit (one stop bit assumed)
 
-  // detect any errors in rx fifo
-  // although rxfullbit looks like a combinational loop, in one bit rxfifotail == i and breaks the loop
-  // tail is normally higher than head, but might wrap around.  unwrapped variable adds 16 to eliminate wrapping
-  assign rxfifotailunwrapped = rxfifotail < rxfifohead ? {1'b1, rxfifotail} : {1'b0, rxfifotail};
+  // detect any errors in rx fifo: slot i holds a character when it lies within rxfifoentries slots above the tail (mod 16)
   genvar i;
-  for (i=0; i<32; i++) begin : rxfull
-    if (i == 0) assign rxfullbitunwrapped[i] = (rxfifohead==0) & (rxfifotail != 0);
-    else        assign rxfullbitunwrapped[i] = ({1'b0,rxfifohead}==i | rxfullbitunwrapped[i-1]) & (rxfifotailunwrapped != i);
-  end
   for (i=0; i<16; i++) begin : rx
-    assign RXerrbit[i]  = |rxfifo[i][10:8]; // are any of the error conditions set?
-    assign rxfullbit[i] = rxfullbitunwrapped[i] | rxfullbitunwrapped[i+16];
-  /*      if (i > 0)
-      assign rxfullbit[i] = ((rxfifohead==i) | rxfullbit[i-1]) & (rxfifotail != i);
-      else
-      assign rxfullbit[0] = ((rxfifohead==i) | rxfullbit[15]) & (rxfifotail != i);*/
+    assign RXerrbit[i]  = |rxfifo[i][9:8]; // parity or framing error (break is a framing error); overrun is not a FIFO error (PC16550D LSR7)
+    assign rxfullbit[i] = (4'(i) - rxfifotail) < rxfifoentries;
   end
   assign rxfifohaserr   = |(RXerrbit & rxfullbit);
 

@@ -519,7 +519,7 @@ module testbench;
   if (P.UNCORE_RAM_SUPPORTED)
     always @(posedge clk)
       if (ResetMem)  // program memory is sometimes reset (e.g. for CoreMark, which needs zeroed memory)
-        for (adrindex=0; adrindex<(P.UNCORE_RAM_RANGE>>1+(P.XLEN/32)); adrindex = adrindex+1)
+        for (adrindex=0; adrindex<((P.UNCORE_RAM_RANGE+1)>>(1+P.XLEN/32)); adrindex = adrindex+1)
           dut.uncoregen.uncore.ram.ram.memory.ram.RAM[adrindex] = '0;
 
   ////////////////////////////////////////////////////////////////////////////////

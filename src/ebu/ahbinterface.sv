@@ -43,7 +43,11 @@ module ahbinterface #(
 
   logic                                 CaptureEn;
 
-  flopen #(XLEN) fb(.clk(HCLK), .en(CaptureEn), .d(HRDATA), .q(FetchBuffer));
+  // The IFU decodes its fetch buffer for spill detection even on a fetch that faulted before reaching the
+  // bus.  A configuration that fetches everything from the IROM never fills the buffer, so reset it there
+  // to keep an X out of the spill logic, which in simulation would hang the next PC.
+  if (LSU) flopen  #(XLEN) fb(.clk(HCLK), .en(CaptureEn), .d(HRDATA), .q(FetchBuffer));
+  else     flopenr #(XLEN) fb(.clk(HCLK), .reset(~HRESETn), .en(CaptureEn), .d(HRDATA), .q(FetchBuffer));
 
   if(LSU) begin
     // delay HWDATA by 1 cycle per spec; assumes AHBW = XLEN

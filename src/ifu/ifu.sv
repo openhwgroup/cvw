@@ -130,7 +130,6 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   logic                        BusCommittedF;                            // Bus memory operation in flight, delay interrupts
   logic                        CacheCommittedF;                          // I$ memory operation started, delay interrupts
   logic                        SelIROM;                                  // PMA indicates instruction address is in the IROM
-  logic [15:0]                 InstrRawE, InstrRawM;
   logic [LINELEN-1:0]          FetchBuffer;
   logic [31:0]                 ShiftUncachedInstr;
   logic                        ITLBMissF;
@@ -150,14 +149,15 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     logic [P.XLEN-1:0] PCSpillD, PCSpillE;
     logic [P.XLEN-1:0] PCIncrM;
     logic              SelSpillF, SelSpillD, SelSpillE, SelSpillM;
-    logic              FirstHalfFaultF;
     spill #(P) spill(.clk, .reset, .StallF, .FlushD, .PCF, .PCPlus4F, .PCNextF, .InstrRawF,  .CacheableF,
       .InstrPageFaultF(InstrPageFaultRawF), .InstrAccessFaultF(InstrAccessFaultRawF),
-      .IFUCacheBusStallF, .ITLBMissOrUpdateAF(ITLBMissOrUpdateRawF), .PCSpillNextF, .PCSpillF, .SelSpillNextF, .SelSpillF,
-      .InstrPageFaultSpillF(InstrPageFaultF), .InstrAccessFaultSpillF(InstrAccessFaultF), .FirstHalfFaultF,
+      .IFUCacheBusStallF, .ITLBMissOrUpdateRawF, .PCSpillNextF, .PCSpillF, .SelSpillNextF, .SelSpillF,
       .PostSpillInstrRawF, .CompressedF);
-    // A fault on the first half is reported at PCM, not PCM+2, so clear the spill flag that adds the +2 in xtval
-    flopenr #(1) SpillDReg(clk, reset, ~StallD, SelSpillF & ~FirstHalfFaultF, SelSpillD);
+    // A spill is taken only when the first half fetches cleanly, so a fault during a spill belongs to the
+    // second half and is reported at PCM+2.
+    assign InstrPageFaultF = InstrPageFaultRawF;
+    assign InstrAccessFaultF = InstrAccessFaultRawF;
+    flopenr #(1) SpillDReg(clk, reset, ~StallD, SelSpillF, SelSpillD);
     flopenr #(1) SpillEReg(clk, reset, ~StallE, SelSpillD, SelSpillE);
     flopenr #(1) SpillMReg(clk, reset, ~StallM, SelSpillE, SelSpillM);
     assign PCIncrM = PCM + 'd2;
@@ -398,7 +398,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
       .CallD, .CallE, .CallM, .CallW, .ReturnD, .ReturnE, .ReturnM, .ReturnW,
       .BTBCallF(1'b0), .BTBReturnF(1'b0), .BTBJumpF(1'b0),
       .BTBBranchF(1'b0), .BPCallF(), .BPReturnF(), .BPJumpF(), .BPBranchF(), .IClassWrongM,
-      .BPReturnWrongD());
+      .BPReturnWrongD(), .BPReturnD());
     flopenrc #(1) PCSrcMReg(clk, reset, FlushM, ~StallM, PCSrcE, BPWrongM);
     assign RASPredPCWrongM = 1'b0;
     assign BPDirWrongM = BPWrongM;
@@ -465,8 +465,10 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   end
 
   // pipeline original compressed instruction in case it is needed for XTVAL on an illegal instruction exception
-  if (P.ZICSR_SUPPORTED & P.ZCA_SUPPORTED | 1) begin
-    logic CompressedM; // instruction is compressed
+  // Only csr reads InstrOrigM, and it differs from InstrM only for compressed instructions
+  if (P.ZICSR_SUPPORTED & P.ZCA_SUPPORTED) begin
+    logic        CompressedM; // instruction is compressed
+    logic [15:0] InstrRawE, InstrRawM;
     flopenrc #(16) InstrRawEReg(clk, reset, FlushE, ~StallE, InstrRawD[15:0], InstrRawE);
     flopenrc #(16) InstrRawMReg(clk, reset, FlushM, ~StallM, InstrRawE, InstrRawM);
     flopenrc #(1)  CompressedMReg(clk, reset, FlushM, ~StallM, CompressedE, CompressedM);

@@ -14,7 +14,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`define INSTR_CLASS_PRED 1
 `include "BranchPredictorType.vh"
 
 
@@ -144,15 +143,15 @@ module bpred import cvw::*;  #(parameter cvw_t P) (
       .IClassM({CallM, ReturnM, JumpM, BranchM}),
       .IClassW({CallW, ReturnW, JumpW, BranchW}));
 
-  icpred #(P, `INSTR_CLASS_PRED) icpred(.clk, .reset, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM,
+  icpred #(P, P.INSTR_CLASS_PRED) icpred(.clk, .reset, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM,
     .PostSpillInstrRawF, .InstrD, .BranchD, .BranchE, .JumpD, .JumpE, .BranchM, .BranchW, .JumpM, .JumpW,
     .CallD, .CallE, .CallM, .CallW, .ReturnD, .ReturnE, .ReturnM, .ReturnW, .BTBCallF, .BTBReturnF, .BTBJumpF,
-    .BTBBranchF, .BPCallF, .BPReturnF, .BPJumpF, .BPBranchF, .IClassWrongM, .BPReturnWrongD);
+    .BTBBranchF, .BPCallF, .BPReturnF, .BPJumpF, .BPBranchF, .IClassWrongM, .BPReturnWrongD, .BPReturnD);
 
   // Part 3 RAS
   RASPredictor #(P) RASPredictor(.clk, .reset, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
     .BPReturnF, .ReturnD, .ReturnE, .CallE,
-    .BPReturnWrongD, .RASPCF, .PCLinkE);
+    .BPReturnWrongD, .BPReturnD, .RASPCF, .PCLinkE);
 
   // Check the prediction
   // if it is a CFI then check if the next instruction address (PCD) matches the branch's target or fallthrough address.
@@ -176,7 +175,7 @@ module bpred import cvw::*;  #(parameter cvw_t P) (
 
   // If the fence/csrw was predicted as a taken branch then we select PCF, rather than PCE.
   // Effectively this is PCM+4 or the non-existent PCLinkM
-  if(`INSTR_CLASS_PRED) mux2 #(P.XLEN) pcmuxBPWrongInvalidateFlush(PCE, PCF, BPWrongM, NextValidPCE);
+  if (P.INSTR_CLASS_PRED) mux2 #(P.XLEN) pcmuxBPWrongInvalidateFlush(PCE, PCF, BPWrongM, NextValidPCE);
   else  assign NextValidPCE = PCE;
 
   if(P.ZIHPM_SUPPORTED) begin

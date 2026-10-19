@@ -141,6 +141,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic [P.LLEN-1:0]     ReadDataSelM;                           // Read data to the W stage (live or held)
   logic                  LSUFlushW;                              // HPTW or hazard unit flushes operation
   logic                  SelfFaultM;                             // M-stage access has its own fault; squash it
+  logic                  DataFaultM;                             // M-stage access has a page or access fault; do not take the spill
   logic                  SelDTIM;                                // Select DTIM rather than bus or D$
   logic [P.XLEN-1:0]     WriteDataZM;
   logic                  LSULoadPageFaultM, LSUStoreAmoPageFaultM;
@@ -153,12 +154,14 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   flopenrc #(P.XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
+  assign DataFaultM = LoadPageFaultM | StoreAmoPageFaultM | LoadAccessFaultM | StoreAmoAccessFaultM;
   if(MISALIGN_SUPPORT) begin : ziccslm_align
     logic [P.XLEN-1:0] IEUAdrSpillE;
     logic [P.XLEN-1:0] IEUAdrSpillM;
     align #(P) align(.clk, .reset, .StallM, .FlushM, .IEUAdrE, .IEUAdrM, .Funct3M, .FpLoadStoreM,
                      .MemRWM,
                      .DCacheReadDataWordM, .CacheBusHPWTStall, .SelHPTW,
+                     .DataFaultM,
                      .ByteMaskM, .ByteMaskExtendedM, .LSUWriteDataM, .ByteMaskSpillM, .LSUWriteDataSpillM,
                      .IEUAdrSpillE, .IEUAdrSpillM, .IEUAdrxTvalM, .SelSpillE, .DCacheReadDataWordSpillM, .SpillStallM);
     assign IEUAdrExtM = {2'b00, IEUAdrSpillM};
