@@ -7,28 +7,22 @@ At present, Wally supports **abstract read and write access** to:
 ### General-Purpose and Floating-Point Registers
 - All **GPRs (x0–x31)**
 - All **FPRs (f0–f31)**
+- All **CSRs**
 
 ### Supported CSRs (currently implemented and readable)
-- `mstatus`
-- `misa`
-- `mtvec`
-- `mepc`
-- `mtval`
-- `dcsr`
-- `dpc`
-- `dscratch0`
 
-All of the above registers are accessible through the **abstract command interface** and are configured to support **read operations** (and write where architecturally meaningful).
 
-This constitutes Wally’s current **“Minimal Debug Spec” implementation**: abstract access to **GPRs, FPRs, and a core subset of CSRs** sufficient for basic halt, inspection, and low-level bring-up.
+All possible registers are accessible through the **abstract command interface** and are configured to support **read operations** (and write where architecturally meaningful).
 
-Wally’s debug module halts the processor pipeline and services abstract commands, enabling external debuggers to read and write GPRs, FPRs, and a growing set of CSRs. This provides a clean, stable foundation for full RISC-V Debug Specification support.
+This constitutes Wally’s current **“Minimal Debug Spec” implementation**: abstract access to **GPRs, FPRs, and CSRs** sufficient for basic halt, inspection, and low-level bring-up.
+
+Wally’s debug module halts the processor pipeline and services abstract commands, enabling external debuggers to read and write GPRs, FPRs, and CSRs. This provides a clean, stable foundation for full RISC-V Debug Specification support.
 
 :-: means we currently have no intention of implementing this feature.
 [x] denotes an item that is currently completed.
 🔶 means we intend to implement this in the future at some point but it is not immediately imperative.
 
-Anything else is intended to be implemented and will be implemented as soon as possible.  
+Anything else is intended to be implemented and will be implemented as soon as possible.
 
 General Overview of Implemented Features:
 - [x] Halting and Resuming
@@ -116,9 +110,9 @@ Debug Extension
   - [ ] nmip 🔶
   - [x] prv
   - [ ] mprven
-  - [ ] v 🔶  
+  - [ ] v 🔶
 - [x] DPC
-  - [x] Grabs PC + 4 on Halt
+  - [x] Grabs PC + 4/2 on Halt
   - [x] Resumes at DPC value on Resume
 
 - [ ] Sdtrig 🔶
