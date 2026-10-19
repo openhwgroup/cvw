@@ -104,6 +104,10 @@ case "$FAMILY" in
         if (( (UBUNTU_VERSION > 0 && UBUNTU_VERSION < 24) || (DEBIAN_VERSION > 0 && DEBIAN_VERSION < 13) )); then
             VIVADO_PACKAGES+=(libncurses5 libtinfo5)
         fi
+        # Whisper Uses C++20 features with incorrect support in gcc11 (As of October 18, 2026)
+        if (( UBUNTU_VERSION == 22 )); then
+            WHISPER_PACKAGES+=(gcc-12 g++-12)
+        fi
         ;;
     suse)
         if ((SUSE_VERSION >= 160)); then

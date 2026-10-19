@@ -50,6 +50,7 @@ elif [ "$FAMILY" == suse ] && ((SUSE_VERSION < 160)); then
         for f in gcc cpp g++ gcc-ar gcc-nm gcc-ranlib gcov gcov-dump gcov-tool lto-dump; do
             ln -vsf /usr/bin/$f-13 "$RISCV"/gcc-13/bin/$f
         done
+        ln -vsf /usr/bin/gcc-13 "$RISCV"/gcc-13/bin/cc
     fi
     export PATH="$RISCV"/gcc-13/bin:$PATH
 elif (( UBUNTU_VERSION == 20 )); then
@@ -58,8 +59,18 @@ elif (( UBUNTU_VERSION == 20 )); then
         for f in gcc cpp g++ gcc-ar gcc-nm gcc-ranlib gcov gcov-dump gcov-tool lto-dump; do
             ln -vsf /usr/bin/$f-10 "$RISCV"/gcc-10/bin/$f
         done
+        ln -vsf /usr/bin/gcc-10 "$RISCV"/gcc-10/bin/cc
     fi
     export PATH="$RISCV"/gcc-10/bin:$PATH
+elif (( UBUNTU_VERSION == 22 )); then
+    if [ ! -e "$RISCV"/gcc-12/bin/gcc ]; then
+        mkdir -p "$RISCV"/gcc-12/bin
+        for f in gcc cpp g++ gcc-ar gcc-nm gcc-ranlib gcov gcov-dump gcov-tool lto-dump; do
+            ln -vsf /usr/bin/$f-12 "$RISCV"/gcc-12/bin/$f
+        done
+        ln -vsf /usr/bin/gcc-12 "$RISCV"/gcc-12/bin/cc
+    fi
+    export PATH="$RISCV"/gcc-12/bin:$PATH
 elif (( UBUNTU_VERSION == 26 )); then
     if [ ! -e "$RISCV"/gnuinstall/bin/install ]; then
         mkdir -p "$RISCV"/gnuinstall/bin
