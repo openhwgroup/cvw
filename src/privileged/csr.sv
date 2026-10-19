@@ -352,7 +352,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign DebugStopCounters = 1'b0;
   end
 
-  if (P.TRIG_SUPPORTED) begin : trig
+  if (P.SDTRIG_SUPPORTED) begin : trig
     trigger #(P) trigger(.clk, .reset,
       .CSRTrigWriteM, .CSRWriteValM, . CSRAdrM, .CSRTrigReadValM, .IllegalCSRTrigAccessM,
       .PCM, .InstrValid(InstrValidM), .PrivilegeModeW, .DebugMode,

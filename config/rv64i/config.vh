@@ -237,6 +237,6 @@ localparam logic DEBUG_SUPPORTED = 0;
 localparam logic SDEXT_SUPPORTED = 0;
 
 // Trig
-localparam logic TRIG_SUPPORTED = 0;
+localparam logic SDTRIG_SUPPORTED = 0;
 
 `include "config-shared.vh"

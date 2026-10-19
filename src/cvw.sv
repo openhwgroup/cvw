@@ -317,7 +317,7 @@ typedef struct packed {
   int         DTM_INSTR_WIDTH;
 
   // Trigger Module
-  logic       TRIG_SUPPORTED;
+  logic       SDTRIG_SUPPORTED;
 
 } cvw_t;
 
