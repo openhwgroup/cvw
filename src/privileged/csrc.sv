@@ -148,9 +148,6 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
         else       HPMCOUNTER_REGW[i][P.XLEN-1:0] <= NextHPMCOUNTERM[i];
 
       if (P.XLEN==32) begin // write high and low separately
-        // logic [P.COUNTERS-1:0] WriteHPMCOUNTERHM;
-        // logic [P.XLEN-1:0] NextHPMCOUNTERHM[P.COUNTERS-1:0];
-        // assign HPMCOUNTERPlusM[i] = {HPMCOUNTERH_REGW[i], HPMCOUNTER_REGW[i]} + {63'b0, CounterEvent[i] & ~MCOUNTINHIBIT_REGW[i] & ~DebugStopCounters};
         assign HPMCOUNTERPlusM[i] = {HPMCOUNTERH_REGW[i], HPMCOUNTER_REGW[i]} + {63'b0, CounterInc[i]};
         assign WriteHPMCOUNTERHM[i] = CSRMWriteM & (CSRAdrM == MHPMCOUNTERHBASE + i);
         assign NextHPMCOUNTERHM[i] = WriteHPMCOUNTERHM[i] ? CSRWriteValM : HPMCOUNTERPlusM[i][63:32];
@@ -158,7 +155,6 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
             if (reset) HPMCOUNTERH_REGW[i][P.XLEN-1:0] <= '0;
             else       HPMCOUNTERH_REGW[i][P.XLEN-1:0] <= NextHPMCOUNTERHM[i];
       end else begin // XLEN=64; write entire register
-          // assign HPMCOUNTERPlusM[i] = HPMCOUNTER_REGW[i] + {63'b0, CounterEvent[i] & ~MCOUNTINHIBIT_REGW[i] & ~DebugStopCounters};
           assign HPMCOUNTERPlusM[i] = HPMCOUNTER_REGW[i] + {63'b0, CounterInc[i]};
           assign HPMCOUNTERH_REGW[i] = '0; // disregard for RV64
       end
