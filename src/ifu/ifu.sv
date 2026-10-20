@@ -104,7 +104,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   output logic                 ICacheAccess,                             // Report I$ read to performance counters
   output logic                 ICacheMiss,                               // Report I$ miss to performance counters
   input  logic                 DebugUseDPC,
-  output logic [P.XLEN-1:0]    NextValidPCE,
+  output logic [P.XLEN-1:0]    NextValidPCE,                              // The PC of the next valid instruction in the pipeline after  csr write or fence
   input  logic [P.XLEN-1:0]    DPC
 );
 
@@ -120,7 +120,6 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]           PCSpillNextF;                             // Next PCF after possible + 2 to handle spill
   logic [P.XLEN-1:2]           PCPlus4F;                                 // PCPlus4F is always PCF + 4.  Fancy way to compute PCPlus2or4F
   logic [P.XLEN-1:0]           PCD;                                      // Decode stage instruction address
-  //logic [P.XLEN-1:0]           NextValidPCE;                             // The PC of the next valid instruction in the pipeline after  csr write or fence
   logic [P.XLEN-1:0]           PCF;                                      // Fetch stage instruction address
   logic [P.PA_BITS-1:0]        PCPF;                                     // Physical address after address translation
   logic [P.XLEN+1:0]           PCFExt;
