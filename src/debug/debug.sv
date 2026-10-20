@@ -51,19 +51,19 @@ module debug import cvw::*; #(parameter cvw_t P) (
   output logic                 DMIRSPVALID,
 
   // APB Requester interface
-  output logic                 PCLK, PRESETn,
-  output logic                 PENABLE,
-  output logic                 PSELRegister,
-  output logic                 PSELMemory,
-  output logic                 PWRITE,
-  output logic [P.LLEN-1:0]    PWDATA,
-  output logic [P.XLEN/8-1:0]  PSTRB,
-  output logic [P.PA_BITS-1:0] PADDR,
+  output logic                 DebugPCLK, DebugPRESETn,
+  output logic                 DebugPENABLE,
+  output logic                 DebugPSELRegister,
+  output logic                 DebugPSELMemory,
+  output logic                 DebugPWRITE,
+  output logic [P.LLEN-1:0]    DebugPWDATA,
+  output logic [P.XLEN/8-1:0]  DebugPSTRB,
+  output logic [P.PA_BITS-1:0] DebugPADDR,
 
   // APB Completer interface
-  input  logic                 PREADY,
-  input  logic [P.LLEN-1:0]    PRDATA,
-  input  logic                 PSLVERR,
+  input  logic                 DebugPREADY,
+  input  logic [P.LLEN-1:0]    DebugPRDATA,
+  input  logic                 DebugPSLVERR,
 
   // Run State
   input  logic                 DebugHaveReset,
@@ -313,7 +313,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
       if (WriteRequest & (DMIADDR == DATA0)) begin
         Data0 <= DMIDATA;
       end else if (ReadRegister) begin
-        Data0 <= PRDATA[31:0];
+        Data0 <= DebugPRDATA[31:0];
       end
     end
   end
@@ -328,7 +328,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
         if (WriteRequest & (DMIADDR == DATA1)) begin
           Data1 <= DMIDATA;
         end else if (ReadRegister) begin
-          Data1 <= PRDATA[63:32];
+          Data1 <= DebugPRDATA[63:32];
         end
       end
     end
@@ -353,7 +353,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
       AbstractCS[10:8] <= DMIDATA[8] == 1'b1 ? 3'b0 : AbstractCS[10:8];
     end else if (WriteRequest & (DMIADDR == COMMAND)) begin
       AbstractCS[10:8] <= AbstractCS[10:8] == 3'b0 ? CMDErr : AbstractCS[10:8];
-    end else if (StartCommand & PREADY) begin
+    end else if (StartCommand & DebugPREADY) begin
       AbstractCS[10:8] <= CMDErr;
     end
   end
@@ -552,7 +552,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
       NewCommand <= 1'b0;
     end else if (CommandWrite) begin
       NewCommand <= 1'b1;
-    end else if (NewCommand & PREADY) begin
+    end else if (NewCommand & DebugPREADY) begin
       NewCommand <= 1'b0;
     end
   end
@@ -570,10 +570,10 @@ module debug import cvw::*; #(parameter cvw_t P) (
   debug_apb_requester #(P) debug_apb(.clk, .reset,
     .NextCommand, .Command, .StartCommand, .CommandWrite, .Data0, .Data1,
     .ValidCommand, .ValidSize, .AARException,
-    .PCLK, .PRESETn, .PENABLE,
-    .PSELRegister, .PSELMemory,
-    .PWRITE, .PWDATA, .PSTRB, .PADDR,
-    .PREADY, .PRDATA, .PSLVERR
+    .DebugPCLK, .DebugPRESETn, .DebugPENABLE,
+    .DebugPSELRegister, .DebugPSELMemory,
+    .DebugPWRITE, .DebugPWDATA, .DebugPSTRB, .DebugPADDR,
+    .DebugPREADY, .DebugPRDATA, .DebugPSLVERR
   );
 
   always_comb begin

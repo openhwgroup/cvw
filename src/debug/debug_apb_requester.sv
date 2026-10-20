@@ -38,17 +38,17 @@ module debug_apb_requester import cvw::*; #(parameter cvw_t P) (
   output logic                 ValidCommand,
   output logic                 ValidSize,
   output logic                 AARException,
-  output logic                 PCLK, PRESETn,
-  output logic                 PENABLE,
-  output logic                 PSELRegister,
-  output logic                 PSELMemory,
-  output logic                 PWRITE,
-  output logic [P.LLEN-1:0]    PWDATA,
-  output logic [P.XLEN/8-1:0]  PSTRB,
-  output logic [P.PA_BITS-1:0] PADDR,
-  input  logic                 PREADY,
-  input  logic [P.LLEN-1:0]    PRDATA,
-  input  logic                 PSLVERR
+  output logic                 DebugPCLK, DebugPRESETn,
+  output logic                 DebugPENABLE,
+  output logic                 DebugPSELRegister,
+  output logic                 DebugPSELMemory,
+  output logic                 DebugPWRITE,
+  output logic [P.LLEN-1:0]    DebugPWDATA,
+  output logic [P.XLEN/8-1:0]  DebugPSTRB,
+  output logic [P.PA_BITS-1:0] DebugPADDR,
+  input  logic                 DebugPREADY,
+  input  logic [P.LLEN-1:0]    DebugPRDATA,
+  input  logic                 DebugPSLVERR
 );
 
   // Phases
@@ -88,8 +88,8 @@ module debug_apb_requester import cvw::*; #(parameter cvw_t P) (
 
   busstatetype CurrState, NextState;
 
-  assign PCLK = clk;
-  assign PRESETn = ~reset;
+  assign DebugPCLK = clk;
+  assign DebugPRESETn = ~reset;
 
   // -----------------------------------------------------------------
   // APB State Machine
@@ -114,7 +114,7 @@ module debug_apb_requester import cvw::*; #(parameter cvw_t P) (
       end
 
       ACCESS: begin
-        if (PREADY) NextState = IDLE;
+        if (DebugPREADY) NextState = IDLE;
         else        NextState = ACCESS;
       end
 
@@ -130,21 +130,21 @@ module debug_apb_requester import cvw::*; #(parameter cvw_t P) (
   assign Setup  = (CurrState == SETUP);
   assign Access = (CurrState == ACCESS);
 
-  assign PSELRegister = ~Idle & (CMDType == 8'h00);
-  assign PSELMemory   = ~Idle & (CMDType == 8'h02);
-  assign PWRITE       = ~Idle & Write;
+  assign DebugPSELRegister = ~Idle & (CMDType == 8'h00);
+  assign DebugPSELMemory   = ~Idle & (CMDType == 8'h02);
+  assign DebugPWRITE       = ~Idle & Write;
 
-  assign PENABLE = Access;
+  assign DebugPENABLE = Access;
 
-  assign PSTRB = '0;
+  assign DebugPSTRB = '0;
 
   if (P.LLEN > 32) begin
-    assign PWDATA = AARSize == 3'd2 ? {32'h0, Data0} : {Data1, Data0};
+    assign DebugPWDATA = AARSize == 3'd2 ? {32'h0, Data0} : {Data1, Data0};
   end else begin
-    assign PWDATA = Data0;
+    assign DebugPWDATA = Data0;
   end
 
-  assign PADDR = P.PA_BITS'(RegNO);
+  assign DebugPADDR = P.PA_BITS'(RegNO);
 
   // assign ValidSize = (AARSize == 3'd2)
   //                    | (AARSize == 3'd3 & (P.XLEN == 64 | (NextDebugFPREnable & P.D_SUPPORTED)))
@@ -156,6 +156,6 @@ module debug_apb_requester import cvw::*; #(parameter cvw_t P) (
                      | (AARSize == 3'd3 & (P.XLEN == 64 | P.D_SUPPORTED))
                      | (AARSize == 3'd4 & P.Q_SUPPORTED));
 
-  assign AARException = PENABLE & PREADY & PSLVERR;
+  assign AARException = DebugPENABLE & DebugPREADY & DebugPSLVERR;
 
 endmodule

@@ -29,16 +29,16 @@
 
 module debug_apb_completer import cvw::*; #(parameter cvw_t P) (
   // APB Requester signals
-  input  logic                PCLK, PRESETn,
-  input  logic                PENABLE,
-  input  logic                PSELRegister,
-  input  logic                PWRITE,
-  input  logic [P.LLEN-1:0]   PWDATA,
-  input  logic [15:0]         PADDR,
+  input  logic                DebugPCLK, DebugPRESETn,
+  input  logic                DebugPENABLE,
+  input  logic                DebugPSELRegister,
+  input  logic                DebugPWRITE,
+  input  logic [P.LLEN-1:0]   DebugPWDATA,
+  input  logic [15:0]         DebugPADDR,
   // APB Completer signals
-  output logic                PREADY,
-  output logic [P.LLEN-1:0]   PRDATA,
-  output logic                PSLVERR,
+  output logic                DebugPREADY,
+  output logic [P.LLEN-1:0]   DebugPRDATA,
+  output logic                DebugPSLVERR,
   // Access the three standard types of registers
   output logic                DebugGPREnable,
   output logic                DebugFPREnable,
@@ -62,30 +62,30 @@ module debug_apb_completer import cvw::*; #(parameter cvw_t P) (
     DebugCSREnable = 1'b0;
     DebugFPREnable = 1'b0;
     Exists         = 1'b0;
-    case (PADDR) inside
+    case (DebugPADDR) inside
       // GPRs
       [16'h1000:16'h100f]: begin
-        DebugGPREnable = PENABLE;
+        DebugGPREnable = DebugPENABLE;
         Exists         = 1'b1;
       end
 
       [16'h1010:16'h101f]: begin
         if (~P.E_SUPPORTED) begin
-          DebugGPREnable = PENABLE;
+          DebugGPREnable = DebugPENABLE;
           Exists         = 1'b1;
         end
       end
 
       // CSRs
       [16'h0000:16'h0fff]: begin
-        DebugCSREnable = PENABLE;
+        DebugCSREnable = DebugPENABLE;
         Exists         = 1'b1;
       end
 
       // FPRs
       [16'h1020:16'h103f]: begin
         if (P.F_SUPPORTED) begin
-          DebugFPREnable = PENABLE;
+          DebugFPREnable = DebugPENABLE;
           Exists         = 1'b1;
         end
       end
@@ -99,11 +99,11 @@ module debug_apb_completer import cvw::*; #(parameter cvw_t P) (
     endcase
   end
 
-  assign PSLVERR = PENABLE & (IllegalDebugCSRAccess | ~Exists);
+  assign DebugPSLVERR = DebugPENABLE & (IllegalDebugCSRAccess | ~Exists);
 
-  assign DebugRegAddr = PADDR[11:0];
-  assign DebugRegWrite = PENABLE & PSELRegister & PWRITE;
-  assign DebugRegWDATA = PWDATA;
+  assign DebugRegAddr = DebugPADDR[11:0];
+  assign DebugRegWrite = DebugPENABLE & DebugPSELRegister & DebugPWRITE;
+  assign DebugRegWDATA = DebugPWDATA;
 
   if (P.F_SUPPORTED) begin
     if (P.FLEN < P.LLEN) begin
@@ -112,22 +112,22 @@ module debug_apb_completer import cvw::*; #(parameter cvw_t P) (
         CSRReadValM,
         {{(P.LLEN-P.FLEN){1'b0}}, DebugFRD1D},
         {DebugFPREnable, DebugCSREnable}, // Select
-        PRDATA);
+        DebugPRDATA);
     end else if (P.XLEN < P.LLEN) begin
       mux3 #(P.LLEN) debugregmux(
         {{(P.LLEN - P.XLEN){1'b0}}, DebugR1D},
         {{(P.LLEN - P.XLEN){1'b0}}, CSRReadValM},
         DebugFRD1D,
         {DebugFPREnable, DebugCSREnable}, // Select
-        PRDATA);
+        DebugPRDATA);
     end else begin
-      mux3 #(P.LLEN) debugregmux(DebugR1D, CSRReadValM, DebugFRD1D, {DebugFPREnable, DebugCSREnable}, PRDATA);
+      mux3 #(P.LLEN) debugregmux(DebugR1D, CSRReadValM, DebugFRD1D, {DebugFPREnable, DebugCSREnable}, DebugPRDATA);
     end
   end else begin
-    mux2 #(P.XLEN) debugregmux(DebugR1D, CSRReadValM, DebugCSREnable, PRDATA);
+    mux2 #(P.XLEN) debugregmux(DebugR1D, CSRReadValM, DebugCSREnable, DebugPRDATA);
   end
 
   // No reason this shouldn't always be ready
-  assign PREADY = 1'b1;
+  assign DebugPREADY = 1'b1;
 
 endmodule

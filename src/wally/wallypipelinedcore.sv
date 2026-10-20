@@ -52,16 +52,16 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
    input  logic                  DebugHaveResetAck,
    input  logic                  DebugResetHaltReq,
    // Debug APB Interface for Abstract Access Register Commands
-   input  logic                  PCLK, PRESETn,
-   input  logic                  PENABLE,
-   input  logic                  PSELRegister,
-   input  logic                  PWRITE,
-   input  logic [P.LLEN-1:0]     PWDATA,
-   input  logic [15:0]           PADDR,
+   input  logic                  DebugPCLK, DebugPRESETn,
+   input  logic                  DebugPENABLE,
+   input  logic                  DebugPSELRegister,
+   input  logic                  DebugPWRITE,
+   input  logic [P.LLEN-1:0]     DebugPWDATA,
+   input  logic [15:0]           DebugPADDR,
    // APB Completer signals
-   output logic                  PREADY,
-   output logic [P.LLEN-1:0]     PRDATA,
-   output logic                  PSLVERR
+   output logic                  DebugPREADY,
+   output logic [P.LLEN-1:0]     DebugPRDATA,
+   output logic                  DebugPSLVERR
 );
 
   logic                          StallF, StallD, StallE, StallM, StallW;
@@ -415,15 +415,15 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   end
 
   if (P.SDEXT_SUPPORTED) begin : debug_apb
-    debug_apb_completer #(P) debug_apb(.PCLK, .PRESETn,
-      .PENABLE, .PSELRegister, .PWRITE, .PWDATA, .PADDR,
-      .PREADY, .PRDATA, .PSLVERR,
+    debug_apb_completer #(P) debug_apb(.DebugPCLK, .DebugPRESETn,
+      .DebugPENABLE, .DebugPSELRegister, .DebugPWRITE, .DebugPWDATA, .DebugPADDR,
+      .DebugPREADY, .DebugPRDATA, .DebugPSLVERR,
       .DebugGPREnable, .DebugFPREnable, .DebugCSREnable,
       .DebugRegAddr, .DebugRegWrite, .DebugRegWDATA,
       .DebugR1D, .DebugFRD1D, .CSRReadValM,
       .IllegalDebugCSRAccess);
   end else begin
-    assign {PREADY, PRDATA, PSLVERR,
+    assign {DebugPREADY, DebugPRDATA, DebugPSLVERR,
       DebugGPREnable, DebugFPREnable, DebugCSREnable,
       DebugRegAddr, DebugRegWrite, DebugRegWDATA} = '0;
   end

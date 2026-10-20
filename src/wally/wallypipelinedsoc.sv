@@ -101,18 +101,18 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic                       DebugResetHaltReq;
 
   // Debug APB interface
-  logic                       PCLK, PRESETn;
-  logic                       PENABLE;
-  logic                       PSELRegister;
-  logic                       PSELMemory;
-  logic                       PWRITE;
-  logic [P.XLEN/8-1:0]        PSTRB;
-  logic [P.LLEN-1:0]          PWDATA;
-  logic [P.PA_BITS-1:0]       PADDR;
+  logic                       DebugPCLK, DebugPRESETn;
+  logic                       DebugPENABLE;
+  logic                       DebugPSELRegister;
+  logic                       DebugPSELMemory;
+  logic                       DebugPWRITE;
+  logic [P.XLEN/8-1:0]        DebugPSTRB;
+  logic [P.LLEN-1:0]          DebugPWDATA;
+  logic [P.PA_BITS-1:0]       DebugPADDR;
   //Completer signals
-  logic                       PREADY;
-  logic [P.LLEN-1:0]          PRDATA;
-  logic                       PSLVERR;
+  logic                       DebugPREADY;
+  logic [P.LLEN-1:0]          DebugPRDATA;
+  logic                       DebugPSLVERR;
 
   assign PlatformReset = reset | DebugNDMReset;;
 
@@ -126,9 +126,9 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .ExternalStall,
     .DebugMode, .DebugHaltReq, .DebugResumeReq,
     .DebugHaveReset, .DebugHaveResetAck, .DebugResetHaltReq,
-    .PCLK, .PRESETn,
-    .PENABLE, .PSELRegister, .PWRITE, .PWDATA, .PADDR(PADDR[15:0]),
-    .PREADY, .PRDATA, .PSLVERR
+    .DebugPCLK, .DebugPRESETn,
+    .DebugPENABLE, .DebugPSELRegister, .DebugPWRITE, .DebugPWDATA, .DebugPADDR(DebugPADDR[15:0]),
+    .DebugPREADY, .DebugPRDATA, .DebugPSLVERR
    );
 
   // instantiate uncore if a bus interface exists
@@ -151,26 +151,20 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
     debug #(P) debug(.clk, .reset, .DebugNDMReset, .DebugHaltReq, .DebugResumeReq, .DebugMode,
       .DMIADDR, .DMIDATA, .DMIOP, .DMIREADY, .DMIVALID,
       .DMIRSPDATA, .DMIRSPOP, .DMIRSPREADY, .DMIRSPVALID,
-      .PCLK, .PRESETn, .PENABLE, .PSELRegister, .PSELMemory,
-      .PWRITE, .PWDATA, .PSTRB, .PADDR, .PREADY, .PRDATA, .PSLVERR,
+      .DebugPCLK, .DebugPRESETn, .DebugPENABLE, .DebugPSELRegister, .DebugPSELMemory,
+      .DebugPWRITE, .DebugPWDATA, .DebugPSTRB, .DebugPADDR, .DebugPREADY, .DebugPRDATA, .DebugPSLVERR,
       .DebugHaveReset, .DebugHaveResetAck, .DebugResetHaltReq);
   end else begin
     assign tdo = 1'bz;
-    // assign DebugGPREnable = 0;
-    // assign DebugCSREnable = 0;
-    // assign DebugFPREnable = 0;
-    // assign DebugRegWDATA = '0;
-    // assign DebugRegAddr = '0;
-    // assign DebugRegWrite = 0;
-    assign PCLK = '0;
-    assign PRESETn = '0;
-    assign PENABLE = '0;
-    assign PSELRegister = '0;
-    assign PSELMemory = '0;
-    assign PWRITE = '0;
-    assign PWDATA = '0;
-    assign PSTRB = '0;
-    assign PADDR = '0;
+    assign DebugPCLK = '0;
+    assign DebugPRESETn = '0;
+    assign DebugPENABLE = '0;
+    assign DebugPSELRegister = '0;
+    assign DebugPSELMemory = '0;
+    assign DebugPWRITE = '0;
+    assign DebugPWDATA = '0;
+    assign DebugPSTRB = '0;
+    assign DebugPADDR = '0;
     assign DebugHaltReq = 0;
     assign DebugResumeReq = 0;
     assign DebugNDMReset = 0;
