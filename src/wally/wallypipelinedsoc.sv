@@ -68,6 +68,10 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   input  logic                tck, tms, tdi,
   output logic                tdo
 );
+  // Reset signals
+  //logic                       ExtResetSync;
+  logic                       reset_ext_sync;
+  logic                       PlatformReset;
 
   // Uncore signals
   logic [P.AHBW-1:0]          HRDATA;           // from AHB mux in uncore
@@ -110,11 +114,13 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic [P.LLEN-1:0]          PRDATA;
   logic                       PSLVERR;
 
+  assign PlatformReset = reset | DebugNDMReset;;
+
   // synchronize reset to SOC clock domain
   synchronizer resetsync(.clk, .d(reset_ext), .q(reset));
 
   // instantiate processor and internal memories
-  wallypipelinedcore #(P) core(.clk, .reset(reset | DebugNDMReset),
+  wallypipelinedcore #(P) core(.clk, .reset(PlatformReset),
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .ExternalStall,
