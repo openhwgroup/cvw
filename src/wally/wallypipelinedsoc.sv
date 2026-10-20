@@ -156,20 +156,10 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
       .DebugHaveReset, .DebugHaveResetAck, .DebugResetHaltReq);
   end else begin
     assign tdo = 1'bz;
-    assign DebugPCLK = '0;
-    assign DebugPRESETn = '0;
-    assign DebugPENABLE = '0;
-    assign DebugPSELRegister = '0;
-    assign DebugPSELMemory = '0;
-    assign DebugPWRITE = '0;
-    assign DebugPWDATA = '0;
-    assign DebugPSTRB = '0;
-    assign DebugPADDR = '0;
-    assign DebugHaltReq = 0;
-    assign DebugResumeReq = 0;
-    assign DebugNDMReset = 0;
-    assign DebugHaveResetAck = 0;
-    assign DebugResetHaltReq = 0;
+    assign {DebugPCLK, DebugPRESETn,
+      DebugPENABLE, DebugPSELRegister, DebugPSELMemory, DebugPWRITE, DebugPWDATA,
+      DebugPSTRB, DebugPADDR, DebugHaltReq, DebugResumeReq, DebugNDMReset,
+      DebugHaveResetAck, DebugResetHaltReq} = '0;
   end
 
 endmodule
