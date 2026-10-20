@@ -88,7 +88,7 @@ Debug Module
   - [x] cmderr
   - [x] datacount
 - [x] Data0
-- [x] Data1 (`if XLEN == 64`)
+- [x] Data1 (`if LLEN == 64`)
 - [ ] HartInfo
 - [ ] Hart Array Window Select
 - [ ] Hart
@@ -106,7 +106,7 @@ Debug Extension
   - [x] Stop counters 🔶
   - [ ] Stop time 🔶
   - [ ] extcause :-:
-    - Can just be set to 0 for not being implemented and also stays 0 even if cetrig is implemented which is partly what it's needed for. All other values are reserved for future version of the RISCV debug spec.
+    - Can just be set to 0 for not being implemented and also stays 0 even if cetrig is implemented which is partly what it's needed for. All other values are reserved for future version Of the RISCV debug spec.
   - [ ] nmip 🔶
   - [x] prv
   - [ ] mprven
