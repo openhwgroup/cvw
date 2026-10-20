@@ -44,7 +44,7 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   output logic         sretM, mretM, RetM,                  // return instructions
   output logic         WaitM,                               // wfi or wrs in M is waiting: stall the pipeline
   output logic         WaitedM,                             // wfi or wrs in M has waited (not a delayed WaitM): it retires before an interrupt is taken
-  output logic         sfencevmaM,                          // sfence.vma / sinval.vma instructions
+  output logic         sfencevmaM,                          // invalidate TLB entries: sfence.vma, sinval.vma (and sfence.w.inval, sfence.inval.ir unless TLB_EXACT_FENCE_INVAL)
   output logic         sfencevmaAllM,                       // sfence.vma with rs2=x0: flush all TLB entries including global
   output logic         sfencevmaAdrM                        // sfence.vma with rs1!=x0: flush only entries that translate the address in rs1
 );
@@ -61,6 +61,7 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   logic                sfencewinvalM, sfenceinvalirM;       // sfence.w.inval, sfence.inval.ir
   logic                vmaM;                                // sfence.vma or sinval.vma
   logic                fenceinvalM;                         // sfence.w.inval or sfence.inval.ir
+  logic                vmafenceM;                           // sfence.vma, sinval.vma, sfence.w.inval or sfence.inval.ir, permitted in this mode
 
   ///////////////////////////////////////////
   // Decode privileged instructions
@@ -70,7 +71,6 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   assign rdzeroM  =    InstrM[11:7]  == 5'b0;
 
   // svinval instructions
-  // any svinval instruction is treated as sfence.vma on Wally
   assign sinvalvmaM     = (InstrM[31:25] ==  7'b0001011)                 & rdzeroM;
   assign sfencewinvalM  = (InstrM[31:20] == 12'b000110000000) & rs1zeroM & rdzeroM;
   assign sfenceinvalirM = (InstrM[31:20] == 12'b000110000001) & rs1zeroM & rdzeroM;
@@ -88,10 +88,14 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   assign wrsntoM =    P.ZAWRS_SUPPORTED & PrivilegedM & (InstrM[31:20] == 12'b000000001101) & rs1zeroM;
   assign wrsstoM =    P.ZAWRS_SUPPORTED & PrivilegedM & (InstrM[31:20] == 12'b000000011101) & rs1zeroM;
 
-  // all of sinval.vma, sfence.w.inval, sfence.inval.ir are treated as sfence.vma
-  assign sfencevmaM = PrivilegedM & P.VIRTMEM_SUPPORTED &
-                      ((PrivilegeModeW == P.M_MODE & (vmaM | fenceinvalM)) |
-                       (PrivilegeModeW == P.S_MODE & (vmaM & ~STATUS_TVM  | fenceinvalM))); // sfence.w.inval & sfence.inval.ir not affected by TVM
+  assign vmafenceM = PrivilegedM & P.VIRTMEM_SUPPORTED &
+                     ((PrivilegeModeW == P.M_MODE & (vmaM | fenceinvalM)) |
+                      (PrivilegeModeW == P.S_MODE & (vmaM & ~STATUS_TVM  | fenceinvalM))); // sfence.w.inval & sfence.inval.ir not affected by TVM
+  // sinval.vma invalidates the TLB like sfence.vma.  With exact invalidation, each sinval.vma has already
+  // invalidated exactly the entries it names, so sfence.w.inval and sfence.inval.ir leave the TLB alone:
+  // stores and page-table walks are in order, and sfence.inval.ir flushes the younger instructions (controller).
+  // Otherwise they flush the whole TLB.
+  assign sfencevmaM = vmafenceM & ~(fenceinvalM & P.TLB_EXACT_FENCE_INVAL);
   // rs2 (InstrM[24:20]) = x0 means flush all ASIDs including global mappings; rs2 != x0 flushes only the
   // non-global (G=0) entries of the ASID in rs2.  rs1 (InstrM[19:15]) != x0 flushes only entries that translate
   // the address in rs1.  sfence.w.inval and sfence.inval.ir (encoded with rs1 = x0) flush everything.
@@ -141,6 +145,6 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   // Fault on illegal instructions
   ///////////////////////////////////////////
 
-  assign IllegalPrivilegedInstrM = PrivilegedM & ~(sretM|mretM|ecallM|ebreakM|wfiM|wrsntoM|wrsstoM|sfencevmaM);
+  assign IllegalPrivilegedInstrM = PrivilegedM & ~(sretM|mretM|ecallM|ebreakM|wfiM|wrsntoM|wrsstoM|vmafenceM);
   assign IllegalInstrFaultM = IllegalIEUFPUInstrM | IllegalPrivilegedInstrM | IllegalCSRAccessM | TWTimeoutM;
 endmodule

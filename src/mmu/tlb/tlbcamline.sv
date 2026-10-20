@@ -114,11 +114,12 @@ module tlbcamline import cvw::*;  #(parameter cvw_t P,
   assign PageTypeRead = PageType & {3{Match}};
 
   // On a write, set the valid bit high and update the stored key.
-  // On a flush, zero the valid bit and leave the key unchanged.  An sfence.vma with rs1 != x0 flushes only
-  // an entry whose page holds the address (TLBFlushVA), and one with rs2 != x0 only a non-global entry of
-  // that ASID (TLBFlushAll = 0), so global mappings survive an ASID-scoped sfence.vma.
+  // On a flush, zero the valid bit and leave the key unchanged.  Global mappings survive an sfence.vma with
+  // rs2 != x0 (TLBFlushAll = 0).  With exact invalidation, an sfence.vma with rs1 != x0 flushes only an entry
+  // whose page holds the address (TLBFlushVA), and one with rs2 != x0 only an entry of that ASID.
   logic ShouldFlush;
-  assign ShouldFlush = TLBFlush & (~TLBFlushVA | MatchVPN) & (TLBFlushAll | ~PTE_G & SameASID);
+  if (P.TLB_EXACT_FENCE_INVAL) assign ShouldFlush = TLBFlush & (~TLBFlushVA | MatchVPN) & (TLBFlushAll | ~PTE_G & SameASID);
+  else                         assign ShouldFlush = TLBFlush & (TLBFlushAll | ~PTE_G);
   flopenr #(1) validbitflop(clk, reset, WriteEnable | ShouldFlush, ~ShouldFlush, Valid);
   flopenr #(KEY_BITS) keyflop(clk, reset, WriteEnable, {SATP_ASID, VPN}, Key);
 endmodule

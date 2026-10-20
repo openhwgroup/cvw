@@ -98,6 +98,8 @@ derivconfigtests = [
         ["tlb16_rv32gc", ["wally32priv"]],
         ["tlb2_rv64gc", ["wally64priv"]],
         ["tlb16_rv64gc", ["wally64priv"]],
+        ["tlbinexact_rv32gc", ["wally32priv"]],
+        ["tlbinexact_rv64gc", ["wally64priv"]],
         ["way_1_4096_512_rv32gc", ["arch32i"]],
         ["way_2_4096_512_rv32gc", ["arch32i"]],
         ["way_8_4096_512_rv32gc", ["arch32i"]],

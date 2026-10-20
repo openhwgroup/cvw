@@ -578,6 +578,13 @@ deriv tlb16_rv64gc rv64gc
 ITLB_ENTRIES 32'd16
 DTLB_ENTRIES 32'd16
 
+# sfence.vma and sinval.vma invalidate more TLB entries than they name
+deriv tlbinexact_rv32gc rv32gc
+TLB_EXACT_FENCE_INVAL 0
+
+deriv tlbinexact_rv64gc rv64gc
+TLB_EXACT_FENCE_INVAL 0
+
 # Feature variants
 
 deriv misaligned_rv32gc rv32gc
