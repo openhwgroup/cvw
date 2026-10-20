@@ -197,14 +197,14 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic [P.XLEN-1:0]             DPC;
   logic                          IllegalDebugCSRAccess;
 
-  //
-  logic                          DebugGPREnable; // REPLACE WITH APB
-  logic                          DebugCSREnable; // REPLACE WITH APB
-  logic                          DebugFPREnable; // REPLACE WITH APB
-  logic [P.LLEN-1:0]             DebugRegRDATA;  // REPLACE WITH APB
-  logic [P.LLEN-1:0]             DebugRegWDATA;  // REPLACE WITH APB
-  logic [11:0]                   DebugRegAddr;   // REPLACE WITH APB
-  logic                          DebugRegWrite;  // REPLACE WITH APB
+  // Internal Debug Abstract Access Register command mux signals
+  logic                          DebugGPREnable;
+  logic                          DebugCSREnable;
+  logic                          DebugFPREnable;
+  logic [P.LLEN-1:0]             DebugRegRDATA;
+  logic [P.LLEN-1:0]             DebugRegWDATA;
+  logic [11:0]                   DebugRegAddr;
+  logic                          DebugRegWrite;
 
   // instruction fetch unit: PC, branch prediction, instruction cache
   ifu #(P) ifu(.clk, .reset,
