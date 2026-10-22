@@ -41,7 +41,7 @@ module lmulsequencer
    // output micro vector instruction
    output logic [4:0] Vs1FinalD, Vs2FinalD, VdFinalD,
    output logic MicroVectorD,
-   output logic LMULExpansionD
+   output logic MicroOpNotLastDD
 );
 
 
@@ -93,9 +93,9 @@ module lmulsequencer
 
   //assign lmulCntrLoad = CurrState == STATE_BEGIN & VectorD;
   assign lmulCntrLoad = CurrState == STATE_INCR & lmulCntrDone;
-  //assign LMULExpansionD = AnyExecutionUnitReadyD & (CurrState == STATE_INCR);
-  assign LMULExpansionD = (CurrState == STATE_INCR & ~lmulCntrDone) | (CurrState == STATE_BEGIN & lmulIntD > 4'd1 & VectorD);
-  assign IncrD = (AnyExecutionUnitReadyD & VectorD) | LMULExpansionD;
+  //assign MicroOpNotLastDD = AnyExecutionUnitReadyD & (CurrState == STATE_INCR);
+  assign MicroOpNotLastDD = (CurrState == STATE_INCR & ~lmulCntrDone) | (CurrState == STATE_BEGIN & lmulIntD > 4'd1 & VectorD);
+  assign IncrD = (AnyExecutionUnitReadyD & VectorD) | MicroOpNotLastDD;
 
   assign MicroVectorD = IncrD | VectorD;
 

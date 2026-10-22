@@ -36,9 +36,9 @@ module vdispatcher import cvw::*;  #(parameter cvw_t P) (
   input  logic [4:0]  Vs1D, Vs2D, VdD,
   input  logic [6:0]  lmulDecodedD,
   // hand shaking controls
-  output logic [P.VPU_MAX_EU-1:0] ControllerValidD,
-  input  logic [P.VPU_MAX_EU-1:0] ExecutionUnitReadyD,
-  output logic LMULExpansionD,
+  output logic [P.VPU_EU-1:0] ControllerValidD,
+  input  logic [P.VPU_EU-1:0] ExecutionUnitReadyD,
+  output logic MicroOpNotLastDD,
   // output micro vector instruction
   output logic MicroVectorD,
   output logic [4:0] Vs1FinalD, Vs2FinalD, VdFinalD
@@ -55,10 +55,10 @@ module vdispatcher import cvw::*;  #(parameter cvw_t P) (
   // For this initial version All EUs will accept all instructions. *** fix me later.
   // Selection mechanism is currently priority encoder.  Should be round robin. *** fix me later.
 
-  logic [P.VPU_MAX_EU-1:0] SelectedD;
+  logic [P.VPU_EU-1:0] SelectedD;
   logic                    AnyExecutionUnitReadyD;
 
-  priorityonehot #(P.VPU_MAX_EU) SelectedEUPriority(ExecutionUnitReadyD, SelectedD);
+  priorityonehot #(P.VPU_EU) SelectedEUPriority(ExecutionUnitReadyD, SelectedD);
   //assign AnyExecutionUnitReadyD = |ExecutionUnitReadyD;
   // *** for now just first 2 EUs
   assign AnyExecutionUnitReadyD = ExecutionUnitReadyD[0] | ExecutionUnitReadyD[1];
@@ -66,9 +66,9 @@ module vdispatcher import cvw::*;  #(parameter cvw_t P) (
   lmulsequencer lmulsequencer(.clk, .reset, .StallVectorD, .FlushVectorD,
                                    .VectorD, .Vs1D, .Vs2D, .VdD, .lmulDecodedD,
                                    .AnyExecutionUnitReadyD, .Vs1FinalD, .Vs2FinalD, .VdFinalD,
-                              .MicroVectorD, .LMULExpansionD);
+                              .MicroVectorD, .MicroOpNotLastDD);
 
-  assign ControllerValidD = SelectedD & {P.VPU_MAX_EU{MicroVectorD}}; // demux to selected EU
+  assign ControllerValidD = SelectedD & {P.VPU_EU{MicroVectorD}}; // demux to selected EU
   //assign MicroVectorD = |ControllerValidD;
 
 endmodule

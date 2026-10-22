@@ -49,12 +49,12 @@ module vcontroller import cvw::*;  #(parameter cvw_t P) (
   output logic                        VALUResultSrcD,
   output logic                        IllegalVPUInstrD,
   // hand shaking controls
-  output logic [P.VPU_MAX_EU-1:0]     ControllerValidD,
-  input logic [P.VPU_MAX_EU-1:0]      ExecutionUnitReadyD,
-  output logic [P.VPU_QUEUEDEPTH-1:0] ExecutionUnitOrderD [P.VPU_MAX_EU-1:0],
-  input logic [P.VPU_QUEUEDEPTH-1:0]  ExecutionUnitOrderW [P.VPU_MAX_EU-1:0],
-  input logic [P.VPU_MAX_EU-1:0]      ExecutionUnitResultValidW,
-  output logic [P.VPU_MAX_EU-1:0]     ControllerWBReadyW,
+  output logic [P.VPU_EU-1:0]     ControllerValidD,
+  input logic [P.VPU_EU-1:0]      ExecutionUnitReadyD,
+  output logic [P.VPU_QUEUEDEPTH-1:0] ExecutionUnitOrderD [P.VPU_EU-1:0],
+  input logic [P.VPU_QUEUEDEPTH-1:0]  ExecutionUnitOrderW [P.VPU_EU-1:0],
+  input logic [P.VPU_EU-1:0]      ExecutionUnitResultValidW,
+  output logic [P.VPU_EU-1:0]     ControllerWBReadyW,
   output logic                        VPUFrontEndBusyD
 );
 
@@ -62,7 +62,7 @@ module vcontroller import cvw::*;  #(parameter cvw_t P) (
   logic [4:0]  Vs1D, Vs2D;               // Vector Source 1 and 2
   logic [4:0]  VdD;                      // Vector Destination read (overwrite)
   logic [6:0]  lmulDecodedD;
-  logic        LMULExpansionD;
+  logic        MicroOpNotLastDD;
 
   //logic [2:0]  lmulD;                  // *** should be set by vset* instruction
 
@@ -77,7 +77,7 @@ module vcontroller import cvw::*;  #(parameter cvw_t P) (
   vdispatcher #(P) vdispatcher(.clk, .reset, .StallVectorD, .FlushVectorD,
                                .VectorD, .Vs1D, .Vs2D, .VdD, .ControllerValidD, .ExecutionUnitReadyD,
                                .MicroVectorD, .Vs1FinalD, .Vs2FinalD, .VdFinalD, .lmulDecodedD,
-                               .LMULExpansionD);
+                               .MicroOpNotLastDD);
 
   // The controller must track the program order of vector instruction because they may finish out-of-order.
   // A queue records the issue order.  The queue is peaked to check for the next instruction to remove from the
@@ -91,7 +91,7 @@ module vcontroller import cvw::*;  #(parameter cvw_t P) (
 
 
   logic [P.VPU_QUEUEDEPTH - 1 : 0 ] OrderD;
-  logic [P.VPU_MAX_EU - 1 : 0 ] MatchW;
+  logic [P.VPU_EU - 1 : 0 ] MatchW;
   logic [P.VPU_QUEUEDEPTH - 1 : 0 ]    HeadOrderW;
   logic                         AnyMatchW;
   logic                         InstrOrderQueueFullD;
@@ -102,7 +102,7 @@ module vcontroller import cvw::*;  #(parameter cvw_t P) (
   counter #(P.VPU_QUEUEDEPTH) ordercounter(clk, reset, MicroVectorD, OrderD);
 
   genvar i;
-  for (i = 0; i < P.VPU_MAX_EU; i++) begin
+  for (i = 0; i < P.VPU_EU; i++) begin
     assign MatchW[i] = (HeadOrderW == ExecutionUnitOrderW[i]) & ExecutionUnitResultValidW[i];  // *** two missing inputs
     assign ControllerWBReadyW[i] = MatchW[i];
     assign ExecutionUnitOrderD[i] = OrderD;
@@ -110,7 +110,7 @@ module vcontroller import cvw::*;  #(parameter cvw_t P) (
 
   assign AnyMatchW = | MatchW;
 
-  assign VPUFrontEndBusyD = InstrOrderQueueFullD | LMULExpansionD; // *** add other terms here, ie if the dispatcher cannot an issue instruction and it stalls decoder stage
+  assign VPUFrontEndBusyD = InstrOrderQueueFullD | MicroOpNotLastDD; // *** add other terms here, ie if the dispatcher cannot an issue instruction and it stalls decoder stage
 
 
 endmodule

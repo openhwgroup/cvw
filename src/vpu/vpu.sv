@@ -76,19 +76,19 @@ module vpu import cvw::*;  #(parameter cvw_t P) (
 
   //logic       IllegalVPUInstrD;
 
-  logic [P.VPU_MAX_EU-1:0] ControllerValidD;
-  logic [P.VPU_MAX_EU-1:0] ExecutionUnitReadyD;
-  logic [P.VPU_MAX_EU-1:0] ControllerWBReadyW;
-  logic [P.VPU_MAX_EU-1:0] ExecutionUnitResultValidW;
-  logic [P.VPU_QUEUEDEPTH-1:0] ExecutionUnitOrderW [P.VPU_MAX_EU-1:0];
-  logic [P.VPU_QUEUEDEPTH-1:0] ExecutionUnitOrderD [P.VPU_MAX_EU-1:0];
+  logic [P.VPU_EU-1:0] ControllerValidD;
+  logic [P.VPU_EU-1:0] ExecutionUnitReadyD;
+  logic [P.VPU_EU-1:0] ControllerWBReadyW;
+  logic [P.VPU_EU-1:0] ExecutionUnitResultValidW;
+  logic [P.VPU_QUEUEDEPTH-1:0] ExecutionUnitOrderW [P.VPU_EU-1:0];
+  logic [P.VPU_QUEUEDEPTH-1:0] ExecutionUnitOrderD [P.VPU_EU-1:0];
 
   logic            VRegWriteW, RegWriteW;
   logic [4:0]      VdFinalW;
   genvar i;
 
-  logic [P.VPU_MAX_EU-1:0] VIEURegWriteW, VIEUVRegWriteW;
-  logic [4:0]              VIEUVdFinalW [P.VPU_MAX_EU-1:0];
+  logic [P.VPU_EU-1:0] VIEURegWriteW, VIEUVRegWriteW;
+  logic [4:0]              VIEUVdFinalW [P.VPU_EU-1:0];
 
   // divide into control and data path
 
@@ -165,7 +165,7 @@ module vpu import cvw::*;  #(parameter cvw_t P) (
 
   or_rows #(P.VPU_INT_EU, P.VLEN) VEUResultAOMux(.a(VIEUResultW), .y(VResultFinalW));
   or_rows #(P.VPU_INT_EU, P.XLEN) VIEUFPResultAOMux(.a(VIEUResultToScalarW), .y(VIEUFPResultFinalW));
-  or_rows #(P.VPU_MAX_EU, 5) VdAOMux(.a(VIEUVdFinalW), .y(VdFinalW));
+  or_rows #(P.VPU_EU, 5) VdAOMux(.a(VIEUVdFinalW), .y(VdFinalW));
   //or_rows #(P.VPU_INT_EU, 5) RdAOMux(.a(VIEURegWriteW), .y(VRdFinalW));
   assign VRegWriteW = | VIEUVRegWriteW;
   assign RegWriteW = | VIEURegWriteW;

@@ -65,21 +65,33 @@ module queue  #(parameter DEPTH=3, WIDTH=8)
       rptr <= '0;
       wptr <= '0;
       full <= 1'b0;
-      empty <= 1'b1;
+      empty <= 1'b0;
     end else begin
       if (enqueue) begin
-        full <= ({~wptrnext[DEPTH], wptrnext[DEPTH-1:0]} == rptr);
-        wptr  <= wptrnext;
-        empty <= (wptrnext == rptrnext);
+
+        if (~full) wptr  <= wptrnext;
       end
       if (dequeue) begin
-        rptr <= rptrnext;
-        empty <= (wptrnext == rptrnext);
+        if (~empty) rptr <= rptrnext;
+      end
+      if(enqueue & dequeue) begin
+        full <= ({~wptrnext[DEPTH], wptrnext[DEPTH-1:0]} == rptrnext);
+        empty <= wptr == rptr;
+        end
+      else if(enqueue) begin
+        full <= ({~wptrnext[DEPTH], wptrnext[DEPTH-1:0]} == rptr);
+        empty <= wptrnext == rptr;
+      end
+      else if(dequeue) begin
+        full <= ({~wptr[DEPTH], wptr[DEPTH-1:0]} == rptrnext);
+        empty <= wptr == rptrnext;
       end
     end
 
+
+
   assign raddr = rptr[DEPTH-1:0];
-  assign rptrnext = rptr + {{(DEPTH){1'b0}}, ~empty};
+  assign rptrnext = rptr + {{(DEPTH){1'b0}}, 1'b1};
   assign waddr = wptr[DEPTH-1:0];
-  assign wptrnext = wptr + {{(DEPTH){1'b0}}, ~full};
+  assign wptrnext = wptr + {{(DEPTH){1'b0}}, 1'b1};
 endmodule
