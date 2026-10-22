@@ -28,7 +28,7 @@
 module vfrecrsqrt7 import cvw::*; #(parameter cvw_t P) (
   input  logic              IsSqrt,                                 // 1 = vfrsqrt7, 0 = vfrec7
   input  logic              Xs, XNaN, XSNaN, XZero, XInf, XSubnorm, // vs2 sign and class, from unpackinput
-  input  logic [P.NE-1:0]   Xe,                                     // vs2 exponent, internal (double) bias
+  input  logic [P.NE-1:0]   Xe,                                     // vs2 exponent, internal bias (widest format)
   input  logic [P.NF:0]     Xm,                                     // vs2 significand, left-justified
   input  logic [2:0]        Vsew,                                   // 001=16b, 010=32b, 011=64b
   input  logic [2:0]        Frm,                                    // rounding mode
@@ -36,10 +36,14 @@ module vfrecrsqrt7 import cvw::*; #(parameter cvw_t P) (
   output logic [4:0]        VfrecFlg                                // fflags {NV, DZ, OF, UF, NX}
 );
 
+  // Xe and Xm arrive in the widest supported scalar format (P.NE, P.NF, P.BIAS), so the datapath
+  // scales with the configuration. Each SEW is supported only with its scalar format (16: Zfh,
+  // 32: F, 64: D); an unsupported or reserved SEW produces a zero result and no flags.
   localparam logic [2:0] VSEW_16 = 3'b001, VSEW_32 = 3'b010, VSEW_64 = 3'b011;
   localparam logic [2:0] RTZ = 3'b001, RDN = 3'b010, RUP = 3'b011;
   localparam integer     EW     = P.NE + 1;       // one extra bit holds the unshifted rsqrt exponent
   localparam integer     NBYTES = (P.NF + 7) / 8; // fraction bytes searched when normalizing a subnormal (7 for double)
+  localparam integer     ZW     = $clog2(P.NF);   // leading-zero count width: {byte, bit within byte}
   localparam logic [6:0] REC7_TBL [0:127] =
     '{127,125,123,121,119,117,116,114,112,110,109,107,105,104,102,100,99,97,96,94,93,91,90,88,87,85,84,
       83,81,80,79,77,76,75,74,72,71,70,69,68,66,65,64,63,62,61,60,59,58,57,56,55,54,53,52,51,50,49,48,
@@ -53,15 +57,18 @@ module vfrecrsqrt7 import cvw::*; #(parameter cvw_t P) (
 
   logic [EW-1:0]    K, ExpSum;
   logic [P.NE-1:0]  NormExp, RecDenormXe, ResExp;
-  logic [5:0]       ZeroCount;
+  logic [ZW-1:0]    ZeroCount;
   logic [8*NBYTES+7:0]  Pad;
   logic [15:0]      Win;
   logic [NBYTES-1:0]    ByteNZ, LeadByte;
   logic [7:0]       LeadBit;
-  logic [2:0]       ByteNum, BitNum;
+  logic [ZW-4:0]    ByteNum;
+  logic [2:0]       BitNum;
   logic [6:0]       SubIdx, Idx, LutOut;
   logic [8:0]       Frac9, ResFrac9;
   logic [P.NF-1:0]  ResFrac;
+  logic [P.FLEN-1:0] Res16, Res32, Res64;
+  logic             Sew16, Sew32, Sew64;
   logic             Denorm0, Denorm1, SubnormOverflow, SqrtNeg, SatMaxFinite, ResSgn;
 
   // Normalize a subnormal (Xm is left-justified for every SEW) in two one-hot steps: find the
@@ -74,7 +81,7 @@ module vfrecrsqrt7 import cvw::*; #(parameter cvw_t P) (
     for (int k = 0; k < NBYTES; k++) begin
       LeadByte[k] = ByteNZ[k] & ~|(ByteNZ & ((NBYTES'(1) << k) - 1'b1));
       Win     |= {16{LeadByte[k]}} & Pad[8*NBYTES+7-8*k -: 16];
-      ByteNum |= {3{LeadByte[k]}} & 3'(k);
+      ByteNum |= {(ZW-3){LeadByte[k]}} & (ZW-3)'(k);
     end
     for (int j = 0; j < 8; j++) begin
       LeadBit[j] = Win[15-j] & ~|(Win[15 -: 8] >> (8-j));
@@ -89,28 +96,40 @@ module vfrecrsqrt7 import cvw::*; #(parameter cvw_t P) (
   // internal biases are both odd, so that LSB is Xe[0] for a normal and Z[0] for a subnormal.
   assign LutOut = IsSqrt ? REC7SQRT_TBL[{XSubnorm ? ZeroCount[0] : Xe[0], Idx[6:1]}] : REC7_TBL[Idx];
 
-  // Output exponent constants for native bias B and internal bias D = P.D_BIAS (e = unbiased input exponent):
-  //   normal input, Xe = e + D:        rec  B-1-e          = (B+D-1) - Xe
-  //                                    rsqrt (3B-1-(e+B))/2 = ((2B+D-1) - Xe) / 2
+  // Supported SEW, one-hot. A flag that is constant 0 removes its format from every select below.
+  assign Sew16 = P.ZFH_SUPPORTED & (Vsew == VSEW_16);
+  assign Sew32 = P.F_SUPPORTED   & (Vsew == VSEW_32);
+  assign Sew64 = P.D_SUPPORTED   & (Vsew == VSEW_64);
+
+  // Output exponent constants for native bias B and internal bias I = P.BIAS (e = unbiased input exponent):
+  //   normal input, Xe = e + I:        rec  B-1-e          = (B+I-1) - Xe
+  //                                    rsqrt (3B-1-(e+B))/2 = ((2B+I-1) - Xe) / 2
   //   subnormal input, e = -B - Z:     rec  2B-1+Z,  rsqrt (3B-1+Z)/2
   // so the exponent is one adder: K + ~Xe (K = constant + 1, since ~Xe = -Xe-1) or K + Z.
-  // The rsqrt divide by 2 is a shift of the sum.
-  always_comb
-    case (Vsew)
-      VSEW_16: K = XSubnorm ? (IsSqrt ? EW'(3*P.H_BIAS - 1) : EW'(2*P.H_BIAS - 1)) :
-                              (IsSqrt ? EW'(2*P.H_BIAS + P.D_BIAS) : EW'(P.H_BIAS + P.D_BIAS));
-      VSEW_32: K = XSubnorm ? (IsSqrt ? EW'(3*P.S_BIAS - 1) : EW'(2*P.S_BIAS - 1)) :
-                              (IsSqrt ? EW'(2*P.S_BIAS + P.D_BIAS) : EW'(P.S_BIAS + P.D_BIAS));
-      default: K = XSubnorm ? (IsSqrt ? EW'(3*P.D_BIAS - 1) : EW'(2*P.D_BIAS - 1)) :
-                              (IsSqrt ? EW'(2*P.D_BIAS + P.D_BIAS) : EW'(P.D_BIAS + P.D_BIAS));
-    endcase
+  // The rsqrt divide by 2 is a shift of the sum. Only a reciprocal of a normal can be subnormal:
+  // output exponent 0 (Xe = B+I-1) or -1 (Xe = B+I), detected directly on Xe, off the adder path.
+  always_comb begin
+    K = '0; RecDenormXe = '0;
+    if (Sew16) begin
+      K = XSubnorm ? (IsSqrt ? EW'(3*P.H_BIAS - 1) : EW'(2*P.H_BIAS - 1)) :
+                     (IsSqrt ? EW'(2*P.H_BIAS + P.BIAS) : EW'(P.H_BIAS + P.BIAS));
+      RecDenormXe = P.NE'(P.H_BIAS + P.BIAS - 1);
+    end
+    if (Sew32) begin
+      K = XSubnorm ? (IsSqrt ? EW'(3*P.S_BIAS - 1) : EW'(2*P.S_BIAS - 1)) :
+                     (IsSqrt ? EW'(2*P.S_BIAS + P.BIAS) : EW'(P.S_BIAS + P.BIAS));
+      RecDenormXe = P.NE'(P.S_BIAS + P.BIAS - 1);
+    end
+    if (Sew64) begin
+      K = XSubnorm ? (IsSqrt ? EW'(3*P.D_BIAS - 1) : EW'(2*P.D_BIAS - 1)) :
+                     (IsSqrt ? EW'(2*P.D_BIAS + P.BIAS) : EW'(P.D_BIAS + P.BIAS));
+      RecDenormXe = P.NE'(P.D_BIAS + P.BIAS - 1);
+    end
+  end
   assign ExpSum  = K + (XSubnorm ? EW'(ZeroCount) : {1'b1, ~Xe});
   assign NormExp = IsSqrt ? ExpSum[P.NE:1] : ExpSum[P.NE-1:0];
 
-  // Only a reciprocal of a normal can be subnormal: output exponent 0 (Xe = B+D-1) or -1 (Xe = B+D),
-  // detected directly on Xe, off the adder path. The result is {1, LutOut} shifted right by 1 or 2.
-  assign RecDenormXe = (Vsew == VSEW_16) ? P.NE'(P.H_BIAS + P.D_BIAS - 1) :
-                      ((Vsew == VSEW_32) ? P.NE'(P.S_BIAS + P.D_BIAS - 1) : P.NE'(2*P.D_BIAS - 1));
+  // A subnormal result is {1, LutOut} shifted right by 1 or 2.
   assign Denorm0 = ~IsSqrt & ~XSubnorm & (Xe == RecDenormXe);
   assign Denorm1 = ~IsSqrt & ~XSubnorm & (Xe == RecDenormXe + 1'b1);
   assign Frac9   = Denorm0 ? {1'b1, LutOut, 1'b0} : (Denorm1 ? {2'b01, LutOut} : {LutOut, 2'b00});
@@ -134,16 +153,15 @@ module vfrecrsqrt7 import cvw::*; #(parameter cvw_t P) (
   assign ResFrac = {ResFrac9, {(P.NF-9){SatMaxFinite}}};
   assign ResSgn  = Xs & ~XNaN & ~SqrtNeg;               // canonical NaN is positive
 
-  always_comb
-    case (Vsew)
-      VSEW_16: VfrecRes = {{(P.FLEN-16){1'b0}}, ResSgn, ResExp[P.H_NE-1:0], ResFrac[P.NF-1 -: P.H_NF]};
-      VSEW_32: VfrecRes = {{(P.FLEN-32){1'b0}}, ResSgn, ResExp[P.S_NE-1:0], ResFrac[P.NF-1 -: P.S_NF]};
-      VSEW_64: VfrecRes = {{(P.FLEN-64){1'b0}}, ResSgn, ResExp[P.D_NE-1:0], ResFrac};
-      default: VfrecRes = '0;
-    endcase
+  // Pack into the native format. A double field does not exist in a narrower internal format,
+  // so SEW=64 is only built when D is supported.
+  assign Res16 = P.FLEN'({ResSgn, ResExp[P.H_NE-1:0], ResFrac[P.NF-1 -: P.H_NF]});
+  assign Res32 = P.FLEN'({ResSgn, ResExp[P.S_NE-1:0], ResFrac[P.NF-1 -: P.S_NF]});
+  if (P.D_SUPPORTED) assign Res64 = P.FLEN'({ResSgn, ResExp[P.D_NE-1:0], ResFrac[P.NF-1 -: P.D_NF]});
+  else               assign Res64 = '0;
+  assign VfrecRes = ({P.FLEN{Sew16}} & Res16) | ({P.FLEN{Sew32}} & Res32) | ({P.FLEN{Sew64}} & Res64);
 
   // Flags {NV, DZ, OF, UF, NX}: signaling NaN or negative rsqrt, divide by zero, and inexact overflow.
-  assign VfrecFlg = (Vsew == VSEW_16 | Vsew == VSEW_32 | Vsew == VSEW_64) ?
-                    {XSNaN | SqrtNeg, XZero, SubnormOverflow, 1'b0, SubnormOverflow} : '0;
+  assign VfrecFlg = (Sew16 | Sew32 | Sew64) ? {XSNaN | SqrtNeg, XZero, SubnormOverflow, 1'b0, SubnormOverflow} : '0;
 
 endmodule

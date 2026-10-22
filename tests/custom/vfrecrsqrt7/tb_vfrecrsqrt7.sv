@@ -44,6 +44,7 @@ module tb_vfrecrsqrt7;
   logic [2:0]  rm;
   logic [63:0] vd;
   logic [4:0]  fflags;
+  logic [P.FLEN-1:0] vdFlen; // DUT result, FLEN wide
 
   // ----------------------------------------------------------------------
   // vfrecrsqrt7 sits downstream of the FPU's unpackinput unit and does not
@@ -53,19 +54,38 @@ module tb_vfrecrsqrt7;
   // unpackinput expects a scalar-style FLEN-wide operand that is properly
   // NaN-boxed above its native width. Vector elements carry no such
   // boxing, so the selected SEW-wide element is boxed here first.
-  // Invalid SEWs are unpacked as half precision so the DUT sees real
-  // input classes and must suppress the result and flags on its own.
+  // Reserved SEWs, and SEWs whose scalar format the configuration does not
+  // support, are unpacked as the smallest supported format (half, else
+  // single) so the DUT sees real input classes and must suppress the
+  // result and flags on its own.
   // ----------------------------------------------------------------------
   logic [P.FMTBITS-1:0] fmt;
   logic [P.FLEN-1:0]    boxedVs2;
 
-  always_comb
-    case (vsew)
-      VSEW_16: begin fmt = P.H_FMT; boxedVs2 = {{(P.FLEN-16){1'b1}}, vs2[15:0]}; end
-      VSEW_32: begin fmt = P.S_FMT; boxedVs2 = {{(P.FLEN-32){1'b1}}, vs2[31:0]}; end
-      VSEW_64: begin fmt = P.D_FMT; boxedVs2 = vs2;                             end
-      default: begin fmt = P.H_FMT; boxedVs2 = {{(P.FLEN-16){1'b1}}, vs2[15:0]}; end
+  // A SEW is supported only with its scalar format: 16 needs Zfh, 32 F, 64 D.
+  function automatic logic sew_supported(input logic [2:0] sew);
+    case (sew)
+      VSEW_16: sew_supported = P.ZFH_SUPPORTED;
+      VSEW_32: sew_supported = P.F_SUPPORTED;
+      VSEW_64: sew_supported = P.D_SUPPORTED;
+      default: sew_supported = 1'b0;
     endcase
+  endfunction
+
+  // unpackinput's Fmt encoding, as fctrl drives it: with one or two formats
+  // it is 1 bit meaning "the widest format", otherwise the 2-bit code.
+  function automatic logic [P.FMTBITS-1:0] unpack_fmt(input logic [1:0] code);
+    unpack_fmt = (P.FPSIZES <= 2) ? P.FMTBITS'(code == P.FMT) : P.FMTBITS'(code);
+  endfunction
+
+  always_comb
+    if (vsew == VSEW_64 && P.D_SUPPORTED) begin
+      fmt = unpack_fmt(P.D_FMT); boxedVs2 = P.FLEN'({{64{1'b1}}, vs2});
+    end else if (vsew == VSEW_32 || !P.ZFH_SUPPORTED) begin
+      fmt = unpack_fmt(P.S_FMT); boxedVs2 = P.FLEN'({{96{1'b1}}, vs2[31:0]});
+    end else begin
+      fmt = unpack_fmt(P.H_FMT); boxedVs2 = P.FLEN'({{112{1'b1}}, vs2[15:0]});
+    end
 
   logic            sign, nan, snan, zero, inf, subnorm;
   logic [P.NE-1:0] exp;
@@ -100,9 +120,10 @@ module tb_vfrecrsqrt7;
     .XSubnorm  (subnorm),
     .Vsew      (vsew),
     .Frm       (rm),
-    .VfrecRes  (vd),
+    .VfrecRes  (vdFlen),
     .VfrecFlg  (fflags)
   );
+  assign vd = 64'(vdFlen);
 
   int checks = 0;
   int errors = 0;
@@ -263,10 +284,15 @@ module tb_vfrecrsqrt7;
     else        expected_vfrec7(sign, expfield, fracfield, expbits, fracbits, exp_vd, exp_fflags);
   endfunction
 
+  // An unsupported SEW must give a zero result and no flags, whatever the input.
   task automatic check_exact(
-    input string tag, input logic [63:0] exp_vd, input logic [4:0] exp_fflags
+    input string tag, input logic [63:0] exp_vd_sew, input logic [4:0] exp_fflags_sew
   );
     logic pass;
+    logic [63:0] exp_vd;
+    logic [4:0]  exp_fflags;
+    exp_vd     = sew_supported(vsew) ? exp_vd_sew : 64'h0;
+    exp_fflags = sew_supported(vsew) ? exp_fflags_sew : 5'b0;
     #1;
     checks++;
     pass = (vd === exp_vd) && (fflags === exp_fflags);
@@ -538,8 +564,8 @@ module tb_vfrecrsqrt7;
               end
               top7[fmt] = vd[width-1 -: 7];
             end
-            check_top7_match("cross-sew16v32", top7[0], top7[1]);
-            check_top7_match("cross-sew32v64", top7[1], top7[2]);
+            if (sew_supported(VSEW_16)) check_top7_match("cross-sew16v32", top7[0], top7[1]);
+            if (sew_supported(VSEW_64)) check_top7_match("cross-sew32v64", top7[1], top7[2]);
           end
         end
       end
