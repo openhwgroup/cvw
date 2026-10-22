@@ -69,7 +69,7 @@ module vieufsm import cvw::*;  #(parameter     cvw_t P,
 
   assign BeatResetD = (ExecutionUnitReadyD & ~LocalStallE) | reset;
 
-  counterval #(BEATBITLEN) beatcounter(clk, BeatResetD, BeatIncrD, P.VPU_INT_LANES[BEATBITLEN-1:0], BeatE);
+  counter #(BEATBITLEN) beatcounter(clk, BeatResetD, BeatIncrD, BeatE);
 
   assign BeatIncrD = BeatValidE & ~LocalStallE;
   assign DoneE = BeatE >= BeatLength - 1; // *** optimize
