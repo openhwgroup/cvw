@@ -27,7 +27,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module fpu import cvw::*;  #(parameter cvw_t P) (
+module fpu import cvw::*, fpu_pkg::*;  #(parameter cvw_t P, parameter fpu_t FP) (
   input  logic                 clk,
   input  logic                 reset,
   // Hazards
@@ -234,7 +234,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   mux3  #(P.FLEN)  fzmulmux (PreZE, BoxedZeroE, PreYE, FmaZSelE, ZE);
 
   // unpack unit: splits FP inputs into their parts and classifies SNaN, NaN, Subnorm, Norm, Zero, Infinity
-  unpack #(P) unpack (.X(XE), .Y(YE), .Z(ZE), .Fmt(FmtE), .Xs(XsE), .Ys(YsE), .Zs(ZsE),
+  unpack #(FP) unpack (.X(XE), .Y(YE), .Z(ZE), .Fmt(FmtE), .Xs(XsE), .Ys(YsE), .Zs(ZsE),
     .Xe(XeE), .Ye(YeE), .Ze(ZeE), .Xm(XmE), .Ym(YmE), .Zm(ZmE), .YEn(YEnE), .FPUActive(FPUActiveE),
     .XNaN(XNaNE), .YNaN(YNaNE), .ZNaN(ZNaNE), .XSNaN(XSNaNE), .XEn(XEnE),
     .YSNaN(YSNaNE), .ZSNaN(ZSNaNE), .XSubnorm(XSubnormE),

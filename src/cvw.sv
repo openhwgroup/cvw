@@ -294,26 +294,6 @@ typedef struct packed {
   logic [1:0] FMT2 ;
   int         BIAS2;
 
-// Vector floating point constants for VPU paramerterization
-  int         VFLEN;
-  int         VFLOGFLEN;
-  int         VFNE;
-  int         VFNF;
-  logic [1:0] VFMT;
-  int         VFBIAS;
-  int         VFPSIZES;
-  int         VFMTBITS;
-  int         VFLEN1;
-  int         VFNE1;
-  int         VFNF1;
-  logic [1:0] VFMT1;
-  int         VFBIAS1;
-  int         VFLEN2;
-  int         VFNE2;
-  int         VFNF2;
-  logic [1:0] VFMT2;
-  int         VFBIAS2;
-
 // largest length in IEU/FPU
   int CVTLEN;
   int LLEN;
