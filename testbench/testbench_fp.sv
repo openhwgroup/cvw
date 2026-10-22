@@ -688,7 +688,7 @@ module testbench_fp;
   end
 
   // extract the inputs (X, Y, Z, SrcA) and the output (Ans, AnsFlg) from the current test vector
-  readvectors #(P) readvectors (.clk, .Fmt(FmtVal), .ModFmt, .TestVector(TestVectors[VectorNum]),
+  readvectors #(P, FP) readvectors (.clk, .Fmt(FmtVal), .ModFmt, .TestVector(TestVectors[VectorNum]),
                                 .VectorNum, .Ans(Ans), .AnsFlg(AnsFlg), .SrcA,
                                 .Xs, .Ys, .Zs, .Unit(UnitVal),
                                 .Xe, .Ye, .Ze, .TestNum, .OpCtrl(OpCtrlVal),
@@ -1024,7 +1024,7 @@ module testbench_fp;
 endmodule
 
 
-module readvectors import cvw::*; #(parameter cvw_t P) (
+module readvectors import cvw::*, fpu_pkg::*; #(parameter cvw_t P, parameter fpu_t FP) (
   input  logic clk,
   input  logic [P.Q_LEN*4+7:0] TestVector,
   input  logic [P.FMTBITS-1:0] ModFmt,
@@ -1387,7 +1387,7 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
   assign ZEn = (Unit == `FMAUNIT);
   assign FPUActive = 1'b1;
 
-  unpack #(P) unpack(.X(X[P.FLEN-1:0]), .Y(Y[P.FLEN-1:0]), .Z(Z[P.FLEN-1:0]), .Fmt(ModFmt), .FPUActive, .Xs, .Ys, .Zs, .Xe, .Ye, .Ze,
+  unpack #(FP) unpack(.X(X[P.FLEN-1:0]), .Y(Y[P.FLEN-1:0]), .Z(Z[P.FLEN-1:0]), .Fmt(ModFmt), .FPUActive, .Xs, .Ys, .Zs, .Xe, .Ye, .Ze,
                      .Xm, .Ym, .Zm, .XNaN, .YNaN, .ZNaN, .XSNaN, .YSNaN, .ZSNaN,
                      .XSubnorm, .XZero, .YZero, .ZZero, .XInf, .YInf, .ZInf,
                      .XEn, .YEn, .ZEn, .XExpMax, .XPostBox, .Bias(BiasE), .Nf(NfE));

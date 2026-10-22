@@ -250,7 +250,7 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
   `include "parameter-defs.vh"
 
   // Wally
-  wallypipelinedsoc  #(P)
+  wallypipelinedsoc  #(P, FP)
   wallypipelinedsoc(.clk(CPUCLK), .reset_ext(bus_struct_reset), .reset(),
                     .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT,
                     .HCLK(HCLKOpen), .HRESETn(HRESETnOpen),

@@ -10,6 +10,7 @@ script that generates top-level wrappers for verilog modules to synthesize
 import argparse
 import glob
 import os
+import re
 
 #create argument parser
 parser = argparse.ArgumentParser()
@@ -46,6 +47,7 @@ with open(fin_path) as fin:
         if l.lstrip().find("module") == 0:
             lineModuleStart = index
             moduleName = l.split()[1]
+            moduleHeader = l
             writeBuf = True
             buf += f"module {moduleName}wrapper (\n"
             continue
@@ -57,7 +59,9 @@ with open(fin_path) as fin:
         index+=1
 
     # post-processing buffer: add DUT and endmodule lines
-    buf += f"\t{moduleName} #(P) dut(.*);\nendmodule"
+    # pass the configuration structs in the order the module header declares them
+    params = ", ".join({"cvw_t": "P", "fpu_t": "FP"}[t] for t in re.findall(r"\b(cvw_t|fpu_t)\b", moduleHeader))
+    buf += f"\t{moduleName} #({params}) dut(.*);\nendmodule"
 
     # path to wrapper
     wrapperPath = f"{args.HDLPATH}/{moduleName}wrapper.sv"
