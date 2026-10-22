@@ -34,7 +34,7 @@ module vdecoder import cvw::*;  #(parameter cvw_t P) (
 /* verilator lint_on UNUSEDPARAM */
   input  logic        clk, reset,
   // Decode stage control signals
-  input  logic        StallVectorD, FlushVectorD,          // Stall, flush Decode stage
+  input  logic        VectorStallD, VectorFlushD,          // Stall, flush Decode stage
   input  logic [31:0] InstrD,             // lmul sequenced micro-op instruction in Decode stage
 
   // Decode stage outputs

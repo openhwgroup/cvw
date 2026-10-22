@@ -31,7 +31,7 @@
 module vdispatcher import cvw::*;  #(parameter cvw_t P) (
   input  logic        clk, reset,
   // Decode stage control signals
-  input  logic        StallVectorD, FlushVectorD,          // Stall, flush Decode stage
+  input  logic        VectorStallD, VectorFlushD,          // Stall, flush Decode stage
   input  logic        VectorD,                 // This instruction is a vector
   input  logic [4:0]  Vs1D, Vs2D, VdD,
   input  logic [6:0]  lmulDecodedD,
@@ -63,7 +63,7 @@ module vdispatcher import cvw::*;  #(parameter cvw_t P) (
   // *** for now just first 2 EUs
   assign AnyExecutionUnitReadyD = ExecutionUnitReadyD[0] | ExecutionUnitReadyD[1];
 
-  lmulsequencer lmulsequencer(.clk, .reset, .StallVectorD, .FlushVectorD,
+  lmulsequencer lmulsequencer(.clk, .reset, .VectorStallD, .VectorFlushD,
                                    .VectorD, .Vs1D, .Vs2D, .VdD, .lmulDecodedD,
                                    .AnyExecutionUnitReadyD, .Vs1FinalD, .Vs2FinalD, .VdFinalD,
                               .MicroVectorD, .MicroOpNotLastDD);

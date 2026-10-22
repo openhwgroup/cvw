@@ -37,8 +37,8 @@ module hazard (
   // Stall & flush outputs
   output logic StallF, StallD, StallE, StallM, StallW,
   output logic FlushD, FlushE, FlushM, FlushW,
-  output logic StallVectorF, StallVectorD, StallVectorE,
-  output logic FlushVectorD, FlushVectorE, FlushVectorM
+  output logic StallVectorF, VectorStallD, VectorStallE,
+  output logic VectorFlushD, VectorFlushE, VectorFlushM
 );
 
   logic                                       StallFCause, StallDCause, StallECause, StallMCause, StallWCause;
@@ -46,11 +46,11 @@ module hazard (
   logic                                       FlushDCause, FlushECause, FlushMCause, FlushWCause;
 
   // for vpu
-  logic                                       StallFCauseVector;
-  logic                                       StallDCauseVector;
-  logic                                       StallECauseVector;
-  logic                                       LatestUnstalledVectorD, LatestUnstalledVectorE, LatestUnstalledVectorM;
-  logic                                       FlushDCauseVector, FlushECauseVector;
+  logic                                       VectorStallFCause;
+  logic                                       VectorStallDCause;
+  logic                                       VectorStallECause;
+  logic                                       VectorLatestUnstalledD, VectorLatestUnstalledE, VectorLatestUnstalledM;
+  logic                                       VectorFlushDCause, VectorFlushECause;
 
 
   logic WFIStallM, WFIInterruptedM;
@@ -84,8 +84,8 @@ module hazard (
   assign FlushMCause = TrapM | RetM | CSRWriteFenceM;
   assign FlushWCause = TrapM & ~WFIInterruptedM;
 
-  assign FlushDCauseVector = TrapM | RetM | CSRWriteFenceM | BPWrongE;
-  assign FlushECauseVector = TrapM | RetM | CSRWriteFenceM | (BPWrongE & ~(DivBusyE | FDivBusyE));
+  assign VectorFlushDCause = TrapM | RetM | CSRWriteFenceM | BPWrongE;
+  assign VectorFlushECause = TrapM | RetM | CSRWriteFenceM | (BPWrongE & ~(DivBusyE | FDivBusyE));
 
   // Stall causes
   //  Most data dependency stalls are identified in the decode stage
@@ -100,9 +100,9 @@ module hazard (
   assign StallECause = (DivBusyE | FDivBusyE | (VPUBackEndBusyE & ~VectorD)) & ~FlushECause;
   assign StallMCause = WFIStallM & ~FlushMCause;
 
-  assign StallFCauseVector = '0;
-  assign StallDCauseVector = (StructuralStallD | FPUStallD) & ~FlushDCause;
-  assign StallECauseVector = (DivBusyE | FDivBusyE) & ~FlushECause;
+  assign VectorStallFCause = '0;
+  assign VectorStallDCause = (StructuralStallD | FPUStallD) & ~FlushDCause;
+  assign VectorStallECause = (DivBusyE | FDivBusyE) & ~FlushECause;
 
   // Need to gate IFUStallF when the equivalent FlushFCause = FlushDCause = 1.
   // assign StallWCause = ((IFUStallF & ~FlushDCause) | LSUStallM) & ~FlushWCause;
@@ -118,9 +118,9 @@ module hazard (
   assign StallM = StallMCause | StallW;
   assign StallW = StallWCause;
 
-  assign StallVectorF = StallFCauseVector | StallVectorD;
-  assign StallVectorD = StallDCauseVector | StallVectorE;
-  assign StallVectorE = StallECauseVector | StallM;
+  assign StallVectorF = VectorStallFCause | VectorStallD;
+  assign VectorStallD = VectorStallDCause | VectorStallE;
+  assign VectorStallE = VectorStallECause | StallM;
 
   // detect the first stage that is not stalled
 
@@ -129,9 +129,9 @@ module hazard (
   assign LatestUnstalledM = ~StallM & StallE;
   assign LatestUnstalledW = ~StallW & StallM;
 
-  assign LatestUnstalledVectorD = ~StallVectorD & StallVectorF;
-  assign LatestUnstalledVectorE = ~StallVectorE & StallVectorD;
-  assign LatestUnstalledVectorM = ~StallM & StallVectorE;
+  assign VectorLatestUnstalledD = ~VectorStallD & StallVectorF;
+  assign VectorLatestUnstalledE = ~VectorStallE & VectorStallD;
+  assign VectorLatestUnstalledM = ~StallM & VectorStallE;
 
 
   // Each stage flushes if the previous stage is the last one stalled (for cause) or the system has reason to flush
@@ -140,8 +140,8 @@ module hazard (
   assign FlushM = LatestUnstalledM | FlushMCause;
   assign FlushW = LatestUnstalledW | FlushWCause;
 
-  assign FlushVectorD = LatestUnstalledVectorD | FlushDCauseVector;
-  assign FlushVectorE = LatestUnstalledVectorE | FlushECauseVector;
-  assign FlushVectorM = LatestUnstalledVectorM | FlushMCause;
+  assign VectorFlushD = VectorLatestUnstalledD | VectorFlushDCause;
+  assign VectorFlushE = VectorLatestUnstalledE | VectorFlushECause;
+  assign VectorFlushM = VectorLatestUnstalledM | FlushMCause;
 
 endmodule

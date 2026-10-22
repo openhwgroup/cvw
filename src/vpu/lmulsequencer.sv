@@ -32,7 +32,7 @@ module lmulsequencer
   (
    input logic       clk, reset,
    // Decode stage control signals
-   input logic       StallVectorD, FlushVectorD, // Stall, flush Decode stage
+   input logic       VectorStallD, VectorFlushD, // Stall, flush Decode stage
    input logic       VectorD,        // This instruction is a vector
    input logic [4:0] Vs1D, Vs2D, VdD,
    input logic [6:0] lmulDecodedD,
@@ -77,7 +77,7 @@ module lmulsequencer
   assign lmulCntrP1 = lmulCntrD + 4'b0001;
 
   always_ff @(posedge clk)
-    if(reset | FlushVectorD) CurrState <= STATE_BEGIN;
+    if(reset | VectorFlushD) CurrState <= STATE_BEGIN;
     else CurrState <= NextState;
 
 

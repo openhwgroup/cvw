@@ -31,8 +31,8 @@ module vpu import cvw::*;  #(parameter cvw_t P) (
   input logic                       clk,
   input logic                       reset,
   // Hazards
-  input logic                       StallVectorD, StallVectorE, StallM, StallW,             // stall signals (from HZU)
-  input logic                       FlushVectorD, FlushVectorE, FlushVectorM, FlushW, // flush signals (from HZU)
+  input logic                       VectorStallD, VectorStallE, StallM, StallW,             // stall signals (from HZU)
+  input logic                       VectorFlushD, VectorFlushE, VectorFlushM, FlushW, // flush signals (from HZU)
   output logic                      VPUFrontEndBusyD,                           // Stall the decode stage (To HZU)
   output logic                      VPUBackEndBusyE,
 
@@ -102,11 +102,11 @@ module vpu import cvw::*;  #(parameter cvw_t P) (
   // the controller waits by asserting VPUFrontEndBusyD.
   // VPUFrontEndBusyD is used by the hazard unit to stall the front end.
   // When transitioning from scalar to vector instructions, if the scalar takes a long time such as div or load miss,
-  // the VPU must be delayed to ensure inorder commit.  StallVectorE, StallM, and StallW need to post pone the progress of
+  // the VPU must be delayed to ensure inorder commit.  VectorStallE, StallM, and StallW need to post pone the progress of
   // vector instruction progress under this condiction.
 
 
-  vcontroller #(P) vcontroller(.clk, .reset, .StallVectorD, .FlushVectorD, .StallW,
+  vcontroller #(P) vcontroller(.clk, .reset, .VectorStallD, .VectorFlushD, .StallW,
                                .InstrD, .VectorD, .Vs1FinalD, .Vs2FinalD, .VdFinalD,
                                .VMD, .Funct6D, .Funct3D, .RegWriteD, .VRegWriteD, .VALUSrcAD, .VALUSrcBD,
                                .VALUResultSrcD, .IllegalVPUInstrD, .ControllerValidD, .ExecutionUnitReadyD,
@@ -120,7 +120,7 @@ module vpu import cvw::*;  #(parameter cvw_t P) (
 
 
   for(i = 0; i < P.VPU_INT_EU; i++) begin : vieu
-    vieu #(P) vieu(.clk, .reset, .StallVectorE, .StallM, .StallW, .FlushVectorE, .FlushVectorM, .FlushW,
+    vieu #(P) vieu(.clk, .reset, .VectorStallE, .StallM, .StallW, .VectorFlushE, .VectorFlushM, .FlushW,
                    .ControllerWBReadyW(ControllerWBReadyW[i]), .ExecutionUnitResultValidW(ExecutionUnitResultValidW[i]),
                    .InstrD, .PCD, .ExecutionUnitOrderD(ExecutionUnitOrderD[i]), .ExecutionUnitOrderW(ExecutionUnitOrderW[i]),
                    .ControllerValidD(ControllerValidD[i]), .ExecutionUnitReadyD(ExecutionUnitReadyD[i]), .VMD, .Funct3D, .Funct6D,
