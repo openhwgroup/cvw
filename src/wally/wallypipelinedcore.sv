@@ -27,7 +27,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
+module wallypipelinedcore import cvw::*, fpu_pkg::*; #(parameter cvw_t P, parameter fpu_t FP) (
    input  logic                  clk, reset,
    // Privileged
    input  logic                  MTimerInt, MExtInt, SExtInt, MSwInt,
@@ -351,7 +351,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
 
   // floating point unit
   if (P.F_SUPPORTED) begin : fpu
-    fpu #(P) fpu(
+    fpu #(P, FP) fpu(
       .clk, .reset,
       .FRM_REGW,                           // Rounding mode from CSR
       .InstrD,                             // instruction from IFU
