@@ -27,7 +27,7 @@
 ## and limitations under the License.
 ################################################################################################
 
-RISCV_SAIL_MODEL_VERSION=0.15 # Version riscv-arch-test (act4) generates expected results with
+RISCV_SAIL_MODEL_VERSION=0.16 # Version riscv-arch-test (act4) generates expected results with
 
 set -e # break on error
 # If run standalone, check environment. Otherwise, use info from main install script
