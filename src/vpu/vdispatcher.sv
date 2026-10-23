@@ -38,7 +38,7 @@ module vdispatcher import cvw::*;  #(parameter cvw_t P) (
   // hand shaking controls
   output logic [P.VPU_EU-1:0] ControllerValidD,
   input  logic [P.VPU_EU-1:0] ExecutionUnitReadyD,
-  output logic MicroOpNotLastDD,
+  output logic MicroOpNotLastD,
   // output micro vector instruction
   output logic MicroVectorD,
   output logic [4:0] Vs1FinalD, Vs2FinalD, VdFinalD
@@ -66,7 +66,7 @@ module vdispatcher import cvw::*;  #(parameter cvw_t P) (
   lmulsequencer lmulsequencer(.clk, .reset, .VectorStallD, .VectorFlushD,
                                    .VectorD, .Vs1D, .Vs2D, .VdD, .lmulDecodedD,
                                    .AnyExecutionUnitReadyD, .Vs1FinalD, .Vs2FinalD, .VdFinalD,
-                              .MicroVectorD, .MicroOpNotLastDD);
+                              .MicroVectorD, .MicroOpNotLastD);
 
   assign ControllerValidD = SelectedD & {P.VPU_EU{MicroVectorD}}; // demux to selected EU
   //assign MicroVectorD = |ControllerValidD;

@@ -62,7 +62,7 @@ module vcontroller import cvw::*;  #(parameter cvw_t P) (
   logic [4:0]  Vs1D, Vs2D;               // Vector Source 1 and 2
   logic [4:0]  VdD;                      // Vector Destination read (overwrite)
   logic [6:0]  lmulDecodedD;
-  logic        MicroOpNotLastDD;
+  logic        MicroOpNotLastD;
 
   //logic [2:0]  lmulD;                  // *** should be set by vset* instruction
 
@@ -77,7 +77,7 @@ module vcontroller import cvw::*;  #(parameter cvw_t P) (
   vdispatcher #(P) vdispatcher(.clk, .reset, .VectorStallD, .VectorFlushD,
                                .VectorD, .Vs1D, .Vs2D, .VdD, .ControllerValidD, .ExecutionUnitReadyD,
                                .MicroVectorD, .Vs1FinalD, .Vs2FinalD, .VdFinalD, .lmulDecodedD,
-                               .MicroOpNotLastDD);
+                               .MicroOpNotLastD);
 
   // The controller must track the program order of vector instruction because they may finish out-of-order.
   // A queue records the issue order.  The queue is peaked to check for the next instruction to remove from the
@@ -110,7 +110,7 @@ module vcontroller import cvw::*;  #(parameter cvw_t P) (
 
   assign AnyMatchW = | MatchW;
 
-  assign VPUFrontEndBusyD = InstrOrderQueueFullD | MicroOpNotLastDD; // *** add other terms here, ie if the dispatcher cannot an issue instruction and it stalls decoder stage
+  assign VPUFrontEndBusyD = InstrOrderQueueFullD | MicroOpNotLastD; // *** add other terms here, ie if the dispatcher cannot an issue instruction and it stalls decoder stage
 
 
 endmodule
