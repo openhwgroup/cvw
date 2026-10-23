@@ -177,9 +177,9 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   logic                        FRoundNVE, FRoundNXE;               // Zfa fround invalid and inexact flags
 
   // debug signals
-  logic                        RegWrite;
-  logic [4:0]                  a1, Rd;
-  logic [P.FLEN-1:0]           Result;
+  logic                        FDebugRegWriteW;                    // Debug Abstract Access Register (AAR) command write enable mux output
+  logic [4:0]                  FDebugA1, FDebugRdW;                // Mux output for regfile address signals upon Debug AAR command
+  logic [P.FLEN-1:0]           FDebugResultW;                      // Mux output for regfile read data output upon Debug AAR command
 
   //////////////////////////////////////////////////////////////////////////////////////////
   // Decode Stage: fctrl decoder, read register file
@@ -196,23 +196,23 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
               .Adr1D, .Adr2D, .Adr3D, .Adr1E, .Adr2E, .Adr3E);
 
   if (P.SDEXT_SUPPORTED) begin
-    mux2 #(5) rfreadaddrmux (InstrD[19:15], DebugRegAddr[4:0], DebugFPREnable, a1);
-    mux2 #(5) rfwriteaddrmux (RdW, DebugRegAddr[4:0], DebugFPREnable, Rd);
-    mux2 #(P.FLEN) rfwdatamux (FResultW, DebugRegWDATA, DebugFPREnable, Result);
-    assign RegWrite = DebugMode & DebugRegWrite & DebugFPREnable | FRegWriteW;
+    mux2 #(5) rfreadaddrmux (InstrD[19:15], DebugRegAddr[4:0], DebugFPREnable, FDebugA1);
+    mux2 #(5) rfwriteaddrmux (RdW, DebugRegAddr[4:0], DebugFPREnable, FDebugRdW);
+    mux2 #(P.FLEN) rfwdatamux (FResultW, DebugRegWDATA, DebugFPREnable, FDebugResultW);
+    assign FDebugRegWriteW = DebugMode & DebugRegWrite & DebugFPREnable | FRegWriteW;
     assign DebugFRD1D = FRD1D;
   end else begin
     assign DebugFRD1D = '0;
-    assign RegWrite = FRegWriteW;
-    assign Rd = RdW;
-    assign a1 = InstrD[19:15];
-    assign Result = FResultW;
+    assign FDebugRegWriteW = FRegWriteW;
+    assign FDebugRdW = RdW;
+    assign FDebugA1 = InstrD[19:15];
+    assign FDebugResultW = FResultW;
   end
 
   // FP register file
-  fregfile #(P.FLEN) fregfile (.clk, .reset, .we4(RegWrite),
-    .a1(a1), .a2(InstrD[24:20]), .a3(InstrD[31:27]),
-    .a4(Rd), .wd4(Result),
+  fregfile #(P.FLEN) fregfile (.clk, .reset, .we4(FDebugRegWriteW),
+    .a1(FDebugA1), .a2(InstrD[24:20]), .a3(InstrD[31:27]),
+    .a4(FDebugRdW), .wd4(FDebugResultW),
     .rd1(FRD1D), .rd2(FRD2D), .rd3(FRD3D));
 
   // D/E pipeline registers

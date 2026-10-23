@@ -103,9 +103,9 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0] MulDivResultW;                  // Multiply always comes from MDU.  Divide could come from MDU or FPU (when using fdivsqrt for integer division)
 
   // Debug Abstract Access Register Command mux signals
-  logic [4:0]        GPRDebugRs1W, GPRDebugRdW;      //
-  logic              GPRDebugRegWriteW;
-  logic [P.XLEN-1:0] GPRDebugResultW;
+  logic              GPRDebugRegWriteW;              // Debug Abstract Access Register (AAR) command write enable mux output
+  logic [4:0]        GPRDebugRs1W, GPRDebugRdW;      // Mux output for regfile address signals upon Debug AAR command
+  logic [P.XLEN-1:0] GPRDebugResultW;                // Mux output for regfile read data output upon Debug AAR command
 
   // Debug Spec muxing of regfile inputs
   if (P.SDEXT_SUPPORTED) begin
