@@ -103,9 +103,9 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   output logic                 InstrAccessFaultF,                        // Instruction access fault
   output logic                 ICacheAccess,                             // Report I$ read to performance counters
   output logic                 ICacheMiss,                               // Report I$ miss to performance counters
-  input  logic                 DebugUseDPC,
-  output logic [P.XLEN-1:0]    NextValidPCE,                              // The PC of the next valid instruction in the pipeline after  csr write or fence
-  input  logic [P.XLEN-1:0]    DPC
+  input  logic                 DebugUseDPC,                              // Use DPC as the next fetched instruction. Used for resuming from halt and step.
+  output logic [P.XLEN-1:0]    NextValidPCE,                             // The PC of the next valid instruction in the pipeline after  csr write or fence
+  input  logic [P.XLEN-1:0]    DPC                                       // Contains the next PC to execute upon resume. Can be specified by the External Debugger.
 );
 
   localparam [31:0]            nop = 32'h00000013;                       // instruction for NOP
