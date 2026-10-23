@@ -62,10 +62,10 @@ module tb_vfrecrsqrt7;
   logic [P.FMTBITS-1:0] fmt;
   logic [P.FLEN-1:0]    boxedVs2;
 
-  // A SEW is supported only with its scalar format: 16 needs Zfh, 32 F, 64 D.
+  // SEW 16 is supported only with Zvfh, 32 with F, and 64 with D.
   function automatic logic sew_supported(input logic [2:0] sew);
     case (sew)
-      VSEW_16: sew_supported = P.ZFH_SUPPORTED;
+      VSEW_16: sew_supported = P.ZVFH_SUPPORTED;
       VSEW_32: sew_supported = P.F_SUPPORTED;
       VSEW_64: sew_supported = P.D_SUPPORTED;
       default: sew_supported = 1'b0;

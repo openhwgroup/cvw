@@ -37,8 +37,8 @@ module vfrecrsqrt7 import cvw::*; #(parameter cvw_t P) (
 );
 
   // Xe and Xm arrive in the widest supported scalar format (P.NE, P.NF, P.BIAS), so the datapath
-  // scales with the configuration. Each SEW is supported only with its scalar format (16: Zfh,
-  // 32: F, 64: D); an unsupported or reserved SEW produces a zero result and no flags.
+  // scales with the configuration. SEW 16 is supported only with Zvfh, 32 with F, and 64 with D;
+  // an unsupported or reserved SEW produces a zero result and no flags.
   localparam logic [2:0] VSEW_16 = 3'b001, VSEW_32 = 3'b010, VSEW_64 = 3'b011;
   localparam logic [2:0] RTZ = 3'b001, RDN = 3'b010, RUP = 3'b011;
   localparam integer     EW     = P.NE + 1;       // one extra bit holds the unshifted rsqrt exponent
@@ -97,9 +97,9 @@ module vfrecrsqrt7 import cvw::*; #(parameter cvw_t P) (
   assign LutOut = IsSqrt ? REC7SQRT_TBL[{XSubnorm ? ZeroCount[0] : Xe[0], Idx[6:1]}] : REC7_TBL[Idx];
 
   // Supported SEW, one-hot. A flag that is constant 0 removes its format from every select below.
-  assign Sew16 = P.ZFH_SUPPORTED & (Vsew == VSEW_16);
-  assign Sew32 = P.F_SUPPORTED   & (Vsew == VSEW_32);
-  assign Sew64 = P.D_SUPPORTED   & (Vsew == VSEW_64);
+  assign Sew16 = P.ZVFH_SUPPORTED & (Vsew == VSEW_16);
+  assign Sew32 = P.F_SUPPORTED    & (Vsew == VSEW_32);
+  assign Sew64 = P.D_SUPPORTED    & (Vsew == VSEW_64);
 
   // Output exponent constants for native bias B and internal bias I = P.BIAS (e = unbiased input exponent):
   //   normal input, Xe = e + I:        rec  B-1-e          = (B+I-1) - Xe
