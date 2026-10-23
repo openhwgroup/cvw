@@ -160,6 +160,10 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic                    ENVCFG_FIOM; // fence implies io (presently not used)
   logic                    DebugStopCounters;
 
+  // Debug Abstract Access Register (AAR) Mux Signals
+  logic [P.XLEN-1:0]       CSRDebugRWM;
+  logic [1:0]              CSRDebugOpM;
+
   // Trigger Module signals
   logic                    TriggerHalt;
 
@@ -211,16 +215,20 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   always_comb begin
     // Choose either rs1 or uimm[4:0] as source
     CSRSrcM = InstrM[14] ? {{(P.XLEN-5){1'b0}}, InstrM[19:15]} : SrcAM;
+    CSRDebugRWM = DebugRegWrite ? DebugRegWDATA : CSRSrcM;
 
     // CSR set and clear for MIP/SIP should only touch internal state, not interrupt inputs
     if (CSRAdrM == MIP | CSRAdrM == SIP) CSRReadVal2M = {{(P.XLEN-12){1'b0}}, MIP_REGW_writeable};
     else                                 CSRReadVal2M = CSRReadValM;
 
+    // CSR Op with Debug AAR mux. Allows Debugger to write CSRs.
+    CSRDebugOpM = DebugRegWrite ? 2'b01 : InstrM[13:12];
+
     // Compute AND/OR modification
-    CSRRWM =   DebugRegWrite ? DebugRegWDATA : CSRSrcM;
+    CSRRWM =   CSRDebugRWM;
     CSRRSM =   CSRReadVal2M | CSRSrcM;
     CSRRCM =   CSRReadVal2M & ~CSRSrcM;
-    case (DebugRegWrite ? 2'b01 : InstrM[13:12])
+    case (CSRDebugOpM)
       2'b01:   CSRWriteValM = CSRRWM;
       2'b10:   CSRWriteValM = CSRRSM;
       2'b11:   CSRWriteValM = CSRRCM;
