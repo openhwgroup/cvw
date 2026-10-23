@@ -95,7 +95,7 @@ module lmulsequencer
   assign lmulCntrLoad = CurrState == STATE_INCR & lmulCntrDone;
   //assign MicroOpNotLastD = AnyExecutionUnitReadyD & (CurrState == STATE_INCR);
   assign MicroOpNotLastD = (CurrState == STATE_INCR & ~lmulCntrDone) | (CurrState == STATE_BEGIN & lmulIntD > 4'd1 & VectorD);
-  assign IncrD = (AnyExecutionUnitReadyD & VectorD) | MicroOpNotLastD;
+  assign IncrD = ((AnyExecutionUnitReadyD & VectorD) | MicroOpNotLastD) & ~VectorStallD;
 
   assign MicroVectorD = IncrD | VectorD;
 
