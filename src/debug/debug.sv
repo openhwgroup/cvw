@@ -110,9 +110,6 @@ module debug import cvw::*; #(parameter cvw_t P) (
   logic [31:0] AbstractCS;
   logic [31:0] Command;
 
-  logic [31:0] NextDMControl;
-  logic [31:0] NextDMStatus;
-  logic [31:0] NextAbstractCS;
   logic [31:0] NextCommand;
 
   // DMControl fields
@@ -141,18 +138,14 @@ module debug import cvw::*; #(parameter cvw_t P) (
   logic AllHalted;
   logic AnyHalted;
 
-  // Abstract Register signals
-  logic [7:0]  CMDType;
-  // logic [2:0]  AARSize;
-  logic [2:0]  NextAARSize;
-  logic        AARPostIncrement;
-
-  logic        ReadRequest;
-  logic        WriteRequest;
+  logic ReadRequest;
+  logic WriteRequest;
 
   logic StartCommand;
   logic NextValid;
   logic ValidSize;
+  logic AARException;
+  logic NewCommand;
 
   logic DMActive;
 
@@ -269,6 +262,11 @@ module debug import cvw::*; #(parameter cvw_t P) (
     registers.
     */
 
+  /*
+   Each register lives in it's own always_ff block. Some registers can be written
+
+   */
+
   // DMControl
   always_ff @(posedge clk) begin
     if (reset) begin
@@ -302,7 +300,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
 
   // Data Registers, used as arguments for writing to registers and
   // for storing results read from registers.
-  assign ReadRegister = StartCommand & ~Command[16];
+  assign ReadRegister = DebugPENABLE & DebugPREADY & ~Command[16];
 
   // Data[0]
   always_ff @(posedge clk) begin
@@ -353,7 +351,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
       AbstractCS[10:8] <= DMIDATA[8] == 1'b1 ? 3'b0 : AbstractCS[10:8];
     end else if (WriteRequest & (DMIADDR == COMMAND)) begin
       AbstractCS[10:8] <= AbstractCS[10:8] == 3'b0 ? CMDErr : AbstractCS[10:8];
-    end else if (StartCommand & DebugPREADY) begin
+    end else if (DebugPENABLE & DebugPREADY & AARException) begin
       AbstractCS[10:8] <= CMDErr;
     end
   end
@@ -499,42 +497,6 @@ module debug import cvw::*; #(parameter cvw_t P) (
   // This allows a momentary clear right after receiving a ResumeRequest
   assign AnyResumeAck = (resack_state == RESACKHIGH);
 
-  // --------------------------------------------------------------------------
-  // Abstract Command FSM
-  // --------------------------------------------------------------------------
-
-  enum logic [1:0] {IDLE, BUSY, ERRORWAIT, ERRORBUSY} AbstractState;
-
-  // Abstract Command FSM
-  always_ff @(posedge clk) begin
-    if (reset) begin
-      AbstractState <= IDLE;
-    end else begin
-      case(AbstractState)
-        IDLE: begin
-          if (Command[31:24] == 8'b0) begin
-            AbstractState <= IDLE; // Reading and writing to registers should be immediate.
-          end else begin
-            AbstractState <= BUSY; // This would be for Quick Access or Memory Access conditions
-          end
-        end
-
-        BUSY: begin
-          // To be implemented; necessary for abstract memory
-        end
-
-        ERRORWAIT: begin
-
-        end
-
-        ERRORBUSY: begin
-
-        end
-        default: AbstractState <= IDLE;
-      endcase
-    end
-  end
-
   // ------------------------------------------------------------------
   // RISC-V Debug Specification v1.0 Access Register Commands
   // Decodes abstract register-access commands from the Debug Module
@@ -544,28 +506,8 @@ module debug import cvw::*; #(parameter cvw_t P) (
 
   assign CommandWrite = WriteRequest & (DMIADDR == COMMAND);
 
-  logic AARException;
-  logic NewCommand;
-
-  always_ff @(posedge clk) begin
-    if (reset) begin
-      NewCommand <= 1'b0;
-    end else if (CommandWrite) begin
-      NewCommand <= 1'b1;
-    end else if (NewCommand & DebugPREADY) begin
-      NewCommand <= 1'b0;
-    end
-  end
-
-  always_ff @(posedge clk) begin
-    if (reset) begin
-      StartCommand <= 0;
-    end else begin
-      StartCommand <= CommandWrite & DMIRSPREADY & ~|CMDErr & DMActive & DebugMode;
-    end
-  end
-
-  assign NextCommand = CommandWrite ? DMIDATA : '0;
+  assign NextCommand = DMIDATA;
+  assign StartCommand = CommandWrite & DMIRSPREADY & ~|CMDErr & DMActive & DebugMode;
 
   debug_apb_requester #(P) debug_apb(.clk, .reset,
     .NextCommand, .Command, .StartCommand, .CommandWrite, .Data0, .Data1,
@@ -578,10 +520,10 @@ module debug import cvw::*; #(parameter cvw_t P) (
 
   always_comb begin
     CMDErr = 3'd0;
-    if (NewCommand) begin
+    if (CommandWrite | DebugPREADY) begin
       if (~DebugMode)                      CMDErr = 3'd4;
-      else if (~ValidCommand | ~ValidSize) CMDErr = 3'd2;
       else if (AARException)               CMDErr = 3'd3;
+      else if (~ValidCommand | ~ValidSize) CMDErr = 3'd2;
       else                                 CMDErr = 3'd0;
     end
   end

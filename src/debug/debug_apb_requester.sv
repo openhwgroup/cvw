@@ -71,9 +71,9 @@ module debug_apb_requester import cvw::*; #(parameter cvw_t P) (
   logic [15:0] RegNO;
 
   // NextCommand unpacking
-  assign NextCMDType          = Command[31:24];
-  assign NextAARSize          = Command[22:20];
-  assign NextRegNO            = Command[15:0];
+  assign NextCMDType      = NextCommand[31:24];
+  assign NextAARSize      = NextCommand[22:20];
+  assign NextRegNO        = NextCommand[15:0];
 
   // Command unpacking
   assign CMDType          = Command[31:24];
@@ -150,12 +150,14 @@ module debug_apb_requester import cvw::*; #(parameter cvw_t P) (
   //                    | (AARSize == 3'd3 & (P.XLEN == 64 | (NextDebugFPREnable & P.D_SUPPORTED)))
   //                    | (AARSize == 3'd4 & NextDebugFPREnable & P.Q_SUPPORTED);
 
-  assign ValidCommand = (CommandWrite | StartCommand) & (CMDType == 8'd0);
+  assign ValidCommand = (CommandWrite | StartCommand) & (NextCMDType == 8'd0);
 
-  assign ValidSize = (CommandWrite | StartCommand) & ((AARSize == 3'd2)
-                     | (AARSize == 3'd3 & (P.XLEN == 64 | P.D_SUPPORTED))
-                     | (AARSize == 3'd4 & P.Q_SUPPORTED));
+  assign ValidSize = (CommandWrite | StartCommand) & ((NextAARSize == 3'd2)
+                     | (NextAARSize == 3'd3 & (P.XLEN == 64 | P.D_SUPPORTED))
+                     | (NextAARSize == 3'd4 & P.Q_SUPPORTED));
 
+  // CMDErr for non-existent registers. Gets registered into
+  // AbstractCS upon DebugPREADY
   assign AARException = DebugPENABLE & DebugPREADY & DebugPSLVERR;
 
 endmodule
