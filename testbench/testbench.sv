@@ -308,7 +308,7 @@ module testbench;
 
         "arch32vm_sv32": if (P.VIRTMEM_SUPPORTED) tests = arch32vm_sv32;
         "wally32debug": begin
-          if (P.DEBUG_SUPPORTED) begin
+          if (P.DEBUG_SUPPORTED) begin // JACOB: Need to revisit these conditions with the new Testbench
             tests = wally32debug;
             debugger_tests = wally32debug_jtag;
           end
@@ -375,7 +375,7 @@ module testbench;
     // riscof tests have a different signature, tests[0] == "0" refers to RiscvArchTests
     // and tests[0] == "1" refers to WallyRiscvArchTests
     riscofTest = tests[0] == "0" | tests[0] == "1";
-    debugTest = tests[0] == "8" | "10";
+    debugTest = (tests[0] == "8") | (tests[0] == "10");
     pathname = tvpaths[tests[0].atoi()];
 
     case(CurrState)

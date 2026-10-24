@@ -319,7 +319,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
         Data1 <= Data1;
         if (WriteRequest & (DMIADDR == DATA1)) begin
           Data1 <= DMIDATA;
-        end else if (ReadRegister) begin
+        end else if (ReadRegister & (Command[22:20] == 3'd3)) begin
           Data1 <= DebugPRDATA[63:32];
         end
       end

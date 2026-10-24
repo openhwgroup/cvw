@@ -70,6 +70,13 @@ module debug_apb_requester import cvw::*; #(parameter cvw_t P) (
   logic        Write;
   logic [15:0] RegNO;
 
+  // Decoding for rejecting certain register sizes
+  logic NextFPR;
+
+  // APB Phases
+  typedef enum logic [1:0] {IDLE, SETUP, ACCESS} busstatetype;
+  busstatetype CurrState, NextState;
+
   // NextCommand unpacking
   assign NextCMDType      = NextCommand[31:24];
   assign NextAARSize      = NextCommand[22:20];
@@ -84,9 +91,6 @@ module debug_apb_requester import cvw::*; #(parameter cvw_t P) (
   assign Write            = Command[16];
   assign RegNO            = Command[15:0];
 
-  typedef enum logic [1:0] {IDLE, SETUP, ACCESS} busstatetype;
-
-  busstatetype CurrState, NextState;
 
   assign DebugPCLK = clk;
   assign DebugPRESETn = ~reset;
@@ -147,15 +151,12 @@ module debug_apb_requester import cvw::*; #(parameter cvw_t P) (
 
   assign DebugPADDR = RegNO;
 
-  // assign ValidSize = (AARSize == 3'd2)
-  //                    | (AARSize == 3'd3 & (P.XLEN == 64 | (NextDebugFPREnable & P.D_SUPPORTED)))
-  //                    | (AARSize == 3'd4 & NextDebugFPREnable & P.Q_SUPPORTED);
-
   assign ValidCommand = CommandWrite & (NextCMDType == 8'd0);
 
+  debugregdecode #(P) nextdecode(.RegNO(NextRegNO), .CSRAccess(), .GPRAccess(), .FPRAccess(NextFPR));
   assign ValidSize = CommandWrite & ((NextAARSize == 3'd2)
-                     | (NextAARSize == 3'd3 & (P.XLEN == 64 | P.D_SUPPORTED))
-                     | (NextAARSize == 3'd4 & P.Q_SUPPORTED));
+      | (NextAARSize == 3'd3 & (NextFPR ? P.D_SUPPORTED : (P.XLEN == 64)))
+      | (NextAARSize == 3'd4 & NextFPR & P.Q_SUPPORTED));
 
   // CMDErr for non-existent registers. Gets registered into
   // AbstractCS upon DebugPREADY

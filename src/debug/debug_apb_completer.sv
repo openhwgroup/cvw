@@ -6,7 +6,7 @@
 // Created: August 12th, 2025
 // Modified:
 //
-// Purpose: The Debug Module (DM)
+// Purpose: An APB Completer for Abstract Access Register Command interface with a Debug Module
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -56,61 +56,22 @@ module debug_apb_completer import cvw::*; #(parameter cvw_t P) (
   input logic                 IllegalDebugCSRAccess
 );
 
-  logic Exists;
-
   // This is for APB4 spec compliance. If a custom Debug Module
   // interfaces with this, it will reject partial writes.
-  logic IllegalPartialWrite;
-  logic GPRAccess, FPRAccess, CSRAccess;
-  assign CSRAccess = DebugPADDR inside {[16'h0000:16'h0fff]};
-  assign GPRAccess = DebugPADDR inside {[16'h1000:16'h101f]};
-  assign FPRAccess = DebugPADDR inside {[16'h1020:16'h103f]};
+  logic GPRAccess, FPRAccess, CSRAccess, Exists;
+  logic IllegalPartialWrite, FPRPartialWrite;
 
-  assign IllegalPartialWrite = DebugPWRITE & (
-    (GPRAccess | CSRAccess) & ~&DebugPSTRB[P.XLEN/8-1:0] |
-    FPRAccess               & ~&DebugPSTRB[P.FLEN/8-1:0]);
+  debugregdecode #(P) decode(.RegNO(DebugPADDR), .CSRAccess, .GPRAccess, .FPRAccess);
 
-  always_comb begin
-    DebugGPREnable = 1'b0;
-    DebugCSREnable = 1'b0;
-    DebugFPREnable = 1'b0;
-    Exists         = 1'b0;
-    case (DebugPADDR) inside
-      // GPRs
-      [16'h1000:16'h100f]: begin
-        DebugGPREnable = DebugPENABLE;
-        Exists         = 1'b1;
-      end
+  assign Exists = GPRAccess | CSRAccess | FPRAccess;
+  assign DebugGPREnable = DebugPENABLE & GPRAccess;
+  assign DebugCSREnable = DebugPENABLE & CSRAccess;
+  assign DebugFPREnable = DebugPENABLE & FPRAccess;
 
-      [16'h1010:16'h101f]: begin
-        if (~P.E_SUPPORTED) begin
-          DebugGPREnable = DebugPENABLE;
-          Exists         = 1'b1;
-        end
-      end
+  if (P.F_SUPPORTED) assign FPRPartialWrite = FPRAccess & ~&DebugPSTRB[P.FLEN/8-1:0];
+  else               assign FPRPartialWrite = 1'b0;
 
-      // CSRs
-      [16'h0000:16'h0fff]: begin
-        DebugCSREnable = DebugPENABLE;
-        Exists         = 1'b1;
-      end
-
-      // FPRs
-      [16'h1020:16'h103f]: begin
-        if (P.F_SUPPORTED) begin
-          DebugFPREnable = DebugPENABLE;
-          Exists         = 1'b1;
-        end
-      end
-
-      default: begin
-        DebugGPREnable = 1'b0;
-        DebugFPREnable = 1'b0;
-        DebugCSREnable = 1'b0;
-        Exists         = 1'b0;
-      end
-    endcase
-  end
+  assign IllegalPartialWrite = DebugPWRITE & ((GPRAccess | CSRAccess) & ~&DebugPSTRB[P.XLEN/8-1:0] | FPRPartialWrite);
 
   assign DebugPSLVERR = DebugPENABLE & (IllegalDebugCSRAccess | ~Exists | IllegalPartialWrite);
 

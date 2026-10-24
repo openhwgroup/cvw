@@ -4166,7 +4166,8 @@ string wally32debug[] = '{
   "WALLY-debug-ex2",
   "WALLY-debug-ex3",
   "WALLY-debug-ex4",
-  "WALLY-debug-prv"
+  "WALLY-debug-prv",
+  "WALLY-debug-aarsize-notsup"
 };
 
 string wally32debug_jtag[] = '{
@@ -4185,7 +4186,8 @@ string wally32debug_jtag[] = '{
   "WALLY-debug-ex2",
   "WALLY-debug-ex3",
   "WALLY-debug-ex4",
-  "WALLY-debug-prv"
+  "WALLY-debug-prv",
+  "WALLY-debug-aarsize-notsup"
 };
 
 string wally64debug[] = '{
@@ -4205,7 +4207,8 @@ string wally64debug[] = '{
   "WALLY-debug-ex3",
   "WALLY-debug-ex4",
   "WALLY-debug-prv",
-  "WALLY-debug-pipeline-state"
+  "WALLY-debug-pipeline-state",
+  "WALLY-debug-data1-preserve"
 };
 
 string wally64debug_jtag[] = '{
@@ -4225,15 +4228,16 @@ string wally64debug_jtag[] = '{
   "WALLY-debug-ex3",
   "WALLY-debug-ex4",
   "WALLY-debug-prv",
-  "WALLY-debug-pipeline-state"
+  "WALLY-debug-pipeline-state",
+  "WALLY-debug-data1-preserve"
 };
 
 // string wally64debug[] = '{
 //   `DEBUGELFS,
-//   "WALLY-debug-fpu"
+//   "WALLY-debug-01"
 // };
 
 // string wally64debug_jtag[] = '{
 //   `DEBUGTV,
-//   "WALLY-debug-fpu"
+//   "WALLY-debug-01"
 // };
