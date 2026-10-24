@@ -142,7 +142,6 @@ module debug import cvw::*; #(parameter cvw_t P) (
   logic WriteRequest;
 
   logic StartCommand;
-  logic NextValid;
   logic ValidSize;
   logic AARException;
   logic NewCommand;
@@ -291,7 +290,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
   end
 
   // Data Registers, used as arguments for writing to registers and
-  // for storing results read from registers. ReadRegistter contains
+  // for storing results read from registers. ReadRegister contains
   // the condition from the APB bus, used for Abstract Access Register
   // commands, to write to the data register from the core
   assign ReadRegister = DebugPENABLE & DebugPREADY & ~Command[16];
@@ -501,7 +500,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
   assign CommandWrite = WriteRequest & (DMIADDR == COMMAND);
 
   assign NextCommand = DMIDATA;
-  assign StartCommand = CommandWrite & DMIRSPREADY & ~|CMDErr & DMActive & DebugMode;
+  assign StartCommand = CommandWrite & DMIRSPREADY & ~|CMDErr & ~|AbstractCS[10:8] & DMActive & DebugMode;
 
   debug_apb_requester #(P) debug_apb(.clk, .reset,
     .NextCommand, .Command, .StartCommand, .CommandWrite, .Data0, .Data1,
