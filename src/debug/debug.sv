@@ -254,7 +254,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
     end
   end
 
-  // DMStatus — Debug Module Status (read-only)
+  // DMStatus — Debug Module Status (read-only) section 3.14.1
   //
   // Bit fields:
   // [31:25] 0                  — Reserved
