@@ -136,7 +136,7 @@ module debug_apb_requester import cvw::*; #(parameter cvw_t P) (
 
   assign DebugPENABLE = Access;
 
-  assign DebugPSTRB = '0;
+  assign DebugPSTRB = '1;
 
   if (P.LLEN > 32) begin
     assign DebugPWDATA = AARSize == 3'd2 ? {32'h0, Data0} : {Data1, Data0};

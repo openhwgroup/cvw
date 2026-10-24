@@ -152,7 +152,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
   logic ReadRegister;
 
   // Resume request pulse state machine
-  typedef enum logic [1:0] {RESUMEREQIDLE, RESUMEREQUEST, RESUMEWAITCLEAR} ResumeReqState;
+  typedef enum logic {RESUMEREQIDLE, RESUMEREQUEST} ResumeReqState;
   ResumeReqState CurrResumeReq;
   ResumeReqState NextResumeReq;
 
@@ -246,10 +246,11 @@ module debug import cvw::*; #(parameter cvw_t P) (
       DMControl <= DMControl;
       if (DebugHaltReq) begin
         DMControl[31]    <= DMIDATA[31];
+        // Can't write another resume request
         DMControl[29:28] <= DMIDATA[29:28];
         DMControl[3:0]   <= DMIDATA[3:0];
       end else begin
-        DMControl <= {DMIDATA[31:28], 24'b0, DMIDATA[3:0]};
+        DMControl <= {DMIDATA[31], 1'b0, DMIDATA[29:28], 24'b0, DMIDATA[3:0]};
       end
     end
   end
@@ -361,6 +362,10 @@ module debug import cvw::*; #(parameter cvw_t P) (
     end
   end
 
+  logic ResumeReqWrite;
+  // DMControl: don't store the W1 bits (30 resumereq, 28 ackhavereset)
+  assign ResumeReqWrite = WriteRequest & (DMIADDR == DMCONTROL) & DMIDATA[30] & ~DMIDATA[31];
+
   // TODO: This is wrong. Resume Request is a W1 field, meaning only a
   // write of 1 should have any effect. This means that this should be
   // cleared when the HART is running not upon DMControl[30] being
@@ -368,24 +373,18 @@ module debug import cvw::*; #(parameter cvw_t P) (
   always_comb begin
     case(CurrResumeReq)
       RESUMEREQIDLE: begin
-        if (DMControl[30] & DebugMode) NextResumeReq = RESUMEREQUEST;
+        if (ResumeReqWrite & DebugMode) NextResumeReq = RESUMEREQUEST;
         else NextResumeReq = RESUMEREQIDLE;
       end
 
       RESUMEREQUEST: begin
-        if (~DebugMode) NextResumeReq = RESUMEWAITCLEAR;
+        if (~DebugMode) NextResumeReq = RESUMEREQIDLE;
         else NextResumeReq = RESUMEREQUEST;
-      end
-
-      RESUMEWAITCLEAR: begin
-        if (~DMControl[30]) NextResumeReq = RESUMEREQIDLE;
-        else NextResumeReq = RESUMEWAITCLEAR;
       end
 
       default: NextResumeReq = RESUMEREQIDLE;
     endcase
   end
-
 
   always_ff @(posedge clk) begin
     if (reset) begin
@@ -423,7 +422,8 @@ module debug import cvw::*; #(parameter cvw_t P) (
   // implemented as a reminder.
   assign HartReset = 1'b0;
 
-  assign DebugHaveResetAck = DMControl[28];
+  //assign DebugHaveResetAck = DMControl[28];
+  assign DebugHaveResetAck = WriteRequest & (DMIADDR == DMCONTROL) & DMIDATA[28];
   assign DebugNDMReset = DMControl[1];
   assign DMActive = DMControl[0];
 
