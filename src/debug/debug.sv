@@ -57,8 +57,8 @@ module debug import cvw::*; #(parameter cvw_t P) (
   output logic                 DebugPSELMemory,
   output logic                 DebugPWRITE,
   output logic [P.LLEN-1:0]    DebugPWDATA,
-  output logic [P.XLEN/8-1:0]  DebugPSTRB,
-  output logic [P.PA_BITS-1:0] DebugPADDR,
+  output logic [P.LLEN/8-1:0]  DebugPSTRB,
+  output logic [15:0]          DebugPADDR,
 
   // APB Completer interface
   input  logic                 DebugPREADY,

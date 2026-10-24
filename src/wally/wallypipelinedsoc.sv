@@ -106,15 +106,15 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic                       DebugPSELRegister;
   logic                       DebugPSELMemory;
   logic                       DebugPWRITE;
-  logic [P.XLEN/8-1:0]        DebugPSTRB;
+  logic [P.LLEN/8-1:0]        DebugPSTRB;
   logic [P.LLEN-1:0]          DebugPWDATA;
-  logic [P.PA_BITS-1:0]       DebugPADDR;
+  logic [15:0]                DebugPADDR; // Should be XLEN wide when Abstract Memory Access is supported
   //Completer signals
   logic                       DebugPREADY;
   logic [P.LLEN-1:0]          DebugPRDATA;
   logic                       DebugPSLVERR;
 
-  assign PlatformReset = reset | DebugNDMReset;;
+  assign PlatformReset = reset | DebugNDMReset;
 
   // synchronize reset to SOC clock domain
   synchronizer resetsync(.clk, .d(reset_ext), .q(reset));
@@ -127,7 +127,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
     .DebugMode, .DebugHaltReq, .DebugResumeReq,
     .DebugHaveReset, .DebugHaveResetAck, .DebugResetHaltReq,
     .DebugPCLK, .DebugPRESETn,
-    .DebugPENABLE, .DebugPSELRegister, .DebugPWRITE, .DebugPWDATA, .DebugPADDR(DebugPADDR[15:0]),
+    .DebugPENABLE, .DebugPSELRegister, .DebugPWRITE, .DebugPWDATA, .DebugPSTRB, .DebugPADDR(DebugPADDR[15:0]),
     .DebugPREADY, .DebugPRDATA, .DebugPSLVERR
    );
 

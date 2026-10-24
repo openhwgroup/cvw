@@ -34,6 +34,7 @@ module debug_apb_completer import cvw::*; #(parameter cvw_t P) (
   input  logic                DebugPSELRegister,
   input  logic                DebugPWRITE,
   input  logic [P.LLEN-1:0]   DebugPWDATA,
+  input  logic [P.LLEN/8-1:0] DebugPSTRB,
   input  logic [15:0]         DebugPADDR,
   // APB Completer signals
   output logic                DebugPREADY,
@@ -56,6 +57,18 @@ module debug_apb_completer import cvw::*; #(parameter cvw_t P) (
 );
 
   logic Exists;
+
+  // This is for APB4 spec compliance. If a custom Debug Module
+  // interfaces with this, it will reject partial writes.
+  logic IllegalPartialWrite;
+  logic GPRAccess, FPRAccess, CSRAccess;
+  assign CSRAccess = DebugPADDR inside {[16'h0000:16'h0fff]};
+  assign GPRAccess = DebugPADDR inside {[16'h1000:16'h101f]};
+  assign FPRAccess = DebugPADDR inside {[16'h1020:16'h103f]};
+
+  assign IllegalPartialWrite = DebugPWRITE & (
+    (GPRAccess | CSRAccess) & ~&DebugPSTRB[P.XLEN/8-1:0] |
+    FPRAccess               & ~&DebugPSTRB[P.FLEN/8-1:0]);
 
   always_comb begin
     DebugGPREnable = 1'b0;
@@ -99,10 +112,10 @@ module debug_apb_completer import cvw::*; #(parameter cvw_t P) (
     endcase
   end
 
-  assign DebugPSLVERR = DebugPENABLE & (IllegalDebugCSRAccess | ~Exists);
+  assign DebugPSLVERR = DebugPENABLE & (IllegalDebugCSRAccess | ~Exists | IllegalPartialWrite);
 
   assign DebugRegAddr = DebugPADDR[11:0];
-  assign DebugRegWrite = DebugPENABLE & DebugPSELRegister & DebugPWRITE;
+  assign DebugRegWrite = DebugPENABLE & DebugPSELRegister & DebugPWRITE & ~DebugPSLVERR;
   assign DebugRegWDATA = DebugPWDATA;
 
   if (P.F_SUPPORTED) begin

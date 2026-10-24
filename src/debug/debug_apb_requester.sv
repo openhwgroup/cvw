@@ -44,8 +44,8 @@ module debug_apb_requester import cvw::*; #(parameter cvw_t P) (
   output logic                 DebugPSELMemory,
   output logic                 DebugPWRITE,
   output logic [P.LLEN-1:0]    DebugPWDATA,
-  output logic [P.XLEN/8-1:0]  DebugPSTRB,
-  output logic [P.PA_BITS-1:0] DebugPADDR,
+  output logic [P.LLEN/8-1:0]  DebugPSTRB,
+  output logic [15:0]          DebugPADDR,
   input  logic                 DebugPREADY,
   input  logic [P.LLEN-1:0]    DebugPRDATA,
   input  logic                 DebugPSLVERR
@@ -136,7 +136,8 @@ module debug_apb_requester import cvw::*; #(parameter cvw_t P) (
 
   assign DebugPENABLE = Access;
 
-  assign DebugPSTRB = '1;
+  // APB4 Compliance
+  assign DebugPSTRB = DebugPWRITE ? '1 : '0;
 
   if (P.LLEN > 32) begin
     assign DebugPWDATA = AARSize == 3'd2 ? {32'h0, Data0} : {Data1, Data0};
@@ -144,7 +145,7 @@ module debug_apb_requester import cvw::*; #(parameter cvw_t P) (
     assign DebugPWDATA = Data0;
   end
 
-  assign DebugPADDR = P.PA_BITS'(RegNO);
+  assign DebugPADDR = RegNO;
 
   // assign ValidSize = (AARSize == 3'd2)
   //                    | (AARSize == 3'd3 & (P.XLEN == 64 | (NextDebugFPREnable & P.D_SUPPORTED)))

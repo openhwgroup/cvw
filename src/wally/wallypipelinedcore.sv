@@ -57,6 +57,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
    input  logic                  DebugPSELRegister,
    input  logic                  DebugPWRITE,
    input  logic [P.LLEN-1:0]     DebugPWDATA,
+   input  logic [P.LLEN/8-1:0]   DebugPSTRB,
    input  logic [15:0]           DebugPADDR,
    // APB Completer signals
    output logic                  DebugPREADY,
@@ -416,7 +417,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
 
   if (P.SDEXT_SUPPORTED) begin : debug_apb
     debug_apb_completer #(P) debug_apb(.DebugPCLK, .DebugPRESETn,
-      .DebugPENABLE, .DebugPSELRegister, .DebugPWRITE, .DebugPWDATA, .DebugPADDR,
+      .DebugPENABLE, .DebugPSELRegister, .DebugPWRITE, .DebugPWDATA, .DebugPSTRB, .DebugPADDR,
       .DebugPREADY, .DebugPRDATA, .DebugPSLVERR,
       .DebugGPREnable, .DebugFPREnable, .DebugCSREnable,
       .DebugRegAddr, .DebugRegWrite, .DebugRegWDATA,
