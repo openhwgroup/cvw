@@ -150,9 +150,9 @@ module debug_apb_requester import cvw::*; #(parameter cvw_t P) (
   //                    | (AARSize == 3'd3 & (P.XLEN == 64 | (NextDebugFPREnable & P.D_SUPPORTED)))
   //                    | (AARSize == 3'd4 & NextDebugFPREnable & P.Q_SUPPORTED);
 
-  assign ValidCommand = (CommandWrite | StartCommand) & (NextCMDType == 8'd0);
+  assign ValidCommand = CommandWrite & (NextCMDType == 8'd0);
 
-  assign ValidSize = (CommandWrite | StartCommand) & ((NextAARSize == 3'd2)
+  assign ValidSize = CommandWrite & ((NextAARSize == 3'd2)
                      | (NextAARSize == 3'd3 & (P.XLEN == 64 | P.D_SUPPORTED))
                      | (NextAARSize == 3'd4 & P.Q_SUPPORTED));
 

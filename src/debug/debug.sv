@@ -188,24 +188,9 @@ module debug import cvw::*; #(parameter cvw_t P) (
     if (reset) begin
       DMIRSPVALID <= 1'b0;
     end else if (InitRequest) begin
-      DMIRSPVALID <= NextValid;
+      DMIRSPVALID <= 1'b1;
     end else if (DMIRSPVALID) begin
       DMIRSPVALID <= 1'b0;
-    end
-  end
-
-  always_comb begin
-    if (ReadRequest) begin
-      NextValid = 1'b1;
-    end else if (WriteRequest) begin
-      case(DMIADDR[6:0])
-        COMMAND: begin
-          NextValid = ~|AbstractCS[10:8] ? StartCommand : 1'b1;
-        end
-        default: NextValid = 1'b1;
-      endcase
-    end else begin
-      NextValid = 1'b0;
     end
   end
 
@@ -253,19 +238,6 @@ module debug import cvw::*; #(parameter cvw_t P) (
   // ----------------------------------------------------------------
   // Writes to registers
   // ----------------------------------------------------------------
-  /*
-    These contain complicated enable logic. Conditions that happen based
-    on state can cause these to change outside of DMI transactions.
-
-    In order to not confuse synthesis, these are placed in their own
-    behavioral blocks. The enable logic is now clear for all of these
-    registers.
-    */
-
-  /*
-   Each register lives in it's own always_ff block. Some registers can be written
-
-   */
 
   // DMControl
   always_ff @(posedge clk) begin
@@ -277,29 +249,51 @@ module debug import cvw::*; #(parameter cvw_t P) (
         DMControl[31]    <= DMIDATA[31];
         DMControl[29:28] <= DMIDATA[29:28];
         DMControl[3:0]   <= DMIDATA[3:0];
-        // DMControl <= {DMIDATA[31], 1'b0, DMIDATA[29:28], 24'b0, DMIDATA[3:0]};
       end else begin
         DMControl <= {DMIDATA[31:28], 24'b0, DMIDATA[3:0]};
       end
     end
   end
 
-  // DMStatus
-  // This doesn't get updated on writes to DMStatus because it's a read only register.
+  // DMStatus — Debug Module Status (read-only)
+  //
+  // Bit fields:
+  // [31:25] 0                  — Reserved
+  // [24]    ndmresetpending    — NDM reset is in progress (or was requested)
+  // [23]    stickyunavail      — Per-hart unavail bits are sticky
+  // [22]    impebreak          — Implicit ebreak after Program Buffer
+  // [21:20] 0                  — Reserved
+  // [19]    allhavereset       — All selected harts have been reset (not yet acked)
+  // [18]    anyhavereset       — At least one selected hart has been reset (not yet acked)
+  // [17]    allresumeack       — All selected harts have acknowledged their last resume
+  // [16]    anyresumeack       — At least one selected hart has acknowledged its last resume
+  // [15]    allnonexistent     — All selected harts do not exist
+  // [14]    anynonexistent     — At least one selected hart does not exist
+  // [13]    allunavail         — All selected harts are unavailable
+  // [12]    anyunavail         — At least one selected hart is unavailable
+  // [11]    allrunning         — All selected harts are running
+  // [10]    anyrunning         — At least one selected hart is running
+  // [9]     allhalted          — All selected harts are halted
+  // [8]     anyhalted          — At least one selected hart is halted
+  // [7]     authenticated      — Authentication has passed (or is not required)
+  // [6]     authbusy           — Authentication module is busy
+  // [5]     hasresethaltreq    — Halt-on-reset request is implemented
+  // [4]     confstrptrvalid    — Configuration string pointer is valid
+  // [3:0]   version            — Debug Module version (0=none, 1=0.11, 2=0.13, 3=1.0)
   always_ff @(posedge clk) begin
     if (reset) begin
       DMStatus <= {14'b0, 2'b11, 8'b0, 1'b1, 1'b0, 1'b1, 1'b0, 4'b11}; // ResumeAck's start high
     end else if (WriteRequest & (DMIADDR == DMCONTROL)) begin
       // Force AllResumeAck and AnyResumeAck low if
-      // we're writing to ResumeReq p. 28. There will
-      // always be at least 1 cycle of latency after
-      // receving the ResumeReq
+      // we're writing to ResumeReq p. 28.
       if (DMIDATA[30]) DMStatus[17:16] <= 2'b0;
     end
   end
 
   // Data Registers, used as arguments for writing to registers and
-  // for storing results read from registers.
+  // for storing results read from registers. ReadRegistter contains
+  // the condition from the APB bus, used for Abstract Access Register
+  // commands, to write to the data register from the core
   assign ReadRegister = DebugPENABLE & DebugPREADY & ~Command[16];
 
   // Data[0]
